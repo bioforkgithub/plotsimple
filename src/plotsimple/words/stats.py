@@ -7,6 +7,9 @@ phase, after every chart type. Methods, written so they can be stated in a paper
   "sd" = sample standard deviation (n - 1), "se" = sd / sqrt(n),
   "ci" = 95 % confidence interval of the mean from the t distribution (_stats.t_interval).
   Empty cells are skipped. An x value with a single y value gets no bar.
+  With colour groups sharing an x value, each group's bars, line and dots are shifted
+  sideways together (ggplot2's position_dodge), spread over 15 % of the smallest x gap
+  (15 % of 1 for categories); dodge=False keeps the true x.
 * fit_line: ordinary least squares, scipy.stats.linregress; R² = rvalue².
   band=True is the 95 % confidence band of the fitted line (of the mean of y at each x):
   y_hat ± t(0.975, n - 2) · s · sqrt(1/n + (x - x̄)² / Sxx), with s² = SSE / (n - 2).
@@ -31,7 +34,8 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 from matplotlib import rcParams
-from matplotlib.colors import is_color_like
+from matplotlib.collections import PathCollection
+from matplotlib.colors import is_color_like, to_rgba
 from matplotlib.figure import Figure
 from scipy import stats
 
@@ -332,11 +336,12 @@ def _not_average_error(show):
     )
 
 
-def _draw_error_bars(ctx, kind, column):
+def _draw_error_bars(ctx, kind, column, dodge=True):
     last = _layer(ctx, "error_bars", {"dots", "lines"})
     table, x, y, group = last["table"], last["x"], last["y"], last["colour"]
     ax = ctx.ax
     style = dict(capsize=4, elinewidth=1.5, capthick=1.5, zorder=3)
+    bars = []  # one entry per colour group: level, colour, x values, centres, half-widths
 
     if column is not None:
         if is_listlike(column):
@@ -360,30 +365,129 @@ def _draw_error_bars(ctx, kind, column):
                 'Use chart.error_bars("sd") to work out the spread instead, or use one row per x value.'
             )
         data = table.assign(_err=values.to_numpy())
-        for _, part, colour in _groups(ctx, data, group):
+        for level, part, colour in _groups(ctx, data, group):
             part = part.dropna(subset=[y, "_err"])
-            if len(part):
-                ax.errorbar(part[x].to_list(), part[y].to_numpy(dtype=float),
-                            yerr=part["_err"].to_numpy(dtype=float), fmt="none", ecolor=colour, **style)
-        return
+            bars.append(dict(level=level, colour=colour, x=part[x].to_list(),
+                             mid=part[y].to_numpy(dtype=float), half=part["_err"].to_numpy(dtype=float)))
+        fmt = "none"
+    else:
+        if last.get("show", "average") not in ("average", "mean"):
+            raise _not_average_error(last["show"])
+        if not _is_number_column(table[y]):
+            raise PlotsimpleError(f'.error_bars() needs numbers on y, but "{y}" holds {_kind_of(table[y])}.')
+        summary = group_errors(table, x, y, group, kind)
+        if summary["half"].isna().all():
+            raise PlotsimpleError(
+                f'.error_bars("{kind}") needs at least 2 values for an x value, but every x has only one.\n'
+                'If your table has its own error sizes, use chart.error_bars(column="your error column").'
+            )
+        for level, part, colour in _groups(ctx, summary, group):
+            part = part.dropna(subset=["half"])
+            bars.append(dict(level=level, colour=colour, x=part[x].to_list(),
+                             mid=part["mean"].to_numpy(dtype=float), half=part["half"].to_numpy(dtype=float)))
+        fmt = "_" if last["kind"] == "dots" else "none"  # on dots, also mark the average
 
-    if last.get("show", "average") not in ("average", "mean"):
-        raise _not_average_error(last["show"])
-    if not _is_number_column(table[y]):
-        raise PlotsimpleError(f'.error_bars() needs numbers on y, but "{y}" holds {_kind_of(table[y])}.')
-    summary = group_errors(table, x, y, group, kind)
-    if summary["half"].isna().all():
-        raise PlotsimpleError(
-            f'.error_bars("{kind}") needs at least 2 values for an x value, but every x has only one.\n'
-            'If your table has its own error sizes, use chart.error_bars(column="your error column").'
-        )
-    fmt = "_" if last["kind"] == "dots" else "none"  # on dots, also mark the average
-    for _, part, colour in _groups(ctx, summary, group):
-        part = part.dropna(subset=["half"])
-        if len(part):
-            ax.errorbar(part[x].to_list(), part["mean"].to_numpy(dtype=float),
-                        yerr=part["half"].to_numpy(dtype=float), fmt=fmt, color=colour, ecolor=colour,
+    positions = [list(b["x"]) for b in bars]
+    if dodge and group is not None:
+        shifted = _dodge(ax, last, bars)
+        if shifted is not None:
+            positions = shifted
+    for b, xs in zip(bars, positions):
+        if len(b["mid"]):
+            ax.errorbar(xs, b["mid"], yerr=b["half"], fmt=fmt, color=b["colour"], ecolor=b["colour"],
                         markersize=16, markeredgewidth=2, **style)
+
+
+# ---------------------------------------------------------------- dodging grouped error bars
+DODGE_SPREAD = 0.15  # the groups spread over 15 % of the smallest gap between x values
+
+
+def _to_numbers(ax, values) -> np.ndarray:
+    """x values as the numbers matplotlib uses on the axis (categories 0, 1, 2 ...; dates in days)."""
+    if len(values) == 0:
+        return np.array([], dtype=float)
+    return np.asarray(ax.xaxis.convert_units(list(values)), dtype=float)
+
+
+def dodge_offsets(n_groups: int, gap: float) -> np.ndarray:
+    """Sideways shift for each group, in legend order, centred on the true x (ggplot2 position_dodge)."""
+    if n_groups < 2:
+        return np.zeros(n_groups)
+    spread = DODGE_SPREAD * gap
+    return (np.arange(n_groups) - (n_groups - 1) / 2) * spread / (n_groups - 1)
+
+
+def _same_rgb(a, b) -> bool:
+    return np.allclose(to_rgba(a)[:3], to_rgba(b)[:3], atol=1e-3)
+
+
+def _same_x(a, b) -> bool:
+    a = np.sort(np.asarray(a, dtype=float))
+    b = np.sort(np.asarray(b, dtype=float))
+    return len(a) == len(b) and np.allclose(a, b)
+
+
+def _dodge(ax, last, bars):
+    """Shift each group's error bars, line and dots sideways by the same amount.
+
+    Returns the new x positions per group, or None when nothing should move: no x value
+    is shared by 2 groups, or a group's own line/dots cannot be found for certain (then the
+    bars stay on the true x rather than come loose from their points).
+    """
+    table, x, y, group = last["table"], last["x"], last["y"], last["colour"]
+    numbers = [_to_numbers(ax, b["x"]) for b in bars]
+    owners = {}
+    for i, xs in enumerate(numbers):
+        for v in np.unique(xs):
+            owners.setdefault(v, set()).add(i)
+    if not any(len(o) > 1 for o in owners.values()):
+        return None
+    if _is_number_column(table[x]) or pd.api.types.is_datetime64_any_dtype(table[x]):
+        distinct = np.unique(np.concatenate(numbers))
+        if len(distinct) < 2:
+            return None
+        gap = float(np.diff(distinct).min())
+    else:  # categories sit 1 apart
+        gap = 1.0
+    offsets = dodge_offsets(len(bars), gap)
+
+    # find every group's own artists first; move nothing unless all are found
+    moves = []
+    points = table.dropna(subset=[x, y])
+    for b in bars:
+        part = points[points[group] == b["level"]]
+        own_x = _to_numbers(ax, part[x].to_list())
+        if last["kind"] == "lines":
+            found = [ln for ln in ax.lines
+                     if len(ln.get_xdata()) and _same_rgb(ln.get_color(), b["colour"])
+                     and _same_x(ln.convert_xunits(ln.get_xdata()), np.unique(own_x))]
+            if len(found) != 1:
+                return None
+            moves.append(("line", found[0]))
+        else:
+            hits = []
+            for coll in ax.collections:
+                if not isinstance(coll, PathCollection):
+                    continue
+                offs = np.asarray(coll.get_offsets())
+                faces = coll.get_facecolors()
+                if len(offs) == 0 or len(faces) != len(offs):
+                    continue
+                mask = np.array([_same_rgb(f, b["colour"]) for f in faces])
+                if mask.any() and _same_x(offs[mask, 0], own_x):
+                    hits.append((coll, mask))
+            if len(hits) != 1:
+                return None
+            moves.append(("dots", hits[0]))
+    for (what, target), off in zip(moves, offsets):
+        if what == "line":
+            target.set_xdata(np.asarray(target.convert_xunits(target.get_xdata()), dtype=float) + off)
+        else:
+            coll, mask = target
+            offs = np.array(coll.get_offsets(), dtype=float)
+            offs[mask, 0] += off
+            coll.set_offsets(offs)
+    return [xs + off for xs, off in zip(numbers, offsets)]
 
 
 def _draw_fit(ctx, word, how, colour, show_equation, band=False, degree=1):
@@ -520,13 +624,15 @@ class StatsWords:
         return step
 
     @friendly
-    def error_bars(self, kind="sd", column=None):
+    def error_bars(self, kind="sd", column=None, dodge=True):
         """Error bars on dots or lines. chart.error_bars("sd")
 
         For every x value the bar shows the average of y and its spread:
         "sd" standard deviation (n - 1), "se" standard error, "ci" 95 % confidence interval
         (t distribution). Empty cells are skipped.
         column="error" uses error sizes from your own column instead.
+        With colour groups, bars at the same x move a little apart (with their lines and
+        dots) so they do not hide each other; dodge=False keeps them on the true x.
         """
         self._check_choice("error_bars", "kind", kind, ERRORS)
         if column is not None and not is_listlike(column):
@@ -539,7 +645,8 @@ class StatsWords:
             show = step.kwargs.get("show", "average")
             if show not in ("average", "mean"):
                 raise _not_average_error(show)
-        return self._add("error_bars", "extra", _draw_error_bars, kind=kind, column=column)
+        return self._add("error_bars", "extra", _draw_error_bars, kind=kind, column=column,
+                         dodge=bool(dodge))
 
     @friendly
     def fit_line(self, band=False, show_equation=False, colour=None):

@@ -400,3 +400,72 @@ def test_pairs_errors(marks):
         ps.pairs(marks, columns=["name", "marks"])
     with pytest.raises(PlotsimpleError, match="already names"):
         ps.pairs(marks).label_x("x")
+
+
+# ------------------------------------------------------------------ dodged error bars
+from plotsimple.words.stats import dodge_offsets  # noqa: E402
+
+
+def _grouped(n_groups, x_values=("A", "B", "C")):
+    rng = np.random.default_rng(2)
+    levels = ["g1", "g2", "g3"][:n_groups]
+    rows = [dict(x=x, g=g, y=float(rng.normal(10 * i, 1)))
+            for x in x_values for i, g in enumerate(levels) for _ in range(4)]
+    return pd.DataFrame(rows)
+
+
+def test_dodge_offsets():
+    assert np.allclose(dodge_offsets(2, 1.0), [-0.075, 0.075])
+    assert np.allclose(dodge_offsets(3, 2.0), [-0.15, 0.0, 0.15])
+    assert np.allclose(dodge_offsets(1, 1.0), [0.0])
+
+
+def _bar_x(container):
+    return np.array([s[0][0] for s in container.lines[2][0].get_segments()])
+
+
+@pytest.mark.parametrize("n_groups", [2, 3])
+def test_dodge_lines_moves_bars_and_lines_together(n_groups):
+    data = _grouped(n_groups)
+    ax = ps.chart(data).lines(x="x", y="y", colour="g").error_bars("se")._render().axes[0]
+    lines = [ln for ln in ax.lines if len(ln.get_xdata()) == 3]
+    offsets = dodge_offsets(n_groups, 1.0)  # categories sit 1 apart
+    for cont, line, off in zip(ax.containers, lines, offsets):
+        assert np.allclose(_bar_x(cont), np.arange(3) + off)
+        assert np.allclose(np.asarray(line.get_xdata(), dtype=float), np.arange(3) + off)
+    assert [t.get_text() for t in ax.get_xticklabels()] == ["A", "B", "C"]
+
+
+def test_dodge_dots_numeric_x_moves_points_and_mean_ticks():
+    data = _grouped(2, x_values=(1.0, 3.0, 4.0))  # smallest gap 1 -> spread 0.15
+    ax = ps.chart(data).dots(x="x", y="y", colour="g").error_bars("sd")._render().axes[0]
+    offs = ax.collections[0].get_offsets()
+    first = data["g"].to_numpy() == "g1"
+    assert np.allclose(offs[first, 0], data.loc[first, "x"] - 0.075)
+    assert np.allclose(offs[~first, 0], data.loc[~first, "x"] + 0.075)
+    for cont, off in zip(ax.containers, [-0.075, 0.075]):
+        assert np.allclose(_bar_x(cont), np.array([1, 3, 4]) + off)
+        assert np.allclose(cont.lines[0].get_xdata(), np.array([1, 3, 4]) + off)  # the mean ticks
+
+
+def test_dodge_dates_uses_date_units():
+    data = _grouped(2)
+    data["x"] = pd.to_datetime("2026-01-01") + pd.to_timedelta(data["x"].map({"A": 0, "B": 7, "C": 14}), unit="D")
+    ax = ps.chart(data).lines(x="x", y="y", colour="g").error_bars("ci")._render().axes[0]
+    xs = [_bar_x(c) for c in ax.containers]
+    assert np.allclose(xs[1] - xs[0], 0.15 * 7)  # days
+
+
+def test_no_dodge_when_off_single_group_or_no_shared_x():
+    data = _grouped(2)
+    ax = ps.chart(data).lines(x="x", y="y", colour="g").error_bars(dodge=False)._render().axes[0]
+    for cont in ax.containers:
+        assert np.allclose(_bar_x(cont), [0, 1, 2])
+    lines = [ln for ln in ax.lines if len(ln.get_xdata()) == 3]
+    assert all(np.allclose(np.asarray(ln.convert_xunits(ln.get_xdata()), dtype=float), [0, 1, 2]) for ln in lines)
+    one = _grouped(1)
+    ax = ps.chart(one).lines(x="x", y="y", colour="g").error_bars()._render().axes[0]
+    assert np.allclose(_bar_x(ax.containers[0]), [0, 1, 2])
+    apart = pd.DataFrame({"x": [1, 1, 2, 2], "y": [1.0, 2.0, 3.0, 4.0], "g": ["a", "a", "b", "b"]})
+    ax = ps.chart(apart).dots(x="x", y="y", colour="g").error_bars()._render().axes[0]
+    assert np.allclose(np.concatenate([_bar_x(c) for c in ax.containers]), [1, 2])
