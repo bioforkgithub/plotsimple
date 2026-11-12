@@ -25,7 +25,7 @@ import re
 import narwhals as nw
 
 from .._errors import SimplydataError, column_error
-from .columns import FORMULA_HELP, _FormulaReader
+from .columns import CONSTANTS, FORMULA_HELP, _FormulaReader
 
 
 class _NotGiven:
@@ -191,6 +191,13 @@ class _ConditionReader(_FormulaReader):
                 '  table.add_column("class_average", "average(marks)", for_each="class")\n'
                 '  table.keep_rows("marks > class_average")'
             )
+        if getattr(self, "specials", None):  # gamma(x) and friends are worked out on a column first
+            name = self.specials[0][2]
+            raise _condition_error(
+                f"{name}() cannot be used in {self.where} yet. Add it as a column first, then compare with it:\n"
+                f'  table.add_column("new", "{name}(...)")\n'
+                '  table.keep_rows("new > 1")'
+            )
         return result
 
     def _from_formula(self, error):
@@ -285,6 +292,8 @@ class _ConditionReader(_FormulaReader):
                 raise _condition_error("To find empty cells write is empty, like: marks is empty.")
             if node.id in ("true", "false"):
                 raise _condition_error(f"Write {node.id.title()} with a capital letter and no quotes.")
+            if node.id in CONSTANTS:
+                return self._written(CONSTANTS[node.id])
             raise column_error(node.id, self.columns)
         if isinstance(node, ast.Constant):
             value = node.value

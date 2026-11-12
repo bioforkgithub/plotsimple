@@ -6,9 +6,11 @@ decimal numbers can be stacked without fuss).
 
 Calculator-style formulas, add_column("total", "maths + english"), are never run as
 Python code. The text is read with Python's ast module and only these pieces are allowed:
-column names, numbers, + - * / ** // %, brackets, a minus sign in front, the functions
-round, abs, sqrt and log, and the summary words average, median, total, smallest, biggest
-and count. Everything else is refused with a friendly message. Rules in
+column names, numbers, + - * / ** // %, brackets, a minus sign in front, the constant pi,
+the functions round, abs, sqrt, log, exp, sin, cos and tan, the special functions erf,
+erfc, gamma, lgamma, digamma, beta and besselJ (named and ordered as in R, worked out by
+SciPy), and the summary words average, median, total, smallest, biggest and count.
+Everything else is refused with a friendly message. Rules in
 add_group_column(rules=) are read by the shared condition reader in conditions.py (the
 same one keep_rows() uses), with comparisons, and / or / not, in [...] and is empty added.
 
@@ -23,6 +25,7 @@ from __future__ import annotations
 import ast
 import datetime as _dt
 import keyword
+import math
 import numbers
 import re
 import warnings
@@ -45,6 +48,12 @@ FORMULA_HELP = (
     "  round(x)  round(x, 1)      round, or round to 1 decimal place\n"
     "  abs(x)  sqrt(x)            size without the minus sign, square root\n"
     "  log(x)  log(x, 10)         natural log, log to base 10\n"
+    "  exp(x)                     e to the power x\n"
+    "  sin(x)  cos(x)  tan(x)     sine, cosine, tangent (x in radians); pi is 3.14159...\n"
+    "  erf(x)  erfc(x)            error function, and 1 - erf(x)\n"
+    "  gamma(x)  lgamma(x)        gamma function, and the log of its size (as R)\n"
+    "  digamma(x)  beta(a, b)     digamma function, beta function (as R)\n"
+    "  besselJ(x, nu)             Bessel function of the first kind, order nu (as R)\n"
     "  average(x)  median(x)      summary words: one value for the whole column,\n"
     "  total(x)  count(x)         or for each group with for_each=\n"
     "  smallest(x)  biggest(x)    (count counts the cells that are not empty)\n"
@@ -52,13 +61,21 @@ FORMULA_HELP = (
     'Example: table.add_column("share", "marks / total(marks) * 100", for_each="class")'
 )
 
-FUNCTIONS = {"round": (1, 2), "abs": (1, 1), "sqrt": (1, 1), "log": (1, 2)}
+FUNCTIONS = {"round": (1, 2), "abs": (1, 1), "sqrt": (1, 1), "log": (1, 2), "exp": (1, 1),
+             "sin": (1, 1), "cos": (1, 1), "tan": (1, 1), "erf": (1, 1), "erfc": (1, 1), "gamma": (1, 1),
+             "lgamma": (1, 1), "digamma": (1, 1), "beta": (2, 2), "besselJ": (2, 2)}
+# functions worked out with SciPy / NumPy on the numbers themselves (narwhals has no word for them)
+SPECIAL_FUNCTIONS = ("tan", "erf", "erfc", "gamma", "lgamma", "digamma", "beta", "besselJ")
+FUNCTION_SPELLINGS = {"besselj": "besselJ"}  # both spellings work
+CONSTANTS = {"pi": math.pi}
 # summary words inside formulas -> the narwhals method that works them out
 SUMMARY_WORDS = {"average": "mean", "median": "median", "total": "sum",
                  "smallest": "min", "biggest": "max", "count": "count"}
 # names people bring from other tools -> the simplydata word
 OTHER_TOOL_NAMES = {"mean": "average", "avg": "average", "sum": "total", "min": "smallest",
-                    "max": "biggest", "n": "count", "len": "count", "length": "count"}
+                    "max": "biggest", "n": "count", "len": "count", "length": "count",
+                    "gammaln": "lgamma", "loggamma": "lgamma", "psi": "digamma", "jv": "besselJ",
+                    "power": "**", "pow": "**"}
 MAX_FORMULA_LENGTH = 500
 
 KEEP_CHOICES = {
@@ -88,6 +105,28 @@ def _divide(top, bottom, how="/"):
     return nw.when(bottom != 0).then(result)
 
 
+def special_function(name: str, *values):
+    """erf(x), gamma(x), beta(a, b), besselJ(x, nu) ... on NumPy arrays, with SciPy.
+
+    Names and the order of the inputs are those of R: lgamma is the log of the size of
+    gamma (SciPy gammaln), besselJ(x, nu) is SciPy jv(nu, x).
+    """
+    import numpy as np
+    from scipy import special
+
+    values = [np.asarray(v, dtype=float) for v in values]
+    with np.errstate(all="ignore"):
+        if name == "tan":
+            return np.tan(values[0])
+        if name == "beta":
+            return special.beta(values[0], values[1])
+        if name == "besselJ":
+            return special.jv(values[1], values[0])
+        found = {"erf": special.erf, "erfc": special.erfc, "gamma": special.gamma,
+                 "lgamma": special.gammaln, "digamma": special.digamma}[name]
+        return found(values[0])
+
+
 class _FormulaReader:
     """Turns formula text into a narwhals expression. The text is never run.
 
@@ -105,6 +144,8 @@ class _FormulaReader:
         self.number_used: list = []
         self.placeholders: dict = {}
         self.summaries: list = []
+        self.specials: list = []  # (temporary column, expressions inside, function name)
+        self.steps: list = []  # summaries and special functions, inner ones first
         self._in_summary = False
 
     def _error(self, problem):
@@ -199,6 +240,8 @@ class _FormulaReader:
             name = self._column_name(node)
             if name is not None:
                 return self._column(name)
+            if node.id in CONSTANTS:
+                return nw.lit(CONSTANTS[node.id])
             if node.id in FUNCTIONS or node.id in SUMMARY_WORDS:
                 raise self._error(f"{node.id} needs brackets after it, for example {node.id}(marks).")
             raise column_error(node.id, self.columns)
@@ -243,9 +286,13 @@ class _FormulaReader:
     def _call(self, node):
         if isinstance(node.func, ast.Name) and node.func.id in SUMMARY_WORDS:
             return self._summary(node)
+        if isinstance(node.func, ast.Name) and node.func.id in FUNCTION_SPELLINGS:
+            node.func.id = FUNCTION_SPELLINGS[node.func.id]
         if not isinstance(node.func, ast.Name) or node.func.id not in FUNCTIONS:
             name = node.func.id if isinstance(node.func, ast.Name) else self._snippet(node.func)
-            if name in OTHER_TOOL_NAMES:
+            if OTHER_TOOL_NAMES.get(name) == "**":
+                hint = " For a power write x ** 2."
+            elif name in OTHER_TOOL_NAMES:
                 hint = f" In simplydata it is called {OTHER_TOOL_NAMES[name]}()."
             else:
                 guess = suggest(name, [*FUNCTIONS, *SUMMARY_WORDS], n=1)
@@ -256,12 +303,26 @@ class _FormulaReader:
             raise self._error(f"Write {name}() simply, like {name}(marks).")
         low, high = FUNCTIONS[name]
         if not low <= len(node.args) <= high:
-            raise self._error(f"{name}() was given {len(node.args)} things inside the brackets.")
+            needs = "one thing" if high == 1 else "two things" if low == 2 else "one or two things"
+            given = f"{len(node.args)} thing" + ("" if len(node.args) == 1 else "s")
+            raise self._error(f"{name}() was given {given} inside the brackets; it takes {needs}.")
+        if name in SPECIAL_FUNCTIONS:
+            inside = [self._node(a) for a in node.args]
+            key = f"_simplydata_special_{len(self.steps)}_"
+            self.specials.append((key, inside, name))
+            self.steps.append(("special", key, inside, name))
+            return nw.col(key)
         inner = self._node(node.args[0])
         if name == "abs":
             return inner.abs()
         if name == "sqrt":
             return inner.cast(nw.Float64).sqrt()
+        if name == "exp":
+            return inner.cast(nw.Float64).exp()
+        if name == "sin":
+            return inner.cast(nw.Float64).sin()
+        if name == "cos":
+            return inner.cast(nw.Float64).cos()
         second = node.args[1] if len(node.args) == 2 else None
         if second is not None and not (isinstance(second, ast.Constant) and _is_number(second.value)):
             raise self._error(
@@ -297,27 +358,39 @@ class _FormulaReader:
                 inner = self._node(arg)
         finally:
             self._in_summary = False
-        key = f"_simplydata_summary_{len(self.summaries)}_"
+        key = f"_simplydata_summary_{len(self.steps)}_"
         self.summaries.append((key, inner, name))
+        self.steps.append(("summary", key, inner, name))
         return nw.col(key)
 
 
 def _apply_summaries(frame, reader, keys):
-    """Add the summary columns a formula asked for (per group when keys are given).
+    """Add the summary and special-function columns a formula asked for (summaries per group
+    when keys are given), inner ones first, so gamma(total(x)) and total(gamma(x)) both work.
 
     Gives (frame, temporary column names to drop afterwards). Empty cells are left out of
     every summary, as in pandas and Polars: count() counts only the cells that are filled.
+    A special function gives an empty cell where its answer is not a number.
     """
-    if not reader.summaries:
-        return frame, []
-    inside = [(key + "in_", expr) for key, expr, _ in reader.summaries]
-    frame = frame.with_columns([expr.alias(name) for name, expr in inside])
-    done = []
-    for (key, _, word), (inner_name, _) in zip(reader.summaries, inside):
-        expr = getattr(nw.col(inner_name), SUMMARY_WORDS[word])()
-        done.append((expr.over(*keys) if keys else expr).alias(key))
-    frame = frame.with_columns(done)
-    return frame, [name for name, _ in inside] + [key for key, _, _ in reader.summaries]
+    import numpy as np
+
+    temporary = []
+    for kind, key, inner, word in reader.steps:
+        if kind == "summary":
+            frame = frame.with_columns(inner.alias(key + "in_"))
+            expr = getattr(nw.col(key + "in_"), SUMMARY_WORDS[word])()
+            frame = frame.with_columns((expr.over(*keys) if keys else expr).alias(key))
+            temporary += [key + "in_", key]
+            continue
+        frame = nw.maybe_reset_index(frame)
+        names = [f"{key}in{i}_" for i in range(len(inner))]
+        frame = frame.with_columns(e.cast(nw.Float64).alias(n) for e, n in zip(inner, names))
+        arrays = [np.asarray(frame[n].to_numpy(), dtype=float) for n in names]
+        values = special_function(word, *arrays)
+        frame = frame.with_columns(nw.new_series(key, values, nw.Float64, backend=frame.implementation))
+        frame = frame.with_columns(nw.col(key).fill_nan(None))
+        temporary += names + [key]
+    return frame, temporary
 
 
 def _dtype_kind(dtype) -> str:
