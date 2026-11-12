@@ -15,6 +15,9 @@ The first release: charts, tables, numbers and statistical tests in one small vo
   second y-axis, zoom insets, polar and 3D charts, animation.
 - Panels: `sdata.grid(a, b, letters=True)` and `one_chart_per(down=, across=, per_row=)`.
 - Months and weekdays in calendar order; `label_legend`, `names_on_dots`, `band`.
+- Saving for journals: `chart.size(width=17, height=8, unit="cm")` (inches, cm, mm or pixels)
+  gives a file of exactly that size, and `chart.save("figure.tif", resolution=600)` sets the dots
+  per inch.
 - Charts say how many rows with empty cells they left out; `chart.empty_cells()` shows where
   the gaps are.
 
