@@ -1,0 +1,371 @@
+"""Numbers and NumberGrid, and the words that make them: numbers(), number_grid(), random_numbers()."""
+
+from __future__ import annotations
+
+import math
+import numbers as _nb
+import sys
+
+import numpy as np
+
+from .._errors import PlotsimpleError, friendly
+from ._base import BaseNumbers, amount, check_seed, check_whole, is_number, plain, to_array
+from .maths import MathsWords
+from .picking import PickingWords
+from .summaries import GridSummaryWords, SummaryWords
+
+
+class Numbers(PickingWords, MathsWords, SummaryWords, BaseNumbers):
+    """A list of numbers. Make one with ps.numbers([3, 5, 2, 8]), then add steps: nums.add(5)."""
+
+    _is_plotsimple_numbers = True
+    _name = "nums"
+    _noun = "numbers"
+
+    def _as_pandas(self, name="value", for_chart=False):
+        import pandas as pd
+
+        if not isinstance(name, str) or not name.strip():
+            raise PlotsimpleError('name= needs a column name in quotes, like nums.table(name="marks").')
+        return pd.DataFrame({name: self._values})
+
+    def _picking_help(self) -> str:
+        return (
+            "Numbers are picked with words, and positions count from 1:\n"
+            "    nums.number_at(1)              the first number\n"
+            "    nums.number_at(nums.count())   the last number\n"
+            "    nums.keep_first_numbers(3)     keep only the first 3\n"
+            "Python's [ ] counts from 0, so plotsimple does not use it. "
+            "For a NumPy array, use nums.done()."
+        )
+
+    def __repr__(self):
+        body = np.array2string(self._values, separator=", ", threshold=60)
+        return f"plotsimple numbers: {amount(self._values.size)}\n{body}"
+
+
+class NumberGrid(GridSummaryWords, MathsWords, BaseNumbers):
+    """A grid of numbers in rows and columns. Make one with ps.number_grid([[1, 2], [3, 4]])."""
+
+    _is_plotsimple_grid = True
+    _name = "grid"
+    _noun = "grid"
+
+    def _as_pandas(self, name=None, for_chart=False):
+        """A table with columns called "1", "2", ...; for charts the rows are numbered from 1 too."""
+        import pandas as pd
+
+        rows, columns = self._values.shape
+        frame = pd.DataFrame(self._values, columns=[str(i) for i in range(1, columns + 1)])
+        if for_chart:
+            frame.index = pd.RangeIndex(1, rows + 1)
+        return frame
+
+    def _picking_help(self) -> str:
+        return (
+            "Numbers in a grid are picked with words, and positions count from 1:\n"
+            "    grid.number_at(row=1, column=2)   one number\n"
+            "    grid.row(1)                       the first row, as numbers\n"
+            "    grid.column(2)                    the second column, as numbers\n"
+            "Python's [ ] counts from 0, so plotsimple does not use it. "
+            "For a NumPy array, use grid.done()."
+        )
+
+    def __repr__(self):
+        rows, columns = self._values.shape
+        body = np.array2string(self._values, separator=", ", threshold=200)
+        return f"plotsimple number grid: {amount(rows, 'row')}, {amount(columns, 'column')}\n{body}"
+
+    def __iter__(self):
+        return iter(self._values.tolist())  # one list per row
+
+    # ------------------------------------------------------------------ looking
+    @friendly
+    def count_rows(self):
+        """How many rows the grid has. grid.count_rows()"""
+        return int(self._values.shape[0])
+
+    @friendly
+    def count_columns(self):
+        """How many columns the grid has. grid.count_columns()"""
+        return int(self._values.shape[1])
+
+    @friendly
+    def shape(self):
+        """How many rows and columns, as (rows, columns). grid.shape()"""
+        return tuple(int(n) for n in self._values.shape)
+
+    @friendly
+    def show_first(self, rows=5):
+        """Show the first rows. grid.show_first(5)"""
+        n = check_whole("show_first", "show_first()", rows, "grid.show_first(5)")
+        print(np.array2string(self._values[:n], threshold=sys.maxsize, separator=", "))
+        return None
+
+    @friendly
+    def show_last(self, rows=5):
+        """Show the last rows. grid.show_last(5)"""
+        n = check_whole("show_last", "show_last()", rows, "grid.show_last(5)")
+        size = self._values.shape[0]
+        print(np.array2string(self._values[size - min(n, size):], threshold=sys.maxsize, separator=", "))
+        return None
+
+    def _position(self, step, value, option):
+        n = self._values.shape[0 if option == "row" else 1]
+        example = f"{step}(row=1, column=2)" if step == "number_at" else f"{step}(1)"
+        if not isinstance(value, (int, np.integer)) or isinstance(value, bool) or not 1 <= value <= n:
+            raise PlotsimpleError(
+                f"{option}= needs a whole number from 1 to {n} (this grid has {amount(n, option)}); "
+                f"positions count from 1, so 1 is the first." + self._example(example)
+            )
+        return int(value) - 1
+
+    @friendly
+    def number_at(self, row=None, column=None):
+        """The number at a row and column, counting from 1. grid.number_at(row=1, column=2)"""
+        return plain(self._values[self._position("number_at", row, "row"),
+                                  self._position("number_at", column, "column")])
+
+    @friendly
+    def row(self, position=None):
+        """One row of the grid as new numbers, counting from 1: row(1) is the top row. grid.row(1)"""
+        return Numbers(self._values[self._position("row", position, "row")].copy())
+
+    @friendly
+    def column(self, position=None):
+        """One column of the grid as new numbers, counting from 1: column(1) is the left one. grid.column(1)"""
+        return Numbers(self._values[:, self._position("column", position, "column")].copy())
+
+    @friendly
+    def numbers(self):
+        """All the numbers of the grid as a list, row by row (flatten). nums = grid.numbers()"""
+        return Numbers(self._values.ravel().copy())
+
+    # ------------------------------------------------------------------ changing the grid
+    @friendly
+    def swap_rows_and_columns(self):
+        """Turn rows into columns and columns into rows (the transpose in maths).
+
+        grid.swap_rows_and_columns()
+        A grid of 2 rows and 3 columns becomes 3 rows and 2 columns.
+        Matrix multiplication and other linear algebra are planned for plotsimple v0.7.
+        """
+        return self._change("swap rows and columns", self._values.T.copy())
+
+    @friendly
+    def table(self):
+        """Turn the grid into a plotsimple table with columns "1", "2", ... grid.table()"""
+        from ..table import Table
+
+        return Table(self._as_pandas())
+
+    @friendly
+    def chart(self):
+        """Start a chart from this grid, for example a heatmap. grid.chart().heatmap(numbers=True)"""
+        from ..chart import chart
+
+        return chart(self)
+
+
+# ====================================================================== making numbers
+_NUMBERS_EXAMPLE = "ps.numbers([3, 5, 2, 8])   or   ps.numbers(1, to=10)"
+
+
+@friendly
+def numbers(*values, to=None, step=None, how_many=None) -> Numbers:
+    """Make a list of numbers.
+
+    ps.numbers([3, 5, 2, 8])              these numbers (or ps.numbers(3, 5, 2, 8))
+    ps.numbers(1, to=10)                  1, 2, 3 ... 10 (the end is included)
+    ps.numbers(0, to=100, step=25)        0, 25, 50, 75, 100
+    ps.numbers(0, to=1, how_many=5)       5 numbers evenly spaced: 0, 0.25, 0.5, 0.75, 1
+    ps.numbers(10, to=1)                  counting down: 10, 9 ... 1
+    None or NaN in a list is an empty (missing) value.
+    """
+    if len(values) == 1 and not is_number(values[0]):
+        if to is not None or step is not None or how_many is not None:
+            raise PlotsimpleError(
+                "to=, step= and how_many= go with a starting number, like ps.numbers(1, to=10).\n"
+                "For a list of your own numbers, write just the list: ps.numbers([3, 5, 2, 8])"
+            )
+        arr = to_array(values[0], "ps.numbers()", _NUMBERS_EXAMPLE)
+        if arr.ndim != 1:
+            raise PlotsimpleError(
+                "ps.numbers() makes one list of numbers. For rows and columns, use "
+                "ps.number_grid([[1, 2], [3, 4]])."
+            )
+        return Numbers(arr)
+    if not values:
+        raise PlotsimpleError(f"ps.numbers() needs some numbers.\nFor example:  {_NUMBERS_EXAMPLE}")
+    if len(values) == 1 and to is not None:
+        return Numbers(_counting(values[0], to, step, how_many))
+    if to is not None or step is not None or how_many is not None:
+        raise PlotsimpleError(
+            "to=, step= and how_many= go with one starting number, like ps.numbers(1, to=10)."
+        )
+    if len(values) == 1:
+        n = say_number(values[0])
+        raise PlotsimpleError(
+            f"ps.numbers({n}) is only one number. For a list with just that number write ps.numbers([{n}]);\n"
+            f"to count up to it write ps.numbers(1, to={n})."
+        )
+    return Numbers(to_array(list(values), "ps.numbers()", _NUMBERS_EXAMPLE))
+
+
+def say_number(value) -> str:
+    from ._base import say
+
+    return say(value)
+
+
+def _counting(start, to, step, how_many) -> np.ndarray:
+    example = "ps.numbers(1, to=10)   or   ps.numbers(0, to=1, how_many=5)"
+    for name, value in (("the starting number", start), ("to=", to)):
+        if not is_number(value) or not math.isfinite(value):
+            raise PlotsimpleError(f"{name} needs to be a number.\nFor example:  {example}")
+    if step is not None and how_many is not None:
+        raise PlotsimpleError(
+            "Give step= (the gap between numbers) or how_many= (how many numbers), not both.\n"
+            "For example:  ps.numbers(0, to=100, step=25)   or   ps.numbers(0, to=1, how_many=5)"
+        )
+    if how_many is not None:
+        n = check_whole("numbers", "how_many=", how_many, "ps.numbers(0, to=1, how_many=5)")
+        return np.linspace(start, to, n)
+    if step is None:
+        step = 1 if to >= start else -1
+    if not is_number(step) or step == 0 or not math.isfinite(step):
+        raise PlotsimpleError(f"step= needs a number that is not 0, like step=2.\nFor example:  ps.numbers(0, to=100, step=25)")
+    if (to - start) * step < 0:
+        raise PlotsimpleError(
+            f"Going from {say_number(start)} to {say_number(to)} with step={say_number(step)} never gets there.\n"
+            f"To count {'down' if to < start else 'up'}, use step={say_number(-step)}."
+        )
+    n = int(math.floor((to - start) / step + 1e-9)) + 1
+    if all(isinstance(v, _nb.Integral) for v in (start, step)):
+        return start + step * np.arange(n, dtype=np.int64)
+    return start + step * np.arange(n, dtype=np.float64)
+
+
+_GRID_EXAMPLE = "ps.number_grid([[1, 2], [3, 4]])   or   ps.number_grid(rows=3, columns=4, filled_with=0)"
+
+
+@friendly
+def number_grid(values=None, rows=None, columns=None, filled_with=0) -> NumberGrid:
+    """Make a grid of numbers in rows and columns.
+
+    ps.number_grid([[1, 2, 3], [4, 5, 6]])            from rows of numbers (2 rows, 3 columns)
+    ps.number_grid(rows=3, columns=4, filled_with=0)  a grid of 0s (filled_with=1 for 1s, or any number)
+    ps.number_grid([1, 2, 3, 4, 5, 6], columns=3)     a list cut into rows of 3
+    """
+    for option, value in (("rows=", rows), ("columns=", columns)):
+        if value is not None:
+            check_whole("number_grid", option, value, _GRID_EXAMPLE, smallest=1)
+    if values is None:
+        if rows is None or columns is None:
+            raise PlotsimpleError(f"ps.number_grid() needs your numbers, or rows= and columns=.\nFor example:  {_GRID_EXAMPLE}")
+        if filled_with is not None and not is_number(filled_with):
+            raise PlotsimpleError(
+                "filled_with= needs a number, like filled_with=0 (or None for empty values).\n"
+                f"For example:  {_GRID_EXAMPLE}"
+            )
+        fill = np.nan if filled_with is None else filled_with
+        return NumberGrid(np.full((int(rows), int(columns)), fill))
+    arr = to_array(values, "ps.number_grid()", _GRID_EXAMPLE)
+    if arr.ndim == 2:
+        if rows is not None or columns is not None:
+            raise PlotsimpleError(
+                "Your numbers already have rows, so leave out rows= and columns=.\n"
+                "For example:  ps.number_grid([[1, 2, 3], [4, 5, 6]])"
+            )
+        return NumberGrid(arr)
+    if arr.ndim != 1:
+        raise PlotsimpleError(f"ps.number_grid() needs rows of numbers.\nFor example:  {_GRID_EXAMPLE}")
+    if rows is None and columns is None:
+        raise PlotsimpleError(
+            "To make a grid from one list, say how many columns (or rows) it should have.\n"
+            "For example:  ps.number_grid([1, 2, 3, 4, 5, 6], columns=3)"
+        )
+    size = arr.size
+    rows = rows if rows is not None else (size // columns if size % columns == 0 else None)
+    columns = columns if columns is not None else (size // rows if rows and size % rows == 0 else None)
+    if rows is None or columns is None or rows * columns != size:
+        raise PlotsimpleError(
+            f"{amount(size)} cannot fill that grid exactly. "
+            "The number of rows times the number of columns must equal how many numbers you have.\n"
+            "For example, 6 numbers make 2 rows of 3:  ps.number_grid([1, 2, 3, 4, 5, 6], columns=3)"
+        )
+    return NumberGrid(arr.reshape(int(rows), int(columns)))
+
+
+@friendly
+def random_numbers(how_many=None, between=None, average=None, standard_deviation=None,
+                   whole_numbers=False, seed=None, rows=None, columns=None):
+    """Make random numbers; give seed= to get the same numbers every time.
+
+    ps.random_numbers(how_many=10, between=[0, 1], seed=1)
+        any number from 0 up to 1, each equally likely (a uniform distribution)
+    ps.random_numbers(how_many=10, between=[1, 6], whole_numbers=True, seed=1)
+        whole numbers from 1 to 6, both ends included, like rolling a dice
+    ps.random_numbers(how_many=100, average=50, standard_deviation=10, seed=1)
+        numbers that bunch around the average in a bell shape (a normal distribution);
+        about 2 in 3 land within one standard deviation of the average
+    rows= and columns= in place of how_many= give a grid.
+    """
+    example = "ps.random_numbers(how_many=10, between=[0, 1], seed=1)"
+    seed = check_seed(seed, example)
+    if not isinstance(whole_numbers, bool):
+        raise PlotsimpleError(f"whole_numbers= needs True or False (no quotes).\nFor example:  {example}")
+    if how_many is not None and (rows is not None or columns is not None):
+        raise PlotsimpleError(
+            "Give how_many= for a list, or rows= and columns= for a grid, not both.\n"
+            f"For example:  {example}"
+        )
+    if how_many is not None:
+        size = check_whole("random_numbers", "how_many=", how_many, example)
+    elif rows is not None and columns is not None:
+        size = (check_whole("random_numbers", "rows=", rows, example, smallest=1),
+                check_whole("random_numbers", "columns=", columns, example, smallest=1))
+    else:
+        raise PlotsimpleError(
+            "ps.random_numbers() needs how_many= (or rows= and columns= for a grid).\n"
+            f"For example:  {example}"
+        )
+    bell = average is not None or standard_deviation is not None
+    if bell and between is not None:
+        raise PlotsimpleError(
+            "Give between=[low, high] for numbers spread evenly, or average= and standard_deviation= for a "
+            "bell shape (normal distribution), not both.\n"
+            "For example:  ps.random_numbers(how_many=100, average=50, standard_deviation=10, seed=1)"
+        )
+    rng = np.random.default_rng(seed)
+    if bell:
+        bell_example = "ps.random_numbers(how_many=100, average=50, standard_deviation=10, seed=1)"
+        if not is_number(average) or not is_number(standard_deviation) or standard_deviation < 0:
+            raise PlotsimpleError(
+                "A bell shape needs both average= and standard_deviation= as numbers "
+                f"(the standard deviation cannot be below 0).\nFor example:  {bell_example}"
+            )
+        if whole_numbers:
+            raise PlotsimpleError(
+                "whole_numbers=True goes with between=[low, high]. For a bell shape, round afterwards: "
+                "nums.round_to(0)."
+            )
+        values = rng.normal(average, standard_deviation, size)
+    else:
+        low, high = _two_numbers(between if between is not None else [0, 1], example)
+        if whole_numbers:
+            if not all(float(v).is_integer() for v in (low, high)):
+                raise PlotsimpleError(
+                    "whole_numbers=True needs whole numbers in between=, like between=[1, 6]."
+                )
+            values = rng.integers(int(low), int(high), size, endpoint=True)
+        else:
+            values = rng.uniform(low, high, size)
+    return NumberGrid(values) if isinstance(size, tuple) else Numbers(values)
+
+
+def _two_numbers(between, example):
+    if (isinstance(between, (str, bytes)) or not isinstance(between, (list, tuple)) or len(between) != 2
+            or not all(is_number(v) and math.isfinite(v) for v in between)):
+        raise PlotsimpleError(f"between= needs two numbers in square brackets: the lowest and the highest.\nFor example:  {example}")
+    return sorted(between)

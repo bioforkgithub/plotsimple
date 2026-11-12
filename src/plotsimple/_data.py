@@ -114,6 +114,8 @@ def load(source=None, sheet=None, big_data: bool = False) -> pd.DataFrame:
         return pd.DataFrame()
     if getattr(source, "_is_plotsimple_table", False):
         return load(source.done())
+    if _is_plotsimple_numbers(source):
+        return source._as_pandas(for_chart=True)
     if isinstance(source, (str, os.PathLike)):
         return read_file(source, sheet=sheet, big_data=big_data)
     if isinstance(source, pd.DataFrame):
@@ -142,8 +144,14 @@ def load(source=None, sheet=None, big_data: bool = False) -> pd.DataFrame:
     )
 
 
+def _is_plotsimple_numbers(obj) -> bool:
+    """ps.numbers(...) or ps.number_grid(...)."""
+    return bool(getattr(obj, "_is_plotsimple_numbers", False) or getattr(obj, "_is_plotsimple_grid", False))
+
+
 def is_listlike(value) -> bool:
-    return isinstance(value, (list, tuple, np.ndarray, pd.Series, range)) or _is_polars(value)
+    return (isinstance(value, (list, tuple, np.ndarray, pd.Series, range)) or _is_polars(value)
+            or bool(getattr(value, "_is_plotsimple_numbers", False)))
 
 
 def check_columns(data: pd.DataFrame, **roles) -> None:
@@ -208,6 +216,8 @@ def load_native(source=None, sheet=None, big_data: bool = False):
     """Like load(), but Polars tables (and big files) stay in Polars. Used by tables."""
     if getattr(source, "_is_plotsimple_table", False):
         return source.done()
+    if _is_plotsimple_numbers(source):
+        return source._as_pandas()
     if _is_polars(source):
         if hasattr(source, "collect"):  # LazyFrame
             source = source.collect()
