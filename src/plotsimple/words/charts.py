@@ -87,7 +87,7 @@ def _draw_lines(ctx, x, y, colour, show, error, dots, dashed):
     if dashed:
         kw["linestyle"] = "--"
     sns.lineplot(**kw)
-    _remember(ctx, "lines", table, n)
+    _remember(ctx, "lines", table, n, show=show)
 
 
 # ---------------------------------------------------------------- dots
