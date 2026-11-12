@@ -465,3 +465,14 @@ def test_every_word_has_a_docstring_with_an_example():
             doc = getattr(cls, word).__doc__ or ""
             assert doc.strip(), word
             assert name in doc or "nums." in doc, f"{cls.__name__}.{word} has no example"
+
+
+def test_fill_empty_numbers_with_the_line_between_neighbours(capsys):
+    values = [np.nan, 1.0, np.nan, np.nan, 7.0, 8.0, np.nan]
+    nums = numbers(values)
+    nums.fill_empty_numbers(with_the="line between neighbours")
+    expected = pd.Series(values).interpolate(limit_area="inside")
+    same(nums.as_numpy(), expected.to_numpy())
+    out = capsys.readouterr().out
+    assert "Filled 2 empty values. 2 values stayed empty (at the start or end" in out
+    numbers([1.0, np.nan, 3.0]).fill_empty_numbers(with_the="line between neighbors")  # US spelling too

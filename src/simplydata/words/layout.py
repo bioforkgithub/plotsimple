@@ -19,7 +19,7 @@ import pandas as pd
 from matplotlib.figure import Figure
 
 from .. import _style
-from .._core import PHASES, BaseChart, Context
+from .._core import PHASES, BaseChart, Context, chart_notes
 from .._data import is_listlike
 from .._errors import SimplydataError, column_error, friendly, option_error, renamed_note
 from .look import LookWords
@@ -80,14 +80,6 @@ def _zoom_box(ctx, chart, x_between, y_between, where):
 
 
 # ---------------------------------------------------------------- animation helpers
-def _frame_values(data, over):
-    values = list(pd.unique(data[over].dropna()))
-    try:
-        return sorted(values)
-    except TypeError:  # mixed types that cannot be sorted: keep the order in the table
-        return values
-
-
 def _label_frame(fig, axes, over, value):
     text = f"{over}: {value}"
     sup = getattr(fig, "_suptitle", None)
@@ -219,7 +211,7 @@ class LayoutWords:
     def _frames(self):
         anim = self._settings["animate"]
         data, over = self._data, anim["over"]
-        values = _frame_values(data, over)
+        values = self._panel_groups(over, words="sorted")  # calendar months, order_x ... else small to big
         for i, value in enumerate(values):
             shown = values[: i + 1] if anim["keep"] else [value]
             yield value, data[data[over].isin(shown)]
@@ -250,7 +242,8 @@ class LayoutWords:
         if self._cache is not None:
             return self._cache
         s = self._settings
-        with _style.context(s):
+        with chart_notes(), _style.context(s):
+            self._left_out_rows()
             limits = self._fixed_limits()
             fig = Figure(figsize=(s["width"], s["height"]), layout="constrained")
             *_, (value, table) = self._frames()
@@ -265,7 +258,8 @@ class LayoutWords:
 
         s = self._settings
         seconds = s["animate"]["seconds"]
-        with _style.context(s), matplotlib.rc_context({"savefig.bbox": None}):  # every frame the same size
+        with chart_notes(), _style.context(s), matplotlib.rc_context({"savefig.bbox": None}):  # same size frames
+            self._left_out_rows()
             limits = self._fixed_limits()
             fig = Figure(figsize=(s["width"], s["height"]), layout="constrained")
             writer = PillowWriter(fps=1.0 / seconds)
@@ -324,7 +318,9 @@ class Page(BaseChart):
 
     def _render(self):
         s = self._settings
-        with _style.context(s):
+        with chart_notes(), _style.context(s):
+            for chart in self._charts:
+                chart._left_out_rows()
             fig = Figure(figsize=self._page_size(), layout="constrained")
             cells = fig.subfigures(self._rows, self._columns, squeeze=False)
             panels = []

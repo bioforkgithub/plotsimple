@@ -9,7 +9,8 @@ Python code. The text is read with Python's ast module and only these pieces are
 column names, numbers, + - * / ** // %, brackets, a minus sign in front, the functions
 round, abs, sqrt and log, and the summary words average, median, total, smallest, biggest
 and count. Everything else is refused with a friendly message. Rules in
-add_group_column(rules=) are read the same way, with comparisons and and / or / not added.
+add_group_column(rules=) are read by the shared condition reader in conditions.py (the
+same one keep_rows() uses), with comparisons, and / or / not, in [...] and is empty added.
 
 A few words need each engine's own code, because narwhals has no common word for them:
 the ISO week number, splitting text into columns, pulling out part of a text with a
@@ -59,21 +60,6 @@ SUMMARY_WORDS = {"average": "mean", "median": "median", "total": "sum",
 OTHER_TOOL_NAMES = {"mean": "average", "avg": "average", "sum": "total", "min": "smallest",
                     "max": "biggest", "n": "count", "len": "count", "length": "count"}
 MAX_FORMULA_LENGTH = 500
-
-CONDITION_HELP = (
-    "A rule is a condition: a question each row answers with yes or no.\n"
-    "  marks >= 80                   compare with  >  >=  <  <=  ==  (equal)  !=  (not equal)\n"
-    '  class == "A"                  text goes in quotes\n'
-    '  date >= "2026-03-01"          dates are written year-month-day, in quotes\n'
-    "  marks >= 50 and hours < 5     both must be true\n"
-    '  class == "A" or class == "B"  one of them is enough\n'
-    "  not (marks >= 50)             the opposite\n"
-    "  40 <= marks < 60              between, in one go\n"
-    "  marks / hours > 10            sums work as in add_column()\n"
-    'Example: table.add_group_column("result", rules={"marks >= 60": "pass"}, otherwise="fail")'
-    '   (with sdata.example("marks"))'
-)
-COMPARE_SIGNS = {ast.Gt: ">", ast.GtE: ">=", ast.Lt: "<", ast.LtE: "<=", ast.Eq: "==", ast.NotEq: "!="}
 
 KEEP_CHOICES = {
     "matching rows": "inner",
@@ -345,124 +331,6 @@ def _dtype_kind(dtype) -> str:
     if dtype == nw.Date or dtype == nw.Datetime:
         return "date"
     return "other"
-
-
-class _ConditionReader(_FormulaReader):
-    """Reads a rule such as 'marks >= 80 and class == "A"' into a yes/no expression.
-
-    Like formulas, the text is read with ast and never run. Comparisons, and / or / not,
-    text in quotes and dates in quotes are allowed on top of the formula pieces.
-    A comparison with an empty cell is not met (it counts as "no").
-    """
-
-    def __init__(self, text, columns, schema):
-        super().__init__(text, columns)
-        self.schema = schema
-
-    def _error(self, problem):
-        return SimplydataError(f"{problem}\n\n{CONDITION_HELP}")
-
-    def _no_column_error(self):
-        return self._error(f'The rule "{self.text}" has no column in it.')
-
-    def _what(self):
-        return "rule"
-
-    def read(self):
-        if isinstance(self.text, str):
-            outside_quotes = re.sub(r"""'[^']*'|"[^"]*\"""", "", self.text)
-            if re.search(r"(?<![=!<>])=(?!=)", outside_quotes):
-                raise self._error(
-                    f'In the rule "{self.text}", write == (two equal signs) to ask "is equal to", '
-                    'for example class == "A".'
-                )
-            if "&" in outside_quotes or "|" in outside_quotes:
-                raise self._error('Write the words and / or instead of & and |, for example marks > 50 and hours < 5.')
-        return super().read()
-
-    def _top(self, node):
-        return self._condition(node)
-
-    def _condition(self, node):
-        if isinstance(node, ast.BoolOp):
-            parts = [self._condition(v) for v in node.values]
-            out = parts[0]
-            for part in parts[1:]:
-                out = (out & part) if isinstance(node.op, ast.And) else (out | part)
-            return out
-        if isinstance(node, ast.UnaryOp) and isinstance(node.op, ast.Not):
-            return ~self._condition(node.operand)
-        if isinstance(node, ast.Compare):
-            return self._compare(node)
-        raise self._error(
-            f'"{self._snippet(node)}" is not a condition. A rule compares something, for example marks >= 80.'
-        )
-
-    def _operand(self, node):
-        """(expression, kind, column name or value) for one side of a comparison."""
-        if isinstance(node, ast.Constant) and isinstance(node.value, str):
-            return None, "quoted", node.value
-        if isinstance(node, ast.Constant) and isinstance(node.value, bool):
-            return nw.lit(node.value), "true/false", node.value
-        column = self._column_name(node)
-        if column is not None:
-            return self._column(column, needs_number=False), _dtype_kind(self.schema[column]), column
-        return self._node(node), "number", None
-
-    def _date_literal(self, text, column):
-        try:
-            value = _dt.datetime.fromisoformat(text.strip())
-        except ValueError:
-            raise self._error(
-                f'"{column}" holds dates. Write a date as year-month-day in quotes, like {column} >= "2026-03-15".'
-            ) from None
-        return value.date() if self.schema[column] == nw.Date else value
-
-    def _pair(self, left, right, sign):
-        (l_expr, l_kind, l_what), (r_expr, r_kind, r_what) = left, right
-        if l_kind == "quoted" and r_kind == "quoted":
-            raise self._error(f'"{l_what}" {sign} "{r_what}" compares two pieces of text, but no column.')
-        if r_kind == "quoted":
-            l_expr, r_expr = l_expr, self._quoted(r_what, l_kind, l_what)
-        elif l_kind == "quoted":
-            l_expr = self._quoted(l_what, r_kind, r_what)
-        elif l_kind != r_kind and "number" in (l_kind, r_kind) and "text" in (l_kind, r_kind):
-            text_column = l_what if l_kind == "text" else r_what
-            raise self._error(
-                f'"{text_column}" holds text, so compare it with text in quotes, like {text_column} == "A".'
-            )
-        return l_expr, r_expr
-
-    def _quoted(self, value, kind, column):
-        if kind == "text":
-            return nw.lit(value)
-        if kind == "date":
-            return nw.lit(self._date_literal(value, column))
-        if kind == "number":
-            name = column or "the sum"
-            try:
-                float(value)
-                raise self._error(f'{name} is a number, so write the number without quotes: {value.strip()}')
-            except ValueError:
-                raise self._error(f'{name} is a number, so it cannot be compared with the text "{value}".') from None
-        raise self._error(f'"{column}" holds {kind} values, so it cannot be compared with the text "{value}".')
-
-    def _compare(self, node):
-        for op in node.ops:
-            if type(op) not in COMPARE_SIGNS:
-                raise self._error(
-                    f'"{self._snippet(node)}" uses a comparison simplydata does not know. '
-                    'Use > >= < <= == or !=, and "or" for several values: class == "A" or class == "B".'
-                )
-        sides = [self._operand(n) for n in [node.left, *node.comparators]]
-        out = None
-        for op, left, right in zip(node.ops, sides, sides[1:]):
-            sign = COMPARE_SIGNS[type(op)]
-            a, b = self._pair(left, right, sign)
-            part = {">": lambda: a > b, ">=": lambda: a >= b, "<": lambda: a < b, "<=": lambda: a <= b,
-                    "==": lambda: a == b, "!=": lambda: a != b}[sign]()
-            out = part if out is None else out & part
-        return out
 
 
 # ---------------------------------------------------------------------------- helpers
@@ -1095,18 +963,18 @@ class ColumnWords:
             raise SimplydataError(
                 "The group names (and otherwise=) should all be text or all be numbers, so the column holds one kind."
             )
-        schema = dict(self._frame.schema)
+        from .conditions import _ConditionReader, empty_cells_note  # conditions.py builds on this module
+
         conditions, used = [], []
         for condition, _ in pairs:
             if not isinstance(condition, str):
                 raise SimplydataError(f"Each rule should be a condition in quotes, like \"marks >= 80\".\n{example}")
-            reader = _ConditionReader(condition, self._columns, schema)
-            expr = reader.read()
-            self._need_numbers(*reader.number_used, step="add_group_column")
-            conditions.append(expr.fill_null(False))
+            reader = _ConditionReader(condition, self._frame, where="rules=")
+            true, false = reader.read()
+            conditions.append((true.fill_null(False), false.fill_null(False)))
             used += [c for c in reader.used if c not in used]
         result = nw.lit(otherwise) if otherwise is not None else None
-        for cond, (_, label) in reversed(list(zip(conditions, pairs))):
+        for (cond, _), (_, label) in reversed(list(zip(conditions, pairs))):
             result = (nw.when(cond).then(nw.lit(label)) if result is None
                       else nw.when(cond).then(nw.lit(label)).otherwise(result))
         frame = self._frame.with_columns(result.alias(name))
@@ -1118,16 +986,14 @@ class ColumnWords:
         if unmatched:
             counts.append(f"no group (empty): {_rows_word(unmatched)}")
         print(f'Groups in "{name}": ' + ", ".join(counts) + ".")
-        empty = None
-        for c in used:
-            e = nw.col(c).is_null()
-            if self._frame.schema[c].is_float():
-                e = e | nw.col(c).is_nan()
-            empty = e if empty is None else empty | e
-        n_empty = int(self._frame.select(empty.cast(nw.Int64).sum()).item() or 0) if len(self._frame) else 0
-        if n_empty:
-            print(f"Note: {_rows_word(n_empty)} have an empty cell in {', '.join(map(str, used))}. "
-                  "An empty cell never meets a rule.")
+        # rows where a rule could not be checked (an empty cell) before an earlier rule matched
+        met, unknown = nw.lit(False), nw.lit(False)
+        for true, false in conditions:
+            unknown = unknown | (~met & ~true & ~false)
+            met = met | true
+        _, note = empty_cells_note(self._frame, nw.lit(False), ~unknown, used, what="rule")
+        if note:
+            print(note)
         rule_words = "; ".join(f"{cond} -> {_plain(label)}" for cond, label in pairs)
         if otherwise is not None:
             rule_words += f"; otherwise {_plain(otherwise)}"
@@ -1157,6 +1023,28 @@ class ColumnWords:
         order = "biggest first" if biggest_first else "smallest first"
         return self._put_column(name, expr, f'add rank column "{name}" from {from_column} ({order})')
 
+    @friendly
+    def add_is_empty_column(self, name=None, from_column=None):
+        """Add a true/false column: True where a cell of from_column is empty.
+
+        Add it before filling empty cells, to keep track of which values were filled in.
+        table.add_is_empty_column("sales_was_empty", from_column="sales")   (with sdata.example("shop"))
+        """
+        from .conditions import _empty_in  # what counts as empty: missing, NaN or blank text
+
+        self._check_new_name(name, "add_is_empty_column")
+        if not isinstance(from_column, str):
+            raise SimplydataError(
+                "add_is_empty_column() needs from_column= with one column name, for example\n"
+                'table.add_is_empty_column("sales_was_empty", from_column="sales")   (with sdata.example("shop"))'
+            )
+        self._need_columns(from_column)
+        expr = _empty_in(self._frame, from_column).fill_null(True)
+        n = int(self._frame.select(expr.cast(nw.Int64).sum()).item() or 0) if len(self._frame) else 0
+        print(f'"{name}" is True in {_rows_word(n)} (where {from_column} is empty) and False in the other '
+              f"{_rows_word(len(self._frame) - n)}.")
+        return self._put_column(name, expr, f'add is-empty column "{name}" from {from_column}')
+
     # ------------------------------------------------------------------ dates
     @friendly
     def add_date_part_column(self, name=None, from_column=None, part=None):
@@ -1166,14 +1054,12 @@ class ColumnWords:
         "week" (the ISO week number, 1 to 53), "day" (day of the month), "weekday" (1 is
         Monday ... 7 is Sunday, as in the ISO 8601 standard), "weekday name" ("Monday"),
         "day of year" (1 to 366), "hour" or "minute". Empty dates give empty cells.
-          table.make_dates("year")
-          table.add_date_part_column("weekday", from_column="year", part="weekday name")
-        (with sdata.example("growth"): on which weekday did each year start?)
+          table.add_date_part_column("weekday", from_column="date", part="weekday name")
+        (with sdata.example("shop"): which weekday was each day?)
         """
         step = "add_date_part_column"
-        example = ('For example: table.make_dates("year")\n'
-                   '             table.add_date_part_column("weekday", from_column="year", part="weekday name")'
-                   '   (with sdata.example("growth"))')
+        example = ('For example: table.add_date_part_column("weekday", from_column="date", part="weekday name")'
+                   '   (with sdata.example("shop"))')
         self._check_new_name(name, step)
         if not isinstance(from_column, str):
             raise SimplydataError(f"add_date_part_column() needs from_column= with the date column.\n{example}")

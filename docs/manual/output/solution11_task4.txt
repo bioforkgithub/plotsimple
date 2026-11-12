@@ -1,0 +1,10 @@
+Filled 8 cells in sales on the line between neighbours in order of date, for each shop on its own.
+Note: 2 cells stayed empty: they are at the start or end of a group, with a filled neighbour on one side only.
+Each "change" is the change in sales from the row before (separately for each shop), in order of date.
+        date       shop  sales  customers  change
+0 2026-01-01  Northgate  398.0       56.0     NaN
+1 2026-01-02  Northgate  387.0       51.0   -11.0
+2 2026-01-03  Northgate  605.0       88.0   218.0
+3 2026-01-04  Northgate  592.0       83.0   -13.0
+4 2026-01-05  Northgate  407.0       59.0  -185.0
+(the first 5 rows of 180; table.show(rows=180) shows them all)

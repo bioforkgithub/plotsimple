@@ -26,38 +26,45 @@ WIDTH = 78
 GROUPS = [
     ("Start, show and save", ["sdata.chart", "sdata.example", "show", "save"]),
     ("Chart types", ["bars", "lines", "dots", "area", "histogram", "boxes", "violins",
-                     "heatmap", "pie", "polar", "contour", "surface", "dots_3d"]),
+                     "heatmap", "pie", "polar", "contour", "surface", "dots_3d", "band", "empty_cells"]),
     ("Statistics", ["show=", "error=", "error_bars", "fit_line", "fit_curve", "smooth_line",
                     "density", "count_bars", "all_dots", "side_histograms", "sdata.pairs"]),
     ("Lines and shading", ["line_at_x", "line_at_y", "shade_between_x", "shade_between_y"]),
     ("Words on the chart", ["title_top", "caption_bottom", "label_x", "label_y", "note",
-                            "numbers_on_bars", "font_size"]),
+                            "numbers_on_bars", "names_on_dots", "font_size"]),
     ("Axes", ["range_x", "range_y", "log_scale_x", "log_scale_y", "ticks_x", "ticks_y",
               "rotate_labels_x", "rotate_labels_y", "second_y", "flip_x", "flip_y"]),
     ("Colours and look", ["colour", "colours", "style", "size", "show_grid", "hide_grid",
                           "legend_top", "legend_bottom", "legend_left", "legend_right",
-                          "hide_legend", "show_legend", "label_colour_bar"]),
+                          "hide_legend", "show_legend", "label_legend", "label_colour_bar"]),
+    ("Order of groups", ["order_x", "order_y", "order_legend"]),
     ("Several charts", ["one_chart_per", "sdata.side_by_side", "sdata.one_above_other", "sdata.grid",
                         "zoom_box", "animate"]),
     # Table words: "table.name" is a step on a table (table.name(...)).
     ("Tables: start and look", ["sdata.table", "table.show_first_rows", "table.show_last_rows",
-                                "table.column_names", "table.describe_columns"]),
+                                "table.show", "table.column_names", "table.describe_columns", "table.column"]),
     ("Choose columns", ["table.keep_columns", "table.remove_columns", "table.rename_column"]),
     ("Choose rows", ["table.keep_rows", "table.remove_rows", "table.keep_first_rows",
-                     "table.keep_last_rows", "table.keep_random_rows", "table.remove_duplicate_rows"]),
+                     "table.keep_last_rows", "table.keep_random_rows", "table.remove_duplicate_rows",
+                     "table.keep_biggest_rows", "table.keep_smallest_rows", "table.show_rows_with_outliers",
+                     "table.remove_rows_with_outliers"]),
     ("Empty cells", ["table.count_empty_cells", "table.remove_rows_with_empty_cells",
-                     "table.fill_empty_cells"]),
+                     "table.fill_empty_cells", "table.add_is_empty_column"]),
     ("Fix columns", ["table.make_numbers", "table.make_text", "table.make_dates",
                      "table.make_lowercase", "table.make_uppercase", "table.remove_extra_spaces",
-                     "table.replace_values"]),
+                     "table.replace_values", "table.round_to", "table.change_column"]),
     ("Sort and new columns", ["table.sort_by", "table.add_column", "table.add_group_column",
                               "table.add_rank_column"]),
+    ("Dates and text", ["table.add_date_part_column", "table.add_text_part_column", "table.split_column",
+                        "table.replace_text"]),
+    ("Row after row", ["table.add_rolling_column", "table.add_previous_value_column", "table.add_change_column"]),
     ("Summaries", ["table.count_rows", "table.count_each", "table.average_of", "table.median_of",
                    "table.total_of", "table.smallest_of", "table.biggest_of",
-                   "table.standard_deviation_of", "table.correlation_between"]),
+                   "table.standard_deviation_of", "table.summary_of", "table.percent_of",
+                   "table.count_different_values", "table.correlation_between"]),
     ("Statistical tests", ["table.compare_averages", "table.compare_each_pair", "table.compare_before_after",
                            "table.compare_average_to", "table.compare_counts", "table.fit_straight_line",
-                           "table.fit_formula"]),
+                           "table.fit_formula", "table.compare_shape_to", "table.add_adjusted_p_value_column"]),
     ("Combine and reshape", ["table.join_with", "table.add_rows_from", "table.turn_columns_into_rows",
                              "table.turn_rows_into_columns"]),
     ("Undo and finish", ["table.undo", "table.steps", "table.start_again", "table.save",
@@ -197,6 +204,17 @@ HELP_EXAMPLES = {
     "contour": _ex("island", 'chart.contour(x="east", y="north", z="height")', "contour"),
     "surface": _ex("island", 'chart.surface(x="east", y="north", z="height")', "surface"),
     "dots_3d": _ex("marks", 'chart.dots_3d(x="hours", y="height", z="marks", colour="class")', "dots_3d"),
+    "band": textwrap.dedent("""\
+        import simplydata as sdata
+        table = sdata.table(sdata.example("weather"))
+        table.keep_rows("city", equal_to="Sunnyvale")
+        table.add_column("lowest", "temperature - 4")
+        table.add_column("highest", "temperature + 4")
+        chart = table.chart()
+        chart.band(x="month", between=["lowest", "highest"], label="4 degrees either side")
+        chart.lines(x="month", y="temperature")
+        chart.save("band.png")"""),
+    "empty_cells": _ex("shop", 'chart.empty_cells()\nchart.title_top("Where the empty cells are")', "empty_cells"),
     # statistics
     "show=": _ex("marks", 'chart.bars(x="class", y="marks", show="median")', "median"),
     "error=": _ex("marks", 'chart.bars(x="class", y="marks", error="standard deviation")', "error"),
@@ -227,6 +245,14 @@ HELP_EXAMPLES = {
     "label_x": _ex("marks", 'chart.dots(x="hours", y="marks")\nchart.label_x("Hours of study")', "label_x"),
     "label_y": _ex("marks", 'chart.dots(x="hours", y="marks")\nchart.label_y("Marks (out of 100)")', "label_y"),
     "note": _ex("growth", 'chart.lines(x="year", y="population", colour="country")\nchart.note("Cherria grows fastest", x=2020, y=12, arrow=True)', "note"),
+    "names_on_dots": textwrap.dedent("""\
+        import simplydata as sdata
+        table = sdata.table(sdata.example("marks"))
+        table.keep_rows("subject", equal_to="Maths")
+        chart = table.chart()
+        chart.dots(x="hours", y="marks")
+        chart.names_on_dots("name")
+        chart.save("names_on_dots.png")"""),
     "numbers_on_bars": _ex("fruit", 'chart.bars(x="fruit", y="count", show="total")\nchart.numbers_on_bars()', "numbers_on_bars"),
     "font_size": _ex("marks", 'chart.bars(x="class", y="marks")\nchart.title_top("Big text")\nchart.font_size(18)', "font_size"),
     # axes
@@ -256,6 +282,12 @@ HELP_EXAMPLES = {
     "hide_legend": _ex("weather", 'chart.lines(x="month", y="temperature", colour="city")\nchart.hide_legend()', "hide_legend"),
     "show_legend": _ex("weather", 'chart.lines(x="month", y="temperature", colour="city")\nchart.hide_legend()\n'
                        'chart.show_legend()', "show_legend"),
+    "label_legend": _ex("marks", 'chart.dots(x="hours", y="marks", colour="class")\nchart.label_legend("Class")',
+                        "label_legend"),
+    "order_x": _ex("marks", 'chart.bars(x="class", y="marks")\nchart.order_x("C", "B", "A")', "order_x"),
+    "order_y": _ex("marks", 'chart.bars(x="class", y="marks", sideways=True)\nchart.order_y("C", "B", "A")', "order_y"),
+    "order_legend": _ex("marks", 'chart.bars(x="class", y="marks", colour="subject")\n'
+                        'chart.order_legend("Science", "Maths", "English")', "order_legend"),
     "label_colour_bar": _ex("island", 'chart.contour(x="east", y="north", z="height")\n'
                             'chart.label_colour_bar("Height (m)")', "label_colour_bar"),
     # several charts
@@ -299,7 +331,9 @@ HELP_EXAMPLES = {
     "sdata.table": _tx("marks", "table.show_first_rows()"),
     "table.show_first_rows": _tx("marks", "table.show_first_rows(10)"),
     "table.show_last_rows": _tx("marks", "table.show_last_rows(3)"),
+    "table.show": _tx("marks", 'table.keep_rows("class", equal_to="A")\ntable.show(rows=10)'),
     "table.column_names": _tx("marks", "print(table.column_names())"),
+    "table.column": _tx("marks", 'marks = table.column("marks")\nmarks.average()\nmarks.percentile(90)'),
     "table.describe_columns": _tx("marks", "table.describe_columns()"),
     # choose columns
     "table.keep_columns": _tx("marks", 'table.keep_columns("name", "marks")\ntable.show_first_rows()'),
@@ -307,20 +341,28 @@ HELP_EXAMPLES = {
     "table.rename_column": _tx("marks", 'table.rename_column("marks", to="score")\ntable.show_first_rows()'),
     # choose rows
     "table.keep_rows": _tx("marks", 'table.keep_rows("marks", above=50)\n'
-                                    'table.keep_rows("subject", one_of=["Maths", "Science"])\ntable.show_first_rows()'),
+                                    'table.keep_rows("subject", one_of=["Maths", "Science"])\n'
+                                    "table.keep_rows(\"hours > 5 and class != 'C'\")\ntable.show_first_rows()"),
     "table.remove_rows": _tx("marks", 'table.remove_rows("subject", equal_to="English")\ntable.show_first_rows()'),
     "table.keep_first_rows": _tx("marks", "table.keep_first_rows(10)\nprint(table)"),
     "table.keep_last_rows": _tx("marks", "table.keep_last_rows(10)\nprint(table)"),
     "table.keep_random_rows": _tx("marks", "table.keep_random_rows(10, seed=1)\nprint(table)"),
     "table.remove_duplicate_rows": _tx("marks", 'table.remove_duplicate_rows(columns=["name"])\nprint(table)'),
-    # empty cells (the practice tables have none, so the examples make some first)
-    "table.count_empty_cells": _tx("marks", 'table.replace_values("marks", [61, 73], with_value=None)\n'
-                                            "table.count_empty_cells()"),
-    "table.remove_rows_with_empty_cells": _tx("marks", 'table.replace_values("marks", [61, 73], with_value=None)\n'
-                                                       'table.remove_rows_with_empty_cells("marks")\nprint(table)'),
-    "table.fill_empty_cells": _tx("marks", 'table.replace_values("marks", [61, 73], with_value=None)\n'
-                                           'table.fill_empty_cells("marks", with_the="average")\n'
-                                           "table.show_first_rows()"),
+    "table.keep_biggest_rows": _tx("marks", 'table.keep_biggest_rows(3, by="marks", for_each="subject")\ntable.show()'),
+    "table.keep_smallest_rows": _tx("marks", 'table.keep_smallest_rows(3, by="marks", for_each="subject")\ntable.show()'),
+    "table.show_rows_with_outliers": _tx("marks", 'table.show_rows_with_outliers("marks", for_each="class")'),
+    "table.remove_rows_with_outliers": _tx("marks", 'table.remove_rows_with_outliers("marks", for_each="subject")\n'
+                                                    "table.steps()"),
+    # empty cells (the shop table has some)
+    "table.count_empty_cells": _tx("shop", "table.count_empty_cells()"),
+    "table.remove_rows_with_empty_cells": _tx("shop", 'table.remove_rows_with_empty_cells("sales")\nprint(table)'),
+    "table.fill_empty_cells": _tx("shop", 'table.fill_empty_cells("customers", with_the="median")\n'
+                                          'table.fill_empty_cells("sales", with_the="line between neighbours", '
+                                          'sorted_by="date", for_each="shop")\ntable.count_empty_cells()'),
+    "table.add_is_empty_column": _tx("shop", 'table.add_is_empty_column("sales_was_empty", from_column="sales")\n'
+                                             'table.fill_empty_cells("sales", with_the="line between neighbours", '
+                                             'sorted_by="date", for_each="shop")\n'
+                                             'table.keep_rows("sales_was_empty")\ntable.show()'),
     # fix columns
     "table.make_numbers": _tx("marks", 'table.make_numbers("marks")\ntable.describe_columns()'),
     "table.make_text": _tx("weather", 'table.make_text("month_number")\ntable.describe_columns()'),
@@ -330,6 +372,8 @@ HELP_EXAMPLES = {
     "table.remove_extra_spaces": _tx("marks", 'table.remove_extra_spaces("name")\ntable.show_first_rows()'),
     "table.replace_values": _tx("marks", 'table.replace_values("subject", "Maths", with_value="Math")\n'
                                          'table.count_each("subject")'),
+    "table.round_to": _tx("marks", 'table.round_to("hours", 0)\ntable.show_first_rows()'),
+    "table.change_column": _tx("marks", 'table.change_column("marks", "marks / 10")\ntable.show_first_rows()'),
     # sort and new columns
     "table.sort_by": _tx("marks", 'table.sort_by("marks", biggest_first=True)\ntable.show_first_rows()'),
     "table.add_column": _tx("marks", 'table.add_column("study_and_marks", by_adding=["hours", "marks"])\n'
@@ -339,6 +383,25 @@ HELP_EXAMPLES = {
                                            'table.count_each("grade")'),
     "table.add_rank_column": _tx("marks", 'table.add_rank_column("place", from_column="marks")\n'
                                           'table.sort_by("place")\ntable.show_first_rows()'),
+    # dates and text
+    "table.add_date_part_column": _tx("shop", 'table.add_date_part_column("weekday", from_column="date", '
+                                              'part="weekday name")\n'
+                                              'table.average_of("sales", for_each="weekday")'),
+    "table.add_text_part_column": _tx("marks", 'table.add_text_part_column("initial", from_column="name", '
+                                               'first_characters=1)\ntable.show_first_rows()'),
+    "table.split_column": _tx("fruit", 'table.split_column("shop", separator=" ", into=["shop_kind", "shop_word"])\n'
+                                       "table.show_first_rows()"),
+    "table.replace_text": _tx("fruit", 'table.replace_text("shop", " shop", with_value="")\ntable.count_each("shop")'),
+    # row after row
+    "table.add_rolling_column": _tx("weather", 'table.add_rolling_column("rain_3_months", from_column="rain", window=3, '
+                                               'show="total", for_each="city", sorted_by="month_number")\n'
+                                               "table.show_first_rows()"),
+    "table.add_previous_value_column": _tx("weather", 'table.add_previous_value_column("last_month", '
+                                                      'from_column="temperature", for_each="city", '
+                                                      'sorted_by="month_number")\ntable.show_first_rows()'),
+    "table.add_change_column": _tx("growth", 'table.add_change_column("growth", from_column="population", '
+                                             'in_percent=True, for_each="country", sorted_by="year")\n'
+                                             "table.show_first_rows()"),
     # summaries
     "table.count_rows": _tx("marks", 'table.count_rows()\ntable.count_rows(for_each="class")'),
     "table.count_each": _tx("fruit", 'table.count_each("fruit")'),
@@ -349,22 +412,31 @@ HELP_EXAMPLES = {
     "table.smallest_of": _tx("weather", 'table.smallest_of("temperature", for_each="city")'),
     "table.biggest_of": _tx("weather", 'table.biggest_of("temperature", for_each="city")'),
     "table.standard_deviation_of": _tx("marks", 'table.standard_deviation_of("marks", for_each="class")'),
+    "table.summary_of": _tx("marks", 'table.summary_of("marks", for_each="class", '
+                                     'show=["average", "standard deviation", "count"])'),
+    "table.percent_of": _tx("marks", 'table.percent_of("marks", above=60, for_each="class")'),
+    "table.count_different_values": _tx("marks", 'table.count_different_values("name", for_each="class")'),
     "table.correlation_between": _tx("marks", 'table.correlation_between("hours", "marks")'),
     # statistical tests
-    "table.compare_averages": _tx("marks", 'result = table.compare_averages("marks", between="class")\n'
-                                           'table.compare_averages("marks", between="class", based_on="ranks")\n'
+    "table.compare_averages": _tx("marks", 'result = table.compare_averages("marks", for_each="class")\n'
+                                           'table.compare_averages("marks", for_each="class", based_on="ranks")\n'
                                            'result.save("marks_test.csv")'),
-    "table.compare_each_pair": _tx("marks", 'table.compare_each_pair("marks", between="class")'),
+    "table.compare_each_pair": _tx("marks", 'table.compare_each_pair("marks", for_each="class")'),
     "table.compare_before_after": _tx("marks", 'table.keep_columns("name", "subject", "marks")\n'
                                                'table.turn_rows_into_columns(names_from="subject", values_from="marks")\n'
                                                'table.compare_before_after("Maths", "Science")'),
     "table.compare_average_to": _tx("marks", 'table.compare_average_to("marks", 60)'),
     "table.compare_counts": _tx("marks", 'table.add_group_column("result", from_column="marks", cut_at=[60], '
                                          'names=["below 60", "60 or more"])\n'
-                                         'table.compare_counts("result", between="class")'),
+                                         'table.compare_counts("result", for_each="class")'),
     "table.fit_straight_line": _tx("marks", 'table.fit_straight_line(x="hours", y="marks")'),
     "table.fit_formula": _tx("growth", 'table.keep_rows("country", equal_to="Applia")\n'
                                        'table.fit_formula("population = a * exp(b * (year - 2000))")'),
+    "table.compare_shape_to": _tx("marks", 'table.compare_shape_to("marks", "normal", for_each="class")'),
+    "table.add_adjusted_p_value_column": _tx("marks", 'table = table.correlation_between("hours", "marks", "height", '
+                                                      'show="each pair")\n'
+                                                      'table.add_adjusted_p_value_column("q", method="benjamini-hochberg")\n'
+                                                      "table.show()"),
     # combine and reshape
     "table.join_with": _tx("marks", 'ages = {"name": ["Asha", "Ben"], "age": [12, 13]}\n'
                                     'table.join_with(ages, using="name", keep="all rows from this table")\n'
@@ -426,7 +498,8 @@ HELP_EXAMPLES = {
     "nums.keep_random_numbers": _nx("nums.keep_random_numbers(3, seed=1)\nnums.show()"),
     "nums.remove_duplicate_numbers": _nx("nums.remove_duplicate_numbers()\nnums.show()", "[3, 5, 3, 8, 5]"),
     "nums.remove_empty_numbers": _nx("nums.remove_empty_numbers()\nnums.show()", "[12, None, 9, 14]"),
-    "nums.fill_empty_numbers": _nx('nums.fill_empty_numbers(with_the="average")\nnums.show()', "[12, None, 9, 14]"),
+    "nums.fill_empty_numbers": _nx('nums.fill_empty_numbers(with_the="line between neighbours")\nnums.show()',
+                                   "[12, None, 9, None, 14]"),
     "nums.sort": _nx("nums.sort(biggest_first=True)\nnums.show()"),
     "nums.reverse": _nx("nums.reverse()\nnums.show()"),
     # numbers: summaries
@@ -868,8 +941,9 @@ def help(word=None) -> None:  # noqa: A001 - meant to be sdata.help
         if not keys:
             return builtins.help(word)  # not a simplydata word: Python's own help
         word = name
-    if not keys and _old_names(word):
-        old = _old_names(word)
+    old = _old_names(word)
+    # "band=" is an old option (now confidence_band= in fit_line), although band is also a word
+    if old and (not keys or str(word).strip().endswith("=")):
         for name, new, key in old:
             where = f" in {_call_form(key)}" if name.endswith("=") else ""
             print(f'"{name}" is now called "{new}"{where}. The old name still works for now, but will '
@@ -1006,6 +1080,19 @@ LESSONS = [
                 ("chart.font_size(14)", "Make all the text a bit bigger (normal is 12)."),
                 ('chart.save("lesson2.png")', "Save it."),
             ]),
+            ("Words can also go next to the dots: a name for each dot, where it covers nothing.", [
+                ("import simplydata as sdata", "Load simplydata."),
+                ('kids = {"name": ["Asha", "Ben", "Chen", "Dina", "Eli"], "hours": [2.0, 5.5, 3.1, 7.2, 4.4], '
+                 '"marks": [48, 71, 55, 88, 62]}', "A small table typed by hand: each column name, then its "
+                                                   "values in a list."),
+                ("chart = sdata.chart(kids)", "Start a chart of it."),
+                ('chart.dots(x="hours", y="marks")', "One dot for each child."),
+                ('chart.names_on_dots("name")', "Write each name next to its dot, where it covers no other "
+                                                "name or dot. A name with no free place is left out, and "
+                                                "a line says so."),
+                ('chart.label_x("Hours of study")', "Name the x-axis."),
+                ('chart.save("lesson2_names.png")', "Save it."),
+            ]),
         ],
         notes=[
             "After the chart type, the order of words such as title_top and label_y does not matter: "
@@ -1050,7 +1137,8 @@ LESSONS = [
                 chart.save("lesson2_no_rotate.png")"""),
              "Without rotate_labels_x the 18 names lie flat under the bars and run into each other."),
         ],
-        words=["title_top", "label_x", "label_y", "rotate_labels_x", "caption_bottom", "font_size"],
+        words=["title_top", "label_x", "label_y", "rotate_labels_x", "caption_bottom", "font_size",
+               "names_on_dots"],
     ),
     dict(
         title="Colours, groups and legends",
@@ -1086,12 +1174,27 @@ LESSONS = [
                                           '"presentation" and "dark".'),
                 ('chart.save("lesson3_look.png")', "Save it."),
             ]),
+            ("Groups come in the order they first appear in the table. You can choose another order, "
+             "and give the legend a name.", [
+                ("import simplydata as sdata", "Load simplydata."),
+                ('marks = sdata.example("marks")', "Get the marks table."),
+                ("chart = sdata.chart(marks)", "Start a chart."),
+                ('chart.bars(x="class", y="marks", colour="subject")', "For each class, one bar per subject."),
+                ('chart.order_x("C", "B", "A")', "Put the classes along the x-axis in this order."),
+                ('chart.order_legend("Science", "Maths", "English")', "Put the subjects in this order: in the "
+                                                                      "legend and side by side in each class."),
+                ('chart.label_legend("Subject")', "The name above the legend (normally the column name)."),
+                ('chart.save("lesson3_order.png")', "Save it."),
+            ]),
         ],
         notes=[
             'colour="class" (a column) gives each group a colour. colour="red" (a colour) makes '
             "that step red. color works too.",
             "The legend can go on any side: legend_top, legend_bottom, legend_left, legend_right. "
             "hide_legend takes it away and show_legend brings it back.",
+            'Month and weekday names ("Jan", "Monday") come in calendar order by themselves, also in '
+            "the small charts of one_chart_per and the frames of animate. order_x(biggest_first=True) "
+            "puts the biggest bar first, and order_y orders the groups up the y-axis.",
         ],
         task=[
             'In the weather chart, add colour="city" to chart.lines(...). How many lines do you get?',
@@ -1126,7 +1229,8 @@ LESSONS = [
              "Light, bright colours stand out on a dark background; dark colours such as navy "
              "would almost disappear."),
         ],
-        words=["colours", "colour", "legend_bottom", "legend_top", "hide_legend", "style", "lines"],
+        words=["colours", "colour", "legend_bottom", "legend_top", "hide_legend", "style", "lines",
+               "order_x", "order_legend", "label_legend"],
     ),
     dict(
         title="Different chart types",
@@ -1349,6 +1453,19 @@ LESSONS = [
                 ('chart.label_y("People (millions)")', "Name the y-axis."),
                 ('chart.save("lesson6_log.png")', "Save it."),
             ]),
+            ("A band shades the space between a low and a high value at each x: a range, or the "
+             "uncertainty around a line.", [
+                ("import simplydata as sdata", "Load simplydata."),
+                ('days = {"day": [1, 2, 3, 4, 5], "lowest": [3, 5, 4, 6, 8], "average": [6, 8, 7, 9, 11], '
+                 '"highest": [9, 11, 10, 12, 14]}', "A small table: the lowest, average and highest "
+                                                    "temperature on five days."),
+                ("chart = sdata.chart(days)", "Start a chart of it."),
+                ('chart.band(x="day", between=["lowest", "highest"], label="lowest to highest")',
+                 "Shade from the lowest to the highest value of each day. label= names it in the legend."),
+                ('chart.lines(x="day", y="average")', "The average as a line through the band."),
+                ('chart.label_y("Temperature (°C)")', "Name the y-axis."),
+                ('chart.save("lesson6_band.png")', "Save it."),
+            ]),
         ],
         notes=[
             "Every axis word ends in _x or _y: range_x, ticks_x, log_scale_x, line_at_x, "
@@ -1394,7 +1511,8 @@ LESSONS = [
              "The y-axis turns upside down: 0 is at the top and the bars hang down. Useful for "
              "depths, where bigger numbers are further down."),
         ],
-        words=["range_y", "ticks_y", "line_at_y", "shade_between_y", "log_scale_y", "line_at_x", "flip_y"],
+        words=["range_y", "ticks_y", "line_at_y", "shade_between_y", "log_scale_y", "line_at_x", "flip_y",
+               "band"],
     ),
     dict(
         title="Several charts together",
@@ -1653,6 +1771,22 @@ LESSONS = [
                                               "that also has the percent of all the rows."),
                 ('table.count_each("shop")', "The same for each shop."),
             ]),
+            ("sdata.table can read many files at once. Here we first save two small files, then "
+             "read them back together.", [
+                ("import simplydata as sdata", "Load simplydata."),
+                ('weather = sdata.table(sdata.example("weather"))', "Make a table of the weather."),
+                ("weather.keep_first_rows(12)", "Keep the first 12 rows: one city, a whole year."),
+                ('weather.save("lesson9_part1.csv")', "Save them as a CSV file."),
+                ("weather.start_again()", "Back to the whole table."),
+                ("weather.keep_last_rows(12)", "Keep the last 12 rows: another city."),
+                ('weather.save("lesson9_part2.csv")', "Save them as a second file."),
+                ('both = sdata.table("lesson9_part*.csv")', "Read every file whose name fits the pattern "
+                                                            "(* stands for any text) and stack them. A new "
+                                                            'column, "file", says where each row came from.'),
+                ('both.count_each("file")', "12 rows from each file."),
+                ("both.show(rows=3)", "Show the first 3 rows with every column. both.show() shows the "
+                                      "whole table."),
+            ]),
         ],
         notes=[
             "Looking never changes the table. Only steps that say what they change (keep_rows, "
@@ -1662,6 +1796,10 @@ LESSONS = [
             "sdata.table reads the same files as sdata.chart: .xlsx, .csv, .tsv, .parquet and .json. "
             'For one sheet of an Excel file: sdata.table("results.xlsx", sheet="2026").',
             "The row numbers on the left start at 0, as everywhere in Python.",
+            'A folder works too: sdata.table("data/") reads every table file in it. A web address '
+            'works like a file name: sdata.table("https://example.org/data.csv").',
+            'Files written in another way: separator=";", decimal_mark="," (3,5 is three and a half), '
+            'thousands_mark=".", empty_values=["NA", "-"], skip_rows=2 and encoding="latin-1".',
         ],
         task=[
             'Make a table of sdata.example("weather"). How many rows does it have?',
@@ -1687,7 +1825,7 @@ LESSONS = [
              "Yes: Frostby, Rainbridge and Sunnyvale have 12 rows each, one for every month."),
         ],
         words=["sdata.table", "table.show_first_rows", "table.show_last_rows", "table.column_names",
-               "table.describe_columns", "table.count_rows", "table.count_each"],
+               "table.describe_columns", "table.count_rows", "table.count_each", "table.show"],
     ),
     dict(
         title="Tables: choose rows and columns, and undo",
@@ -1730,6 +1868,21 @@ LESSONS = [
                 ('table.save("lesson10_summer.xlsx")', "Save the table as an Excel file. A name "
                                                        "ending in .csv saves a CSV file."),
             ]),
+            ("A condition can also be written out, with and, or, not and brackets. And keep_biggest_rows "
+             "keeps the top rows of each group.", [
+                ("import simplydata as sdata", "Load simplydata."),
+                ('table = sdata.table(sdata.example("marks"))', "Make a table of the marks."),
+                ("table.keep_rows(\"marks > 60 and subject == 'Maths'\")",
+                 "Keep the rows where both are true: a mark above 60, in Maths. Text goes in quotes, "
+                 "and == means \"is equal to\"."),
+                ("table.undo()", "Back to all the rows."),
+                ("table.remove_rows(\"hours < 3 or class in ['B', 'C']\")",
+                 "Remove the rows where at least one is true: under 3 hours of study, or class B or C."),
+                ("table.start_again()", "Back to the whole table."),
+                ('table.keep_biggest_rows(2, by="marks", for_each="subject")', "Keep the 2 best marks in "
+                                                                              "each subject: 6 rows."),
+                ("table.show()", "Show the whole (small) table."),
+            ]),
         ],
         notes=[
             "Conditions for keep_rows and remove_rows: above, below, at_least, at_most, equal_to, "
@@ -1738,11 +1891,19 @@ LESSONS = [
             "undo() takes back one step at a time. start_again() is a step too, so undo() can take "
             "it back.",
             "Your file is never changed: only table.save(...) writes a file.",
+            "Written conditions use == != < <= > >=, and, or, not, brackets, in [...] and is empty. "
+            "An empty cell never meets a condition, and not does not change that: \"not (marks > 50)\" "
+            "leaves out empty marks too. To find them, write \"marks is empty\". A note says how many "
+            "rows had an empty cell.",
+            'Dates go in quotes as year-month-day: table.keep_rows("date > \'2026-03-01\'"), or '
+            'table.keep_rows("date", after="2026-03-01").',
         ],
         task=[
             'In the marks table, keep only class "B" and sort by "hours". Who studied the longest?',
             "Undo the sorting, then sort by name instead.",
             'Keep 5 random rows with table.keep_random_rows(5, seed=1) and save them as "five.csv".',
+            "With one written condition, keep the rows with marks below 50 or hours above 8. How many "
+            "rows are there?",
         ],
         solutions=[
             (_sx("""\
@@ -1768,10 +1929,16 @@ LESSONS = [
                 print(table)
                 table.save("five.csv")"""),
              "seed=1 picks the same 5 rows every time, so someone else can repeat it."),
+            (_sx("""\
+                import simplydata as sdata
+                table = sdata.table(sdata.example("marks"))
+                table.keep_rows("marks < 50 or hours > 8")
+                table.count_rows()"""),
+             "19 rows: or keeps a row when at least one of the two is true."),
         ],
         words=["table.keep_columns", "table.keep_rows", "table.sort_by", "table.steps", "table.undo",
                "table.start_again", "table.remove_rows", "table.remove_columns", "table.rename_column",
-               "table.save", "table.keep_random_rows"],
+               "table.save", "table.keep_random_rows", "table.keep_biggest_rows"],
     ),
     dict(
         title="Tables: clean the data and add new columns",
@@ -1836,6 +2003,52 @@ LESSONS = [
                 ('table.sort_by("place")', "Put the rows in order of place."),
                 ("table.show_first_rows()", "Who came first?"),
             ]),
+            ("The shop table has real dates and some empty cells: days when the till broke. Look "
+             "where they are, then fill them.", [
+                ("import simplydata as sdata", "Load simplydata."),
+                ('table = sdata.table(sdata.example("shop"))', "Daily sales of two shops, January to "
+                                                             "March 2026."),
+                ("table.count_empty_cells()", "10 empty sales and 5 empty customer counts."),
+                ("look = table.chart()", "A chart of the table, to see where the empty cells are."),
+                ("look.empty_cells()", "One strip per column and one line per row: empty cells are "
+                                       "coloured, and each column says how many it has."),
+                ('look.save("lesson11_empty_cells.png")', "Save it."),
+                ('table.add_is_empty_column("sales_was_empty", from_column="sales")',
+                 "Before filling: a True/False column that remembers which sales were empty."),
+                ('table.fill_empty_cells("sales", with_the="line between neighbours", sorted_by="date", '
+                 'for_each="shop")',
+                 "Fill each gap on the straight line between the day before and the day after, in date "
+                 "order, for each shop on its own. A gap at the very start or end has a neighbour on one "
+                 "side only, so it stays empty, and a note says so."),
+                ('table.add_date_part_column("weekday", from_column="date", part="weekday name")',
+                 "A new column with the weekday of each date."),
+                ('table.add_rolling_column("sales_7_days", from_column="sales", window=7, for_each="shop", '
+                 'sorted_by="date")',
+                 "The average of each day and the 6 days before it: a 7-day moving average, which "
+                 "smooths out the busy weekends."),
+                ("table.show(rows=8)", "Look at the first 8 rows."),
+            ]),
+            ("Names and dates typed in by people often need taking apart.", [
+                ("import simplydata as sdata", "Load simplydata."),
+                ('table = sdata.table({"name": ["Asha Rao", "Ben Lee", "Chen Wu"], '
+                 '"born": ["04/30/2014", "12/25/2013", "07/03/2014"], "height": [144.37, 152.81, 139.5]})',
+                 "A small table typed by hand. The birthdays are written month first, as in the USA."),
+                ('table.split_column("name", separator=" ", into=["first_name", "family_name"])',
+                 "Split each name at the space into two new columns."),
+                ('table.add_text_part_column("initial", from_column="first_name", first_characters=1)',
+                 "The first letter of each first name."),
+                ('table.replace_text("family_name", "Lee", with_value="Li")', "Replace a piece of text "
+                                                                              "inside the cells."),
+                ('table.make_dates("born", order="month day year")',
+                 "Turn the birthdays into dates. order= says how they are written, so 07/03/2014 is read "
+                 "as 3 July and not as 7 March."),
+                ('table.add_date_part_column("month_born", from_column="born", part="month name")',
+                 "The month of each birthday, as a word."),
+                ('table.change_column("height", "height / 100")', "Change the heights from centimetres "
+                                                                  "to metres, in the same column."),
+                ('table.round_to("height", 2)', "Round them to 2 decimal places."),
+                ("table.show()", "Look at the whole table."),
+            ]),
         ],
         notes=[
             "Long or wide? A long table has one row for each measurement: the marks table has a row "
@@ -1851,11 +2064,20 @@ LESSONS = [
             "Plain words for new columns: by_adding=, by_subtracting=, by_multiplying= and "
             "by_dividing=, or from_column= with plus=, minus=, times= or divide_by=.",
             'In a maths-style column, a column name with spaces goes in backticks: "`max temp` - 2".',
+            'with_the="line between neighbours" is linear interpolation. It suits values that change '
+            "smoothly, like sales from day to day; it cannot know about a sudden jump. Keep a True/False "
+            "column of what you filled, and say in your report how you filled it.",
+            "Charts say it too: when a chart leaves out rows because of empty cells, one line tells you "
+            "how many.",
+            "Row after row: add_previous_value_column gives the value of the row before, and "
+            "add_change_column the change since then (in_percent=True for a percent).",
         ],
         task=[
             "In the first example, fill the empty marks with the median instead of the average.",
             'Add a column "height_m" with the height in metres: from_column="height", divide_by=100.',
             'In the last example, add a column "best_two" with the formula "total - English".',
+            'In the shop example, add a column "change" with the change in sales from the day before, '
+            'for_each="shop" and sorted_by="date" (add_change_column).',
         ],
         solutions=[
             (_sx("""\
@@ -1882,11 +2104,23 @@ LESSONS = [
                 table.add_column("best_two", "total - English")
                 table.show_first_rows()"""),
              "The formula can use a column made earlier (total); best_two is Maths + Science."),
+            (_sx("""\
+                import simplydata as sdata
+                table = sdata.table(sdata.example("shop"))
+                table.fill_empty_cells("sales", with_the="line between neighbours", sorted_by="date", for_each="shop")
+                table.add_change_column("change", from_column="sales", for_each="shop", sorted_by="date")
+                table.show(rows=5)"""),
+             "Each change is today's sales minus yesterday's, in the same shop; the first day of each "
+             "shop has nothing before it, so its change is empty."),
         ],
         words=["table.replace_values", "table.count_empty_cells", "table.fill_empty_cells",
                "table.remove_rows_with_empty_cells",
                "table.remove_extra_spaces", "table.make_numbers", "table.add_column",
-               "table.add_group_column", "table.add_rank_column", "table.turn_rows_into_columns"],
+               "table.add_group_column", "table.add_rank_column", "table.turn_rows_into_columns",
+               "table.add_is_empty_column", "empty_cells", "table.add_date_part_column",
+               "table.add_rolling_column", "table.split_column", "table.add_text_part_column",
+               "table.replace_text", "table.make_dates", "table.change_column", "table.round_to",
+               "table.add_change_column"],
     ),
     dict(
         title="Tables: summaries, and from a table to a chart",
@@ -1966,6 +2200,39 @@ LESSONS = [
                                                                   "child."),
                 ('chart.save("lesson12_tests.png")', "Save it."),
             ]),
+            ("summary_of gives several measures at once, and every= sums up dates by week, month or "
+             "year.", [
+                ("import simplydata as sdata", "Load simplydata."),
+                ('table = sdata.table(sdata.example("shop"))', "Daily sales of two shops."),
+                ('table.summary_of("sales", for_each="shop", show=["average", "median", "standard deviation", '
+                 '"count", "empty cells"])',
+                 "Five measures of each shop's sales in one tidy table. count counts the days with a "
+                 "number; empty cells counts the others."),
+                ('table.total_of("sales", for_each="date", every="month")', "The total sales of each "
+                                                                            "month: every= puts the days "
+                                                                            "of one month together."),
+                ('table.percent_of("sales", above=500, for_each="shop")',
+                 "On what percent of the days did each shop take more than 500? Each percent comes with "
+                 "its 95 % confidence interval."),
+            ]),
+            ("A cross table puts one group down the side and another across the top. A correlation "
+             "table compares many columns at once.", [
+                ("import simplydata as sdata", "Load simplydata."),
+                ('fruit = sdata.table(sdata.example("fruit"))', "A table of fruit sales."),
+                ('fruit.count_rows(for_each="shop", across="fruit")', "How many sales of each fruit in "
+                                                                      "each shop: one row per shop, one "
+                                                                      "column per fruit."),
+                ('fruit.count_different_values("fruit", for_each="shop")', "How many different fruits "
+                                                                           "each shop sold."),
+                ('marks = sdata.table(sdata.example("marks"))', "A table of the marks."),
+                ('marks.average_of("marks", for_each="class", across="subject")', "The average mark of "
+                                                                                  "each class in each "
+                                                                                  "subject."),
+                ('marks.correlation_between("hours", "marks", "height")', "Every pair of the three "
+                                                                         "columns at once: a "
+                                                                         "correlation table, with the "
+                                                                         "strongest pairs in words."),
+            ]),
         ],
         notes=[
             "Correlation is not cause. Children who study more might also sleep more, or like the "
@@ -1979,11 +2246,15 @@ LESSONS = [
             "turn_rows_into_columns does the opposite of turn_columns_into_rows.",
             "Lesson 13 teaches numbers, and lesson 14 the statistical tests: is a difference "
             "real, or could it be chance?",
+            "Every summary skips empty cells and says how many it skipped. summary_of can also show "
+            '"variance", "standard error", "confidence interval", "range" and "interquartile range".',
         ],
         task=[
             'Make the fruit totals for_each="shop" instead. Which shop sold more?',
             'Work out the average temperature for_each="city" in the weather table and draw it as bars.',
             "Is there a link between height and marks? Use correlation_between to find out.",
+            'Make a cross table of the average mark for_each="subject" across="class". Which class is '
+            "best in Science?",
         ],
         solutions=[
             (_sx("""\
@@ -2007,10 +2278,16 @@ LESSONS = [
                 table = sdata.table(sdata.example("marks"))
                 table.correlation_between("height", "marks")"""),
              "No: r = 0.03, very close to 0, and p = 0.83 says it could easily be chance."),
+            (_sx("""\
+                import simplydata as sdata
+                table = sdata.table(sdata.example("marks"))
+                table.average_of("marks", for_each="subject", across="class")"""),
+             "Class A, with an average of 79.2 in Science, against 67.5 for B and 62.3 for C."),
         ],
         words=["table.average_of", "table.biggest_of", "table.correlation_between", "table.total_of",
                "table.chart", "sdata.side_by_side", "table.join_with", "table.turn_columns_into_rows",
-               "table.add_rows_from"],
+               "table.add_rows_from", "table.summary_of", "table.percent_of", "table.count_rows",
+               "table.count_different_values"],
     ),
     dict(
         title="Numbers: lists and grids of numbers",
@@ -2126,15 +2403,15 @@ LESSONS = [
              "bigger than chance alone would often give?", [
                 ("import simplydata as sdata", "Load simplydata."),
                 ('table = sdata.table(sdata.example("marks"))', "Make a table of the marks."),
-                ('table.compare_averages("marks", between="class")',
+                ('table.compare_averages("marks", for_each="class")',
                  "Do the three classes really differ in their average mark? The answer comes in "
                  "words. The p-value is the chance of a difference this big if the classes were "
                  "really the same: below 0.05 we call it unlikely to be chance. With three or more "
                  "groups this test is also called Welch's ANOVA; with two groups, a t-test."),
-                ('table.compare_each_pair("marks", between="class")',
+                ('table.compare_each_pair("marks", for_each="class")',
                  "Which classes differ? Each pair gets its own t-test (Welch's). Testing many pairs makes a "
                  "false alarm more likely, so the p-values are adjusted (Holm's method)."),
-                ('table.compare_averages("marks", between="subject", based_on="ranks")',
+                ('table.compare_averages("marks", for_each="subject", based_on="ranks")',
                  "based_on=\"ranks\" puts the marks in order and compares the places instead "
                  "(a Kruskal-Wallis test, or Mann-Whitney for two groups). It is safer when groups "
                  "are small and the values are not bell-shaped."),
@@ -2145,7 +2422,7 @@ LESSONS = [
                 ('table.add_group_column("result", from_column="marks", cut_at=[60], '
                  'names=["below 60", "60 or more"])', "A new column that says if each mark is below "
                                                       "60 or not."),
-                ('table.compare_counts("result", between="class")',
+                ('table.compare_counts("result", for_each="class")',
                  "Do the classes differ in how many marks are 60 or more? This counts the rows for "
                  "each class and result and uses the chi-square test. Cramer's V says how strong "
                  "the link is, from 0 (none) to 1."),
@@ -2164,6 +2441,23 @@ LESSONS = [
                  "data; the others (a and b) are found by simplydata. Here b is the growth rate "
                  "each year. This is nonlinear least squares."),
             ]),
+            ("Before a test, look at the shape of the values and at values far from the rest. After "
+             "many tests, adjust the p-values.", [
+                ("import simplydata as sdata", "Load simplydata."),
+                ('table = sdata.table(sdata.example("marks"))', "Make a table of the marks."),
+                ('table.compare_shape_to("marks", "normal", for_each="class")',
+                 "Do the marks of each class look bell-shaped (normal)? The Shapiro-Wilk test answers for "
+                 "each class. Tests on averages work best with bell-shaped values, or with many values."),
+                ('table.show_rows_with_outliers("marks", for_each="class")',
+                 "The rows whose mark is far from the rest of its class, by Tukey's rule (the one box "
+                 "plots use): here one mark of 33 in class B. The table does not change."),
+                ('pairs = table.correlation_between("hours", "marks", "height", show="each pair")',
+                 "Test three pairs of columns at once: a table with one row per pair and its p-value."),
+                ('pairs.add_adjusted_p_value_column(method="holm")',
+                 "With many tests, one of them looks real by chance more often. Holm's adjustment keeps "
+                 "the chance of even one false alarm at 5 %."),
+                ("pairs.show()", "The p-values and the adjusted ones, side by side."),
+            ]),
         ],
         notes=[
             "The idea behind every test: imagine there is no real difference (this is called the "
@@ -2178,24 +2472,30 @@ LESSONS = [
             'result = table.compare_averages(...), then result.save("test.csv").',
             "Also: compare_before_after for two measurements of the same thing (a paired t-test), "
             "and compare_average_to for one average against a number you choose.",
+            "remove_rows_with_outliers removes such rows. Say in your report which rule removed how many "
+            "rows, and never remove a value only because it spoils the result.",
+            'method="benjamini-hochberg" adjusts for many tests more gently: it controls the share of '
+            "false alarms among your findings (the false discovery rate).",
         ],
         task=[
-            'Compare the average marks between="subject". Could the differences be chance?',
+            'Compare the average marks for_each="subject". Could the differences be chance?',
             'Is the average temperature different between the cities of sdata.example("weather")?',
             'Fit a straight line of "forest" against "year" in sdata.example("growth") for one country.',
+            'Remove the rows with outliers in "marks" for_each="class", then compare the average marks '
+            'for_each="class" again. Did the answer change?',
         ],
         solutions=[
             (_sx("""\
                 import simplydata as sdata
                 table = sdata.table(sdata.example("marks"))
-                table.compare_averages("marks", between="subject")"""),
+                table.compare_averages("marks", for_each="subject")"""),
              "Yes, they could: p = 0.26 is well above 0.05. That does not prove the subjects are "
              "the same; these data simply cannot tell."),
             (_sx("""\
                 import simplydata as sdata
                 table = sdata.table(sdata.example("weather"))
-                table.compare_averages("temperature", between="city")
-                table.compare_each_pair("temperature", between="city")"""),
+                table.compare_averages("temperature", for_each="city")
+                table.compare_each_pair("temperature", for_each="city")"""),
              "Yes: p = 0.0002, very unlikely to be chance. compare_each_pair then shows which "
              "cities differ from each other."),
             (_sx("""\
@@ -2205,9 +2505,18 @@ LESSONS = [
                 table.fit_straight_line(x="year", y="forest")"""),
              "In Applia the forest shrinks by about 0.57 percentage points a year (95 % CI 0.48 to "
              "0.67), and the line explains 94 % of the differences."),
+            (_sx("""\
+                import simplydata as sdata
+                table = sdata.table(sdata.example("marks"))
+                table.remove_rows_with_outliers("marks", for_each="class")
+                table.compare_averages("marks", for_each="class")"""),
+             "Only one mark (33 in class B) is removed. Class B goes up from 64.3 to 66.1, but p stays 0.028: "
+             "the answer does not change. Say in a report that you checked, and how."),
         ],
         words=["table.compare_averages", "table.compare_each_pair", "table.compare_counts",
-               "table.fit_straight_line", "table.fit_formula", "table.add_group_column"],
+               "table.fit_straight_line", "table.fit_formula", "table.add_group_column",
+               "table.compare_shape_to", "table.show_rows_with_outliers", "table.add_adjusted_p_value_column",
+               "table.remove_rows_with_outliers"],
     ),
     dict(
         title="A whole analysis: from a question to a figure",
@@ -2228,7 +2537,7 @@ LESSONS = [
                 ("table.remove_rows_with_empty_cells()", "Clean: remove the rows with an empty cell. The "
                                                          "practice table has none, so nothing is removed."),
                 ('table.average_of("marks", for_each="class")', "Sum up: the average mark of each class."),
-                ('table.compare_averages("marks", between="class")', "Test: could the differences "
+                ('table.compare_averages("marks", for_each="class")', "Test: could the differences "
                                                                      "between the classes be chance?"),
                 ("a = table.chart()", "Chart A, from the cleaned table."),
                 ('a.boxes(x="class", y="marks")', "The marks of each class as boxes."),
@@ -2293,7 +2602,7 @@ LESSONS = [
         ],
         task=[
             'Do a whole analysis of sdata.example("weather"): look at it, compare the average rain '
-            'between="city", draw the rain of each city as boxes, and save the chart and the table.',
+            'for_each="city", draw the rain of each city as boxes, and save the chart and the table.',
             "Make a second chart of the temperature, then put the two charts together with "
             "sdata.side_by_side(..., letters=True).",
             "Read the steps() of your table out loud. Would someone else understand what you did?",
@@ -2305,7 +2614,7 @@ LESSONS = [
                 table.describe_columns()
                 table.remove_columns("wind_direction", "wind_speed")
                 table.average_of("rain", for_each="city")
-                table.compare_averages("rain", between="city")
+                table.compare_averages("rain", for_each="city")
                 chart = table.chart()
                 chart.boxes(x="city", y="rain")
                 chart.all_dots(x="city", y="rain")

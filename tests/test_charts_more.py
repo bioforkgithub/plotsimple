@@ -385,3 +385,75 @@ def test_new_words_work_with_styles_and_saving(tmp_path, marks):
     chart.names_on_dots("name").label_legend("Class").order_legend("C", "B", "A").style("dark")
     chart.save(tmp_path / "x.png")
     assert (tmp_path / "x.png").stat().st_size > 1000
+
+
+# ---------------------------------------------------------------- panel and frame order
+def _panel_titles(fig):
+    return [ax.get_title() for ax in fig.axes if ax.get_visible() and ax.get_title()]
+
+
+@pytest.mark.parametrize("engine", ENGINES)
+def test_panels_and_frames_follow_calendar_order(engine):
+    t = pd.DataFrame({"month": ["Mar", "Jan", "Feb", "Mar", "Jan", "Feb"], "x": [1, 2, 3, 4, 5, 6],
+                      "y": [1.0, 2, 3, 4, 5, 6]})
+    chart = sdata.chart(as_engine(t, engine)).dots(x="x", y="y").one_chart_per("month")
+    assert _panel_titles(chart._render()) == ["month = Jan", "month = Feb", "month = Mar"]
+    chart = sdata.chart(as_engine(t, engine)).dots(x="x", y="y").one_chart_per(down="month", across="month")
+    titles = [ax.get_title() for ax in chart._render().axes]
+    assert titles[0] == "month = Jan, month = Jan" and titles[-1] == "month = Mar, month = Mar"
+    frames = sdata.chart(as_engine(t, engine)).dots(x="x", y="y").animate(over="month")._frames()
+    assert [value for value, _ in frames] == ["Jan", "Feb", "Mar"]  # not A to Z (Feb, Jan, Mar)
+
+
+def test_panels_follow_order_x_and_category_order(marks):
+    chart = sdata.chart(marks).bars(x="class", y="marks").order_x("C", "A", "B").one_chart_per("class")
+    assert _panel_titles(chart._render()) == ["class = C", "class = A", "class = B"]
+    chart = sdata.chart(marks).bars(x="class", y="marks").order_x("B", "C", "A").animate(over="class")
+    assert [value for value, _ in chart._frames()] == ["B", "C", "A"]
+    chart = (sdata.chart(marks).bars(x="name", y="marks", colour="subject")
+             .order_legend("Science", "Maths").one_chart_per("subject"))
+    titles = _panel_titles(chart._render())
+    assert titles[:2] == ["subject = Science", "subject = Maths"]
+    cat = marks.assign(level=pd.Categorical(np.where(marks["marks"] > 60, "high", "low"), categories=["low", "high"]))
+    chart = sdata.chart(cat).dots(x="height", y="marks").one_chart_per("level")
+    assert _panel_titles(chart._render()) == ["level = low", "level = high"]
+
+
+def test_panels_of_numbers_go_from_small_to_big():
+    t = pd.DataFrame({"year": [2003, 2001, 2002], "x": [1, 2, 3], "y": [1.0, 2, 3]})
+    fig = sdata.chart(t).dots(x="x", y="y").one_chart_per("year")._render()
+    assert _panel_titles(fig) == ["year = 2001", "year = 2002", "year = 2003"]
+
+
+# ---------------------------------------------------------------- empty cells on charts
+def test_chart_says_once_which_rows_empty_cells_left_out(capsys):
+    shop = sdata.example("shop")
+    n_sales = int(shop["sales"].isna().sum())
+    sdata.chart(shop).lines(x="date", y="sales", colour="shop").one_chart_per("shop")._render()
+    out = capsys.readouterr().out
+    assert out.count("left out of this chart") == 1  # once, not once per panel
+    assert f'Note: {n_sales} rows with empty "sales" were left out of this chart.' in out
+    both = int(shop[["customers", "sales"]].isna().any(axis=1).sum())
+    sdata.chart(shop).dots(x="customers", y="sales").animate(over="shop")._render()
+    out = capsys.readouterr().out
+    assert out.count("left out") == 1
+    assert f'Note: {both} rows with empty "customers" or "sales" were left out of this chart.' in out
+    sdata.chart(sdata.example("marks")).bars(x="class", y="marks")._render()
+    assert "left out" not in capsys.readouterr().out  # nothing empty, nothing said
+
+
+def test_empty_cells_chart_marks_every_empty_cell(capsys):
+    shop = sdata.example("shop")
+    chart = sdata.chart(shop).empty_cells()
+    ax = chart._render().axes[0]
+    grid = ax.images[0].get_array()
+    assert grid.shape == (len(shop), 4)
+    assert np.array_equal(np.asarray(grid, dtype=bool), shop.isna().to_numpy())
+    assert xnames(ax) == [f"{c}\n{int(shop[c].isna().sum())} empty" for c in shop.columns]
+    assert "left out" not in capsys.readouterr().out  # this chart shows empty cells on purpose
+    ax = sdata.chart(pd.DataFrame({"a": ["x", "  ", None]})).empty_cells(columns="a")._render().axes[0]
+    assert list(np.asarray(ax.images[0].get_array(), dtype=bool).ravel()) == [False, True, True]
+    with pytest.raises(SimplydataError, match='Did you mean "sales"'):
+        sdata.chart(shop).empty_cells(columns=["sale"])
+    with pytest.raises(SimplydataError, match="needs a table"):
+        sdata.chart().empty_cells()

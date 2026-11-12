@@ -995,7 +995,8 @@ class StatTestWords:
                 lines.append(f"  {label}: {looks} (W = {w:.3f}, {_p_shown(p)}, {n} values)")
             any_large_flag = any_large_flag or (p < 0.05 and n >= CLT_SIZE)
         if groups:
-            print(f'Do the values of "{column}" look bell-shaped (normal) in each {' and '.join(chr(34) + g + chr(34) for g in groups)}? '
+            names = " and ".join(f'"{g}"' for g in groups)
+            print(f'Do the values of "{column}" look bell-shaped (normal) in each {names}? '
                   "Shapiro-Wilk test (as R shapiro.test()); a small p-value means too far from normal to be chance:")
         for line in lines:
             print(line)
@@ -1014,8 +1015,9 @@ class StatTestWords:
     def add_adjusted_p_value_column(self, name=None, from_column="p-value", method="holm"):
         """Adjust p-values for testing many things at once, in a new column.
 
-        results = table.correlation_between("hours", "marks", "height", show="each pair")
-        results.add_adjusted_p_value_column("q", method="benjamini-hochberg")   (with sdata.example("marks"))
+        table = sdata.table(sdata.example("marks")).correlation_between("hours", "marks", "height", show="each pair")
+        table.add_adjusted_p_value_column("q", method="benjamini-hochberg")
+        (table is now one row per pair of columns, with its p-value)
         The more tests you run, the more likely one of them looks real by chance; adjusted
         p-values allow for that. method="holm" (the default, as R p.adjust()): the chance
         of even one false alarm among all the tests stays at 5 %. "bonferroni": the same

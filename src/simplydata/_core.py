@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import io
 import math
+from contextlib import contextmanager
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Callable
@@ -44,6 +45,52 @@ def _tidy_dates(fig):
         for axis in (ax.xaxis, ax.yaxis):
             if isinstance(axis.get_major_formatter(), AutoDateFormatter):
                 axis.set_major_formatter(ConciseDateFormatter(axis.get_major_locator()))
+
+
+# ---------------------------------------------------------------- notes while drawing
+# A chart can be drawn several times for one picture (each panel of one_chart_per, each frame
+# of an animation, the zoom box ...). Notes made while drawing are collected and printed once,
+# when the whole picture is done, so the same note never shows up again and again.
+_NOTES = {"depth": 0, "lines": {}}
+
+# The options of a chart type that name the columns it draws (the rest are settings).
+COLUMN_OPTIONS = ("x", "y", "z", "colour", "size", "shape", "value", "labels", "values", "angle", "distance",
+                  "low", "high")
+# Chart types that show empty cells on purpose, so they leave nothing out.
+SHOWS_EMPTY_CELLS = {"empty_cells"}
+
+
+@contextmanager
+def chart_notes():
+    """Collect notes while a picture is drawn; print each once at the end (also when nested)."""
+    _NOTES["depth"] += 1
+    try:
+        yield
+    except BaseException:
+        if _NOTES["depth"] == 1:
+            _NOTES["lines"] = {}
+        raise
+    finally:
+        _NOTES["depth"] -= 1
+    if _NOTES["depth"] == 0:
+        lines, _NOTES["lines"] = _NOTES["lines"], {}
+        for count, make in lines.values():
+            print(make(count))
+
+
+def chart_note(key, make, count=0):
+    """Add a note: make(total count) gives its line. Notes with the same key are one note,
+    and their counts add up (names left out on each panel ...)."""
+    if _NOTES["depth"] == 0:
+        print(make(count))
+        return
+    old = _NOTES["lines"].get(key)
+    _NOTES["lines"][key] = ((old[0] if old else 0) + count, make)
+
+
+def _quoted(names):
+    names = [f'"{n}"' for n in names]
+    return names[0] if len(names) == 1 else ", ".join(names[:-1]) + " or " + names[-1]
 
 
 SAVE_FORMATS = ("png", "pdf", "svg", "jpg", "jpeg", "tif", "tiff", "gif")
@@ -141,6 +188,7 @@ class BaseChart:
             axes=axes if axes is not None else [ax],
             panel_title=panel_title,
         )
+        ctx.store["whole_table"] = self._data  # a panel shows part of it (one_chart_per, animate)
         self._run([s for s in self._steps if s.scope == "axes"], ctx)
         if panel_title is not None and not ax.get_title():
             ax.set_title(str(panel_title))
@@ -158,9 +206,43 @@ class BaseChart:
         )
         self._run([s for s in self._steps if s.scope == "figure"], ctx)
 
+    def _left_out_rows(self):
+        """One note per chart type for the rows it leaves out because of empty cells.
+
+        Counted on the whole table (not on each panel or frame). The columns that split the
+        chart into panels or frames count too: a row with no group is in no panel.
+        """
+        data = self._data
+        if data is None or len(data.columns) == 0:
+            return
+        split = self._settings.get("split") or {}
+        animate = self._settings.get("animate") or {}
+        splitting = [c for c in (split.get("by"), split.get("row"), split.get("column"), animate.get("over"))
+                     if isinstance(c, str)]
+        for step in self._steps:
+            if step.phase != PHASES["draw"] or step.name in SHOWS_EMPTY_CELLS:
+                continue
+            used = [v for k, v in step.kwargs.items() if k in COLUMN_OPTIONS and isinstance(v, str)]
+            used = list(dict.fromkeys(c for c in used + splitting if c in data.columns))
+            if not used:
+                continue
+            empty = data[used].isna()
+            n = int(empty.any(axis=1).sum())
+            if not n:
+                continue
+            names = [c for c in used if empty[c].any()]
+            rows = "1 row" if n == 1 else f"{n} rows"
+            line = f"Note: {rows} with empty {_quoted(names)} {'was' if n == 1 else 'were'} left out of this chart."
+            chart_note(line, lambda _count, line=line: line)
+
     def _render(self) -> Figure:
         if self._cache is not None:
             return self._cache
+        with chart_notes():
+            self._left_out_rows()
+            return self._render_now()
+
+    def _render_now(self) -> Figure:
         s = self._settings
         with _style.context(s):
             fig = Figure(figsize=(s["width"], s["height"]), layout="constrained")
@@ -176,13 +258,19 @@ class BaseChart:
         self._cache = fig
         return fig
 
+    def _panel_groups(self, column, words="appearance"):
+        """A column's groups in panel order: order_x / category / calendar order (see group_values)."""
+        from .words.charts import group_values  # the chart words build on this module
+
+        return group_values(self, column, words)
+
     def _render_split(self, fig, split):
         data = self._data
         row, column, by = split.get("row"), split.get("column"), split.get("by")
         share = dict(sharex=split.get("same_x", True), sharey=split.get("same_y", True))
         ctx = None
         if by is not None:
-            groups = list(pd.unique(data[by].dropna()))
+            groups = self._panel_groups(by)
             ncols = split.get("columns") or min(len(groups), 3)
             nrows = math.ceil(len(groups) / ncols)
             grid = fig.subplots(nrows, ncols, squeeze=False, subplot_kw={"projection": self._settings["projection"]}, **share)
@@ -192,8 +280,8 @@ class BaseChart:
             for ax in flat[len(groups):]:
                 ax.set_visible(False)
             return flat[: len(groups)], ctx
-        rows = list(pd.unique(data[row].dropna())) if row else [None]
-        cols = list(pd.unique(data[column].dropna())) if column else [None]
+        rows = self._panel_groups(row) if row else [None]
+        cols = self._panel_groups(column) if column else [None]
         grid = fig.subplots(len(rows), len(cols), squeeze=False, subplot_kw={"projection": self._settings["projection"]}, **share)
         for i, r in enumerate(rows):
             for j, c in enumerate(cols):

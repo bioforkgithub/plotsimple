@@ -9,13 +9,14 @@ import math
 import warnings
 from contextlib import contextmanager
 
+import matplotlib
 import numpy as np
 import pandas as pd
 import seaborn as sns
 
 from .._core import PHASES
 from .._data import frame_for, is_listlike
-from .._errors import SimplydataError, friendly, suggest
+from .._errors import SimplydataError, column_error, friendly, suggest
 from .._stats import SHOW, check_error, check_show, error_code, say_error
 from ._helpers import check, colour_role, default_colour, palette_for, single_list
 
@@ -134,7 +135,11 @@ def _apply_order(ctx, table, roles, measure=None):
             if not (is_category or _is_words(series)):
                 raise _numbers_cannot_be_ordered(word, col, where)
             if "names" in asked:
-                check_order_names(word, asked["names"], pd.unique(series.dropna()), col)
+                known = list(pd.unique(series.dropna()))
+                whole = ctx.store.get("whole_table")  # a panel may hold only some of the groups
+                if whole is not None and col in whole.columns:
+                    known += [v for v in pd.unique(whole[col].dropna()) if v not in set(known)]
+                check_order_names(word, asked["names"], known, col)
                 wanted = list(asked["names"])
             else:
                 wanted = _biggest_first_order(word, table, col, roles.get("value"), measure,
@@ -219,6 +224,40 @@ def set_order(chart, where, names, biggest_first):
     return chart._set(order=order)
 
 
+def group_values(chart, column, words="appearance"):
+    """The groups of a column in the order panels (one_chart_per) and animation frames use.
+
+    The names given to order_x / order_y / order_legend, when that axis or legend shows this
+    column; else the order of a category column; else calendar order for month or weekday
+    names; numbers and dates go from small to big. Other words keep the order they appear in
+    the table (words="appearance") or go A to Z (words="sorted").
+    """
+    data = chart._data
+    series = data[column]
+    present = list(pd.unique(series.dropna()))
+    asked_all = chart._settings.get("order") or {}
+    wanted = None
+    for where, asked in asked_all.items():
+        if "names" not in asked:
+            continue
+        if any(_step_column(step, where) == column for step in chart._steps if step.phase == PHASES["draw"]):
+            wanted = list(asked["names"])
+            break
+    if wanted is None and isinstance(series.dtype, pd.CategoricalDtype):
+        wanted = list(series.cat.categories)
+    if wanted is None and _is_words(series):
+        wanted = calendar_order(series)
+    if wanted is None and (not _is_words(series) or words == "sorted"):
+        try:
+            return sorted(present)
+        except TypeError:  # a mix that cannot be sorted: keep the order in the table
+            return present
+    if wanted is None:
+        return present
+    shown = [v for v in wanted if v in set(present)]
+    return shown + [v for v in present if v not in set(shown)]
+
+
 def _hue(table, n):
     """hue= for seaborn, with the groups in the order they appear (seaborn may sort them)."""
     col = n.get("colour")
@@ -253,6 +292,47 @@ def _frame(ctx, on_x="x", on_y="y", measure=None, size_role=None, **roles):
     place = {"x": n.get(on_x) if on_x else None, "y": n.get(on_y) if on_y else None,
              "colour": n.get("colour"), "value": n.get(size_role) if size_role else None}
     return _apply_order(ctx, table, place, measure), n
+
+
+# ---------------------------------------------------------------- where the empty cells are
+EMPTY_COLOUR = "#D55E00"  # Okabe-Ito vermilion: stands out from the grey of filled cells
+FILLED_COLOUR = "#E3E3E3"
+
+
+def _empty_cell_grid(data, columns):
+    """True for every empty cell: missing, NaN, or text that is only spaces (as in the table words)."""
+    part = data[columns]
+    empty = part.isna()
+    for col in columns:
+        if part[col].dtype == object or pd.api.types.is_string_dtype(part[col]):
+            empty[col] = empty[col] | part[col].map(lambda v: isinstance(v, str) and not v.strip())
+    return empty
+
+
+def _draw_empty_cells(ctx, columns):
+    from matplotlib.colors import ListedColormap
+    from matplotlib.patches import Patch
+
+    data, ax = ctx.data, ctx.ax
+    columns = list(columns) if columns else list(data.columns)
+    empty = _empty_cell_grid(data, columns)
+    n_rows = len(data)
+    marked = ctx.settings.get("colour") or EMPTY_COLOUR
+    ax.imshow(empty.to_numpy(dtype=float).reshape(n_rows, len(columns)), aspect="auto", interpolation="nearest",
+              cmap=ListedColormap([FILLED_COLOUR, marked]), vmin=0, vmax=1,
+              extent=(-0.5, len(columns) - 0.5, n_rows + 0.5, 0.5))
+    counts = empty.sum().astype(int)
+    ax.set_xticks(range(len(columns)), labels=[f"{c}\n{counts[c]} empty" for c in columns])
+    ax.tick_params(axis="x", length=0)
+    ax.grid(False)
+    for i in range(1, len(columns)):  # a thin gap between the columns
+        ax.axvline(i - 0.5, color=matplotlib.rcParams["axes.facecolor"], linewidth=3)
+    for side in ("left", "bottom"):
+        ax.spines[side].set_visible(False)
+    ax.set_ylabel("row (in table order)")
+    total = int(counts.sum())
+    ax.legend(handles=[Patch(color=marked, label=f"empty ({total} cells)"), Patch(color=FILLED_COLOUR, label="filled")],
+              loc="upper left", bbox_to_anchor=(1.01, 1))
 
 
 # ---------------------------------------------------------------- bars
@@ -1047,6 +1127,30 @@ class ChartWords:
         self._need_axes("heatmap")
         return self._add("heatmap", "draw", _draw_heatmap, x=x, y=y, value=value,
                          numbers=numbers, cluster=cluster)
+
+    @friendly
+    def empty_cells(self, columns=None):
+        """A map of the empty cells: one row of the chart for each row of the table, one strip
+        for each column, with empty cells coloured. chart.empty_cells() (with sdata.example("shop"))
+
+        Under each column it says how many of its cells are empty. columns=["sales", "customers"]
+        shows only those columns. A cell is empty when it is missing or holds only spaces.
+        """
+        data = self._data
+        if data is None or len(data.columns) == 0:
+            raise SimplydataError(
+                '.empty_cells() needs a table, for example sdata.chart(sdata.example("shop")).empty_cells().')
+        if columns is not None:
+            if isinstance(columns, str):
+                columns = [columns]
+            if not is_listlike(columns) or not list(columns):
+                raise SimplydataError('columns= should be a list of column names, like columns=["sales", "customers"].')
+            columns = list(columns)
+            for name in columns:
+                if name not in data.columns:
+                    raise column_error(name, data.columns)
+        self._need_axes("empty_cells")
+        return self._add("empty_cells", "draw", _draw_empty_cells, columns=columns)
 
     @friendly
     def pie(self, labels=None, values=None):

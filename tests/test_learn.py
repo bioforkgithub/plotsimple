@@ -38,7 +38,10 @@ def test_example_tables_load_with_the_columns_described(name):
     assert isinstance(table, pd.DataFrame)
     assert len(table) >= 20
     assert list(table.columns) == list(EXAMPLES[name][1])
-    assert not table.isna().any().any()
+    if name == "shop":  # the one table made for practising empty cells and dates
+        assert table.isna().any().any() and pd.api.types.is_datetime64_any_dtype(table["date"])
+    else:
+        assert not table.isna().any().any()
 
 
 def test_example_without_name_lists_tables(capsys):

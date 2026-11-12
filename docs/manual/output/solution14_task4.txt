@@ -1,0 +1,9 @@
+Outliers in "marks" by Tukey's rule: values more than 1.5 x IQR below the first quartile (Q1) or above the third quartile (Q3).
+IQR, the interquartile range, is Q3 - Q1: the spread of the middle half of the values.
+For each class:
+  A: below 34.88 or above 107.88 (Q1 = 62.25, Q3 = 80.5); 0 rows found
+  B: below 33.25 or above 97.25 (Q1 = 57.25, Q3 = 73.25); 1 row found
+  C: below 14.88 or above 103.88 (Q1 = 48.25, Q3 = 70.5); 0 rows found
+Removed 1 of 54 rows. 53 rows left.
+The average "marks" is 71.8 in A, 66.1 in B and 58.6 in C. Differences this big between the groups are unlikely to be chance (p = 0.028). Omega-squared = 0.109: the groups explain about 11 % of the differences in "marks".
+Test: Welch's one-way ANOVA (F = 3.97, df = 2 and 33.3), the usual test for three or more averages; it does not assume the groups have the same spread. To see which groups differ: table.compare_each_pair("marks", for_each="class").

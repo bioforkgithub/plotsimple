@@ -1,0 +1,8 @@
+Split "name" at " " into first_name, family_name. The column "name" is replaced by them.
+Replaced "Lee" in 1 cell of family_name.
+born is now dates (read as month day year).
+Rounded height to 2 decimal places.
+  first_name family_name       born  height initial month_born
+0       Asha         Rao 2014-04-30    1.44       A      April
+1        Ben          Li 2013-12-25    1.53       B   December
+2       Chen          Wu 2014-07-03    1.40       C       July

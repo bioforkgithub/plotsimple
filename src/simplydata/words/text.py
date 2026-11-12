@@ -9,7 +9,7 @@ import numpy as np
 from matplotlib.colors import to_rgb
 from matplotlib.text import Annotation
 
-from .._core import PHASES
+from .._core import PHASES, chart_note
 from .._data import is_listlike
 from .._errors import SimplydataError, column_error, friendly
 from .axes import tick_position
@@ -266,9 +266,13 @@ def _names_on_dots(ctx, column, colour):
         else:
             left_out += 1
     ctx.store["names_left_out"] = ctx.store.get("names_left_out", 0) + left_out
-    if left_out:
-        print(f"names_on_dots: {left_out} name{'s were' if left_out != 1 else ' was'} left out, because "
-              "there was no free space next to the dot. A bigger chart (chart.size(...)) makes room.")
+    if left_out:  # one note for the whole picture, however many panels it has
+        chart_note("names_on_dots", _names_left_out, left_out)
+
+
+def _names_left_out(n):
+    return (f"Note: {n} name{'s were' if n != 1 else ' was'} left out of this chart (names_on_dots), because "
+            "there was no free space next to the dot. A bigger chart (chart.size(...)) makes room.")
 
 
 # ---------------------------------------------------------------- the words

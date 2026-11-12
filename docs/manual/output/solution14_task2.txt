@@ -1,5 +1,5 @@
 The average "temperature" is 1.02 in Frostby, 10.1 in Rainbridge and 17.0 in Sunnyvale. Differences this big between the groups are very unlikely to be chance (p = 0.0002). Omega-squared = 0.465: the groups explain about 46 % of the differences in "temperature".
-Test: Welch's one-way ANOVA (F = 13.0, df = 2 and 20.8), the usual test for three or more averages; it does not assume the groups have the same spread. To see which groups differ: table.compare_each_pair("temperature", between="city").
+Test: Welch's one-way ANOVA (F = 13.0, df = 2 and 20.8), the usual test for three or more averages; it does not assume the groups have the same spread. To see which groups differ: table.compare_each_pair("temperature", for_each="city").
 Each pair of "city" groups compared on "temperature" with Welch's t-test; the p-values are adjusted for 3 pairs with Holm's method, so the chance of any false alarm stays at 5 %.
   Frostby vs Rainbridge: the average of Frostby is 9.06 lower; unlikely to be chance (Holm-adjusted p = 0.011).
   Frostby vs Sunnyvale: the average of Frostby is 15.9 lower; very unlikely to be chance (Holm-adjusted p = 0.0002).

@@ -180,7 +180,7 @@ def test_written_condition_with_keyword_and_spaces(engine):
 
 
 WRITTEN_ERRORS = [
-    ("marks = 50", "two equals signs"),
+    ("marks = 50", "two equal signs"),
     ("marks > 50 && class == 'A'", "and / or as words"),
     ("marks > 50 & hours > 2", "instead of & and |"),
     ("class == 'A' AND marks > 3", "small letters"),
@@ -559,3 +559,49 @@ def test_summary_words_are_refused_for_now(marks):
     with pytest.raises(SimplydataError, match="add_column"):
         marks.keep_rows("marks > average(marks)")
     assert not marks._history
+
+
+# ---------------------------------------------------------------------- line between neighbours
+def test_fill_with_the_line_between_neighbours_matches_pandas(engine, capsys):
+    data = pd.DataFrame({"v": [np.nan, 2.0, np.nan, np.nan, 8.0, np.nan], "w": [1, 2, 3, 4, 5, 6]})
+    t = _engine_table(data, engine)
+    t.fill_empty_cells("v", with_the="line between neighbours")
+    expected = data["v"].interpolate(method="linear", limit_area="inside")
+    assert np.allclose(plain(t)["v"], expected, equal_nan=True)
+    out = capsys.readouterr().out
+    assert "Filled 2 cells in v on the line between neighbours in table order." in out
+    assert "Note: 2 cells stayed empty: they are at the start or end" in out
+    t.steps()
+    assert "with the line between neighbours" in capsys.readouterr().out
+
+
+def test_fill_with_the_line_follows_dates_and_groups(engine, capsys):
+    # shop B's rows are mixed in, and the days are not in order; 4 and 5 March are missing
+    data = pd.DataFrame({
+        "shop": ["A", "B", "A", "A", "B", "A", "B"],
+        "date": pd.to_datetime(["2026-03-06", "2026-03-01", "2026-03-01", "2026-03-02", "2026-03-03",
+                                "2026-03-03", "2026-03-02"]),
+        "sales": [60.0, 5.0, 10.0, np.nan, 7.0, np.nan, np.nan],
+    })
+    t = _engine_table(data, engine)
+    t.fill_empty_cells("sales", with_the="line between neighbours", sorted_by="date", for_each="shop")
+    # pandas: per shop, by date, spaced by the dates (method="time")
+    expected = (data.set_index("date").groupby("shop")["sales"]
+                .transform(lambda s: s.sort_index().interpolate(method="time", limit_area="inside")
+                           .reindex(s.index)))
+    got = plain(t)["sales"]
+    assert np.allclose(got, expected.to_numpy(), equal_nan=True)
+    assert got[3] == pytest.approx(20.0) and got[5] == pytest.approx(30.0) and got[6] == pytest.approx(6.0)
+    assert list(plain(t)["shop"]) == list(data["shop"])  # rows keep their place
+    assert "in order of date, for each shop on its own" in capsys.readouterr().out
+
+
+def test_fill_with_the_line_errors(marks):
+    with pytest.raises(SimplydataError, match="needs numbers"):
+        marks.fill_empty_cells("name", with_the="line between neighbours")
+    with pytest.raises(SimplydataError, match="numbers or dates"):
+        marks.fill_empty_cells("marks", with_the="line between neighbours", sorted_by="name")
+    with pytest.raises(SimplydataError, match='go with with_the="line between neighbours"'):
+        marks.fill_empty_cells("marks", with_the="average", for_each="class")
+    with pytest.raises(SimplydataError, match="line between neighbours"):
+        marks.fill_empty_cells("marks", with_the="nearest")

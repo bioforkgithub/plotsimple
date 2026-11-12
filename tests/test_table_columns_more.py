@@ -485,7 +485,7 @@ def test_rules_with_empty_cells_and_dates(engine, capsys):
     t = build(data, engine)
     t.add_group_column("size", rules={"x >= 50": "big"}, otherwise="small")
     same_values(plain(t)["size"], ["small", "small", "big"])
-    assert "1 row have an empty cell in x" in capsys.readouterr().out
+    assert "Note: 1 row has an empty cell in x. An empty cell never meets a rule." in capsys.readouterr().out
     t.add_group_column("half", rules={'day < "2026-03-01"': "first"}, otherwise="second")
     same_values(plain(t)["half"], ["first", "second", "second"])
     t.add_group_column("only", rules={"x >= 50": "big"})
@@ -496,9 +496,9 @@ def test_rules_with_empty_cells_and_dates(engine, capsys):
 def test_rules_errors(table):
     with pytest.raises(SimplydataError, match="two equal signs"):
         table.add_group_column("g", rules={"class = 'A'": "a"})
-    with pytest.raises(SimplydataError, match="and / or instead of"):
+    with pytest.raises(SimplydataError, match="and / or as words instead of"):
         table.add_group_column("g", rules={"marks > 5 & test > 1": "a"})
-    with pytest.raises(SimplydataError, match="compare it with text in quotes"):
+    with pytest.raises(SimplydataError, match="put the text in quotes"):
         table.add_group_column("g", rules={"class == 5": "a"})
     with pytest.raises(SimplydataError, match="without quotes"):
         table.add_group_column("g", rules={"marks > '50'": "a"})
@@ -514,8 +514,10 @@ def test_rules_errors(table):
         table.add_group_column("g", from_column="marks", cut_at=[50], names=["a", "b"], otherwise="c")
     with pytest.raises(SimplydataError, match="pair each condition"):
         table.add_group_column("g", rules=["marks > 50"])
-    with pytest.raises(SimplydataError, match="comparison simplydata does not know"):
-        table.add_group_column("g", rules={"class in ['A']": "a"})
+    with pytest.raises(SimplydataError, match="After is write empty"):
+        table.add_group_column("g", rules={"class is 'A'": "a"})
+    with pytest.raises(SimplydataError, match="cannot be used in rules= yet"):
+        table.add_group_column("g", rules={"marks > average(marks)": "a"})
 
 
 def test_formula_with_a_condition_points_to_rules(table):
@@ -627,3 +629,76 @@ def test_change_on_example_growth(engine):
     t.add_change_column("growth", from_column="population", in_percent=True, for_each="country", sorted_by="year")
     expected = data.sort_values("year", kind="stable").groupby("country")["population"].pct_change().sort_index() * 100
     same_values(plain(t)["growth"], expected)
+
+
+# ---------------------------------------------------------------------------- one condition reader
+def test_rules_and_keep_rows_share_one_reader_and_one_empty_cell_rule(engine, capsys):
+    """not (x >= 50) must not turn an empty cell into a match, in rules= as in keep_rows()."""
+    data = {"x": [10.0, np.nan, 90.0, 40.0], "c": ["A", "B", None, "A"]}
+    t = build(data, engine)
+    t.add_group_column("low", rules={"not (x >= 50)": "low"}, otherwise="other")
+    same_values(plain(t)["low"], ["low", "other", "other", "low"])
+    assert "Note: 1 row has an empty cell in x. An empty cell never meets a rule." in capsys.readouterr().out
+    t2 = build(data, engine)
+    t2.keep_rows("not (x >= 50)")
+    same_values(plain(t2)["x"], [10.0, 40.0])
+    out = capsys.readouterr().out
+    assert "Note: 1 row has an empty cell in x. An empty cell never meets a condition, so it was left out." in out
+
+
+def test_rules_understand_in_lists_and_is_empty(engine, capsys):
+    data = {"x": [10.0, np.nan, 90.0], "c": ["A", "B", "C"]}
+    t = build(data, engine)
+    t.add_group_column("g", rules={"x is empty": "missing", "c in ['A', 'C']": "a or c"}, otherwise="other")
+    same_values(plain(t)["g"], ["a or c", "missing", "a or c"])
+    assert "Note:" not in capsys.readouterr().out  # is empty is always known
+
+
+def test_rules_note_counts_only_rows_an_empty_cell_kept_out(engine, capsys):
+    # the second row meets the first rule, so its empty y does not matter
+    data = {"x": [90.0, 90.0, 10.0], "y": [1.0, np.nan, np.nan]}
+    t = build(data, engine)
+    t.add_group_column("g", rules={"x > 50": "big x", "y > 0": "some y"}, otherwise="none")
+    same_values(plain(t)["g"], ["big x", "big x", "none"])
+    assert "Note: 1 row has an empty cell in y." in capsys.readouterr().out
+
+
+def test_remove_rows_note_says_empty_rows_stay(engine, capsys):
+    t = build({"x": [10.0, np.nan, 90.0]}, engine)
+    t.remove_rows("x > 50")
+    assert len(plain(t)) == 2
+    assert "so it was not removed." in capsys.readouterr().out
+
+
+@pytest.mark.parametrize("show,how", [("average", "mean"), ("total", "sum"), ("standard deviation", "std"),
+                                      ("median", "median")])
+def test_rolling_per_group_in_table_order_lands_in_the_right_rows(engine, show, how):
+    """Groups that take turns (a, b, a, b ...) and no sorted_by=: narwhals needs order_by= on
+    pandas here, or rolling values per group come out in the wrong rows."""
+    data = pd.DataFrame({"g": list("abababab"), "v": [5.0, 1, 3, 9, 3, 2, 8, 4]})
+    t = build(data, engine)
+    t.add_rolling_column("r", from_column="v", window=2, show=show, for_each="g")
+    expected = data.groupby("g")["v"].transform(lambda s: getattr(s.rolling(2), how)())
+    same_values(plain(t)["r"], expected)
+    t.add_previous_value_column("p", from_column="v", for_each="g")
+    same_values(plain(t)["p"], data.groupby("g")["v"].shift(1))
+    t.add_change_column("c", from_column="v", for_each="g")
+    same_values(plain(t)["c"], data.groupby("g")["v"].diff())
+
+
+# ---------------------------------------------------------------------------- add_is_empty_column
+def test_add_is_empty_column_keeps_track_of_filled_cells(engine, capsys):
+    data = {"v": [1.0, np.nan, 3.0, np.nan], "name": ["a", "  ", None, "d"]}
+    t = build(data, engine)
+    t.add_is_empty_column("v_was_empty", from_column="v")
+    t.add_is_empty_column("no_name", from_column="name")
+    t.fill_empty_cells("v", with_the="line between neighbours")
+    got = plain(t)
+    assert list(got["v_was_empty"]) == [False, True, False, True]
+    assert list(got["no_name"]) == [False, True, True, False]  # blank text counts as empty
+    assert list(got["v"].fillna(-1)) == [1.0, 2.0, 3.0, -1]
+    assert '"v_was_empty" is True in 2 rows (where v is empty) and False in the other 2 rows.' in capsys.readouterr().out
+    with pytest.raises(SimplydataError, match="needs from_column="):
+        t.add_is_empty_column("x")
+    with pytest.raises(SimplydataError, match="needs a name"):
+        t.add_is_empty_column(from_column="v")

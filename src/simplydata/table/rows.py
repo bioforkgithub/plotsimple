@@ -8,34 +8,26 @@ a missing value (None, NaN, NaT), or text that is only spaces or nothing at all.
 Empty cells never match a condition in keep_rows()/remove_rows(), except is_empty=.
 
 keep_rows()/remove_rows() also read a written condition, "marks > 50 and class == 'A'".
-Like add_column() formulas, the text is never run as Python code: it is read with Python's
-ast module and only comparisons, and/or/not, brackets, "in [...]", "is empty", column names,
-numbers, text and dates in quotes and simple sums are allowed. A comparison with an empty
-cell is never true and never false (as in SQL), so "not" never brings back empty cells either.
+The condition is read by the shared reader in conditions.py (also used by
+add_group_column(rules=)): the text is never run, and a comparison with an empty cell is
+never true and never false (as in SQL), so "not" never brings back empty cells either.
 """
 
 from __future__ import annotations
 
-import ast
 import datetime as _dt
 import math
 import numbers
-import operator
 import re
 
 import narwhals as nw
 
-from .._errors import SimplydataError, column_error, friendly
+from .._errors import SimplydataError, friendly
 from ._base import show as _show_native
-from .columns import FORMULA_HELP, _FormulaReader
-
-
-class _NotGiven:
-    def __repr__(self):
-        return "not given"
-
-
-_NOT_GIVEN = _NotGiven()
+from .conditions import (
+    _NOT_GIVEN, _ConditionReader, _condition_error, _count_in, _empty_in, _is_number, _kind,
+    _looks_like_number, _rows, _say, empty_cells_note,
+)
 
 # Conditions for keep_rows() / remove_rows(), in the order they are listed in messages.
 CONDITIONS = (
@@ -44,7 +36,7 @@ CONDITIONS = (
 )
 COMPARE = ("above", "below", "at_least", "at_most")
 TEXT_ONLY = ("contains", "starts_with", "ends_with")
-FILL_CHOICES = ("average", "median", "value above", "value below")
+FILL_CHOICES = ("average", "median", "value above", "value below", "line between neighbours")
 
 # Text-to-date formats, tried in this order. Day comes before month (03/04/2026 is 3 April);
 # month-first is only used when day-first cannot work (12/25/2026).
@@ -58,6 +50,23 @@ DATE_FORMATS = (
     "%d %B %Y", "%d %b %Y", "%B %d, %Y", "%b %d, %Y", "%B %d %Y", "%b %d %Y",
 )
 
+
+def _with_times(*days):
+    """Each day format, then the same with a time after it."""
+    return tuple(f + t for f in days for t in ("", " %H:%M:%S", " %H:%M"))
+
+
+_ISO = ("%Y-%m-%d", "%Y-%m-%d %H:%M:%S", "%Y-%m-%d %H:%M", "%Y-%m-%dT%H:%M:%S", "%Y-%m-%dT%H:%M")
+# make_dates(order=...): only the formats that read the parts in that order (a year with four
+# digits written first is always year-month-day, so those formats are kept for every order).
+DATE_ORDERS = {
+    "day month year": _ISO + _with_times("%Y/%m/%d", "%d/%m/%Y", "%d.%m.%Y", "%d-%m-%Y")
+    + ("%d %B %Y", "%d %b %Y"),
+    "month day year": _ISO + _with_times("%Y/%m/%d", "%m/%d/%Y", "%m.%d.%Y", "%m-%d-%Y")
+    + ("%B %d, %Y", "%b %d, %Y", "%B %d %Y", "%b %d %Y"),
+    "year month day": _ISO + _with_times("%Y/%m/%d", "%Y.%m.%d") + ("%Y%m%d", "%Y %B %d", "%Y %b %d"),
+}
+
 _NUMBER = r"^[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?$"
 _THOUSANDS = r"^[+-]?\d{1,3}(?:,\d{3})+(?:\.\d+)?$"  # 1,200 or 12,345.6
 _DECIMAL_COMMA = r"^[+-]?\d*,\d+$"  # 12,5
@@ -68,56 +77,6 @@ SHOW_LIMIT = 1000  # rows that table.show() shows when rows= is not given
 def _example(code: str, name: str = "marks") -> str:
     return f'\nFor example:  {code}   (with sdata.example("{name}"))'
 
-
-def _kind(dtype) -> str:
-    """The kind of a column in plain words."""
-    if dtype == nw.Boolean:
-        return "true/false"
-    if dtype.is_numeric():
-        return "number"
-    if dtype == nw.String or dtype == nw.Categorical or dtype == nw.Enum:
-        return "text"
-    if dtype == nw.Date or dtype == nw.Datetime:
-        return "date"
-    if dtype == nw.Object:
-        return "mixed"
-    return "other"
-
-
-def _empty_in(frame, column):
-    """True for every empty cell in the column (missing, NaN, or blank text)."""
-    dtype = frame.schema[column]
-    col = nw.col(column)
-    empty = col.is_null()
-    if dtype.is_float():
-        empty = empty | col.is_nan()
-    elif dtype == nw.String:
-        empty = empty | (col.str.strip_chars() == "")
-    return empty
-
-
-def _count_in(frame, expr) -> int:
-    """How many rows an expression is true for."""
-    if len(frame) == 0:
-        return 0
-    return int(frame.select(expr.fill_null(False).cast(nw.Int64).sum()).item() or 0)
-
-
-def _say(value) -> str:
-    """A value written the way steps() shows it."""
-    if isinstance(value, str):
-        return f'"{value}"'
-    if hasattr(value, "to_pydatetime"):  # pandas Timestamp
-        value = value.to_pydatetime()
-    if isinstance(value, _dt.datetime):
-        if value.hour or value.minute or value.second:
-            return value.isoformat(sep=" ")
-        return value.date().isoformat()
-    if isinstance(value, _dt.date):
-        return value.isoformat()
-    if value is None:
-        return "empty"
-    return str(value)
 
 
 def _nice(value) -> str:
@@ -134,21 +93,6 @@ def _nice(value) -> str:
         return _say(value)
     return str(value)
 
-
-def _is_number(value) -> bool:
-    return isinstance(value, numbers.Real) and not isinstance(value, bool)
-
-
-def _looks_like_number(text) -> bool:
-    try:
-        float(str(text).replace(",", "."))
-        return True
-    except ValueError:
-        return False
-
-
-def _rows(n: int) -> str:
-    return f"{n} row" if n == 1 else f"{n} rows"
 
 
 def _cells(n: int) -> str:
@@ -172,8 +116,8 @@ def _check_count(step: str, n, example: str) -> int:
     return int(n)
 
 
-def _parse_dates(native):
-    """Parse a native text Series (pandas or Polars) into dates, trying DATE_FORMATS in order.
+def _parse_dates(native, formats=DATE_FORMATS):
+    """Parse a native text Series (pandas or Polars) into dates, trying the formats in order.
 
     Native code because narwhals' to_datetime stops at the first bad cell; here bad cells
     simply become empty. The same formats in the same order are used for both engines.
@@ -183,14 +127,14 @@ def _parse_dates(native):
 
         return (
             pl.DataFrame({"s": native})
-            .select(pl.coalesce([pl.col("s").str.strptime(pl.Datetime("us"), f, strict=False) for f in DATE_FORMATS]))
+            .select(pl.coalesce([pl.col("s").str.strptime(pl.Datetime("us"), f, strict=False) for f in formats]))
             .to_series()
             .rename(native.name)
         )
     import pandas as pd
 
     out = pd.Series(pd.NaT, index=native.index, dtype="datetime64[us]", name=native.name)
-    for f in DATE_FORMATS:
+    for f in formats:
         missing = out.isna()
         if not missing.any():
             break
@@ -198,328 +142,6 @@ def _parse_dates(native):
         out = out.fillna(found)
     return out
 
-
-# ---------------------------------------------------------------------------- written conditions
-
-CONDITION_HELP = (
-    "A condition can use:\n"
-    "  column names            marks, class  (names with spaces go in backticks: `max temp`)\n"
-    "  numbers                 50, 2.5\n"
-    "  text in quotes          class == 'A'   (capital letters matter)\n"
-    "  dates in quotes         date > '2026-03-01'   (year-month-day, for date columns)\n"
-    "  ==  !=                  equal to, not equal to\n"
-    "  <  <=  >  >=            below, at most, above, at least\n"
-    "  and  or  not  ( )       join conditions; brackets decide what goes together\n"
-    "  in [...]                subject in ['Maths', 'Science']\n"
-    "  is empty                marks is empty, marks is not empty\n"
-    "  sums                    marks / hours > 10   (+ - * / ** and round, abs, sqrt, log)\n"
-    "Example: table.keep_rows(\"marks > 50 and class == 'A'\")   (with sdata.example(\"marks\"))"
-)
-
-_SIGNS = {ast.Eq: "==", ast.NotEq: "!=", ast.Lt: "<", ast.LtE: "<=", ast.Gt: ">", ast.GtE: ">="}
-_COMPARE_WITH = {ast.Eq: operator.eq, ast.NotEq: operator.ne, ast.Lt: operator.lt,
-                 ast.LtE: operator.le, ast.Gt: operator.gt, ast.GtE: operator.ge}
-_FLIPPED = {ast.Lt: ast.Gt, ast.Gt: ast.Lt, ast.LtE: ast.GtE, ast.GtE: ast.LtE, ast.Eq: ast.Eq, ast.NotEq: ast.NotEq}
-
-
-def _condition_error(problem: str) -> SimplydataError:
-    return SimplydataError(f"{problem}\n\n{CONDITION_HELP}")
-
-
-class _Side:
-    """One side of a comparison: a column, a sum, or a value written in the condition."""
-
-    def __init__(self, label, kind, expr=None, known=None, column=None, literal=_NOT_GIVEN, has_column=True):
-        self.label = label          # how to name it in a message
-        self.kind = kind            # number, text, date, true/false, ...
-        self.expr = expr            # narwhals expression (not for written values)
-        self.known = known          # true where the side is not empty
-        self.column = column        # the column name, when the side is just a column
-        self.literal = literal      # the value, when it is written in the condition
-        self.has_column = has_column
-
-    @property
-    def is_value(self) -> bool:
-        return self.literal is not _NOT_GIVEN
-
-
-class _ConditionReader(_FormulaReader):
-    """Turns condition text into narwhals expressions. The text is never run.
-
-    read() gives two expressions: where the condition is surely true, and where it is surely
-    false. A comparison with an empty cell is neither (three-valued logic, as in SQL), so
-    keep_rows keeps only "surely true" rows and "not" cannot bring empty cells back.
-    """
-
-    def __init__(self, text, frame):
-        super().__init__(text, frame.columns)
-        self.frame = frame
-        self.in_sum = False
-
-    # messages from the formula reader speak of a condition and list what a condition can use
-    def _error(self, problem):
-        return _condition_error(problem.replace("formula", "condition"))
-
-    def _what(self):
-        return "condition"
-
-    def _no_column_error(self):
-        return _condition_error("A condition needs a column in it, like marks > 50.")
-
-    def read(self):
-        if not isinstance(self.text, str) or not self.text.strip():
-            raise _condition_error("The condition should be some text, for example \"marks > 50\".")
-        try:
-            result = super().read()
-        except SimplydataError as error:
-            message = str(error)
-            if CONDITION_HELP in message and "cannot read" in message:
-                hint = self._hint()
-                if hint:
-                    raise _condition_error(message.replace("\n\n" + CONDITION_HELP, "") + f"\n{hint}") from None
-            raise self._from_formula(error) from None
-        if getattr(self, "summaries", None):  # average(marks) and friends need a column first
-            raise _condition_error(
-                "Summary words such as average() cannot be used in keep_rows() or remove_rows() yet. "
-                "Add them as a column first, then compare with it:\n"
-                '  table.add_column("class_average", "average(marks)", for_each="class")\n'
-                '  table.keep_rows("marks > class_average")'
-            )
-        return result
-
-    def _from_formula(self, error):
-        """A formula-reader message, if one slips through, with the condition help instead."""
-        message = str(error)
-        if FORMULA_HELP not in message:
-            return error
-        message = message.replace("\n\n" + FORMULA_HELP, "")
-        for old, new in (("the formula", "the condition"), ("a formula", "a condition"),
-                         ("That formula", "That condition")):
-            message = message.replace(old, new)
-        hint = self._hint() if "cannot read" in message else ""
-        return _condition_error(message + (f"\n{hint}" if hint else ""))
-
-    def _hint(self) -> str:
-        """A guess at what went wrong when the text cannot be read at all."""
-        outside = re.sub(r"'[^']*'|\"[^\"]*\"", "''", self.text)  # leave out text in quotes
-        if "&&" in outside or "||" in outside:
-            return "Write and / or as words: marks > 50 and class == 'A'."
-        if "<>" in outside:
-            return "For 'not equal to' write != ."
-        if re.search(r"(?<![<>=!])=(?!=)", outside):
-            return "To compare, write two equals signs: class == 'A'."
-        if re.search(r"\b(AND|OR|NOT|And|Or|Not)\b", outside):
-            return "Write and, or, not in small letters."
-        if self.text.count("'") % 2 or self.text.count('"') % 2:
-            return "A quote mark is missing: text needs one at the start and one at the end, like 'A'."
-        if outside.count("(") != outside.count(")"):
-            return "A bracket is missing: every ( needs a )."
-        return ""
-
-    # ---- the whole condition, or one part of it
-    def _node(self, node):
-        if self.in_sum:  # a sum inside a comparison: the formula reader does it
-            if isinstance(node, ast.BinOp) and isinstance(node.op, (ast.BitAnd, ast.BitOr)):
-                raise _condition_error("Write and / or as words instead of & and |: marks > 50 and class == 'A'.")
-            if isinstance(node, (ast.Compare, ast.BoolOp)) or (isinstance(node, ast.UnaryOp)
-                                                               and isinstance(node.op, ast.Not)):
-                raise _condition_error(f'"{self._snippet(node)}" needs brackets around it.')
-            return super()._node(node)
-        return self._test(node)
-
-    def _test(self, node):
-        """(surely true, surely false) for a condition."""
-        if isinstance(node, ast.BoolOp):
-            parts = [self._test(value) for value in node.values]
-            true, false = parts[0]
-            for t, f in parts[1:]:
-                if isinstance(node.op, ast.And):
-                    true, false = true & t, false | f
-                else:
-                    true, false = true | t, false & f
-            return true, false
-        if isinstance(node, ast.UnaryOp) and isinstance(node.op, ast.Not):
-            true, false = self._test(node.operand)
-            return false, true
-        if isinstance(node, ast.Compare):
-            left = self._side(node.left)
-            result = None
-            for op, right_node in zip(node.ops, node.comparators):  # 40 <= marks <= 60
-                part = self._compare(left, op, right_node)
-                result = part if result is None else (result[0] & part[0], result[1] | part[1])
-                if not isinstance(op, (ast.Is, ast.IsNot, ast.In, ast.NotIn)):
-                    left = self._side(right_node)
-            return result
-        if isinstance(node, ast.BinOp) and isinstance(node.op, (ast.BitAnd, ast.BitOr)):
-            raise _condition_error("Write and / or as words instead of & and |: marks > 50 and class == 'A'.")
-        if isinstance(node, ast.Name):
-            side = self._side(node)
-            if side.kind == "true/false":
-                col = side.expr
-                return col.fill_null(False) & side.known, (~col).fill_null(False) & side.known
-            raise _condition_error(
-                f'"{side.label}" alone is not a condition. Compare it with something, like {side.label} > 50 '
-                f"or {side.label} == 'A'."
-            )
-        if isinstance(node, ast.Constant):
-            raise _condition_error("A condition needs a column in it, like marks > 50.")
-        raise _condition_error(
-            f'"{self._snippet(node)}" is not a condition. A condition compares, like marks > 50.'
-        )
-
-    # ---- one side of a comparison
-    def _side(self, node) -> _Side:
-        if isinstance(node, ast.Name):
-            name = self.placeholders.get(node.id, node.id)
-            if name in self.columns:
-                self._column(name)
-                kind = _kind(self.frame.schema[name])
-                return _Side(name, kind, nw.col(name), ~_empty_in(self.frame, name), column=name)
-            if node.id == "empty":
-                raise _condition_error("To find empty cells write is empty, like: marks is empty.")
-            if node.id in ("true", "false"):
-                raise _condition_error(f"Write {node.id.title()} with a capital letter and no quotes.")
-            raise column_error(node.id, self.columns)
-        if isinstance(node, ast.Constant):
-            value = node.value
-            if isinstance(value, str):  # never let a column-name stand-in change quoted text
-                for key, name in self.placeholders.items():
-                    value = value.replace(key, name)
-            return self._written(value)
-        if (isinstance(node, ast.UnaryOp) and isinstance(node.op, (ast.USub, ast.UAdd))
-                and isinstance(node.operand, ast.Constant) and _is_number(node.operand.value)):
-            value = node.operand.value
-            return self._written(-value if isinstance(node.op, ast.USub) else value)
-        if isinstance(node, (ast.List, ast.Tuple, ast.Set)):
-            raise _condition_error("A list in square brackets goes after in, like subject in ['Maths', 'Science'].")
-        # a sum, like marks / hours: every column in it must hold numbers
-        names = []
-        for part in ast.walk(node):
-            if isinstance(part, ast.Name):
-                name = self.placeholders.get(part.id, part.id)
-                if name in self.columns and name not in names:
-                    names.append(name)
-        for name in names:
-            kind = _kind(self.frame.schema[name])
-            if kind != "number":
-                raise _condition_error(f'"{name}" is a {kind} column, so it cannot be used in a sum.')
-        self.in_sum = True
-        try:
-            expr = self._node(node)
-        finally:
-            self.in_sum = False
-        known = expr.cast(nw.Float64).is_finite().fill_null(False)
-        for name in names:
-            known = known & ~_empty_in(self.frame, name)
-        return _Side(self._snippet(node), "number", expr, known, has_column=bool(names))
-
-    @staticmethod
-    def _written(value) -> _Side:
-        if value is None:
-            raise _condition_error("To find empty cells write is empty, like: marks is empty.")
-        if isinstance(value, bool):
-            kind = "true/false"
-        elif _is_number(value):
-            kind = "number"
-        elif isinstance(value, str):
-            kind = "text"
-        else:
-            raise _condition_error(f"{value!r} is not allowed in a condition.")
-        return _Side(_say(value), kind, literal=value, has_column=False)
-
-    # ---- comparisons
-    def _compare(self, left: _Side, op, right_node):
-        if isinstance(op, (ast.Is, ast.IsNot)):
-            is_empty_word = ((isinstance(right_node, ast.Name) and right_node.id == "empty")
-                             or (isinstance(right_node, ast.Constant) and right_node.value is None))
-            if not is_empty_word:
-                raise _condition_error("After is write empty, like: marks is empty. To compare values use == .")
-            if left.column is None:
-                raise _condition_error("is empty goes after a column name, like: marks is empty.")
-            empty = _empty_in(self.frame, left.column)
-            return (empty, ~empty) if isinstance(op, ast.Is) else (~empty, empty)
-
-        if isinstance(op, (ast.In, ast.NotIn)):
-            if left.is_value or not isinstance(right_node, (ast.List, ast.Tuple, ast.Set)):
-                raise _condition_error("Write in like this: subject in ['Maths', 'Science'].")
-            values = []
-            for item in right_node.elts:
-                side = self._side(item)
-                if not side.is_value:
-                    raise _condition_error("The list after in can only hold values, like ['Maths', 'Science'].")
-                values.append(self._fit(left, side.literal, "=="))
-            if not values:
-                raise _condition_error("The list after in needs at least one value, like ['Maths', 'Science'].")
-            cond = left.expr.is_in(values)
-            if isinstance(op, ast.NotIn):
-                cond = ~cond
-            return cond.fill_null(False) & left.known, (~cond).fill_null(False) & left.known
-
-        if type(op) not in _SIGNS:
-            raise _condition_error("That way of comparing is not allowed in a condition.")
-        right = self._side(right_node)
-        if left.is_value and right.is_value:
-            raise _condition_error(
-                f"{left.label} and {right.label} are both values. Compare a column with a value, like marks > 50."
-            )
-        if left.is_value:  # 50 < marks is the same as marks > 50
-            left, right, op = right, left, _FLIPPED[type(op)]()
-        if not (left.has_column or right.has_column):
-            raise _condition_error("A condition needs a column in it, like marks > 50.")
-        sign = _SIGNS[type(op)]
-        if sign not in ("==", "!=") and left.kind not in ("number", "date"):
-            raise _condition_error(
-                f'{sign} compares numbers or dates, but "{left.label}" is a {left.kind} column. '
-                f"For text use == or !=, or keep_rows(\"{left.label}\", starts_with=\"A\")."
-            )
-        if right.is_value:
-            other, known = self._fit(left, right.literal, sign), left.known
-        else:
-            if left.kind != right.kind:
-                raise _condition_error(
-                    f'"{left.label}" is a {left.kind} column and "{right.label}" is a {right.kind} column, '
-                    f"so they cannot be compared."
-                )
-            other, known = right.expr, left.known & right.known
-        cond = _COMPARE_WITH[type(op)](left.expr, other)
-        return cond.fill_null(False) & known, (~cond).fill_null(False) & known
-
-    def _fit(self, side: _Side, value, sign: str):
-        """A written value, checked against the kind of the column it is compared with."""
-        label, kind = side.label, side.kind
-        if kind == "number":
-            if _is_number(value):
-                return value
-            if isinstance(value, str) and _looks_like_number(value):
-                raise _condition_error(
-                    f'"{label}" holds numbers, so write the number without quotes: {label} {sign} {value.strip()}'
-                )
-            raise _condition_error(f'"{label}" holds numbers, so compare it with a number, like {label} {sign} 50.')
-        if kind == "text":
-            if isinstance(value, str):
-                return value
-            hint = (f' If "{label}" holds numbers written as text, first use table.make_numbers("{label}").'
-                    if _is_number(value) else "")
-            raise _condition_error(f"\"{label}\" is a text column, so put the text in quotes: {label} {sign} '{value}'.{hint}")
-        if kind == "true/false":
-            if isinstance(value, bool):
-                return value
-            raise _condition_error(f'"{label}" is a true/false column, so compare it with True or False (no quotes).')
-        if kind == "date":
-            is_datetime = self.frame.schema[side.column] == nw.Datetime if side.column else False
-            if isinstance(value, str):
-                try:
-                    when = _dt.datetime.fromisoformat(value.strip())
-                except ValueError:
-                    when = None
-                if when is not None:
-                    return when if is_datetime else when.date()
-            raise _condition_error(
-                f"\"{label}\" is a date column, so write the date in quotes as year-month-day: {label} {sign} '2026-03-15'."
-            )
-        raise _condition_error(
-            f'"{label}" holds a mix of things. Turn it into text first with table.make_text("{label}").'
-        )
 
 
 def _rule_of(step: str, rule, example: str):
@@ -747,7 +369,7 @@ class RowWords:
                 cond, words = col != value, f"is not {_say(value)}"
         return cond.fill_null(False) & ~empty, words
 
-    def _filter(self, what: str, keep_expr, kept_word: bool = True):
+    def _filter(self, what: str, keep_expr, kept_word: bool = True, note: str = ""):
         before = len(self._frame)
         new = self._frame.filter(keep_expr)
         after = len(new)
@@ -755,6 +377,8 @@ class RowWords:
             print(f"Kept {after} of {_rows(before)}.")
         else:
             print(f"Removed {before - after} of {_rows(before)}. {_rows(after)} left.")
+        if note:
+            print(note)
         return self._change(what, new)
 
     def _report_failed(self, column: str, kind_word: str, new_values) -> int:
@@ -804,7 +428,7 @@ class RowWords:
     def count_empty_cells(self):
         """Show how many empty cells each column has.
 
-        table.count_empty_cells()   (with sdata.example("marks"))
+        table.count_empty_cells()   (with sdata.example("shop"))
         """
         counts = {name: self._count(self._empty(name)) for name in self._columns}
         width = max((len(str(n)) for n in counts), default=0)
@@ -871,7 +495,7 @@ class RowWords:
 
     # ================================================================== choosing rows
     def _where(self, step: str, column, options: dict, extra: tuple):
-        """(condition, words) for keep_rows()/remove_rows(): a written condition or one plain word."""
+        """(condition, words, note) for keep_rows()/remove_rows(): a written condition or one plain word."""
         given = any(v is not _NOT_GIVEN for v in options.values())
         if isinstance(column, str) and column not in self._frame.columns:
             text = column.strip()
@@ -881,22 +505,32 @@ class RowWords:
                         f".{step}() takes either a written condition or a column with one plain word, not both."
                         + _example(f'table.{step}("marks > 50")') + _example(f'table.{step}("marks", above=50)')
                     )
-                return self._read_condition(step, text), text
+                true, note = self._read_condition(step, text)
+                return true, text, note
         is_yes_no = isinstance(column, str) and column in self._frame.columns and self._kind_of(column) == "true/false"
         if is_yes_no and not given and not extra:  # keep_rows("passed")
-            return self._read_condition(step, f"`{column}`"), f"{column} is True"
+            true, note = self._read_condition(step, f"`{column}`")
+            return true, f"{column} is True", note
         cond, words = self._condition(step, column, options, extra)
-        return cond, f"{column} {words}"
+        return cond, f"{column} {words}", ""
 
     def _read_condition(self, step: str, text: str):
-        true, _ = _ConditionReader(text, self._frame).read()
+        """(where the condition is surely true, a note about rows it could not check)."""
+        reader = _ConditionReader(text, self._frame)
+        true, false = reader.read()
         try:
             self._count(true)  # check now that it can be worked out, so errors come at once
         except Exception as error:  # noqa: BLE001 - shown to the user in plain words
             raise _condition_error(
                 f'simplydata could not check the condition "{text}" ({type(error).__name__}).'
             ) from None
-        return true
+        n, note = empty_cells_note(self._frame, true, false, reader.used)
+        if n:
+            gone = "they were left out" if step == "keep_rows" else "they were not removed"
+            if n == 1:
+                gone = "it was left out" if step == "keep_rows" else "it was not removed"
+            note = note[:-1] + f", so {gone}."
+        return true, note
 
     @friendly
     def keep_rows(self, column=None, *extra, above=_NOT_GIVEN, below=_NOT_GIVEN, at_least=_NOT_GIVEN,
@@ -916,8 +550,8 @@ class RowWords:
         options = dict(above=above, below=below, at_least=at_least, at_most=at_most, equal_to=equal_to,
                        not_equal_to=not_equal_to, between=between, one_of=one_of, contains=contains,
                        starts_with=starts_with, ends_with=ends_with, is_empty=is_empty, after=after, before=before)
-        cond, words = self._where("keep_rows", column, options, extra)
-        return self._filter(f"keep rows where {words}", cond)
+        cond, words, note = self._where("keep_rows", column, options, extra)
+        return self._filter(f"keep rows where {words}", cond, note=note)
 
     @friendly
     def remove_rows(self, column=None, *extra, above=_NOT_GIVEN, below=_NOT_GIVEN, at_least=_NOT_GIVEN,
@@ -934,8 +568,8 @@ class RowWords:
         options = dict(above=above, below=below, at_least=at_least, at_most=at_most, equal_to=equal_to,
                        not_equal_to=not_equal_to, between=between, one_of=one_of, contains=contains,
                        starts_with=starts_with, ends_with=ends_with, is_empty=is_empty, after=after, before=before)
-        cond, words = self._where("remove_rows", column, options, extra)
-        return self._filter(f"remove rows where {words}", ~cond, kept_word=False)
+        cond, words, note = self._where("remove_rows", column, options, extra)
+        return self._filter(f"remove rows where {words}", ~cond, kept_word=False, note=note)
 
     @friendly
     def keep_first_rows(self, n=5):
@@ -1010,7 +644,7 @@ class RowWords:
     def remove_rows_with_empty_cells(self, column=None):
         """Remove rows with an empty cell (in any column, or only in the column you name).
 
-        table.remove_rows_with_empty_cells("marks")   (with sdata.example("marks"))
+        table.remove_rows_with_empty_cells("sales")   (with sdata.example("shop"))
         """
         if column is None:
             names, what = self._columns, "remove rows with an empty cell"
@@ -1022,10 +656,16 @@ class RowWords:
         return self._filter(what, ~any_empty.fill_null(False), kept_word=False)
 
     @friendly
-    def fill_empty_cells(self, column=None, with_value=None, with_the=None):
+    def fill_empty_cells(self, column=None, with_value=None, with_the=None, sorted_by=None, for_each=None):
         """Fill the empty cells of a column with a value, or with the average, median, value above or value below.
 
-        table.fill_empty_cells("marks", with_the="average")   (with sdata.example("marks"))
+        table.fill_empty_cells("customers", with_the="median")   (with sdata.example("shop"))
+        with_the="line between neighbours" fills each gap on the straight line between the
+        filled cells just before and just after it (linear interpolation). It follows the rows
+        in table order, or sorted_by= a column of numbers or dates (then the line is spaced by
+        those values, so a missing day counts as one day); for_each= fills each group on its
+        own. Empty cells at the start or end have only one neighbour, so they stay empty.
+          table.fill_empty_cells("sales", with_the="line between neighbours", sorted_by="date", for_each="shop")
         """
         example = 'table.fill_empty_cells("marks", with_the="average")'
         self._need_one_column("fill_empty_cells", column, example)
@@ -1035,6 +675,16 @@ class RowWords:
                 + _example('table.fill_empty_cells("marks", with_value=0)')
                 + _example(example)
             )
+        if with_the is not None:
+            choice = str(with_the).strip().lower().replace("_", " ").replace("neighbors", "neighbours")
+            if choice == "line between neighbours":
+                return self._fill_by_line(column, sorted_by, for_each)
+        if sorted_by is not None or for_each is not None:
+            raise SimplydataError(
+                'sorted_by= and for_each= go with with_the="line between neighbours".'
+                + _example('table.fill_empty_cells("sales", with_the="line between neighbours", sorted_by="date")',
+                           "shop")
+            )
         empty = self._empty(column)
         kind = self._kind_of(column)
         col = nw.col(column)
@@ -1042,7 +692,6 @@ class RowWords:
             value = self._value_for("with_value", column, with_value, 'table.fill_empty_cells("marks", with_value=0)')
             new_col, how = nw.when(empty).then(nw.lit(value)).otherwise(col), _say(value)
         else:
-            choice = str(with_the).strip().lower().replace("_", " ")
             self._check_choice("fill_empty_cells", "with_the", choice, FILL_CHOICES)
             if choice in ("average", "median"):
                 if kind != "number":
@@ -1065,6 +714,65 @@ class RowWords:
         print(f"Filled {_cells(before - after)} in {column}."
               + (f" {_cells(after)} stayed empty (nothing to copy from)." if after else ""))
         return self._change(f"fill empty cells in {column} with {how}", new)
+
+    def _fill_by_line(self, column, sorted_by, for_each):
+        """fill_empty_cells(with_the="line between neighbours"): see line_between_neighbours()."""
+        from .._stats import line_between_neighbours
+
+        example = 'table.fill_empty_cells("sales", with_the="line between neighbours", sorted_by="date")'
+        kind = self._kind_of(column)
+        if kind != "number":
+            raise SimplydataError(
+                f'with_the="line between neighbours" needs numbers, but "{column}" is a {kind} column. '
+                f'Try with_the="value above" or with_value= instead.' + _example(example, "shop")
+            )
+        keys = [for_each] if isinstance(for_each, str) else list(for_each or [])
+        if for_each is not None and (not keys or not all(isinstance(k, str) for k in keys)):
+            raise SimplydataError("for_each= should be a column name or a list of column names." + _example(example, "shop"))
+        if sorted_by is not None and not isinstance(sorted_by, str):
+            raise SimplydataError("sorted_by= should be one column name, such as a date." + _example(example, "shop"))
+        self._need_columns(*keys, *([sorted_by] if sorted_by else []))
+        frame = self._frame
+        values = frame[column].cast(nw.Float64).to_numpy()
+        x = None
+        if sorted_by is not None:
+            by_kind = self._kind_of(sorted_by)
+            if by_kind not in ("number", "date"):
+                raise SimplydataError(
+                    f'sorted_by= puts the rows in order of numbers or dates, but "{sorted_by}" is a {by_kind} column.'
+                    + _example(example, "shop")
+                )
+            raw = frame[sorted_by].to_numpy()
+            if by_kind == "date":
+                raw = raw.astype("datetime64[us]")
+                missing = raw != raw  # NaT
+                x = raw.astype("int64").astype(float) / 86_400_000_000  # in days
+                x[missing] = float("nan")
+            else:
+                x = frame[sorted_by].cast(nw.Float64).to_numpy()
+        groups = None
+        if keys:
+            columns = [frame[k].to_list() for k in keys]
+            place = {}
+            groups = [place.setdefault(key, len(place)) for key in zip(*columns)]
+        new_values = line_between_neighbours(values, x, groups)
+        before = self._count(self._empty(column))
+        new = frame.with_columns(nw.new_series(column, new_values, nw.Float64, backend=frame.implementation))
+        after = _count_in(new, _empty_in(new, column))
+        order = f" in order of {sorted_by}" if sorted_by else " in table order"
+        each = f", for each {', '.join(keys)} on its own" if keys else ""
+        print(f"Filled {_cells(before - after)} in {column} on the line between neighbours{order}{each}.")
+        no_place = _count_in(frame, self._empty(column) & self._empty(sorted_by)) if sorted_by else 0
+        if after - no_place:
+            ends = "the start or end of a group" if keys else "the start or end"
+            n = after - no_place
+            print(f"Note: {_cells(n)} stayed empty: {'it is' if n == 1 else 'they are'} at {ends}, "
+                  "with a filled neighbour on one side only.")
+        if no_place:
+            print(f"Note: {_cells(no_place)} stayed empty because {sorted_by} is empty in "
+                  f"{'that row' if no_place == 1 else 'those rows'}.")
+        what = f"fill empty cells in {column} with the line between neighbours{order}{each}"
+        return self._change(what, new)
 
     # ================================================================== fixing columns
     @friendly
@@ -1102,15 +810,22 @@ class RowWords:
         return self._change(f"make {column} into numbers", self._frame.with_columns(values))
 
     @friendly
-    def make_dates(self, column=None):
+    def make_dates(self, column=None, order=None):
         """Turn a column into dates; cells that are not dates become empty.
 
         table.make_dates("year")   (with sdata.example("growth"))
         Understands 2026-03-15, 15/03/2026, 15.03.2026, 15 March 2026, March 15, 2026, 2026-03 and 2026.
-        03/04/2026 is read day first, as 3 April.
+        03/04/2026 is read day first, as 3 April (month first only when day first cannot work).
+        order= says how the dates are written, so nothing is guessed: "day month year"
+        (15/03/2026), "month day year" (03/15/2026) or "year month day" (2026/03/15).
+          table.make_dates("when", order="month day year")
         """
         example = 'table.make_dates("year")'
         self._need_one_column("make_dates", column, example)
+        if order is not None:
+            if isinstance(order, str):
+                order = " ".join(order.lower().replace(",", " ").replace("-", " ").split())
+            self._check_choice("make_dates", "order", order, DATE_ORDERS)
         kind = self._kind_of(column)
         col = nw.col(column)
         if kind == "date":
@@ -1128,10 +843,13 @@ class RowWords:
             nw.when(text.str.contains(r"^\d{4}-\d{1,2}$").fill_null(False)).then(text + nw.lit("-01")).otherwise(text)
         )
         cleaned = self._frame.select(text.alias(column))[column]
-        values = nw.from_native(_parse_dates(cleaned.to_native()), series_only=True).alias(column)
+        formats = DATE_FORMATS if order is None else DATE_ORDERS[order]
+        values = nw.from_native(_parse_dates(cleaned.to_native(), formats), series_only=True).alias(column)
         self._report_failed(column, "dates", values)
-        print(f"{column} is now dates.")
-        return self._change(f"make {column} into dates", self._frame.with_columns(values))
+        read_as = "" if order is None else f" (read as {order})"
+        print(f"{column} is now dates{read_as}.")
+        what = f"make {column} into dates" + ("" if order is None else f', order="{order}"')
+        return self._change(what, self._frame.with_columns(values))
 
     @friendly
     def make_text(self, column=None):

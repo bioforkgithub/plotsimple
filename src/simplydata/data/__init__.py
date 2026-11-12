@@ -12,6 +12,8 @@ import pandas as pd
 from .._errors import SimplydataError, suggest
 
 # name -> (what it is, what each column means)
+# Columns read as dates (the files keep them as year-month-day text).
+DATE_COLUMNS = {"shop": ["date"]}
 EXAMPLES = {
     "marks": (
         "Test marks of 18 made-up children in three classes.",
@@ -55,6 +57,15 @@ EXAMPLES = {
             "forest": "how much of the land is forest, in %",
         },
     ),
+    "shop": (
+        "Daily sales of two made-up shops from January to March 2026. Some cells are empty.",
+        {
+            "date": "every day from 2026-01-01 to 2026-03-31 (real dates)",
+            "shop": "Northgate or Southside",
+            "sales": "money taken that day (made-up money); empty on days the till broke",
+            "customers": "how many people bought something; empty on days nobody counted",
+        },
+    ),
     "island": (
         "A map of a made-up island with two hills, on a 15 x 15 grid.",
         {
@@ -80,7 +91,8 @@ def example(name: str | None = None):
     """A small made-up table to practise with. sdata.example("marks")
 
     sdata.example() with no name lists every table and its columns.
-    The tables are: marks, weather, fruit, growth, island.
+    The tables are: marks, weather, fruit, growth, shop, island.
+    Only "shop" has empty cells and a column of dates, to practise with.
     """
     if name is None:
         _list_examples()
@@ -96,4 +108,4 @@ def example(name: str | None = None):
         lines.append("Tables you can use: " + ", ".join(EXAMPLES))
         raise SimplydataError("\n".join(lines))
     with (files(__name__) / f"{key}.csv").open("r", encoding="utf-8") as fh:
-        return pd.read_csv(fh)
+        return pd.read_csv(fh, parse_dates=DATE_COLUMNS.get(key, False))

@@ -1,0 +1,4 @@
+The average of "marks" for each "subject" (rows) and each "class" (columns): a new table with 3 rows and 3 columns of numbers.
+  English: A 68, B 59.67, C 59.17
+  Maths: A 68.33, B 65.67, C 54.33
+  Science: A 79.17, B 67.5, C 62.33

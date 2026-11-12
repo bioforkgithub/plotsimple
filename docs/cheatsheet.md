@@ -65,6 +65,8 @@ and `a`, `b` in `sdata.side_by_side(a, b)` are charts you made first.
 | `contour` | `chart.contour(x="east", y="north", z="height")` | island | A map where each colour band joins places with the same height. |
 | `surface` | `chart.surface(x="east", y="north", z="height")` | island | A 3D landscape: z= is how high the ground is. |
 | `dots_3d` | `chart.dots_3d(x="hours", y="height", z="marks", colour="class")` | marks | Dots floating in a 3D box. |
+| `band` | `chart.band(x="month", between=["lowest", "highest"])` | weather | A shaded band between a low and a high column, along x. |
+| `empty_cells` | `chart.empty_cells()` | shop | A map of the empty cells: one row of the chart for each row of the table, one strip for each column, with empty cells coloured. |
 
 ## Statistics
 
@@ -101,6 +103,7 @@ and `a`, `b` in `sdata.side_by_side(a, b)` are charts you made first.
 | `label_y` | `chart.label_y("Marks")` | marks | The name beside the y-axis. |
 | `note` | `chart.note("Biggest", x=2024, y=49)` | growth | A note on the chart at a place x, y. |
 | `numbers_on_bars` | `chart.numbers_on_bars()` | fruit | Write the value of each bar on it. |
+| `names_on_dots` | `chart.names_on_dots("name")` | marks | Write a name next to each dot. |
 | `font_size` | `chart.font_size(14)` | marks | Make all the text bigger or smaller. |
 
 ## Axes
@@ -135,7 +138,16 @@ and `a`, `b` in `sdata.side_by_side(a, b)` are charts you made first.
 | `legend_right` | `chart.legend_right()` | weather | The legend to the right of the chart, outside the plot. |
 | `hide_legend` | `chart.hide_legend()` | weather | No legend. |
 | `show_legend` | `chart.show_legend()` | weather | The legend in its usual place, for example after hide_legend(). |
+| `label_legend` | `chart.label_legend("Class")` | marks | The name above the legend. |
 | `label_colour_bar` (also `label_color_bar`) | `chart.label_colour_bar("Height (m)")` | island | The name beside the colour bar of a heatmap or contour. |
+
+## Order of groups
+
+| Word | Example | Table | What it does |
+|---|---|---|---|
+| `order_x` | `chart.order_x("C", "B", "A")` | marks | Put the groups along the x-axis in your order. |
+| `order_y` | `chart.order_y("C", "B", "A")` | marks | Put the groups along the y-axis in your order, the first at the top. |
+| `order_legend` | `chart.order_legend("Science", "Maths", "English")` | marks | Put the colour groups in your order: in the legend, the colours and side by side. |
 
 ## Several charts
 
@@ -155,8 +167,10 @@ and `a`, `b` in `sdata.side_by_side(a, b)` are charts you made first.
 | `sdata.table` | `sdata.table(sdata.example("marks"))` | marks | Start a table. |
 | `show_first_rows` | `table.show_first_rows(5)` | marks | Show the first rows. |
 | `show_last_rows` | `table.show_last_rows(5)` | marks | Show the last rows. |
+| `show` | `table.show()` | marks | Show the table, every row and every column (or only the first rows=). |
 | `column_names` | `table.column_names()` | marks | The names of all columns. |
 | `describe_columns` | `table.describe_columns()` | marks | Describe every column: its kind, empty cells, smallest, biggest and average. |
+| `column` | `table.column("marks")` | marks | One column on its own: a column of numbers becomes sdata.numbers, any other a plain list. |
 
 ## Choose columns
 
@@ -170,20 +184,25 @@ and `a`, `b` in `sdata.side_by_side(a, b)` are charts you made first.
 
 | Word | Example | Table | What it does |
 |---|---|---|---|
-| `keep_rows` | `table.keep_rows("marks", above=50)` | marks | Keep only the rows that match one condition. |
-| `remove_rows` | `table.remove_rows("subject", equal_to="English")` | marks | Remove the rows that match one condition (the opposite of keep_rows). |
+| `keep_rows` | `table.keep_rows("marks", above=50)` | marks | Keep only the rows that match a condition. |
+| `remove_rows` | `table.remove_rows("subject", equal_to="English")` | marks | Remove the rows that match a condition (the opposite of keep_rows). |
 | `keep_first_rows` | `table.keep_first_rows(10)` | marks | Keep only the first rows. |
 | `keep_last_rows` | `table.keep_last_rows(10)` | marks | Keep only the last rows. |
 | `keep_random_rows` | `table.keep_random_rows(10, seed=1)` | marks | Keep some rows picked at random; give a seed to get the same rows every time. |
 | `remove_duplicate_rows` | `table.remove_duplicate_rows(columns=["name"])` | marks | Remove rows that repeat an earlier row, or that repeat it in the columns you name. |
+| `keep_biggest_rows` | `table.keep_biggest_rows(3, by="marks", for_each="subject")` | marks | Keep the n rows with the biggest values in a column (also for each group). |
+| `keep_smallest_rows` | `table.keep_smallest_rows(3, by="marks", for_each="subject")` | marks | Keep the n rows with the smallest values in a column (also for each group). |
+| `show_rows_with_outliers` | `table.show_rows_with_outliers("marks", for_each="subject")` | marks | Show the rows whose value in a column is an outlier, and say why (the table does not change). |
+| `remove_rows_with_outliers` | `table.remove_rows_with_outliers("marks", for_each="subject")` | marks | Remove the rows whose value in a column is an outlier, and say how many and why. |
 
 ## Empty cells
 
 | Word | Example | Table | What it does |
 |---|---|---|---|
-| `count_empty_cells` | `table.count_empty_cells()` | marks | Show how many empty cells each column has. |
-| `remove_rows_with_empty_cells` | `table.remove_rows_with_empty_cells("marks")` | marks | Remove rows with an empty cell (in any column, or only in the column you name). |
-| `fill_empty_cells` | `table.fill_empty_cells("marks", with_the="average")` | marks | Fill the empty cells of a column with a value, or with the average, median, value above or value below. |
+| `count_empty_cells` | `table.count_empty_cells()` | shop | Show how many empty cells each column has. |
+| `remove_rows_with_empty_cells` | `table.remove_rows_with_empty_cells("sales")` | shop | Remove rows with an empty cell (in any column, or only in the column you name). |
+| `fill_empty_cells` | `table.fill_empty_cells("customers", with_the="median")` | shop | Fill the empty cells of a column with a value, or with the average, median, value above or value below. |
+| `add_is_empty_column` | `table.add_is_empty_column("sales_was_empty", from_column="sales")` | shop | Add a true/false column: True where a cell of from_column is empty. |
 
 ## Fix columns
 
@@ -196,6 +215,8 @@ and `a`, `b` in `sdata.side_by_side(a, b)` are charts you made first.
 | `make_uppercase` | `table.make_uppercase("name")` | marks | Write all the text in a column in capital letters. |
 | `remove_extra_spaces` | `table.remove_extra_spaces("name")` | marks | Remove spaces at the start and end of the text, and double spaces inside it. |
 | `replace_values` | `table.replace_values("subject", "Maths", with_value="Math")` | marks | Replace a value (or a list of values) in a column; with_value=None makes those cells empty. |
+| `round_to` | `table.round_to("hours", 0)` | marks | Round numbers to this many decimal places: in one column, a list of columns, or every number column. |
+| `change_column` | `table.change_column("marks", "marks / 10")` | marks | Change the values of a column in place, with the same ways as add_column(). |
 
 ## Sort and new columns
 
@@ -203,8 +224,28 @@ and `a`, `b` in `sdata.side_by_side(a, b)` are charts you made first.
 |---|---|---|---|
 | `sort_by` | `table.sort_by("marks", biggest_first=True)` | marks | Put the rows in order of one or more columns; empty cells go last. |
 | `add_column` | `table.add_column("study_and_marks", by_adding=["hours", "marks"])` | marks | Add a new column, worked out from other columns in plain words or with a formula. |
-| `add_group_column` | `table.add_group_column("grade", from_column="marks", cut_at=[40, 60, 80], names=["D", "C", "B", "A"])` | marks | Add a column that puts each number into a group, like turning marks into grades. |
+| `add_group_column` | `table.add_group_column("grade", from_column="marks", cut_at=[40, 60, 80], names=["D", "C", "B", "A"])` | marks | Add a column that puts each row into a group, like turning marks into grades. |
 | `add_rank_column` | `table.add_rank_column("place", from_column="marks")` | marks | Add a column with each row's place, where 1 is the best. |
+
+## Dates and text
+
+| Word | Example | Table | What it does |
+|---|---|---|---|
+| `add_date_part_column` | `table.add_date_part_column("weekday", from_column="date", part="weekday name")` | shop | Add a column with one part of each date, such as its year, month or weekday. |
+| `add_text_part_column` | `table.add_text_part_column("initial", from_column="name", first_characters=1)` | marks | Add a column with one part of each text, such as its first letters or the text before a mark. |
+| `split_column` | `table.split_column("shop", separator=" ", into=["shop_kind", "shop_word"])` | fruit | Split a text column into several columns at a separator, such as a comma or a space. |
+| `replace_text` | `table.replace_text("shop", " shop", with_value="")` | fruit | Replace a piece of text inside the cells of a text column, wherever it appears. |
+
+## Row after row
+
+| Word | Example | Table | What it does |
+|---|---|---|---|
+| `add_rolling_column` | `table.add_rolling_column("rain_3_months", from_column="rain", window=3, show="total",
+                           for_each="city", sorted_by="month_number")` | weather | Add a rolling (moving) summary: for each row, the average of this row and the rows just before it. |
+| `add_previous_value_column` | `table.add_previous_value_column("last_month", from_column="temperature", for_each="city",
+                                  sorted_by="month_number")` | weather | Add a column with the value from the row before (or rows_back= rows before). |
+| `add_change_column` | `table.add_change_column("growth", from_column="population", in_percent=True,
+                          for_each="country", sorted_by="year")` | growth | Add a column with the change from the row before: this value minus the previous one. |
 
 ## Summaries
 
@@ -218,19 +259,24 @@ and `a`, `b` in `sdata.side_by_side(a, b)` are charts you made first.
 | `smallest_of` | `table.smallest_of("temperature", for_each="city")` | weather | The smallest number in a column; empty cells are skipped. |
 | `biggest_of` | `table.biggest_of("temperature", for_each="city")` | weather | The biggest number in a column; empty cells are skipped. |
 | `standard_deviation_of` | `table.standard_deviation_of("marks", for_each="class")` | marks | How spread out the numbers are: the sample standard deviation (divide by n - 1). |
-| `correlation_between` | `table.correlation_between("hours", "marks")` | marks | How strongly two columns of numbers go up or down together, from -1 to 1. |
+| `summary_of` | `table.summary_of("marks", for_each="class", show=["average", "standard deviation", "count"])` | marks | Several measures of one or more columns at once, in one tidy table. |
+| `percent_of` | `table.percent_of("marks", above=60, for_each="class")` | marks | What percent of the rows meet a condition, or each group's share. |
+| `count_different_values` | `table.count_different_values("name", for_each="class")` | marks | How many different values a column has, or how many in each group. |
+| `correlation_between` | `table.correlation_between("hours", "marks")` | marks | How strongly columns of numbers go up or down together, from -1 to 1. |
 
 ## Statistical tests
 
 | Word | Example | Table | What it does |
 |---|---|---|---|
-| `compare_averages` | `table.compare_averages("marks", between="class")` | marks | Are the averages of the groups really different, or could it be chance? |
-| `compare_each_pair` | `table.compare_each_pair("marks", between="class")` | marks | Which pairs of groups differ? Every pair is compared, with Holm's correction. |
+| `compare_averages` | `table.compare_averages("marks", for_each="class")` | marks | Are the averages of the groups really different, or could it be chance? |
+| `compare_each_pair` | `table.compare_each_pair("marks", for_each="class")` | marks | Which pairs of groups differ? Every pair is compared, with Holm's correction. |
 | `compare_before_after` | `table.compare_before_after("Maths", "Science")` | marks | Did the values change from one column to the other, row by row, more than chance? |
 | `compare_average_to` | `table.compare_average_to("marks", 60)` | marks | Is the average of a column different from a number you choose, or could it be chance? |
-| `compare_counts` | `table.compare_counts("result", between="class")` | marks | Does how often each value turns up differ between groups, more than chance? |
+| `compare_counts` | `table.compare_counts("result", for_each="class")` | marks | Does how often each value turns up differ between groups, more than chance? |
 | `fit_straight_line` | `table.fit_straight_line(x="hours", y="marks")` | marks | Fit the straight line y = slope * x + intercept that best follows the points. |
 | `fit_formula` | `table.fit_formula("population = a * exp(b * (year - 2000))")` | growth | Find the values in a formula that make it follow the data best. |
+| `compare_shape_to` | `table.compare_shape_to("marks", "normal", for_each="class")` | marks | Do the values look bell-shaped (normal), or are they too far from it to be chance? |
+| `add_adjusted_p_value_column` | `table.add_adjusted_p_value_column("q", method="benjamini-hochberg")` | marks | Adjust p-values for testing many things at once, in a new column. |
 
 ## Combine and reshape
 

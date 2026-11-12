@@ -200,7 +200,7 @@
 import simplydata as sdata
 
 table = sdata.table(sdata.example("marks"))
-table.compare_averages("marks", between="class")
+table.compare_averages("marks", for_each="class")
 chart = table.chart()
 chart.boxes(x="class", y="marks")
 chart.save("marks.png")
@@ -397,6 +397,16 @@ country & Applia, Bananaland, Cherria or Dateland\\
 population & people, in millions\\
 forest & how much of the land is forest, in \%\\
 \bottomrule\end{tabularx}\end{center}
+\section*{shop}
+Daily sales of two made-up shops from January to March 2026. Some cells are empty. \code{sdata.\allowbreak{}example(\textquotedbl{}shop\textquotedbl{})}
+\begin{center}\small
+\begin{tabularx}{\textwidth}{@{}>{\ttfamily}l>{\raggedright\arraybackslash}X@{}}
+\toprule \textrm{\textbf{Column}} & \textbf{What it holds}\\ \midrule
+date & every day from 2026-01-01 to 2026-03-31 (real dates)\\
+shop & Northgate or Southside\\
+sales & money taken that day (made-up money); empty on days the till broke\\
+customers & how many people bought something; empty on days nobody counted\\
+\bottomrule\end{tabularx}\end{center}
 \section*{island}
 A map of a made-up island with two hills, on a 15 x 15 grid. \code{sdata.\allowbreak{}example(\textquotedbl{}island\textquotedbl{})}
 \begin{center}\small
@@ -472,7 +482,7 @@ Worked solutions: page~\pageref{solutions:1}, or type \code{sdata.\allowbreak{}l
   \item how to add a small caption and change the size of the text
 \end{itemize}
 \end{learnbox}
-\section*{Example}
+\section*{Example 1}
 A chart is easier to read when it says what it shows. First draw, then add the words.
 \begin{lstlisting}[style=py]
 import simplydata as sdata
@@ -504,7 +514,33 @@ chart.save("lesson2.png")
 \printedoutput{output/lesson02_example1.txt}
 \begin{center}\begin{minipage}{\linewidth}\centering
 \includegraphics[width=0.72\textwidth,height=0.36\textheight,keepaspectratio]{figures/lesson02_example1_lesson2.pdf}
-\captionof{figure}{Lesson 2, example: \code{lesson2.\allowbreak{}png}.}
+\captionof{figure}{Lesson 2, example 1: \code{lesson2.\allowbreak{}png}.}
+\end{minipage}\end{center}
+\section*{Example 2}
+Words can also go next to the dots: a name for each dot, where it covers nothing.
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+kids = {"name": ["Asha", "Ben", "Chen", "Dina", "Eli"], "hours": [2.0, 5.5, 3.1, 7.2, 4.4], "marks": [48, 71, 55, 88, 62]}
+chart = sdata.chart(kids)
+chart.dots(x="hours", y="marks")
+chart.names_on_dots("name")
+chart.label_x("Hours of study")
+chart.save("lesson2_names.png")
+\end{lstlisting}
+\whateachline
+\begin{lineexplain}
+  \item[1] Load simplydata.
+  \item[2] A small table typed by hand: each column name, then its values in a list.
+  \item[3] Start a chart of it.
+  \item[4] One dot for each child.
+  \item[5] Write each name next to its dot, where it covers no other name or dot. A name with no free place is left out, and a line says so.
+  \item[6] Name the x-axis.
+  \item[7] Save it.
+\end{lineexplain}
+\printedoutput{output/lesson02_example2.txt}
+\begin{center}\begin{minipage}{\linewidth}\centering
+\includegraphics[width=0.72\textwidth,height=0.36\textheight,keepaspectratio]{figures/lesson02_example2_lesson2_names.pdf}
+\captionof{figure}{Lesson 2, example 2: \code{lesson2\_\allowbreak{}names.\allowbreak{}png}.}
 \end{minipage}\end{center}
 \begin{goodtoknow}
 \begin{itemize}
@@ -520,7 +556,7 @@ chart.save("lesson2.png")
 \end{enumerate}
 Worked solutions: page~\pageref{solutions:2}, or type \code{sdata.\allowbreak{}lesson(2,\allowbreak{} solutions=True)}.
 \end{tryit}
-\par\noindent{\small\sffamily\textbf{Words in this lesson:} \hyperref[word:title-top]{\code{chart.\allowbreak{}title\_\allowbreak{}top()}}, \hyperref[word:label-x]{\code{chart.\allowbreak{}label\_\allowbreak{}x()}}, \hyperref[word:label-y]{\code{chart.\allowbreak{}label\_\allowbreak{}y()}}, \hyperref[word:rotate-labels-x]{\code{chart.\allowbreak{}rotate\_\allowbreak{}labels\_\allowbreak{}x()}}, \hyperref[word:caption-bottom]{\code{chart.\allowbreak{}caption\_\allowbreak{}bottom()}}, \hyperref[word:font-size]{\code{chart.\allowbreak{}font\_\allowbreak{}size()}}.\par}
+\par\noindent{\small\sffamily\textbf{Words in this lesson:} \hyperref[word:title-top]{\code{chart.\allowbreak{}title\_\allowbreak{}top()}}, \hyperref[word:label-x]{\code{chart.\allowbreak{}label\_\allowbreak{}x()}}, \hyperref[word:label-y]{\code{chart.\allowbreak{}label\_\allowbreak{}y()}}, \hyperref[word:rotate-labels-x]{\code{chart.\allowbreak{}rotate\_\allowbreak{}labels\_\allowbreak{}x()}}, \hyperref[word:caption-bottom]{\code{chart.\allowbreak{}caption\_\allowbreak{}bottom()}}, \hyperref[word:font-size]{\code{chart.\allowbreak{}font\_\allowbreak{}size()}}, \hyperref[word:names-on-dots]{\code{chart.\allowbreak{}names\_\allowbreak{}on\_\allowbreak{}dots()}}.\par}
 
 \chapter{Colours, groups and legends}\label{lesson:3}
 \begin{learnbox}
@@ -585,10 +621,39 @@ chart.save("lesson3_look.png")
 \includegraphics[width=0.72\textwidth,height=0.36\textheight,keepaspectratio]{figures/lesson03_example2_lesson3_look.pdf}
 \captionof{figure}{Lesson 3, example 2: \code{lesson3\_\allowbreak{}look.\allowbreak{}png}.}
 \end{minipage}\end{center}
+\section*{Example 3}
+Groups come in the order they first appear in the table. You can choose another order, and give the legend a name.
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+marks = sdata.example("marks")
+chart = sdata.chart(marks)
+chart.bars(x="class", y="marks", colour="subject")
+chart.order_x("C", "B", "A")
+chart.order_legend("Science", "Maths", "English")
+chart.label_legend("Subject")
+chart.save("lesson3_order.png")
+\end{lstlisting}
+\whateachline
+\begin{lineexplain}
+  \item[1] Load simplydata.
+  \item[2] Get the marks table.
+  \item[3] Start a chart.
+  \item[4] For each class, one bar per subject.
+  \item[5] Put the classes along the x-axis in this order.
+  \item[6] Put the subjects in this order: in the legend and side by side in each class.
+  \item[7] The name above the legend (normally the column name).
+  \item[8] Save it.
+\end{lineexplain}
+\printedoutput{output/lesson03_example3.txt}
+\begin{center}\begin{minipage}{\linewidth}\centering
+\includegraphics[width=0.72\textwidth,height=0.36\textheight,keepaspectratio]{figures/lesson03_example3_lesson3_order.pdf}
+\captionof{figure}{Lesson 3, example 3: \code{lesson3\_\allowbreak{}order.\allowbreak{}png}.}
+\end{minipage}\end{center}
 \begin{goodtoknow}
 \begin{itemize}
   \item \code{colour=\textquotedbl{}class\textquotedbl{}} (a column) gives each group a colour. \code{colour=\textquotedbl{}red\textquotedbl{}} (a colour) makes that step red. color works too.
   \item The legend can go on any side: \code{legend\_\allowbreak{}top}, \code{legend\_\allowbreak{}bottom}, \code{legend\_\allowbreak{}left}, \code{legend\_\allowbreak{}right}. \code{hide\_\allowbreak{}legend} takes it away and \code{show\_\allowbreak{}legend} brings it back.
+  \item Month and weekday names (\code{\textquotedbl{}Jan\textquotedbl{}}, \code{\textquotedbl{}Monday\textquotedbl{}}) come in calendar order by themselves, also in the small charts of \code{one\_\allowbreak{}chart\_\allowbreak{}per} and the frames of animate. \code{order\_\allowbreak{}x(biggest\_\allowbreak{}first=True)} puts the biggest bar first, and \code{order\_\allowbreak{}y} orders the groups up the y-axis.
 \end{itemize}
 \end{goodtoknow}
 \begin{tryit}
@@ -599,7 +664,7 @@ chart.save("lesson3_look.png")
 \end{enumerate}
 Worked solutions: page~\pageref{solutions:3}, or type \code{sdata.\allowbreak{}lesson(3,\allowbreak{} solutions=True)}.
 \end{tryit}
-\par\noindent{\small\sffamily\textbf{Words in this lesson:} \hyperref[word:colours]{\code{chart.\allowbreak{}colours()}}, \hyperref[word:colour]{\code{chart.\allowbreak{}colour()}}, \hyperref[word:legend-bottom]{\code{chart.\allowbreak{}legend\_\allowbreak{}bottom()}}, \hyperref[word:legend-top]{\code{chart.\allowbreak{}legend\_\allowbreak{}top()}}, \hyperref[word:hide-legend]{\code{chart.\allowbreak{}hide\_\allowbreak{}legend()}}, \hyperref[word:style]{\code{chart.\allowbreak{}style()}}, \hyperref[word:lines]{\code{chart.\allowbreak{}lines()}}.\par}
+\par\noindent{\small\sffamily\textbf{Words in this lesson:} \hyperref[word:colours]{\code{chart.\allowbreak{}colours()}}, \hyperref[word:colour]{\code{chart.\allowbreak{}colour()}}, \hyperref[word:legend-bottom]{\code{chart.\allowbreak{}legend\_\allowbreak{}bottom()}}, \hyperref[word:legend-top]{\code{chart.\allowbreak{}legend\_\allowbreak{}top()}}, \hyperref[word:hide-legend]{\code{chart.\allowbreak{}hide\_\allowbreak{}legend()}}, \hyperref[word:style]{\code{chart.\allowbreak{}style()}}, \hyperref[word:lines]{\code{chart.\allowbreak{}lines()}}, \hyperref[word:order-x]{\code{chart.\allowbreak{}order\_\allowbreak{}x()}}, \hyperref[word:order-legend]{\code{chart.\allowbreak{}order\_\allowbreak{}legend()}}, \hyperref[word:label-legend]{\code{chart.\allowbreak{}label\_\allowbreak{}legend()}}.\par}
 
 \chapter{Different chart types}\label{lesson:4}
 \begin{learnbox}
@@ -902,6 +967,32 @@ chart.save("lesson6_log.png")
 \includegraphics[width=0.72\textwidth,height=0.36\textheight,keepaspectratio]{figures/lesson06_example2_lesson6_log.pdf}
 \captionof{figure}{Lesson 6, example 2: \code{lesson6\_\allowbreak{}log.\allowbreak{}png}.}
 \end{minipage}\end{center}
+\section*{Example 3}
+A band shades the space between a low and a high value at each x: a range, or the uncertainty around a line.
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+days = {"day": [1, 2, 3, 4, 5], "lowest": [3, 5, 4, 6, 8], "average": [6, 8, 7, 9, 11], "highest": [9, 11, 10, 12, 14]}
+chart = sdata.chart(days)
+chart.band(x="day", between=["lowest", "highest"], label="lowest to highest")
+chart.lines(x="day", y="average")
+chart.label_y("Temperature (°C)")
+chart.save("lesson6_band.png")
+\end{lstlisting}
+\whateachline
+\begin{lineexplain}
+  \item[1] Load simplydata.
+  \item[2] A small table: the lowest, average and highest temperature on five days.
+  \item[3] Start a chart of it.
+  \item[4] Shade from the lowest to the highest value of each day. \code{label=} names it in the legend.
+  \item[5] The average as a line through the band.
+  \item[6] Name the y-axis.
+  \item[7] Save it.
+\end{lineexplain}
+\printedoutput{output/lesson06_example3.txt}
+\begin{center}\begin{minipage}{\linewidth}\centering
+\includegraphics[width=0.72\textwidth,height=0.36\textheight,keepaspectratio]{figures/lesson06_example3_lesson6_band.pdf}
+\captionof{figure}{Lesson 6, example 3: \code{lesson6\_\allowbreak{}band.\allowbreak{}png}.}
+\end{minipage}\end{center}
 \begin{goodtoknow}
 \begin{itemize}
   \item Every axis word ends in \_x or \_y: \code{range\_\allowbreak{}x}, \code{ticks\_\allowbreak{}x}, \code{log\_\allowbreak{}scale\_\allowbreak{}x}, \code{line\_\allowbreak{}at\_\allowbreak{}x}, \code{shade\_\allowbreak{}between\_\allowbreak{}x}, \code{flip\_\allowbreak{}x} ...
@@ -917,7 +1008,7 @@ chart.save("lesson6_log.png")
 \end{enumerate}
 Worked solutions: page~\pageref{solutions:6}, or type \code{sdata.\allowbreak{}lesson(6,\allowbreak{} solutions=True)}.
 \end{tryit}
-\par\noindent{\small\sffamily\textbf{Words in this lesson:} \hyperref[word:range-y]{\code{chart.\allowbreak{}range\_\allowbreak{}y()}}, \hyperref[word:ticks-y]{\code{chart.\allowbreak{}ticks\_\allowbreak{}y()}}, \hyperref[word:line-at-y]{\code{chart.\allowbreak{}line\_\allowbreak{}at\_\allowbreak{}y()}}, \hyperref[word:shade-between-y]{\code{chart.\allowbreak{}shade\_\allowbreak{}between\_\allowbreak{}y()}}, \hyperref[word:log-scale-y]{\code{chart.\allowbreak{}log\_\allowbreak{}scale\_\allowbreak{}y()}}, \hyperref[word:line-at-x]{\code{chart.\allowbreak{}line\_\allowbreak{}at\_\allowbreak{}x()}}, \hyperref[word:flip-y]{\code{chart.\allowbreak{}flip\_\allowbreak{}y()}}.\par}
+\par\noindent{\small\sffamily\textbf{Words in this lesson:} \hyperref[word:range-y]{\code{chart.\allowbreak{}range\_\allowbreak{}y()}}, \hyperref[word:ticks-y]{\code{chart.\allowbreak{}ticks\_\allowbreak{}y()}}, \hyperref[word:line-at-y]{\code{chart.\allowbreak{}line\_\allowbreak{}at\_\allowbreak{}y()}}, \hyperref[word:shade-between-y]{\code{chart.\allowbreak{}shade\_\allowbreak{}between\_\allowbreak{}y()}}, \hyperref[word:log-scale-y]{\code{chart.\allowbreak{}log\_\allowbreak{}scale\_\allowbreak{}y()}}, \hyperref[word:line-at-x]{\code{chart.\allowbreak{}line\_\allowbreak{}at\_\allowbreak{}x()}}, \hyperref[word:flip-y]{\code{chart.\allowbreak{}flip\_\allowbreak{}y()}}, \hyperref[word:band]{\code{chart.\allowbreak{}band()}}.\par}
 
 \chapter{Several charts together}\label{lesson:7}
 \begin{learnbox}
@@ -1276,12 +1367,42 @@ table.count_each("shop")
   \item[5] The same for each shop.
 \end{lineexplain}
 \printedoutput{output/lesson09_example2.txt}
+\section*{Example 3}
+\code{sdata.\allowbreak{}table} can read many files at once. Here we first save two small files, then read them back together.
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+weather = sdata.table(sdata.example("weather"))
+weather.keep_first_rows(12)
+weather.save("lesson9_part1.csv")
+weather.start_again()
+weather.keep_last_rows(12)
+weather.save("lesson9_part2.csv")
+both = sdata.table("lesson9_part*.csv")
+both.count_each("file")
+both.show(rows=3)
+\end{lstlisting}
+\whateachline
+\begin{lineexplain}
+  \item[1] Load simplydata.
+  \item[2] Make a table of the weather.
+  \item[3] Keep the first 12 rows: one city, a whole year.
+  \item[4] Save them as a CSV file.
+  \item[5] Back to the whole table.
+  \item[6] Keep the last 12 rows: another city.
+  \item[7] Save them as a second file.
+  \item[8] Read every file whose name fits the pattern (* stands for any text) and stack them. A new column, \code{\textquotedbl{}file\textquotedbl{}}, says where each row came from.
+  \item[9] 12 rows from each file.
+  \item[10] Show the first 3 rows with every column. \code{both.\allowbreak{}show()} shows the whole table.
+\end{lineexplain}
+\printedoutput{output/lesson09_example3.txt}
 \begin{goodtoknow}
 \begin{itemize}
   \item Looking never changes the table. Only steps that say what they change (\code{keep\_\allowbreak{}rows}, \code{sort\_\allowbreak{}by} ...) do, and lesson 10 shows them.
   \item In Jupyter, VS Code or Spyder, write table on the last line of a cell to see it as a nice table.
   \item \code{sdata.\allowbreak{}table} reads the same files as \code{sdata.\allowbreak{}chart}: \code{.\allowbreak{}xlsx}, \code{.\allowbreak{}csv}, \code{.\allowbreak{}tsv}, \code{.\allowbreak{}parquet} and \code{.\allowbreak{}json}. For one sheet of an Excel file: \code{sdata.\allowbreak{}table(\textquotedbl{}results.\allowbreak{}xlsx\textquotedbl{},\allowbreak{} sheet=\textquotedbl{}2026\textquotedbl{})}.
   \item The row numbers on the left start at 0, as everywhere in Python.
+  \item A folder works too: \code{sdata.\allowbreak{}table(\textquotedbl{}data/\textquotedbl{})} reads every table file in it. A web address works like a file name: \code{sdata.\allowbreak{}table(\textquotedbl{}https://example.\allowbreak{}org/data.\allowbreak{}csv\textquotedbl{})}.
+  \item Files written in another way: \code{separator=\textquotedbl{};\textquotedbl{}}, \code{decimal\_\allowbreak{}mark=\textquotedbl{},\allowbreak{}\textquotedbl{}} (3,5 is three and a half), \code{thousands\_\allowbreak{}mark=\textquotedbl{}.\allowbreak{}\textquotedbl{}}, \code{empty\_\allowbreak{}values=[\textquotedbl{}NA\textquotedbl{},\allowbreak{} \textquotedbl{}-\textquotedbl{}]}, \code{skip\_\allowbreak{}rows=2} and \code{encoding=\textquotedbl{}latin-1\textquotedbl{}}.
 \end{itemize}
 \end{goodtoknow}
 \begin{tryit}
@@ -1292,7 +1413,7 @@ table.count_each("shop")
 \end{enumerate}
 Worked solutions: page~\pageref{solutions:9}, or type \code{sdata.\allowbreak{}lesson(9,\allowbreak{} solutions=True)}.
 \end{tryit}
-\par\noindent{\small\sffamily\textbf{Words in this lesson:} \hyperref[word:sdata.table]{\code{sdata.\allowbreak{}table()}}, \hyperref[word:table.show-first-rows]{\code{table.\allowbreak{}show\_\allowbreak{}first\_\allowbreak{}rows()}}, \hyperref[word:table.show-last-rows]{\code{table.\allowbreak{}show\_\allowbreak{}last\_\allowbreak{}rows()}}, \hyperref[word:table.column-names]{\code{table.\allowbreak{}column\_\allowbreak{}names()}}, \hyperref[word:table.describe-columns]{\code{table.\allowbreak{}describe\_\allowbreak{}columns()}}, \hyperref[word:table.count-rows]{\code{table.\allowbreak{}count\_\allowbreak{}rows()}}, \hyperref[word:table.count-each]{\code{table.\allowbreak{}count\_\allowbreak{}each()}}.\par}
+\par\noindent{\small\sffamily\textbf{Words in this lesson:} \hyperref[word:sdata.table]{\code{sdata.\allowbreak{}table()}}, \hyperref[word:table.show-first-rows]{\code{table.\allowbreak{}show\_\allowbreak{}first\_\allowbreak{}rows()}}, \hyperref[word:table.show-last-rows]{\code{table.\allowbreak{}show\_\allowbreak{}last\_\allowbreak{}rows()}}, \hyperref[word:table.column-names]{\code{table.\allowbreak{}column\_\allowbreak{}names()}}, \hyperref[word:table.describe-columns]{\code{table.\allowbreak{}describe\_\allowbreak{}columns()}}, \hyperref[word:table.count-rows]{\code{table.\allowbreak{}count\_\allowbreak{}rows()}}, \hyperref[word:table.count-each]{\code{table.\allowbreak{}count\_\allowbreak{}each()}}, \hyperref[word:table.show]{\code{table.\allowbreak{}show()}}.\par}
 
 \chapter{Tables: choose rows and columns, and undo}\label{lesson:10}
 \begin{learnbox}
@@ -1357,12 +1478,38 @@ table.save("lesson10_summer.xlsx")
   \item[8] Save the table as an Excel file. A name ending in \code{.\allowbreak{}csv} saves a CSV file.
 \end{lineexplain}
 \printedoutput{output/lesson10_example2.txt}
+\section*{Example 3}
+A condition can also be written out, with and, or, not and brackets. And \code{keep\_\allowbreak{}biggest\_\allowbreak{}rows} keeps the top rows of each group.
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+table = sdata.table(sdata.example("marks"))
+table.keep_rows("marks > 60 and subject == 'Maths'")
+table.undo()
+table.remove_rows("hours < 3 or class in ['B', 'C']")
+table.start_again()
+table.keep_biggest_rows(2, by="marks", for_each="subject")
+table.show()
+\end{lstlisting}
+\whateachline
+\begin{lineexplain}
+  \item[1] Load simplydata.
+  \item[2] Make a table of the marks.
+  \item[3] Keep the rows where both are true: a mark above 60, in Maths. Text goes in quotes, and == means \code{\textquotedbl{}is equal to\textquotedbl{}}.
+  \item[4] Back to all the rows.
+  \item[5] Remove the rows where at least one is true: under 3 hours of study, or class B or C.
+  \item[6] Back to the whole table.
+  \item[7] Keep the 2 best marks in each subject: 6 rows.
+  \item[8] Show the whole (small) table.
+\end{lineexplain}
+\printedoutput{output/lesson10_example3.txt}
 \begin{goodtoknow}
 \begin{itemize}
   \item Conditions for \code{keep\_\allowbreak{}rows} and \code{remove\_\allowbreak{}rows}: above, below, \code{at\_\allowbreak{}least}, \code{at\_\allowbreak{}most}, \code{equal\_\allowbreak{}to}, \code{not\_\allowbreak{}equal\_\allowbreak{}to}, between, \code{one\_\allowbreak{}of}, contains, \code{starts\_\allowbreak{}with}, \code{ends\_\allowbreak{}with} and \code{is\_\allowbreak{}empty}.
   \item \code{one\_\allowbreak{}of=} takes a list: \code{table.\allowbreak{}keep\_\allowbreak{}rows(\textquotedbl{}subject\textquotedbl{},\allowbreak{} one\_\allowbreak{}of=[\textquotedbl{}Maths\textquotedbl{},\allowbreak{} \textquotedbl{}Science\textquotedbl{}])}.
   \item \code{undo()} takes back one step at a time. \code{start\_\allowbreak{}again()} is a step too, so \code{undo()} can take it back.
   \item Your file is never changed: only \code{table.\allowbreak{}save(.\allowbreak{}.\allowbreak{}.\allowbreak{})} writes a file.
+  \item Written conditions use == != \textless{} \textless{}= \textgreater{} \textgreater{}=, and, or, not, brackets, in [...] and is empty. An empty cell never meets a condition, and not does not change that: \code{\textquotedbl{}not (marks \textgreater{} 50)\textquotedbl{}} leaves out empty marks too. To find them, write \code{\textquotedbl{}marks is empty\textquotedbl{}}. A note says how many rows had an empty cell.
+  \item Dates go in quotes as year-month-day: \code{table.\allowbreak{}keep\_\allowbreak{}rows(\textquotedbl{}date \textgreater{} '2026-03-01'\textquotedbl{})}, or \code{table.\allowbreak{}keep\_\allowbreak{}rows(\textquotedbl{}date\textquotedbl{},\allowbreak{} after=\textquotedbl{}2026-03-01\textquotedbl{})}.
 \end{itemize}
 \end{goodtoknow}
 \begin{tryit}
@@ -1370,10 +1517,11 @@ table.save("lesson10_summer.xlsx")
   \item In the marks table, keep only class \code{\textquotedbl{}B\textquotedbl{}} and sort by \code{\textquotedbl{}hours\textquotedbl{}}. Who studied the longest?
   \item Undo the sorting, then sort by name instead.
   \item Keep 5 random rows with \code{table.\allowbreak{}keep\_\allowbreak{}random\_\allowbreak{}rows(5,\allowbreak{} seed=1)} and save them as \code{\textquotedbl{}five.\allowbreak{}csv\textquotedbl{}}.
+  \item With one written condition, keep the rows with marks below 50 or hours above 8. How many rows are there?
 \end{enumerate}
 Worked solutions: page~\pageref{solutions:10}, or type \code{sdata.\allowbreak{}lesson(10,\allowbreak{} solutions=True)}.
 \end{tryit}
-\par\noindent{\small\sffamily\textbf{Words in this lesson:} \hyperref[word:table.keep-columns]{\code{table.\allowbreak{}keep\_\allowbreak{}columns()}}, \hyperref[word:table.keep-rows]{\code{table.\allowbreak{}keep\_\allowbreak{}rows()}}, \hyperref[word:table.sort-by]{\code{table.\allowbreak{}sort\_\allowbreak{}by()}}, \hyperref[word:table.steps]{\code{table.\allowbreak{}steps()}}, \hyperref[word:table.undo]{\code{table.\allowbreak{}undo()}}, \hyperref[word:table.start-again]{\code{table.\allowbreak{}start\_\allowbreak{}again()}}, \hyperref[word:table.remove-rows]{\code{table.\allowbreak{}remove\_\allowbreak{}rows()}}, \hyperref[word:table.remove-columns]{\code{table.\allowbreak{}remove\_\allowbreak{}columns()}}, \hyperref[word:table.rename-column]{\code{table.\allowbreak{}rename\_\allowbreak{}column()}}, \hyperref[word:table.save]{\code{table.\allowbreak{}save()}}, \hyperref[word:table.keep-random-rows]{\code{table.\allowbreak{}keep\_\allowbreak{}random\_\allowbreak{}rows()}}.\par}
+\par\noindent{\small\sffamily\textbf{Words in this lesson:} \hyperref[word:table.keep-columns]{\code{table.\allowbreak{}keep\_\allowbreak{}columns()}}, \hyperref[word:table.keep-rows]{\code{table.\allowbreak{}keep\_\allowbreak{}rows()}}, \hyperref[word:table.sort-by]{\code{table.\allowbreak{}sort\_\allowbreak{}by()}}, \hyperref[word:table.steps]{\code{table.\allowbreak{}steps()}}, \hyperref[word:table.undo]{\code{table.\allowbreak{}undo()}}, \hyperref[word:table.start-again]{\code{table.\allowbreak{}start\_\allowbreak{}again()}}, \hyperref[word:table.remove-rows]{\code{table.\allowbreak{}remove\_\allowbreak{}rows()}}, \hyperref[word:table.remove-columns]{\code{table.\allowbreak{}remove\_\allowbreak{}columns()}}, \hyperref[word:table.rename-column]{\code{table.\allowbreak{}rename\_\allowbreak{}column()}}, \hyperref[word:table.save]{\code{table.\allowbreak{}save()}}, \hyperref[word:table.keep-random-rows]{\code{table.\allowbreak{}keep\_\allowbreak{}random\_\allowbreak{}rows()}}, \hyperref[word:table.keep-biggest-rows]{\code{table.\allowbreak{}keep\_\allowbreak{}biggest\_\allowbreak{}rows()}}.\par}
 
 \chapter{Tables: clean the data and add new columns}\label{lesson:11}
 \begin{learnbox}
@@ -1474,6 +1622,68 @@ table.show_first_rows()
   \item[9] Who came first?
 \end{lineexplain}
 \printedoutput{output/lesson11_example4.txt}
+\section*{Example 5}
+The shop table has real dates and some empty cells: days when the till broke. Look where they are, then fill them.
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+table = sdata.table(sdata.example("shop"))
+table.count_empty_cells()
+look = table.chart()
+look.empty_cells()
+look.save("lesson11_empty_cells.png")
+table.add_is_empty_column("sales_was_empty", from_column="sales")
+table.fill_empty_cells("sales", with_the="line between neighbours", sorted_by="date", for_each="shop")
+table.add_date_part_column("weekday", from_column="date", part="weekday name")
+table.add_rolling_column("sales_7_days", from_column="sales", window=7, for_each="shop", sorted_by="date")
+table.show(rows=8)
+\end{lstlisting}
+\whateachline
+\begin{lineexplain}
+  \item[1] Load simplydata.
+  \item[2] Daily sales of two shops, January to March 2026.
+  \item[3] 10 empty sales and 5 empty customer counts.
+  \item[4] A chart of the table, to see where the empty cells are.
+  \item[5] One strip per column and one line per row: empty cells are coloured, and each column says how many it has.
+  \item[6] Save it.
+  \item[7] Before filling: a True/False column that remembers which sales were empty.
+  \item[8] Fill each gap on the straight line between the day before and the day after, in date order, for each shop on its own. A gap at the very start or end has a neighbour on one side only, so it stays empty, and a note says so.
+  \item[9] A new column with the weekday of each date.
+  \item[10] The average of each day and the 6 days before it: a 7-day moving average, which smooths out the busy weekends.
+  \item[11] Look at the first 8 rows.
+\end{lineexplain}
+\printedoutput{output/lesson11_example5.txt}
+\begin{center}\begin{minipage}{\linewidth}\centering
+\includegraphics[width=0.72\textwidth,height=0.36\textheight,keepaspectratio]{figures/lesson11_example5_lesson11_empty_cells.pdf}
+\captionof{figure}{Lesson 11, example 5: \code{lesson11\_\allowbreak{}empty\_\allowbreak{}cells.\allowbreak{}png}.}
+\end{minipage}\end{center}
+\section*{Example 6}
+Names and dates typed in by people often need taking apart.
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+table = sdata.table({"name": ["Asha Rao", "Ben Lee", "Chen Wu"], "born": ["04/30/2014", "12/25/2013", "07/03/2014"], "height": [144.37, 152.81, 139.5]})
+table.split_column("name", separator=" ", into=["first_name", "family_name"])
+table.add_text_part_column("initial", from_column="first_name", first_characters=1)
+table.replace_text("family_name", "Lee", with_value="Li")
+table.make_dates("born", order="month day year")
+table.add_date_part_column("month_born", from_column="born", part="month name")
+table.change_column("height", "height / 100")
+table.round_to("height", 2)
+table.show()
+\end{lstlisting}
+\whateachline
+\begin{lineexplain}
+  \item[1] Load simplydata.
+  \item[2] A small table typed by hand. The birthdays are written month first, as in the USA.
+  \item[3] Split each name at the space into two new columns.
+  \item[4] The first letter of each first name.
+  \item[5] Replace a piece of text inside the cells.
+  \item[6] Turn the birthdays into dates. \code{order=} says how they are written, so 07/03/2014 is read as 3 July and not as 7 March.
+  \item[7] The month of each birthday, as a word.
+  \item[8] Change the heights from centimetres to metres, in the same column.
+  \item[9] Round them to 2 decimal places.
+  \item[10] Look at the whole table.
+\end{lineexplain}
+\printedoutput{output/lesson11_example6.txt}
 \begin{goodtoknow}
 \begin{itemize}
   \item Long or wide? A long table has one row for each measurement: the marks table has a row for each child in each subject. A wide table puts the measurements of one child side by side, one column per subject. Charts and tests like long tables (also called tidy data); sums across columns, like the total above, need wide ones.
@@ -1482,6 +1692,9 @@ table.show_first_rows()
   \item More fixing words: \code{make\_\allowbreak{}text}, \code{make\_\allowbreak{}dates}, \code{make\_\allowbreak{}lowercase} and \code{make\_\allowbreak{}uppercase}.
   \item Plain words for new columns: \code{by\_\allowbreak{}adding=}, \code{by\_\allowbreak{}subtracting=}, \code{by\_\allowbreak{}multiplying=} and \code{by\_\allowbreak{}dividing=}, or \code{from\_\allowbreak{}column=} with \code{plus=}, \code{minus=}, \code{times=} or \code{divide\_\allowbreak{}by=}.
   \item In a maths-style column, a column name with spaces goes in backticks: \code{\textquotedbl{}`max temp` - 2\textquotedbl{}}.
+  \item \code{with\_\allowbreak{}the=\textquotedbl{}line between neighbours\textquotedbl{}} is linear interpolation. It suits values that change smoothly, like sales from day to day; it cannot know about a sudden jump. Keep a True/False column of what you filled, and say in your report how you filled it.
+  \item Charts say it too: when a chart leaves out rows because of empty cells, one line tells you how many.
+  \item Row after row: \code{add\_\allowbreak{}previous\_\allowbreak{}value\_\allowbreak{}column} gives the value of the row before, and \code{add\_\allowbreak{}change\_\allowbreak{}column} the change since then (\code{in\_\allowbreak{}percent=True} for a percent).
 \end{itemize}
 \end{goodtoknow}
 \begin{tryit}
@@ -1489,10 +1702,11 @@ table.show_first_rows()
   \item In the first example, fill the empty marks with the median instead of the average.
   \item Add a column \code{\textquotedbl{}height\_\allowbreak{}m\textquotedbl{}} with the height in metres: \code{from\_\allowbreak{}column=\textquotedbl{}height\textquotedbl{}}, \code{divide\_\allowbreak{}by=100}.
   \item In the last example, add a column \code{\textquotedbl{}best\_\allowbreak{}two\textquotedbl{}} with the formula \code{\textquotedbl{}total - English\textquotedbl{}}.
+  \item In the shop example, add a column \code{\textquotedbl{}change\textquotedbl{}} with the change in sales from the day before, \code{for\_\allowbreak{}each=\textquotedbl{}shop\textquotedbl{}} and \code{sorted\_\allowbreak{}by=\textquotedbl{}date\textquotedbl{}} (\code{add\_\allowbreak{}change\_\allowbreak{}column}).
 \end{enumerate}
 Worked solutions: page~\pageref{solutions:11}, or type \code{sdata.\allowbreak{}lesson(11,\allowbreak{} solutions=True)}.
 \end{tryit}
-\par\noindent{\small\sffamily\textbf{Words in this lesson:} \hyperref[word:table.replace-values]{\code{table.\allowbreak{}replace\_\allowbreak{}values()}}, \hyperref[word:table.count-empty-cells]{\code{table.\allowbreak{}count\_\allowbreak{}empty\_\allowbreak{}cells()}}, \hyperref[word:table.fill-empty-cells]{\code{table.\allowbreak{}fill\_\allowbreak{}empty\_\allowbreak{}cells()}}, \hyperref[word:table.remove-rows-with-empty-cells]{\code{table.\allowbreak{}remove\_\allowbreak{}rows\_\allowbreak{}with\_\allowbreak{}empty\_\allowbreak{}cells()}}, \hyperref[word:table.remove-extra-spaces]{\code{table.\allowbreak{}remove\_\allowbreak{}extra\_\allowbreak{}spaces()}}, \hyperref[word:table.make-numbers]{\code{table.\allowbreak{}make\_\allowbreak{}numbers()}}, \hyperref[word:table.add-column]{\code{table.\allowbreak{}add\_\allowbreak{}column()}}, \hyperref[word:table.add-group-column]{\code{table.\allowbreak{}add\_\allowbreak{}group\_\allowbreak{}column()}}, \hyperref[word:table.add-rank-column]{\code{table.\allowbreak{}add\_\allowbreak{}rank\_\allowbreak{}column()}}, \hyperref[word:table.turn-rows-into-columns]{\code{table.\allowbreak{}turn\_\allowbreak{}rows\_\allowbreak{}into\_\allowbreak{}columns()}}.\par}
+\par\noindent{\small\sffamily\textbf{Words in this lesson:} \hyperref[word:table.replace-values]{\code{table.\allowbreak{}replace\_\allowbreak{}values()}}, \hyperref[word:table.count-empty-cells]{\code{table.\allowbreak{}count\_\allowbreak{}empty\_\allowbreak{}cells()}}, \hyperref[word:table.fill-empty-cells]{\code{table.\allowbreak{}fill\_\allowbreak{}empty\_\allowbreak{}cells()}}, \hyperref[word:table.remove-rows-with-empty-cells]{\code{table.\allowbreak{}remove\_\allowbreak{}rows\_\allowbreak{}with\_\allowbreak{}empty\_\allowbreak{}cells()}}, \hyperref[word:table.remove-extra-spaces]{\code{table.\allowbreak{}remove\_\allowbreak{}extra\_\allowbreak{}spaces()}}, \hyperref[word:table.make-numbers]{\code{table.\allowbreak{}make\_\allowbreak{}numbers()}}, \hyperref[word:table.add-column]{\code{table.\allowbreak{}add\_\allowbreak{}column()}}, \hyperref[word:table.add-group-column]{\code{table.\allowbreak{}add\_\allowbreak{}group\_\allowbreak{}column()}}, \hyperref[word:table.add-rank-column]{\code{table.\allowbreak{}add\_\allowbreak{}rank\_\allowbreak{}column()}}, \hyperref[word:table.turn-rows-into-columns]{\code{table.\allowbreak{}turn\_\allowbreak{}rows\_\allowbreak{}into\_\allowbreak{}columns()}}, \hyperref[word:table.add-is-empty-column]{\code{table.\allowbreak{}add\_\allowbreak{}is\_\allowbreak{}empty\_\allowbreak{}column()}}, \hyperref[word:empty-cells]{\code{chart.\allowbreak{}empty\_\allowbreak{}cells()}}, \hyperref[word:table.add-date-part-column]{\code{table.\allowbreak{}add\_\allowbreak{}date\_\allowbreak{}part\_\allowbreak{}column()}}, \hyperref[word:table.add-rolling-column]{\code{table.\allowbreak{}add\_\allowbreak{}rolling\_\allowbreak{}column()}}, \hyperref[word:table.split-column]{\code{table.\allowbreak{}split\_\allowbreak{}column()}}, \hyperref[word:table.add-text-part-column]{\code{table.\allowbreak{}add\_\allowbreak{}text\_\allowbreak{}part\_\allowbreak{}column()}}, \hyperref[word:table.replace-text]{\code{table.\allowbreak{}replace\_\allowbreak{}text()}}, \hyperref[word:table.make-dates]{\code{table.\allowbreak{}make\_\allowbreak{}dates()}}, \hyperref[word:table.change-column]{\code{table.\allowbreak{}change\_\allowbreak{}column()}}, \hyperref[word:table.round-to]{\code{table.\allowbreak{}round\_\allowbreak{}to()}}, \hyperref[word:table.add-change-column]{\code{table.\allowbreak{}add\_\allowbreak{}change\_\allowbreak{}column()}}.\par}
 
 \chapter{Tables: summaries, and from a table to a chart}\label{lesson:12}
 \begin{learnbox}
@@ -1629,6 +1843,46 @@ chart.save("lesson12_tests.png")
 \includegraphics[width=0.72\textwidth,height=0.36\textheight,keepaspectratio]{figures/lesson12_example5_lesson12_tests.pdf}
 \captionof{figure}{Lesson 12, example 5: \code{lesson12\_\allowbreak{}tests.\allowbreak{}png}.}
 \end{minipage}\end{center}
+\section*{Example 6}
+\code{summary\_\allowbreak{}of} gives several measures at once, and \code{every=} sums up dates by week, month or year.
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+table = sdata.table(sdata.example("shop"))
+table.summary_of("sales", for_each="shop", show=["average", "median", "standard deviation", "count", "empty cells"])
+table.total_of("sales", for_each="date", every="month")
+table.percent_of("sales", above=500, for_each="shop")
+\end{lstlisting}
+\whateachline
+\begin{lineexplain}
+  \item[1] Load simplydata.
+  \item[2] Daily sales of two shops.
+  \item[3] Five measures of each shop's sales in one tidy table. count counts the days with a number; empty cells counts the others.
+  \item[4] The total sales of each month: \code{every=} puts the days of one month together.
+  \item[5] On what percent of the days did each shop take more than 500? Each percent comes with its 95 \% confidence interval.
+\end{lineexplain}
+\printedoutput{output/lesson12_example6.txt}
+\section*{Example 7}
+A cross table puts one group down the side and another across the top. A correlation table compares many columns at once.
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+fruit = sdata.table(sdata.example("fruit"))
+fruit.count_rows(for_each="shop", across="fruit")
+fruit.count_different_values("fruit", for_each="shop")
+marks = sdata.table(sdata.example("marks"))
+marks.average_of("marks", for_each="class", across="subject")
+marks.correlation_between("hours", "marks", "height")
+\end{lstlisting}
+\whateachline
+\begin{lineexplain}
+  \item[1] Load simplydata.
+  \item[2] A table of fruit sales.
+  \item[3] How many sales of each fruit in each shop: one row per shop, one column per fruit.
+  \item[4] How many different fruits each shop sold.
+  \item[5] A table of the marks.
+  \item[6] The average mark of each class in each subject.
+  \item[7] Every pair of the three columns at once: a correlation table, with the strongest pairs in words.
+\end{lineexplain}
+\printedoutput{output/lesson12_example7.txt}
 \begin{goodtoknow}
 \begin{itemize}
   \item Correlation is not cause. Children who study more might also sleep more, or like the subject more; r only says that two columns go up and down together, not which one makes the other change.
@@ -1636,6 +1890,7 @@ chart.save("lesson12_tests.png")
   \item A chart never changes its table, and a table step never changes a chart you already made. So one cleaned table can feed many charts.
   \item \code{table.\allowbreak{}add\_\allowbreak{}rows\_\allowbreak{}from(other)} puts the rows of another table under this one. \code{turn\_\allowbreak{}rows\_\allowbreak{}into\_\allowbreak{}columns} does the opposite of \code{turn\_\allowbreak{}columns\_\allowbreak{}into\_\allowbreak{}rows}.
   \item Lesson 13 teaches numbers, and lesson 14 the statistical tests: is a difference real, or could it be chance?
+  \item Every summary skips empty cells and says how many it skipped. \code{summary\_\allowbreak{}of} can also show \code{\textquotedbl{}variance\textquotedbl{}}, \code{\textquotedbl{}standard error\textquotedbl{}}, \code{\textquotedbl{}confidence interval\textquotedbl{}}, \code{\textquotedbl{}range\textquotedbl{}} and \code{\textquotedbl{}interquartile range\textquotedbl{}}.
 \end{itemize}
 \end{goodtoknow}
 \begin{tryit}
@@ -1643,10 +1898,11 @@ chart.save("lesson12_tests.png")
   \item Make the fruit totals \code{for\_\allowbreak{}each=\textquotedbl{}shop\textquotedbl{}} instead. Which shop sold more?
   \item Work out the average temperature \code{for\_\allowbreak{}each=\textquotedbl{}city\textquotedbl{}} in the weather table and draw it as bars.
   \item Is there a link between height and marks? Use \code{correlation\_\allowbreak{}between} to find out.
+  \item Make a cross table of the average mark \code{for\_\allowbreak{}each=\textquotedbl{}subject\textquotedbl{}} \code{across=\textquotedbl{}class\textquotedbl{}}. Which class is best in Science?
 \end{enumerate}
 Worked solutions: page~\pageref{solutions:12}, or type \code{sdata.\allowbreak{}lesson(12,\allowbreak{} solutions=True)}.
 \end{tryit}
-\par\noindent{\small\sffamily\textbf{Words in this lesson:} \hyperref[word:table.average-of]{\code{table.\allowbreak{}average\_\allowbreak{}of()}}, \hyperref[word:table.biggest-of]{\code{table.\allowbreak{}biggest\_\allowbreak{}of()}}, \hyperref[word:table.correlation-between]{\code{table.\allowbreak{}correlation\_\allowbreak{}between()}}, \hyperref[word:table.total-of]{\code{table.\allowbreak{}total\_\allowbreak{}of()}}, \hyperref[word:table.chart]{\code{table.\allowbreak{}chart()}}, \hyperref[word:sdata.side-by-side]{\code{sdata.\allowbreak{}side\_\allowbreak{}by\_\allowbreak{}side()}}, \hyperref[word:table.join-with]{\code{table.\allowbreak{}join\_\allowbreak{}with()}}, \hyperref[word:table.turn-columns-into-rows]{\code{table.\allowbreak{}turn\_\allowbreak{}columns\_\allowbreak{}into\_\allowbreak{}rows()}}, \hyperref[word:table.add-rows-from]{\code{table.\allowbreak{}add\_\allowbreak{}rows\_\allowbreak{}from()}}.\par}
+\par\noindent{\small\sffamily\textbf{Words in this lesson:} \hyperref[word:table.average-of]{\code{table.\allowbreak{}average\_\allowbreak{}of()}}, \hyperref[word:table.biggest-of]{\code{table.\allowbreak{}biggest\_\allowbreak{}of()}}, \hyperref[word:table.correlation-between]{\code{table.\allowbreak{}correlation\_\allowbreak{}between()}}, \hyperref[word:table.total-of]{\code{table.\allowbreak{}total\_\allowbreak{}of()}}, \hyperref[word:table.chart]{\code{table.\allowbreak{}chart()}}, \hyperref[word:sdata.side-by-side]{\code{sdata.\allowbreak{}side\_\allowbreak{}by\_\allowbreak{}side()}}, \hyperref[word:table.join-with]{\code{table.\allowbreak{}join\_\allowbreak{}with()}}, \hyperref[word:table.turn-columns-into-rows]{\code{table.\allowbreak{}turn\_\allowbreak{}columns\_\allowbreak{}into\_\allowbreak{}rows()}}, \hyperref[word:table.add-rows-from]{\code{table.\allowbreak{}add\_\allowbreak{}rows\_\allowbreak{}from()}}, \hyperref[word:table.summary-of]{\code{table.\allowbreak{}summary\_\allowbreak{}of()}}, \hyperref[word:table.percent-of]{\code{table.\allowbreak{}percent\_\allowbreak{}of()}}, \hyperref[word:table.count-rows]{\code{table.\allowbreak{}count\_\allowbreak{}rows()}}, \hyperref[word:table.count-different-values]{\code{table.\allowbreak{}count\_\allowbreak{}different\_\allowbreak{}values()}}.\par}
 
 \chapter{Numbers: lists and grids of numbers}\label{lesson:13}
 \begin{learnbox}
@@ -1785,9 +2041,9 @@ Groups almost never have exactly the same average. A test asks: is the differenc
 \begin{lstlisting}[style=py]
 import simplydata as sdata
 table = sdata.table(sdata.example("marks"))
-table.compare_averages("marks", between="class")
-table.compare_each_pair("marks", between="class")
-table.compare_averages("marks", between="subject", based_on="ranks")
+table.compare_averages("marks", for_each="class")
+table.compare_each_pair("marks", for_each="class")
+table.compare_averages("marks", for_each="subject", based_on="ranks")
 \end{lstlisting}
 \whateachline
 \begin{lineexplain}
@@ -1804,7 +2060,7 @@ Counts can be compared too: does how often something happens differ between grou
 import simplydata as sdata
 table = sdata.table(sdata.example("marks"))
 table.add_group_column("result", from_column="marks", cut_at=[60], names=["below 60", "60 or more"])
-table.compare_counts("result", between="class")
+table.compare_counts("result", for_each="class")
 \end{lstlisting}
 \whateachline
 \begin{lineexplain}
@@ -1834,6 +2090,28 @@ growth.fit_formula("population = a * exp(b * (year - 2000))")
   \item[6] Fit a formula you write yourself. Names that are columns (population, year) are data; the others (a and b) are found by simplydata. Here b is the growth rate each year. This is nonlinear least squares.
 \end{lineexplain}
 \printedoutput{output/lesson14_example3.txt}
+\section*{Example 4}
+Before a test, look at the shape of the values and at values far from the rest. After many tests, adjust the p-values.
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+table = sdata.table(sdata.example("marks"))
+table.compare_shape_to("marks", "normal", for_each="class")
+table.show_rows_with_outliers("marks", for_each="class")
+pairs = table.correlation_between("hours", "marks", "height", show="each pair")
+pairs.add_adjusted_p_value_column(method="holm")
+pairs.show()
+\end{lstlisting}
+\whateachline
+\begin{lineexplain}
+  \item[1] Load simplydata.
+  \item[2] Make a table of the marks.
+  \item[3] Do the marks of each class look bell-shaped (normal)? The Shapiro-Wilk test answers for each class. Tests on averages work best with bell-shaped values, or with many values.
+  \item[4] The rows whose mark is far from the rest of its class, by Tukey's rule (the one box plots use): here one mark of 33 in class B. The table does not change.
+  \item[5] Test three pairs of columns at once: a table with one row per pair and its p-value.
+  \item[6] With many tests, one of them looks real by chance more often. Holm's adjustment keeps the chance of even one false alarm at 5 \%.
+  \item[7] The p-values and the adjusted ones, side by side.
+\end{lineexplain}
+\printedoutput{output/lesson14_example4.txt}
 \begin{goodtoknow}
 \begin{itemize}
   \item The idea behind every test: imagine there is no real difference (this is called the null hypothesis). The p-value says how surprising your data would be then. A small p-value means: hard to explain by chance alone.
@@ -1841,17 +2119,20 @@ growth.fit_formula("population = a * exp(b * (year - 2000))")
   \item A 95 \% confidence interval is the range the true value is very likely in. A narrow one means the data pin the value down well; a wide one means you need more data.
   \item Each test gives back a one-row table with all its numbers, so you can save it: result = \code{table.\allowbreak{}compare\_\allowbreak{}averages(.\allowbreak{}.\allowbreak{}.\allowbreak{})}, then \code{result.\allowbreak{}save(\textquotedbl{}test.\allowbreak{}csv\textquotedbl{})}.
   \item Also: \code{compare\_\allowbreak{}before\_\allowbreak{}after} for two measurements of the same thing (a paired t-test), and \code{compare\_\allowbreak{}average\_\allowbreak{}to} for one average against a number you choose.
+  \item \code{remove\_\allowbreak{}rows\_\allowbreak{}with\_\allowbreak{}outliers} removes such rows. Say in your report which rule removed how many rows, and never remove a value only because it spoils the result.
+  \item \code{method=\textquotedbl{}benjamini-hochberg\textquotedbl{}} adjusts for many tests more gently: it controls the share of false alarms among your findings (the false discovery rate).
 \end{itemize}
 \end{goodtoknow}
 \begin{tryit}
 \begin{enumerate}
-  \item Compare the average marks \code{between=\textquotedbl{}subject\textquotedbl{}}. Could the differences be chance?
+  \item Compare the average marks \code{for\_\allowbreak{}each=\textquotedbl{}subject\textquotedbl{}}. Could the differences be chance?
   \item Is the average temperature different between the cities of \code{sdata.\allowbreak{}example(\textquotedbl{}weather\textquotedbl{})}?
   \item Fit a straight line of \code{\textquotedbl{}forest\textquotedbl{}} against \code{\textquotedbl{}year\textquotedbl{}} in \code{sdata.\allowbreak{}example(\textquotedbl{}growth\textquotedbl{})} for one country.
+  \item Remove the rows with outliers in \code{\textquotedbl{}marks\textquotedbl{}} \code{for\_\allowbreak{}each=\textquotedbl{}class\textquotedbl{}}, then compare the average marks \code{for\_\allowbreak{}each=\textquotedbl{}class\textquotedbl{}} again. Did the answer change?
 \end{enumerate}
 Worked solutions: page~\pageref{solutions:14}, or type \code{sdata.\allowbreak{}lesson(14,\allowbreak{} solutions=True)}.
 \end{tryit}
-\par\noindent{\small\sffamily\textbf{Words in this lesson:} \hyperref[word:table.compare-averages]{\code{table.\allowbreak{}compare\_\allowbreak{}averages()}}, \hyperref[word:table.compare-each-pair]{\code{table.\allowbreak{}compare\_\allowbreak{}each\_\allowbreak{}pair()}}, \hyperref[word:table.compare-counts]{\code{table.\allowbreak{}compare\_\allowbreak{}counts()}}, \hyperref[word:table.fit-straight-line]{\code{table.\allowbreak{}fit\_\allowbreak{}straight\_\allowbreak{}line()}}, \hyperref[word:table.fit-formula]{\code{table.\allowbreak{}fit\_\allowbreak{}formula()}}, \hyperref[word:table.add-group-column]{\code{table.\allowbreak{}add\_\allowbreak{}group\_\allowbreak{}column()}}.\par}
+\par\noindent{\small\sffamily\textbf{Words in this lesson:} \hyperref[word:table.compare-averages]{\code{table.\allowbreak{}compare\_\allowbreak{}averages()}}, \hyperref[word:table.compare-each-pair]{\code{table.\allowbreak{}compare\_\allowbreak{}each\_\allowbreak{}pair()}}, \hyperref[word:table.compare-counts]{\code{table.\allowbreak{}compare\_\allowbreak{}counts()}}, \hyperref[word:table.fit-straight-line]{\code{table.\allowbreak{}fit\_\allowbreak{}straight\_\allowbreak{}line()}}, \hyperref[word:table.fit-formula]{\code{table.\allowbreak{}fit\_\allowbreak{}formula()}}, \hyperref[word:table.add-group-column]{\code{table.\allowbreak{}add\_\allowbreak{}group\_\allowbreak{}column()}}, \hyperref[word:table.compare-shape-to]{\code{table.\allowbreak{}compare\_\allowbreak{}shape\_\allowbreak{}to()}}, \hyperref[word:table.show-rows-with-outliers]{\code{table.\allowbreak{}show\_\allowbreak{}rows\_\allowbreak{}with\_\allowbreak{}outliers()}}, \hyperref[word:table.add-adjusted-p-value-column]{\code{table.\allowbreak{}add\_\allowbreak{}adjusted\_\allowbreak{}p\_\allowbreak{}value\_\allowbreak{}column()}}, \hyperref[word:table.remove-rows-with-outliers]{\code{table.\allowbreak{}remove\_\allowbreak{}rows\_\allowbreak{}with\_\allowbreak{}outliers()}}.\par}
 
 \chapter{A whole analysis: from a question to a figure}\label{lesson:15}
 \begin{learnbox}
@@ -1870,7 +2151,7 @@ table = sdata.table(sdata.example("marks"))
 table.describe_columns()
 table.remove_rows_with_empty_cells()
 table.average_of("marks", for_each="class")
-table.compare_averages("marks", between="class")
+table.compare_averages("marks", for_each="class")
 a = table.chart()
 a.boxes(x="class", y="marks")
 a.all_dots(x="class", y="marks")
@@ -1991,7 +2272,7 @@ chart.save("lesson15_rain.png")
 \end{goodtoknow}
 \begin{tryit}
 \begin{enumerate}
-  \item Do a whole analysis of \code{sdata.\allowbreak{}example(\textquotedbl{}weather\textquotedbl{})}: look at it, compare the average rain \code{between=\textquotedbl{}city\textquotedbl{}}, draw the rain of each city as boxes, and save the chart and the table.
+  \item Do a whole analysis of \code{sdata.\allowbreak{}example(\textquotedbl{}weather\textquotedbl{})}: look at it, compare the average rain \code{for\_\allowbreak{}each=\textquotedbl{}city\textquotedbl{}}, draw the rain of each city as boxes, and save the chart and the table.
   \item Make a second chart of the temperature, then put the two charts together with \code{sdata.\allowbreak{}side\_\allowbreak{}by\_\allowbreak{}side(.\allowbreak{}.\allowbreak{}.\allowbreak{},\allowbreak{} letters=True)}.
   \item Read the \code{steps()} of your table out loud. Would someone else understand what you did?
 \end{enumerate}
@@ -2039,7 +2320,7 @@ chart.save("my_chart.png")
 A small made-up table to practise with. \code{sdata.\allowbreak{}example(\textquotedbl{}marks\textquotedbl{})}
 
 \codeline{sdata.example() with no name lists every table and its columns.}\\
-The tables are: marks, weather, fruit, growth, island.
+The tables are: marks, weather, fruit, growth, shop, island. Only \code{\textquotedbl{}shop\textquotedbl{}} has empty cells and a column of dates, to practise with.
 
 \wordfield{Options}{}\par\nopagebreak
 \begin{optiontable}
@@ -2397,6 +2678,53 @@ marks = sdata.example("marks")
 chart = sdata.chart(marks)
 chart.dots_3d(x="hours", y="height", z="marks", colour="class")
 chart.save("dots_3d.png")
+\end{lstlisting}
+\wordentry{chart.band()}{word:band}
+A shaded band between a low and a high column, along x.\\
+\codeline{chart.band(x=\textquotedbl{}month\textquotedbl{}, between=[\textquotedbl{}lowest\textquotedbl{}, \textquotedbl{}highest\textquotedbl{}]) (with a table that has those columns)}
+
+\code{between=[\textquotedbl{}low column\textquotedbl{},\allowbreak{} \textquotedbl{}high column\textquotedbl{}]} gives the bottom and the top edge at each x: a range of temperatures, a confidence band you worked out, or a smallest-to-biggest band around a line. Draw .lines() as well to show the middle. \code{colour=\textquotedbl{}city\textquotedbl{}} draws one band per group (in the group's colour), or \code{colour=\textquotedbl{}blue\textquotedbl{}} one colour. \code{label=\textquotedbl{}Range\textquotedbl{}} names the band in the legend. Empty cells leave a gap.
+
+\wordfield{Options}{}\par\nopagebreak
+\begin{optiontable}
+\code{x=} & \\
+\code{between=} & \\
+\code{colour=} & \\
+\code{label=} & \\
+\end{optiontable}
+
+\wordfield{Underneath}{matplotlib (\code{fill\_\allowbreak{}between})}
+\wordfield{Example you can run}{(it uses the practice table \code{weather})}\par\nopagebreak
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+table = sdata.table(sdata.example("weather"))
+table.keep_rows("city", equal_to="Sunnyvale")
+table.add_column("lowest", "temperature - 4")
+table.add_column("highest", "temperature + 4")
+chart = table.chart()
+chart.band(x="month", between=["lowest", "highest"], label="4 degrees either side")
+chart.lines(x="month", y="temperature")
+chart.save("band.png")
+\end{lstlisting}
+\wordentry{chart.empty\_cells()}{word:empty-cells}
+A map of the empty cells: one row of the chart for each row of the table, one strip for each column, with empty cells coloured. \code{chart.\allowbreak{}empty\_\allowbreak{}cells()} (with \code{sdata.\allowbreak{}example(\textquotedbl{}shop\textquotedbl{})})
+
+Under each column it says how many of its cells are empty. \code{columns=[\textquotedbl{}sales\textquotedbl{},\allowbreak{} \textquotedbl{}customers\textquotedbl{}]} shows only those columns. A cell is empty when it is missing or holds only spaces.
+
+\wordfield{Options}{}\par\nopagebreak
+\begin{optiontable}
+\code{columns=} & \\
+\end{optiontable}
+
+\wordfield{Underneath}{pandas finds the empty cells (isna); matplotlib (imshow) draws the grid}
+\wordfield{Example you can run}{(it uses the practice table \code{shop})}\par\nopagebreak
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+shop = sdata.example("shop")
+chart = sdata.chart(shop)
+chart.empty_cells()
+chart.title_top("Where the empty cells are")
+chart.save("empty_cells.png")
 \end{lstlisting}
 \unsection{Statistics}{group:Statistics}
 \wordentry{show=}{word:show-eq}
@@ -2816,6 +3144,28 @@ chart = sdata.chart(fruit)
 chart.bars(x="fruit", y="count", show="total")
 chart.numbers_on_bars()
 chart.save("numbers_on_bars.png")
+\end{lstlisting}
+\wordentry{chart.names\_on\_dots()}{word:names-on-dots}
+Write a name next to each dot. \code{chart.\allowbreak{}names\_\allowbreak{}on\_\allowbreak{}dots(\textquotedbl{}name\textquotedbl{})} (with \code{chart.\allowbreak{}dots(x=\textquotedbl{}hours\textquotedbl{},\allowbreak{} y=\textquotedbl{}marks\textquotedbl{})} on \code{sdata.\allowbreak{}example(\textquotedbl{}marks\textquotedbl{})})
+
+column is the column whose words are written (or a list: one name for each dot). Each name goes where it covers no other name or dot: right of its dot, else left, above, below or in a corner. A name with no free place is left out, and a line says how many; a bigger chart (\code{chart.\allowbreak{}size(.\allowbreak{}.\allowbreak{}.\allowbreak{})}) makes room. \code{colour=\textquotedbl{}grey\textquotedbl{}} writes the names in that colour.
+
+\wordfield{Options}{}\par\nopagebreak
+\begin{optiontable}
+\code{column} & needed\\
+\code{colour=} & \\
+\end{optiontable}
+
+\wordfield{Underneath}{matplotlib (annotate), with simplydata choosing a free place for each name}
+\wordfield{Example you can run}{(it uses the practice table \code{marks})}\par\nopagebreak
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+table = sdata.table(sdata.example("marks"))
+table.keep_rows("subject", equal_to="Maths")
+chart = table.chart()
+chart.dots(x="hours", y="marks")
+chart.names_on_dots("name")
+chart.save("names_on_dots.png")
 \end{lstlisting}
 \wordentry{chart.font\_size()}{word:font-size}
 Make all the text bigger or smaller. \code{chart.\allowbreak{}font\_\allowbreak{}size(14)} (normal is 12)
@@ -3249,6 +3599,26 @@ chart.hide_legend()
 chart.show_legend()
 chart.save("show_legend.png")
 \end{lstlisting}
+\wordentry{chart.label\_legend()}{word:label-legend}
+The name above the legend. \code{chart.\allowbreak{}label\_\allowbreak{}legend(\textquotedbl{}Class\textquotedbl{})} (with \code{chart.\allowbreak{}dots(x=\textquotedbl{}hours\textquotedbl{},\allowbreak{} y=\textquotedbl{}marks\textquotedbl{},\allowbreak{} colour=\textquotedbl{}class\textquotedbl{})} on \code{sdata.\allowbreak{}example(\textquotedbl{}marks\textquotedbl{})})
+
+Without it the legend is named after the \code{colour=} column. \code{label\_\allowbreak{}legend(\textquotedbl{}\textquotedbl{})} leaves the name out.
+
+\wordfield{Options}{}\par\nopagebreak
+\begin{optiontable}
+\code{text} & needed\\
+\end{optiontable}
+
+\wordfield{Underneath}{matplotlib}
+\wordfield{Example you can run}{(it uses the practice table \code{marks})}\par\nopagebreak
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+marks = sdata.example("marks")
+chart = sdata.chart(marks)
+chart.dots(x="hours", y="marks", colour="class")
+chart.label_legend("Class")
+chart.save("label_legend.png")
+\end{lstlisting}
 \wordentry{chart.label\_colour\_bar()}{word:label-colour-bar}
 \wordfield{Also written}{\code{chart.\allowbreak{}label\_\allowbreak{}color\_\allowbreak{}bar()}}
 The name beside the colour bar of a heatmap or contour. \code{chart.\allowbreak{}label\_\allowbreak{}colour\_\allowbreak{}bar(\textquotedbl{}Height (m)\textquotedbl{})}
@@ -3267,6 +3637,73 @@ chart = sdata.chart(island)
 chart.contour(x="east", y="north", z="height")
 chart.label_colour_bar("Height (m)")
 chart.save("label_colour_bar.png")
+\end{lstlisting}
+\unsection{Order of groups}{group:Order-of-groups}
+\wordentry{chart.order\_x()}{word:order-x}
+Put the groups along the x-axis in your order. \code{chart.\allowbreak{}order\_\allowbreak{}x(\textquotedbl{}C\textquotedbl{},\allowbreak{} \textquotedbl{}B\textquotedbl{},\allowbreak{} \textquotedbl{}A\textquotedbl{})} (with \code{chart.\allowbreak{}bars(x=\textquotedbl{}class\textquotedbl{},\allowbreak{} y=\textquotedbl{}marks\textquotedbl{})} on \code{sdata.\allowbreak{}example(\textquotedbl{}marks\textquotedbl{})})
+
+Groups you leave out come after the ones you name. \code{biggest\_\allowbreak{}first=True} puts the biggest bar (or box, or line point) first, \code{biggest\_\allowbreak{}first=False} the smallest; the size is what the chart shows (average, median, count ...). Month and weekday names (\code{\textquotedbl{}Jan\textquotedbl{}}, \code{\textquotedbl{}Monday\textquotedbl{}}) are put in calendar order without asking.
+
+\wordfield{Options}{}\par\nopagebreak
+\begin{optiontable}
+\code{names.\allowbreak{}.\allowbreak{}.\allowbreak{}} & as many as you like, separated by commas\\
+\code{biggest\_\allowbreak{}first=} & \\
+\end{optiontable}
+
+\wordfield{Underneath}{pandas (a stable sort of the rows, so every chart type, colour and panel follows the order)}
+\wordfield{Example you can run}{(it uses the practice table \code{marks})}\par\nopagebreak
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+marks = sdata.example("marks")
+chart = sdata.chart(marks)
+chart.bars(x="class", y="marks")
+chart.order_x("C", "B", "A")
+chart.save("order_x.png")
+\end{lstlisting}
+\wordentry{chart.order\_y()}{word:order-y}
+Put the groups along the y-axis in your order, the first at the top.\\
+\codeline{chart.order\_y(\textquotedbl{}C\textquotedbl{}, \textquotedbl{}B\textquotedbl{}, \textquotedbl{}A\textquotedbl{}) (with chart.bars(x=\textquotedbl{}class\textquotedbl{}, y=\textquotedbl{}marks\textquotedbl{}, sideways=True)}\\
+on \code{sdata.\allowbreak{}example(\textquotedbl{}marks\textquotedbl{})})
+
+Works like \code{order\_\allowbreak{}x}, for sideways bars, sideways boxes and heatmap rows.
+
+\wordfield{Options}{}\par\nopagebreak
+\begin{optiontable}
+\code{names.\allowbreak{}.\allowbreak{}.\allowbreak{}} & as many as you like, separated by commas\\
+\code{biggest\_\allowbreak{}first=} & \\
+\end{optiontable}
+
+\wordfield{Underneath}{pandas (a stable sort of the rows, so every chart type, colour and panel follows the order)}
+\wordfield{Example you can run}{(it uses the practice table \code{marks})}\par\nopagebreak
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+marks = sdata.example("marks")
+chart = sdata.chart(marks)
+chart.bars(x="class", y="marks", sideways=True)
+chart.order_y("C", "B", "A")
+chart.save("order_y.png")
+\end{lstlisting}
+\wordentry{chart.order\_legend()}{word:order-legend}
+Put the colour groups in your order: in the legend, the colours and side by side.\\
+\codeline{chart.order\_legend(\textquotedbl{}Science\textquotedbl{}, \textquotedbl{}Maths\textquotedbl{}, \textquotedbl{}English\textquotedbl{})}\\
+(with \code{chart.\allowbreak{}bars(x=\textquotedbl{}class\textquotedbl{},\allowbreak{} y=\textquotedbl{}marks\textquotedbl{},\allowbreak{} colour=\textquotedbl{}subject\textquotedbl{})} on \code{sdata.\allowbreak{}example(\textquotedbl{}marks\textquotedbl{})})
+
+Groups you leave out come after the ones you name. The slices of a pie follow it too. The first group gets the first colour.
+
+\wordfield{Options}{}\par\nopagebreak
+\begin{optiontable}
+\code{names.\allowbreak{}.\allowbreak{}.\allowbreak{}} & as many as you like, separated by commas\\
+\end{optiontable}
+
+\wordfield{Underneath}{pandas (a stable sort of the rows, so every chart type, colour and panel follows the order)}
+\wordfield{Example you can run}{(it uses the practice table \code{marks})}\par\nopagebreak
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+marks = sdata.example("marks")
+chart = sdata.chart(marks)
+chart.bars(x="class", y="marks", colour="subject")
+chart.order_legend("Science", "Maths", "English")
+chart.save("order_legend.png")
 \end{lstlisting}
 \unsection{Several charts}{group:Several-charts}
 \wordentry{chart.one\_chart\_per()}{word:one-chart-per}
@@ -3421,15 +3858,33 @@ Steps on a table: \code{table = sdata.table(...)}, then \code{table.keep\_rows(.
 Start a table.
 
 \codeline{sdata.table(sdata.example(\textquotedbl{}marks\textquotedbl{}))}\enspace a practice table\\
-\codeline{sdata.table(\textquotedbl{}my\_file.xlsx\textquotedbl{})}\enspace a file (Excel, CSV, TSV, Parquet, JSON)\\
-\codeline{sdata.table(\textquotedbl{}my\_file.xlsx\textquotedbl{}, sheet=\textquotedbl{}2026\textquotedbl{}) one sheet of an Excel file}\\
+\codeline{sdata.table(\textquotedbl{}my\_file.xlsx\textquotedbl{})}\enspace a file (Excel, CSV, TSV, Parquet, JSON; Word, SPSS, Stata)\\
+\codeline{sdata.table(\textquotedbl{}my\_file.xlsx\textquotedbl{}, sheet=\textquotedbl{}2026\textquotedbl{}) one sheet of an Excel file; sheet=\textquotedbl{}all\textquotedbl{} stacks every sheet}\\
+\codeline{sdata.table(\textquotedbl{}data/*.csv\textquotedbl{})}\enspace several files stacked, with a \code{\textquotedbl{}file\textquotedbl{}} column (or a folder: \code{\textquotedbl{}data/\textquotedbl{}})\\
+\codeline{sdata.table(\textquotedbl{}https://example.org/data.csv\textquotedbl{}) a file on the web}\\
 \codeline{fast=True}\enspace use the fast engine (Polars), for big data
+
+Reading options, for files whose values are written differently:\\
+\codeline{separator=\textquotedbl{};\textquotedbl{}}\enspace the character between values (\code{\textquotedbl{}tab\textquotedbl{}} for tabs)\\
+\codeline{decimal\_mark=\textquotedbl{},\textquotedbl{}}\enspace 3,5 means three and a half\\
+\codeline{thousands\_mark=\textquotedbl{}.\textquotedbl{}}\enspace 1.000 means one thousand\\
+\code{empty\_\allowbreak{}values=[\textquotedbl{}NA\textquotedbl{},\allowbreak{} \textquotedbl{}-\textquotedbl{}]} markers that mean \code{\textquotedbl{}no value\textquotedbl{}}\\
+\codeline{skip\_rows=2}\enspace skip lines above the column names\\
+\codeline{encoding=\textquotedbl{}latin-1\textquotedbl{}}\enspace for text files not saved as UTF-8\\
+\codeline{table\_number=2}\enspace which table in a Word file (\code{\textquotedbl{}all\textquotedbl{}} stacks them)
 
 \wordfield{Options}{}\par\nopagebreak
 \begin{optiontable}
 \code{data=} & \\
 \code{sheet=} & \\
 \code{fast=} & normally \code{False}\\
+\code{separator=} & \\
+\code{decimal\_\allowbreak{}mark=} & \\
+\code{thousands\_\allowbreak{}mark=} & \\
+\code{empty\_\allowbreak{}values=} & \\
+\code{skip\_\allowbreak{}rows=} & \\
+\code{encoding=} & \\
+\code{table\_\allowbreak{}number=} & \\
 \end{optiontable}
 
 \wordfield{Underneath}{pandas or Polars read the file; narwhals lets every table word run on both}
@@ -3469,6 +3924,25 @@ import simplydata as sdata
 table = sdata.table(sdata.example("marks"))
 table.show_last_rows(3)
 \end{lstlisting}
+\wordentry{table.show()}{word:table.show}
+Show the table, every row and every column (or only the first \code{rows=}).
+
+\codeline{table.show()   table.show(rows=10)} (with \code{sdata.\allowbreak{}example(\textquotedbl{}marks\textquotedbl{})})\\
+A table with more than 1,000 rows shows its first 1,000; choose another number with \code{rows=}.
+
+\wordfield{Options}{}\par\nopagebreak
+\begin{optiontable}
+\code{rows=} & \\
+\end{optiontable}
+
+\wordfield{Underneath}{pandas or Polars (printing the table)}
+\wordfield{Example you can run}{(it uses the practice table \code{marks})}\par\nopagebreak
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+table = sdata.table(sdata.example("marks"))
+table.keep_rows("class", equal_to="A")
+table.show(rows=10)
+\end{lstlisting}
 \wordentry{table.column\_names()}{word:table.column-names}
 The names of all columns. \code{table.\allowbreak{}column\_\allowbreak{}names()}
 
@@ -3494,6 +3968,26 @@ Describe every column: its kind, empty cells, smallest, biggest and average.
 import simplydata as sdata
 table = sdata.table(sdata.example("marks"))
 table.describe_columns()
+\end{lstlisting}
+\wordentry{table.column()}{word:table.column}
+One column on its own: a column of numbers becomes \code{sdata.\allowbreak{}numbers}, any other a plain list.
+
+\codeline{marks = table.column(\textquotedbl{}marks\textquotedbl{})} (with \code{sdata.\allowbreak{}example(\textquotedbl{}marks\textquotedbl{})})\\
+then \code{marks.\allowbreak{}average()}, \code{marks.\allowbreak{}chart()} ... like any \code{sdata.\allowbreak{}numbers}. Empty cells become empty numbers. The table does not change.
+
+\wordfield{Options}{}\par\nopagebreak
+\begin{optiontable}
+\code{name=} & \\
+\end{optiontable}
+
+\wordfield{Underneath}{NumPy (a column of numbers becomes \code{sdata.\allowbreak{}numbers})}
+\wordfield{Example you can run}{(it uses the practice table \code{marks})}\par\nopagebreak
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+table = sdata.table(sdata.example("marks"))
+marks = table.column("marks")
+marks.average()
+marks.percentile(90)
 \end{lstlisting}
 \unsection{Choose columns}{group:Choose-columns}
 \wordentry{table.keep\_columns()}{word:table.keep-columns}
@@ -3553,10 +4047,11 @@ table.show_first_rows()
 \end{lstlisting}
 \unsection{Choose rows}{group:Choose-rows}
 \wordentry{table.keep\_rows()}{word:table.keep-rows}
-Keep only the rows that match one condition.
+Keep only the rows that match a condition.
 
 \codeline{table.keep\_rows(\textquotedbl{}marks\textquotedbl{}, above=50)} (with \code{sdata.\allowbreak{}example(\textquotedbl{}marks\textquotedbl{})})\\
-Conditions: above, below, \code{at\_\allowbreak{}least}, \code{at\_\allowbreak{}most}, \code{equal\_\allowbreak{}to}, \code{not\_\allowbreak{}equal\_\allowbreak{}to}, \code{between=[low,\allowbreak{} high]} (both ends included), \code{one\_\allowbreak{}of=[.\allowbreak{}.\allowbreak{}.\allowbreak{}]}, contains, \code{starts\_\allowbreak{}with}, \code{ends\_\allowbreak{}with} (capital letters matter), \code{is\_\allowbreak{}empty=True}. Empty cells only match \code{is\_\allowbreak{}empty}.
+\codeline{table.keep\_rows(\textquotedbl{}marks \textgreater{} 50 and class == 'A'\textquotedbl{})}\enspace a written condition\\
+Plain words: above, below, \code{at\_\allowbreak{}least}, \code{at\_\allowbreak{}most}, \code{equal\_\allowbreak{}to}, \code{not\_\allowbreak{}equal\_\allowbreak{}to}, \code{between=[low,\allowbreak{} high]} (both ends included), \code{one\_\allowbreak{}of=[.\allowbreak{}.\allowbreak{}.\allowbreak{}]}, contains, \code{starts\_\allowbreak{}with}, \code{ends\_\allowbreak{}with} (capital letters matter), \code{is\_\allowbreak{}empty=True}, and \code{after=} / \code{before=} for dates. Written conditions use == != \textless{} \textless{}= \textgreater{} \textgreater{}=, and, or, not, brackets, in [...], is empty; text and dates go in quotes. Empty cells only match \code{is\_\allowbreak{}empty} / is empty.
 
 \wordfield{Options}{}\par\nopagebreak
 \begin{optiontable}
@@ -3573,6 +4068,8 @@ Conditions: above, below, \code{at\_\allowbreak{}least}, \code{at\_\allowbreak{}
 \code{starts\_\allowbreak{}with=} & \\
 \code{ends\_\allowbreak{}with=} & \\
 \code{is\_\allowbreak{}empty=} & \\
+\code{after=} & \\
+\code{before=} & \\
 \end{optiontable}
 
 \wordfield{Underneath}{narwhals, which runs the step in pandas or Polars (whichever holds the table)}
@@ -3582,13 +4079,15 @@ import simplydata as sdata
 table = sdata.table(sdata.example("marks"))
 table.keep_rows("marks", above=50)
 table.keep_rows("subject", one_of=["Maths", "Science"])
+table.keep_rows("hours > 5 and class != 'C'")
 table.show_first_rows()
 \end{lstlisting}
 \wordentry{table.remove\_rows()}{word:table.remove-rows}
-Remove the rows that match one condition (the opposite of \code{keep\_\allowbreak{}rows}).
+Remove the rows that match a condition (the opposite of \code{keep\_\allowbreak{}rows}).
 
 \codeline{table.remove\_rows(\textquotedbl{}subject\textquotedbl{}, equal\_to=\textquotedbl{}English\textquotedbl{})} (with \code{sdata.\allowbreak{}example(\textquotedbl{}marks\textquotedbl{})})\\
-Same conditions as \code{keep\_\allowbreak{}rows}; \code{between=[low,\allowbreak{} high]} includes both ends.
+\codeline{table.remove\_rows(\textquotedbl{}marks \textless{} 40 or hours \textless{} 2\textquotedbl{})}\enspace a written condition\\
+Same conditions as \code{keep\_\allowbreak{}rows}; \code{between=[low,\allowbreak{} high]} includes both ends. A row whose cell is empty is never removed by a comparison on that cell (use \code{is\_\allowbreak{}empty=True}).
 
 \wordfield{Options}{}\par\nopagebreak
 \begin{optiontable}
@@ -3605,6 +4104,8 @@ Same conditions as \code{keep\_\allowbreak{}rows}; \code{between=[low,\allowbrea
 \code{starts\_\allowbreak{}with=} & \\
 \code{ends\_\allowbreak{}with=} & \\
 \code{is\_\allowbreak{}empty=} & \\
+\code{after=} & \\
+\code{before=} & \\
 \end{optiontable}
 
 \wordfield{Underneath}{narwhals, which runs the step in pandas or Polars (whichever holds the table)}
@@ -3688,30 +4189,17 @@ table = sdata.table(sdata.example("marks"))
 table.remove_duplicate_rows(columns=["name"])
 print(table)
 \end{lstlisting}
-\unsection{Empty cells}{group:Empty-cells}
-\wordentry{table.count\_empty\_cells()}{word:table.count-empty-cells}
-Show how many empty cells each column has.
+\wordentry{table.keep\_biggest\_rows()}{word:table.keep-biggest-rows}
+Keep the n rows with the biggest values in a column (also for each group).
 
-\codeline{table.count\_empty\_cells()} (with \code{sdata.\allowbreak{}example(\textquotedbl{}marks\textquotedbl{})})
-
-\wordfield{Options}{none: just write the empty brackets.}
-
-\wordfield{Underneath}{narwhals, which runs the step in pandas or Polars (whichever holds the table)}
-\wordfield{Example you can run}{(it uses the practice table \code{marks})}\par\nopagebreak
-\begin{lstlisting}[style=py]
-import simplydata as sdata
-table = sdata.table(sdata.example("marks"))
-table.replace_values("marks", [61, 73], with_value=None)
-table.count_empty_cells()
-\end{lstlisting}
-\wordentry{table.remove\_rows\_with\_empty\_cells()}{word:table.remove-rows-with-empty-cells}
-Remove rows with an empty cell (in any column, or only in the column you name).
-
-\codeline{table.remove\_rows\_with\_empty\_cells(\textquotedbl{}marks\textquotedbl{})} (with \code{sdata.\allowbreak{}example(\textquotedbl{}marks\textquotedbl{})})
+\codeline{table.keep\_biggest\_rows(3, by=\textquotedbl{}marks\textquotedbl{}, for\_each=\textquotedbl{}subject\textquotedbl{})} (with \code{sdata.\allowbreak{}example(\textquotedbl{}marks\textquotedbl{})})\\
+The rows come biggest first. Exactly n rows are kept: when rows tie at the cut, the ones higher up in the table are kept (a note says so). Empty cells are never kept.
 
 \wordfield{Options}{}\par\nopagebreak
 \begin{optiontable}
-\code{column=} & \\
+\code{n=} & \\
+\code{by=} & \\
+\code{for\_\allowbreak{}each=} & \\
 \end{optiontable}
 
 \wordfield{Underneath}{narwhals, which runs the step in pandas or Polars (whichever holds the table)}
@@ -3719,30 +4207,150 @@ Remove rows with an empty cell (in any column, or only in the column you name).
 \begin{lstlisting}[style=py]
 import simplydata as sdata
 table = sdata.table(sdata.example("marks"))
-table.replace_values("marks", [61, 73], with_value=None)
-table.remove_rows_with_empty_cells("marks")
+table.keep_biggest_rows(3, by="marks", for_each="subject")
+table.show()
+\end{lstlisting}
+\wordentry{table.keep\_smallest\_rows()}{word:table.keep-smallest-rows}
+Keep the n rows with the smallest values in a column (also for each group).
+
+\codeline{table.keep\_smallest\_rows(3, by=\textquotedbl{}marks\textquotedbl{}, for\_each=\textquotedbl{}subject\textquotedbl{})} (with \code{sdata.\allowbreak{}example(\textquotedbl{}marks\textquotedbl{})})\\
+The rows come smallest first. Exactly n rows are kept: when rows tie at the cut, the ones higher up in the table are kept (a note says so). Empty cells are never kept.
+
+\wordfield{Options}{}\par\nopagebreak
+\begin{optiontable}
+\code{n=} & \\
+\code{by=} & \\
+\code{for\_\allowbreak{}each=} & \\
+\end{optiontable}
+
+\wordfield{Underneath}{narwhals, which runs the step in pandas or Polars (whichever holds the table)}
+\wordfield{Example you can run}{(it uses the practice table \code{marks})}\par\nopagebreak
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+table = sdata.table(sdata.example("marks"))
+table.keep_smallest_rows(3, by="marks", for_each="subject")
+table.show()
+\end{lstlisting}
+\wordentry{table.show\_rows\_with\_outliers()}{word:table.show-rows-with-outliers}
+Show the rows whose value in a column is an outlier, and say why (the table does not change).
+
+\codeline{table.show\_rows\_with\_outliers(\textquotedbl{}marks\textquotedbl{}, for\_each=\textquotedbl{}subject\textquotedbl{})} (with \code{sdata.\allowbreak{}example(\textquotedbl{}marks\textquotedbl{})})\\
+\code{rule=\textquotedbl{}1.\allowbreak{}5 IQR\textquotedbl{}} (the default) is Tukey's rule, the one box plots use: below Q1 - 1.5 x IQR or above Q3 + 1.5 x IQR. Also \code{rule=\textquotedbl{}3 IQR\textquotedbl{}} or \code{rule=\textquotedbl{}3 standard deviations\textquotedbl{}}. Empty cells are never outliers.
+
+\wordfield{Options}{}\par\nopagebreak
+\begin{optiontable}
+\code{column=} & \\
+\code{for\_\allowbreak{}each=} & \\
+\code{rule=} & normally \code{\textquotedbl{}1.\allowbreak{}5 IQR\textquotedbl{}}\\
+\end{optiontable}
+
+\wordfield{Underneath}{narwhals, which runs the step in pandas or Polars (whichever holds the table)}
+\wordfield{Example you can run}{(it uses the practice table \code{marks})}\par\nopagebreak
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+table = sdata.table(sdata.example("marks"))
+table.show_rows_with_outliers("marks", for_each="class")
+\end{lstlisting}
+\wordentry{table.remove\_rows\_with\_outliers()}{word:table.remove-rows-with-outliers}
+Remove the rows whose value in a column is an outlier, and say how many and why.
+
+\codeline{table.remove\_rows\_with\_outliers(\textquotedbl{}marks\textquotedbl{}, for\_each=\textquotedbl{}subject\textquotedbl{})} (with \code{sdata.\allowbreak{}example(\textquotedbl{}marks\textquotedbl{})})\\
+\code{rule=\textquotedbl{}1.\allowbreak{}5 IQR\textquotedbl{}} (the default) is Tukey's rule, the one box plots use: below Q1 - 1.5 x IQR or above Q3 + 1.5 x IQR. Also \code{rule=\textquotedbl{}3 IQR\textquotedbl{}} or \code{rule=\textquotedbl{}3 standard deviations\textquotedbl{}}. Rows with an empty cell stay. Look first with \code{show\_\allowbreak{}rows\_\allowbreak{}with\_\allowbreak{}outliers()}, and say in your report which rule removed how many rows.
+
+\wordfield{Options}{}\par\nopagebreak
+\begin{optiontable}
+\code{column=} & \\
+\code{for\_\allowbreak{}each=} & \\
+\code{rule=} & normally \code{\textquotedbl{}1.\allowbreak{}5 IQR\textquotedbl{}}\\
+\end{optiontable}
+
+\wordfield{Underneath}{narwhals, which runs the step in pandas or Polars (whichever holds the table)}
+\wordfield{Example you can run}{(it uses the practice table \code{marks})}\par\nopagebreak
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+table = sdata.table(sdata.example("marks"))
+table.remove_rows_with_outliers("marks", for_each="subject")
+table.steps()
+\end{lstlisting}
+\unsection{Empty cells}{group:Empty-cells}
+\wordentry{table.count\_empty\_cells()}{word:table.count-empty-cells}
+Show how many empty cells each column has.
+
+\codeline{table.count\_empty\_cells()} (with \code{sdata.\allowbreak{}example(\textquotedbl{}shop\textquotedbl{})})
+
+\wordfield{Options}{none: just write the empty brackets.}
+
+\wordfield{Underneath}{narwhals, which runs the step in pandas or Polars (whichever holds the table)}
+\wordfield{Example you can run}{(it uses the practice table \code{shop})}\par\nopagebreak
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+table = sdata.table(sdata.example("shop"))
+table.count_empty_cells()
+\end{lstlisting}
+\wordentry{table.remove\_rows\_with\_empty\_cells()}{word:table.remove-rows-with-empty-cells}
+Remove rows with an empty cell (in any column, or only in the column you name).
+
+\codeline{table.remove\_rows\_with\_empty\_cells(\textquotedbl{}sales\textquotedbl{})} (with \code{sdata.\allowbreak{}example(\textquotedbl{}shop\textquotedbl{})})
+
+\wordfield{Options}{}\par\nopagebreak
+\begin{optiontable}
+\code{column=} & \\
+\end{optiontable}
+
+\wordfield{Underneath}{narwhals, which runs the step in pandas or Polars (whichever holds the table)}
+\wordfield{Example you can run}{(it uses the practice table \code{shop})}\par\nopagebreak
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+table = sdata.table(sdata.example("shop"))
+table.remove_rows_with_empty_cells("sales")
 print(table)
 \end{lstlisting}
 \wordentry{table.fill\_empty\_cells()}{word:table.fill-empty-cells}
 Fill the empty cells of a column with a value, or with the average, median, value above or value below.
 
-\codeline{table.fill\_empty\_cells(\textquotedbl{}marks\textquotedbl{}, with\_the=\textquotedbl{}average\textquotedbl{})} (with \code{sdata.\allowbreak{}example(\textquotedbl{}marks\textquotedbl{})})
+\codeline{table.fill\_empty\_cells(\textquotedbl{}customers\textquotedbl{}, with\_the=\textquotedbl{}median\textquotedbl{})} (with \code{sdata.\allowbreak{}example(\textquotedbl{}shop\textquotedbl{})})\\
+\code{with\_\allowbreak{}the=\textquotedbl{}line between neighbours\textquotedbl{}} fills each gap on the straight line between the filled cells just before and just after it (linear interpolation). It follows the rows in table order, or \code{sorted\_\allowbreak{}by=} a column of numbers or dates (then the line is spaced by those values, so a missing day counts as one day); \code{for\_\allowbreak{}each=} fills each group on its own. Empty cells at the start or end have only one neighbour, so they stay empty.\\
+\codeline{table.fill\_empty\_cells(\textquotedbl{}sales\textquotedbl{}, with\_the=\textquotedbl{}line between neighbours\textquotedbl{}, sorted\_by=\textquotedbl{}date\textquotedbl{}, for\_each=\textquotedbl{}shop\textquotedbl{})}
 
 \wordfield{Options}{}\par\nopagebreak
 \begin{optiontable}
 \code{column=} & \\
 \code{with\_\allowbreak{}value=} & \\
 \code{with\_\allowbreak{}the=} & \\
+\code{sorted\_\allowbreak{}by=} & \\
+\code{for\_\allowbreak{}each=} & \\
+\end{optiontable}
+
+\wordfield{Underneath}{narwhals; NumPy (interp) for the line between neighbours}
+\wordfield{Example you can run}{(it uses the practice table \code{shop})}\par\nopagebreak
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+table = sdata.table(sdata.example("shop"))
+table.fill_empty_cells("customers", with_the="median")
+table.fill_empty_cells("sales", with_the="line between neighbours", sorted_by="date", for_each="shop")
+table.count_empty_cells()
+\end{lstlisting}
+\wordentry{table.add\_is\_empty\_column()}{word:table.add-is-empty-column}
+Add a true/false column: True where a cell of \code{from\_\allowbreak{}column} is empty.
+
+Add it before filling empty cells, to keep track of which values were filled in.\\
+\codeline{table.add\_is\_empty\_column(\textquotedbl{}sales\_was\_empty\textquotedbl{}, from\_column=\textquotedbl{}sales\textquotedbl{})} (with \code{sdata.\allowbreak{}example(\textquotedbl{}shop\textquotedbl{})})
+
+\wordfield{Options}{}\par\nopagebreak
+\begin{optiontable}
+\code{name=} & \\
+\code{from\_\allowbreak{}column=} & \\
 \end{optiontable}
 
 \wordfield{Underneath}{narwhals, which runs the step in pandas or Polars (whichever holds the table)}
-\wordfield{Example you can run}{(it uses the practice table \code{marks})}\par\nopagebreak
+\wordfield{Example you can run}{(it uses the practice table \code{shop})}\par\nopagebreak
 \begin{lstlisting}[style=py]
 import simplydata as sdata
-table = sdata.table(sdata.example("marks"))
-table.replace_values("marks", [61, 73], with_value=None)
-table.fill_empty_cells("marks", with_the="average")
-table.show_first_rows()
+table = sdata.table(sdata.example("shop"))
+table.add_is_empty_column("sales_was_empty", from_column="sales")
+table.fill_empty_cells("sales", with_the="line between neighbours", sorted_by="date", for_each="shop")
+table.keep_rows("sales_was_empty")
+table.show()
 \end{lstlisting}
 \unsection{Fix columns}{group:Fix-columns}
 \wordentry{table.make\_numbers()}{word:table.make-numbers}
@@ -3786,14 +4394,16 @@ table.describe_columns()
 Turn a column into dates; cells that are not dates become empty.
 
 \codeline{table.make\_dates(\textquotedbl{}year\textquotedbl{})} (with \code{sdata.\allowbreak{}example(\textquotedbl{}growth\textquotedbl{})})\\
-Understands 2026-03-15, 15/03/2026, 15.03.2026, 15 March 2026, March 15, 2026, 2026-03 and 2026. 03/04/2026 is read day first, as 3 April.
+Understands 2026-03-15, 15/03/2026, 15.03.2026, 15 March 2026, March 15, 2026, 2026-03 and 2026. 03/04/2026 is read day first, as 3 April (month first only when day first cannot work). \code{order=} says how the dates are written, so nothing is guessed: \code{\textquotedbl{}day month year\textquotedbl{}} (15/03/2026), \code{\textquotedbl{}month day year\textquotedbl{}} (03/15/2026) or \code{\textquotedbl{}year month day\textquotedbl{}} (2026/03/15).\\
+\codeline{table.make\_dates(\textquotedbl{}when\textquotedbl{}, order=\textquotedbl{}month day year\textquotedbl{})}
 
 \wordfield{Options}{}\par\nopagebreak
 \begin{optiontable}
 \code{column=} & \\
+\code{order=} & \\
 \end{optiontable}
 
-\wordfield{Underneath}{narwhals, which runs the step in pandas or Polars (whichever holds the table)}
+\wordfield{Underneath}{pandas (\code{to\_\allowbreak{}datetime}) or Polars (str.strptime), trying the date formats in a fixed order}
 \wordfield{Example you can run}{(it uses the practice table \code{growth})}\par\nopagebreak
 \begin{lstlisting}[style=py]
 import simplydata as sdata
@@ -3858,7 +4468,9 @@ table.show_first_rows()
 \wordentry{table.replace\_values()}{word:table.replace-values}
 Replace a value (or a list of values) in a column; \code{with\_\allowbreak{}value=None} makes those cells empty.
 
-\codeline{table.replace\_values(\textquotedbl{}subject\textquotedbl{}, \textquotedbl{}Maths\textquotedbl{}, with\_value=\textquotedbl{}Math\textquotedbl{})} (with \code{sdata.\allowbreak{}example(\textquotedbl{}marks\textquotedbl{})})
+\codeline{table.replace\_values(\textquotedbl{}subject\textquotedbl{}, \textquotedbl{}Maths\textquotedbl{}, with\_value=\textquotedbl{}Math\textquotedbl{})} (with \code{sdata.\allowbreak{}example(\textquotedbl{}marks\textquotedbl{})})\\
+\codeline{table.replace\_values(\textquotedbl{}class\textquotedbl{}, \{\textquotedbl{}A\textquotedbl{}: \textquotedbl{}Class A\textquotedbl{}, \textquotedbl{}B\textquotedbl{}: \textquotedbl{}Class B\textquotedbl{}\})}\enspace several at once, old: new\\
+With \{old: new\}, every cell is looked up once in the original column, so \{\code{\textquotedbl{}A\textquotedbl{}}: \code{\textquotedbl{}B\textquotedbl{}}, \code{\textquotedbl{}B\textquotedbl{}}: \code{\textquotedbl{}A\textquotedbl{}}\} swaps A and B. A new value of None makes those cells empty.
 
 \wordfield{Options}{}\par\nopagebreak
 \begin{optiontable}
@@ -3874,6 +4486,62 @@ import simplydata as sdata
 table = sdata.table(sdata.example("marks"))
 table.replace_values("subject", "Maths", with_value="Math")
 table.count_each("subject")
+\end{lstlisting}
+\wordentry{table.round\_to()}{word:table.round-to}
+Round numbers to this many decimal places: in one column, a list of columns, or every number column.
+
+\codeline{table.round\_to(\textquotedbl{}hours\textquotedbl{}, 0)}\enspace \code{table.\allowbreak{}round\_\allowbreak{}to([\textquotedbl{}hours\textquotedbl{},\allowbreak{} \textquotedbl{}marks\textquotedbl{}],\allowbreak{} 1)} \code{table.\allowbreak{}round\_\allowbreak{}to(1)}\\
+(with \code{sdata.\allowbreak{}example(\textquotedbl{}marks\textquotedbl{})}) A number exactly halfway goes to the even neighbour (2.5 becomes 2, 3.5 becomes 4), like R and NumPy; this stops a run of halves from always pushing totals up. \code{round\_\allowbreak{}to(0)} gives whole numbers; a negative number of places rounds to tens (-1), hundreds (-2).
+
+\wordfield{Options}{}\par\nopagebreak
+\begin{optiontable}
+\code{column=} & \\
+\code{decimals=} & \\
+\end{optiontable}
+
+\wordfield{Underneath}{narwhals, which runs the step in pandas or Polars (whichever holds the table)}
+\wordfield{Example you can run}{(it uses the practice table \code{marks})}\par\nopagebreak
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+table = sdata.table(sdata.example("marks"))
+table.round_to("hours", 0)
+table.show_first_rows()
+\end{lstlisting}
+\wordentry{table.change\_column()}{word:table.change-column}
+Change the values of a column in place, with the same ways as \code{add\_\allowbreak{}column()}.
+
+The column keeps its name and its place in the table; \code{undo()} brings the old values back.\\
+\codeline{table.change\_column(\textquotedbl{}marks\textquotedbl{}, \textquotedbl{}marks / 10\textquotedbl{})} (with \code{sdata.\allowbreak{}example(\textquotedbl{}marks\textquotedbl{})})\\
+\codeline{table.change\_column(\textquotedbl{}marks\textquotedbl{}, from\_column=\textquotedbl{}marks\textquotedbl{}, plus=5)}\\
+\codeline{table.change\_column(\textquotedbl{}marks\textquotedbl{}, \textquotedbl{}marks - average(marks)\textquotedbl{}, for\_each=\textquotedbl{}class\textquotedbl{})}
+
+\wordfield{Options}{}\par\nopagebreak
+\begin{optiontable}
+\code{column=} & \\
+\code{formula=} & \\
+\code{by\_\allowbreak{}adding=} & \\
+\code{by\_\allowbreak{}subtracting=} & \\
+\code{by\_\allowbreak{}multiplying=} & \\
+\code{by\_\allowbreak{}dividing=} & \\
+\code{by\_\allowbreak{}joining\_\allowbreak{}text=} & \\
+\code{separator=} & \\
+\code{by\_\allowbreak{}running=} & \\
+\code{for\_\allowbreak{}each=} & \\
+\code{from\_\allowbreak{}column=} & \\
+\code{plus=} & \\
+\code{minus=} & \\
+\code{times=} & \\
+\code{divide\_\allowbreak{}by=} & \\
+\code{value=} & \\
+\end{optiontable}
+
+\wordfield{Underneath}{narwhals, which runs the step in pandas or Polars (whichever holds the table)}
+\wordfield{Example you can run}{(it uses the practice table \code{marks})}\par\nopagebreak
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+table = sdata.table(sdata.example("marks"))
+table.change_column("marks", "marks / 10")
+table.show_first_rows()
 \end{lstlisting}
 \unsection{Sort and new columns}{group:Sort-and-new-columns}
 \wordentry{table.sort\_by()}{word:table.sort-by}
@@ -3904,7 +4572,17 @@ Choose one way:\\
 \codeline{table.add\_column(\textquotedbl{}half\textquotedbl{}, from\_column=\textquotedbl{}marks\textquotedbl{}, divide\_by=2)}\\
 \codeline{table.add\_column(\textquotedbl{}school\textquotedbl{}, value=\textquotedbl{}Hill School\textquotedbl{})}\enspace same value in every row\\
 \codeline{table.add\_column(\textquotedbl{}marks\_per\_hour\textquotedbl{}, \textquotedbl{}marks / hours\textquotedbl{})}\enspace calculator style\\
+\codeline{table.add\_column(\textquotedbl{}name\_and\_class\textquotedbl{}, by\_joining\_text=[\textquotedbl{}name\textquotedbl{}, \textquotedbl{}class\textquotedbl{}], separator=\textquotedbl{} \textquotedbl{})}\\
 (all with \code{sdata.\allowbreak{}example(\textquotedbl{}marks\textquotedbl{})}). \code{by\_\allowbreak{}subtracting=[\textquotedbl{}a\textquotedbl{},\allowbreak{} \textquotedbl{}b\textquotedbl{}]} means a - b and \code{by\_\allowbreak{}dividing=[\textquotedbl{}a\textquotedbl{},\allowbreak{} \textquotedbl{}b\textquotedbl{}]} means a / b, in the order written. Dividing by zero gives an empty cell. In a formula, a column name with spaces goes in backticks: \code{\textquotedbl{}`max temp` - 2\textquotedbl{}}.
+
+Days between two dates: \code{by\_\allowbreak{}subtracting=[\textquotedbl{}end\textquotedbl{},\allowbreak{} \textquotedbl{}start\textquotedbl{}]} with two date columns gives the number of whole days from start to end (a part of a day is not counted).
+
+Summary words in a formula, \code{average()} \code{median()} \code{total()} \code{smallest()} \code{biggest()} \code{count()}, give one value for the whole column, or for each group with \code{for\_\allowbreak{}each=}:\\
+\codeline{table.add\_column(\textquotedbl{}share\textquotedbl{}, \textquotedbl{}marks / total(marks) * 100\textquotedbl{}, for\_each=\textquotedbl{}class\textquotedbl{})}\\
+gives each mark as a percent of its class total (with \code{sdata.\allowbreak{}example(\textquotedbl{}marks\textquotedbl{})}).
+
+\code{by\_\allowbreak{}running=} runs a function you wrote once for each row. This is ordinary Python: the function gets the row (row[\code{\textquotedbl{}marks\textquotedbl{}}] is that row's mark; an empty cell is None) and gives back the new value. def \code{per\_\allowbreak{}hour(row)}: return row[\code{\textquotedbl{}marks\textquotedbl{}}] / row[\code{\textquotedbl{}hours\textquotedbl{}}]\\
+\codeline{table.add\_column(\textquotedbl{}per\_hour\textquotedbl{}, by\_running=per\_hour)} (with \code{sdata.\allowbreak{}example(\textquotedbl{}marks\textquotedbl{})})
 
 \wordfield{Options}{}\par\nopagebreak
 \begin{optiontable}
@@ -3914,6 +4592,10 @@ Choose one way:\\
 \code{by\_\allowbreak{}subtracting=} & \\
 \code{by\_\allowbreak{}multiplying=} & \\
 \code{by\_\allowbreak{}dividing=} & \\
+\code{by\_\allowbreak{}joining\_\allowbreak{}text=} & \\
+\code{separator=} & \\
+\code{by\_\allowbreak{}running=} & \\
+\code{for\_\allowbreak{}each=} & \\
 \code{from\_\allowbreak{}column=} & \\
 \code{plus=} & \\
 \code{minus=} & \\
@@ -3932,11 +4614,13 @@ table.add_column("marks_per_hour", "marks / hours")
 table.show_first_rows()
 \end{lstlisting}
 \wordentry{table.add\_group\_column()}{word:table.add-group-column}
-Add a column that puts each number into a group, like turning marks into grades.
+Add a column that puts each row into a group, like turning marks into grades.
 
-\code{cut\_\allowbreak{}at=} says where one group ends and the next begins; \code{names=} has one more name than \code{cut\_\allowbreak{}at=} has numbers. A value exactly on a cut goes into the higher group: with \code{cut\_\allowbreak{}at=[40,\allowbreak{} 60,\allowbreak{} 80]}, a mark of 60 is a \code{\textquotedbl{}B\textquotedbl{}}. Empty cells stay empty.\\
+Two ways. With numbers: \code{cut\_\allowbreak{}at=} says where one group ends and the next begins; \code{names=} has one more name than \code{cut\_\allowbreak{}at=} has numbers. A value exactly on a cut goes into the higher group: with \code{cut\_\allowbreak{}at=[40,\allowbreak{} 60,\allowbreak{} 80]}, a mark of 60 is a \code{\textquotedbl{}B\textquotedbl{}}. Empty cells stay empty.\\
 \codeline{table.add\_group\_column(\textquotedbl{}grade\textquotedbl{}, from\_column=\textquotedbl{}marks\textquotedbl{}, cut\_at=[40, 60, 80], names=[\textquotedbl{}D\textquotedbl{}, \textquotedbl{}C\textquotedbl{}, \textquotedbl{}B\textquotedbl{}, \textquotedbl{}A\textquotedbl{}])}\\
-(with \code{sdata.\allowbreak{}example(\textquotedbl{}marks\textquotedbl{})})
+With rules: each rule is a condition and the group name for rows that meet it. The first rule a row meets wins; rows that meet no rule get \code{otherwise=} (or stay empty). An empty cell never meets a rule.\\
+\codeline{table.add\_group\_column(\textquotedbl{}result\textquotedbl{}, rules=\{\textquotedbl{}marks \textgreater{}= 80\textquotedbl{}: \textquotedbl{}top\textquotedbl{}, \textquotedbl{}marks \textgreater{}= 50\textquotedbl{}: \textquotedbl{}pass\textquotedbl{}\}, otherwise=\textquotedbl{}fail\textquotedbl{})}\\
+(both with \code{sdata.\allowbreak{}example(\textquotedbl{}marks\textquotedbl{})}). Rules can also be a list of pairs: \code{rules=[(\textquotedbl{}marks \textgreater{}= 80\textquotedbl{},\allowbreak{} \textquotedbl{}top\textquotedbl{}),\allowbreak{} (\textquotedbl{}marks \textgreater{}= 50\textquotedbl{},\allowbreak{} \textquotedbl{}pass\textquotedbl{})]}.
 
 \wordfield{Options}{}\par\nopagebreak
 \begin{optiontable}
@@ -3944,6 +4628,8 @@ Add a column that puts each number into a group, like turning marks into grades.
 \code{from\_\allowbreak{}column=} & \\
 \code{cut\_\allowbreak{}at=} & \\
 \code{names=} & \\
+\code{rules=} & \\
+\code{otherwise=} & \\
 \end{optiontable}
 
 \wordfield{Underneath}{narwhals, which runs the step in pandas or Polars (whichever holds the table)}
@@ -3976,15 +4662,197 @@ table.add_rank_column("place", from_column="marks")
 table.sort_by("place")
 table.show_first_rows()
 \end{lstlisting}
+\unsection{Dates and text}{group:Dates-and-text}
+\wordentry{table.add\_date\_part\_column()}{word:table.add-date-part-column}
+Add a column with one part of each date, such as its year, month or weekday.
+
+\code{part=} can be \code{\textquotedbl{}year\textquotedbl{}}, \code{\textquotedbl{}quarter\textquotedbl{}} (1 to 4), \code{\textquotedbl{}month\textquotedbl{}} (1 to 12), \code{\textquotedbl{}month name\textquotedbl{}} (\code{\textquotedbl{}March\textquotedbl{}}), \code{\textquotedbl{}week\textquotedbl{}} (the ISO week number, 1 to 53), \code{\textquotedbl{}day\textquotedbl{}} (day of the month), \code{\textquotedbl{}weekday\textquotedbl{}} (1 is Monday ... 7 is Sunday, as in the ISO 8601 standard), \code{\textquotedbl{}weekday name\textquotedbl{}} (\code{\textquotedbl{}Monday\textquotedbl{}}), \code{\textquotedbl{}day of year\textquotedbl{}} (1 to 366), \code{\textquotedbl{}hour\textquotedbl{}} or \code{\textquotedbl{}minute\textquotedbl{}}. Empty dates give empty cells.\\
+\codeline{table.add\_date\_part\_column(\textquotedbl{}weekday\textquotedbl{}, from\_column=\textquotedbl{}date\textquotedbl{}, part=\textquotedbl{}weekday name\textquotedbl{})}\\
+(with \code{sdata.\allowbreak{}example(\textquotedbl{}shop\textquotedbl{})}: which weekday was each day?)
+
+\wordfield{Options}{}\par\nopagebreak
+\begin{optiontable}
+\code{name=} & \\
+\code{from\_\allowbreak{}column=} & \\
+\code{part=} & \\
+\end{optiontable}
+
+\wordfield{Underneath}{narwhals, which runs the step in pandas or Polars (whichever holds the table)}
+\wordfield{Example you can run}{(it uses the practice table \code{shop})}\par\nopagebreak
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+table = sdata.table(sdata.example("shop"))
+table.add_date_part_column("weekday", from_column="date", part="weekday name")
+table.average_of("sales", for_each="weekday")
+\end{lstlisting}
+\wordentry{table.add\_text\_part\_column()}{word:table.add-text-part-column}
+Add a column with one part of each text, such as its first letters or the text before a mark.
+
+Choose one way:\\
+\codeline{first\_characters=3}\enspace the first 3 characters (letters, digits, spaces and signs)\\
+\codeline{last\_characters=3}\enspace the last 3 characters\\
+\codeline{characters=[2, 4]}\enspace characters 2 to 4, counting from 1\\
+\codeline{before=\textquotedbl{} \textquotedbl{}}\enspace the text before the first \code{\textquotedbl{} \textquotedbl{}}\\
+\codeline{after=\textquotedbl{} \textquotedbl{}}\enspace the text after the first \code{\textquotedbl{} \textquotedbl{}}\\
+\codeline{pattern=r\textquotedbl{}\textbackslash{}d+\textquotedbl{}}\enspace the first piece that fits a regular expression; with\\
+brackets ( ) in it, only the part inside the first brackets Cells where the mark or pattern is not found give empty cells.\\
+\codeline{table.add\_text\_part\_column(\textquotedbl{}initial\textquotedbl{}, from\_column=\textquotedbl{}name\textquotedbl{}, first\_characters=1)} (with \code{sdata.\allowbreak{}example(\textquotedbl{}marks\textquotedbl{})})
+
+\wordfield{Options}{}\par\nopagebreak
+\begin{optiontable}
+\code{name=} & \\
+\code{from\_\allowbreak{}column=} & \\
+\code{first\_\allowbreak{}characters=} & \\
+\code{last\_\allowbreak{}characters=} & \\
+\code{characters=} & \\
+\code{before=} & \\
+\code{after=} & \\
+\code{pattern=} & \\
+\end{optiontable}
+
+\wordfield{Underneath}{narwhals, which runs the step in pandas or Polars (whichever holds the table)}
+\wordfield{Example you can run}{(it uses the practice table \code{marks})}\par\nopagebreak
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+table = sdata.table(sdata.example("marks"))
+table.add_text_part_column("initial", from_column="name", first_characters=1)
+table.show_first_rows()
+\end{lstlisting}
+\wordentry{table.split\_column()}{word:table.split-column}
+Split a text column into several columns at a separator, such as a comma or a space.
+
+\code{into=} names the new columns; they take the place of the old column. The last new column keeps the rest of the text when there are more pieces. Spaces at the ends of each piece are removed, and missing pieces give empty cells.\\
+\codeline{table.split\_column(\textquotedbl{}shop\textquotedbl{}, separator=\textquotedbl{} \textquotedbl{}, into=[\textquotedbl{}shop\_kind\textquotedbl{}, \textquotedbl{}shop\_word\textquotedbl{}])} (with \code{sdata.\allowbreak{}example(\textquotedbl{}fruit\textquotedbl{})})
+
+\wordfield{Options}{}\par\nopagebreak
+\begin{optiontable}
+\code{column=} & \\
+\code{separator=} & normally \code{\textquotedbl{} \textquotedbl{}}\\
+\code{into=} & \\
+\end{optiontable}
+
+\wordfield{Underneath}{pandas (str.split) or Polars (str.splitn), whichever holds the table}
+\wordfield{Example you can run}{(it uses the practice table \code{fruit})}\par\nopagebreak
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+table = sdata.table(sdata.example("fruit"))
+table.split_column("shop", separator=" ", into=["shop_kind", "shop_word"])
+table.show_first_rows()
+\end{lstlisting}
+\wordentry{table.replace\_text()}{word:table.replace-text}
+Replace a piece of text inside the cells of a text column, wherever it appears.
+
+The old text is plain text and capitals matter. \code{with\_\allowbreak{}value=\textquotedbl{}\textquotedbl{}} removes it.\\
+\codeline{table.replace\_text(\textquotedbl{}shop\textquotedbl{}, \textquotedbl{} shop\textquotedbl{}, with\_value=\textquotedbl{}\textquotedbl{})} (with \code{sdata.\allowbreak{}example(\textquotedbl{}fruit\textquotedbl{})})\\
+\code{pattern=} takes a regular expression instead of plain text (a pattern language for text: \textbackslash{}d means a digit, \textbackslash{}s a space, + \code{\textquotedbl{}one or more\textquotedbl{}}):\\
+\codeline{table.replace\_text(\textquotedbl{}shop\textquotedbl{}, pattern=r\textquotedbl{}\textbackslash{}s+\textquotedbl{}, with\_value=\textquotedbl{}\_\textquotedbl{})}
+
+\wordfield{Options}{}\par\nopagebreak
+\begin{optiontable}
+\code{column=} & \\
+\code{old=} & \\
+\code{with\_\allowbreak{}value=} & \\
+\code{pattern=} & \\
+\end{optiontable}
+
+\wordfield{Underneath}{narwhals, which runs the step in pandas or Polars (whichever holds the table)}
+\wordfield{Example you can run}{(it uses the practice table \code{fruit})}\par\nopagebreak
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+table = sdata.table(sdata.example("fruit"))
+table.replace_text("shop", " shop", with_value="")
+table.count_each("shop")
+\end{lstlisting}
+\unsection{Row after row}{group:Row-after-row}
+\wordentry{table.add\_rolling\_column()}{word:table.add-rolling-column}
+Add a rolling (moving) summary: for each row, the average of this row and the rows just before it.
+
+\code{window=} is how many rows go into each summary (this row and the window - 1 rows before it). The first rows of each group are empty until there are enough rows, and a window with an empty cell in it gives an empty cell. \code{show=} can be \code{\textquotedbl{}average\textquotedbl{}}, \code{\textquotedbl{}total\textquotedbl{}}, \code{\textquotedbl{}median\textquotedbl{}}, \code{\textquotedbl{}smallest\textquotedbl{}}, \code{\textquotedbl{}biggest\textquotedbl{}} or \code{\textquotedbl{}standard deviation\textquotedbl{}}. \code{sorted\_\allowbreak{}by=} works it out in the order of a column such as a date (the rows themselves keep their place).\\
+\codeline{table.add\_rolling\_column(\textquotedbl{}rain\_3\_months\textquotedbl{}, from\_column=\textquotedbl{}rain\textquotedbl{}, window=3, show=\textquotedbl{}total\textquotedbl{},}\\
+\code{for\_\allowbreak{}each=\textquotedbl{}city\textquotedbl{}}, \code{sorted\_\allowbreak{}by=\textquotedbl{}month\_\allowbreak{}number\textquotedbl{}})   (with \code{sdata.\allowbreak{}example(\textquotedbl{}weather\textquotedbl{})})
+
+\wordfield{Options}{}\par\nopagebreak
+\begin{optiontable}
+\code{name=} & \\
+\code{from\_\allowbreak{}column=} & \\
+\code{window=} & normally \code{3}\\
+\code{show=} & normally \code{\textquotedbl{}average\textquotedbl{}}\\
+\code{for\_\allowbreak{}each=} & \\
+\code{sorted\_\allowbreak{}by=} & \\
+\end{optiontable}
+
+\wordfield{Underneath}{narwhals (\code{rolling\_\allowbreak{}mean}, \code{rolling\_\allowbreak{}sum}, \code{rolling\_\allowbreak{}std} with \code{over(order\_\allowbreak{}by=)}); pandas or Polars rolling for median, smallest and biggest}
+\wordfield{Example you can run}{(it uses the practice table \code{weather})}\par\nopagebreak
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+table = sdata.table(sdata.example("weather"))
+table.add_rolling_column("rain_3_months", from_column="rain", window=3, show="total", for_each="city", sorted_by="month_number")
+table.show_first_rows()
+\end{lstlisting}
+\wordentry{table.add\_previous\_value\_column()}{word:table.add-previous-value-column}
+Add a column with the value from the row before (or \code{rows\_\allowbreak{}back=} rows before).
+
+The first row of each group has no row before it, so it gets an empty cell.\\
+\codeline{table.add\_previous\_value\_column(\textquotedbl{}last\_month\textquotedbl{}, from\_column=\textquotedbl{}temperature\textquotedbl{}, for\_each=\textquotedbl{}city\textquotedbl{},}\\
+\code{sorted\_\allowbreak{}by=\textquotedbl{}month\_\allowbreak{}number\textquotedbl{}})   (with \code{sdata.\allowbreak{}example(\textquotedbl{}weather\textquotedbl{})})
+
+\wordfield{Options}{}\par\nopagebreak
+\begin{optiontable}
+\code{name=} & \\
+\code{from\_\allowbreak{}column=} & \\
+\code{rows\_\allowbreak{}back=} & normally \code{1}\\
+\code{for\_\allowbreak{}each=} & \\
+\code{sorted\_\allowbreak{}by=} & \\
+\end{optiontable}
+
+\wordfield{Underneath}{narwhals (shift, \code{rolling\_\allowbreak{}mean} and over with \code{order\_\allowbreak{}by=}, so each group keeps its own rows)}
+\wordfield{Example you can run}{(it uses the practice table \code{weather})}\par\nopagebreak
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+table = sdata.table(sdata.example("weather"))
+table.add_previous_value_column("last_month", from_column="temperature", for_each="city", sorted_by="month_number")
+table.show_first_rows()
+\end{lstlisting}
+\wordentry{table.add\_change\_column()}{word:table.add-change-column}
+Add a column with the change from the row before: this value minus the previous one.
+
+\code{in\_\allowbreak{}percent=True} gives the change as a percent of the previous value, (this - previous) / previous * 100; a previous value of 0 gives an empty cell. The first row of each group has nothing to compare with, so it is empty.\\
+\codeline{table.add\_change\_column(\textquotedbl{}growth\textquotedbl{}, from\_column=\textquotedbl{}population\textquotedbl{}, in\_percent=True,}\\
+\code{for\_\allowbreak{}each=\textquotedbl{}country\textquotedbl{}}, \code{sorted\_\allowbreak{}by=\textquotedbl{}year\textquotedbl{}})   (with \code{sdata.\allowbreak{}example(\textquotedbl{}growth\textquotedbl{})})
+
+\wordfield{Options}{}\par\nopagebreak
+\begin{optiontable}
+\code{name=} & \\
+\code{from\_\allowbreak{}column=} & \\
+\code{in\_\allowbreak{}percent=} & normally \code{False}\\
+\code{rows\_\allowbreak{}back=} & normally \code{1}\\
+\code{for\_\allowbreak{}each=} & \\
+\code{sorted\_\allowbreak{}by=} & \\
+\end{optiontable}
+
+\wordfield{Underneath}{narwhals (shift, \code{rolling\_\allowbreak{}mean} and over with \code{order\_\allowbreak{}by=}, so each group keeps its own rows)}
+\wordfield{Example you can run}{(it uses the practice table \code{growth})}\par\nopagebreak
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+table = sdata.table(sdata.example("growth"))
+table.add_change_column("growth", from_column="population", in_percent=True, for_each="country", sorted_by="year")
+table.show_first_rows()
+\end{lstlisting}
 \unsection{Summaries}{group:Summaries}
 \wordentry{table.count\_rows()}{word:table.count-rows}
 How many rows the table has, or how many in each group.
 
-\codeline{table.count\_rows(for\_each=\textquotedbl{}class\textquotedbl{})} (with \code{sdata.\allowbreak{}example(\textquotedbl{}marks\textquotedbl{})})
+\codeline{table.count\_rows(for\_each=\textquotedbl{}class\textquotedbl{})} (with \code{sdata.\allowbreak{}example(\textquotedbl{}marks\textquotedbl{})})\\
+\code{across=} gives a cross table (pandas crosstab), one column per value:\\
+\codeline{table.count\_rows(for\_each=\textquotedbl{}shop\textquotedbl{}, across=\textquotedbl{}fruit\textquotedbl{})} (with \code{sdata.\allowbreak{}example(\textquotedbl{}fruit\textquotedbl{})})\\
+\code{in\_\allowbreak{}percent=True} gives percents (0 to 100) instead: of all rows, or with \code{across=} of each row of the cross table, so every row adds up to 100 \%. \code{every=\textquotedbl{}month\textquotedbl{}} with a date column in \code{for\_\allowbreak{}each=} counts the rows of each month.
 
 \wordfield{Options}{}\par\nopagebreak
 \begin{optiontable}
 \code{for\_\allowbreak{}each=} & \\
+\code{across=} & \\
+\code{every=} & \\
+\code{in\_\allowbreak{}percent=} & normally \code{False}\\
 \end{optiontable}
 
 \wordfield{Underneath}{narwhals, which runs the step in pandas or Polars (whichever holds the table)}
@@ -4016,12 +4884,19 @@ table.count_each("fruit")
 \wordentry{table.average\_of()}{word:table.average-of}
 The average (mean) of a column; empty cells are skipped.
 
-\codeline{table.average\_of(\textquotedbl{}marks\textquotedbl{}, for\_each=\textquotedbl{}class\textquotedbl{})} (with \code{sdata.\allowbreak{}example(\textquotedbl{}marks\textquotedbl{})})
+\codeline{table.average\_of(\textquotedbl{}marks\textquotedbl{}, for\_each=\textquotedbl{}class\textquotedbl{})} (with \code{sdata.\allowbreak{}example(\textquotedbl{}marks\textquotedbl{})})\\
+\code{across=} gives a cross table, one column per subject:\\
+\codeline{table.average\_of(\textquotedbl{}marks\textquotedbl{}, for\_each=\textquotedbl{}class\textquotedbl{}, across=\textquotedbl{}subject\textquotedbl{})}\\
+\code{every=} groups a date column in \code{for\_\allowbreak{}each=} into \code{\textquotedbl{}hour\textquotedbl{}}, \code{\textquotedbl{}day\textquotedbl{}}, \code{\textquotedbl{}week\textquotedbl{}}, \code{\textquotedbl{}month\textquotedbl{}}, \code{\textquotedbl{}quarter\textquotedbl{}} or \code{\textquotedbl{}year\textquotedbl{}} periods:\\
+\codeline{table.make\_dates(\textquotedbl{}year\textquotedbl{})}\\
+\codeline{table.average\_of(\textquotedbl{}population\textquotedbl{}, for\_each=\textquotedbl{}year\textquotedbl{}, every=\textquotedbl{}year\textquotedbl{})} (with \code{sdata.\allowbreak{}example(\textquotedbl{}growth\textquotedbl{})})
 
 \wordfield{Options}{}\par\nopagebreak
 \begin{optiontable}
 \code{column} & needed\\
 \code{for\_\allowbreak{}each=} & \\
+\code{every=} & \\
+\code{across=} & \\
 \end{optiontable}
 
 \wordfield{Underneath}{narwhals, which runs the step in pandas or Polars (whichever holds the table)}
@@ -4036,12 +4911,15 @@ print(by_class)
 \wordentry{table.median\_of()}{word:table.median-of}
 The middle number of a column once it is sorted; empty cells are skipped.
 
-\codeline{table.median\_of(\textquotedbl{}marks\textquotedbl{}, for\_each=\textquotedbl{}class\textquotedbl{})} (with \code{sdata.\allowbreak{}example(\textquotedbl{}marks\textquotedbl{})})
+\codeline{table.median\_of(\textquotedbl{}marks\textquotedbl{}, for\_each=\textquotedbl{}class\textquotedbl{})} (with \code{sdata.\allowbreak{}example(\textquotedbl{}marks\textquotedbl{})})\\
+\code{across=} and \code{every=} work as in \code{average\_\allowbreak{}of}.
 
 \wordfield{Options}{}\par\nopagebreak
 \begin{optiontable}
 \code{column} & needed\\
 \code{for\_\allowbreak{}each=} & \\
+\code{every=} & \\
+\code{across=} & \\
 \end{optiontable}
 
 \wordfield{Underneath}{narwhals, which runs the step in pandas or Polars (whichever holds the table)}
@@ -4054,12 +4932,16 @@ table.median_of("marks", for_each="class")
 \wordentry{table.total\_of()}{word:table.total-of}
 All the numbers in a column added up; empty cells are skipped.
 
-\codeline{table.total\_of(\textquotedbl{}count\textquotedbl{}, for\_each=\textquotedbl{}shop\textquotedbl{})} (with \code{sdata.\allowbreak{}example(\textquotedbl{}fruit\textquotedbl{})})
+\codeline{table.total\_of(\textquotedbl{}count\textquotedbl{}, for\_each=\textquotedbl{}shop\textquotedbl{})} (with \code{sdata.\allowbreak{}example(\textquotedbl{}fruit\textquotedbl{})})\\
+\codeline{table.total\_of(\textquotedbl{}count\textquotedbl{}, for\_each=\textquotedbl{}shop\textquotedbl{}, across=\textquotedbl{}fruit\textquotedbl{})}\enspace a cross table\\
+\code{every=\textquotedbl{}month\textquotedbl{}} with a date column in \code{for\_\allowbreak{}each=} gives the total of each month.
 
 \wordfield{Options}{}\par\nopagebreak
 \begin{optiontable}
 \code{column} & needed\\
 \code{for\_\allowbreak{}each=} & \\
+\code{every=} & \\
+\code{across=} & \\
 \end{optiontable}
 
 \wordfield{Underneath}{narwhals, which runs the step in pandas or Polars (whichever holds the table)}
@@ -4072,12 +4954,15 @@ table.total_of("count", for_each="shop")
 \wordentry{table.smallest\_of()}{word:table.smallest-of}
 The smallest number in a column; empty cells are skipped.
 
-\codeline{table.smallest\_of(\textquotedbl{}temperature\textquotedbl{}, for\_each=\textquotedbl{}city\textquotedbl{})} (with \code{sdata.\allowbreak{}example(\textquotedbl{}weather\textquotedbl{})})
+\codeline{table.smallest\_of(\textquotedbl{}temperature\textquotedbl{}, for\_each=\textquotedbl{}city\textquotedbl{})} (with \code{sdata.\allowbreak{}example(\textquotedbl{}weather\textquotedbl{})})\\
+\code{across=} and \code{every=} work as in \code{average\_\allowbreak{}of}.
 
 \wordfield{Options}{}\par\nopagebreak
 \begin{optiontable}
 \code{column} & needed\\
 \code{for\_\allowbreak{}each=} & \\
+\code{every=} & \\
+\code{across=} & \\
 \end{optiontable}
 
 \wordfield{Underneath}{narwhals, which runs the step in pandas or Polars (whichever holds the table)}
@@ -4090,12 +4975,15 @@ table.smallest_of("temperature", for_each="city")
 \wordentry{table.biggest\_of()}{word:table.biggest-of}
 The biggest number in a column; empty cells are skipped.
 
-\codeline{table.biggest\_of(\textquotedbl{}temperature\textquotedbl{}, for\_each=\textquotedbl{}city\textquotedbl{})} (with \code{sdata.\allowbreak{}example(\textquotedbl{}weather\textquotedbl{})})
+\codeline{table.biggest\_of(\textquotedbl{}temperature\textquotedbl{}, for\_each=\textquotedbl{}city\textquotedbl{})} (with \code{sdata.\allowbreak{}example(\textquotedbl{}weather\textquotedbl{})})\\
+\code{across=} and \code{every=} work as in \code{average\_\allowbreak{}of}.
 
 \wordfield{Options}{}\par\nopagebreak
 \begin{optiontable}
 \code{column} & needed\\
 \code{for\_\allowbreak{}each=} & \\
+\code{every=} & \\
+\code{across=} & \\
 \end{optiontable}
 
 \wordfield{Underneath}{narwhals, which runs the step in pandas or Polars (whichever holds the table)}
@@ -4109,12 +4997,15 @@ table.biggest_of("temperature", for_each="city")
 How spread out the numbers are: the sample standard deviation (divide by n - 1).
 
 It is the same as pandas .std() and R \code{sd()}. Empty cells are skipped.\\
-\codeline{table.standard\_deviation\_of(\textquotedbl{}marks\textquotedbl{}, for\_each=\textquotedbl{}class\textquotedbl{})} (with \code{sdata.\allowbreak{}example(\textquotedbl{}marks\textquotedbl{})})
+\codeline{table.standard\_deviation\_of(\textquotedbl{}marks\textquotedbl{}, for\_each=\textquotedbl{}class\textquotedbl{})} (with \code{sdata.\allowbreak{}example(\textquotedbl{}marks\textquotedbl{})})\\
+\code{across=} and \code{every=} work as in \code{average\_\allowbreak{}of}.
 
 \wordfield{Options}{}\par\nopagebreak
 \begin{optiontable}
 \code{column} & needed\\
 \code{for\_\allowbreak{}each=} & \\
+\code{every=} & \\
+\code{across=} & \\
 \end{optiontable}
 
 \wordfield{Underneath}{narwhals, which runs the step in pandas or Polars (whichever holds the table)}
@@ -4124,17 +5015,95 @@ import simplydata as sdata
 table = sdata.table(sdata.example("marks"))
 table.standard_deviation_of("marks", for_each="class")
 \end{lstlisting}
-\wordentry{table.correlation\_between()}{word:table.correlation-between}
-How strongly two columns of numbers go up or down together, from -1 to 1.
+\wordentry{table.summary\_of()}{word:table.summary-of}
+Several measures of one or more columns at once, in one tidy table.
 
-\code{method=\textquotedbl{}pearson\textquotedbl{}} (a straight-line link, the usual one) or \code{\textquotedbl{}spearman\textquotedbl{}} (uses ranks, for any link that keeps going one way). Prints the strength in words and the p-value from SciPy, and gives back the number r. Rows with an empty cell in either column are skipped. Strength words for the size of r: below 0.2 very weak, from 0.2 weak, from 0.4 medium, from 0.6 strong, from 0.8 very strong (after Evans 1996). p below 0.001: \code{\textquotedbl{}very unlikely to be chance\textquotedbl{}}; below 0.05: \code{\textquotedbl{}unlikely to be chance\textquotedbl{}}; otherwise \code{\textquotedbl{}could easily be chance\textquotedbl{}}. A correlation does not show that one thing causes the other.\\
-\codeline{table.correlation\_between(\textquotedbl{}hours\textquotedbl{}, \textquotedbl{}marks\textquotedbl{})} (with \code{sdata.\allowbreak{}example(\textquotedbl{}marks\textquotedbl{})})
+\codeline{table.summary\_of(\textquotedbl{}marks\textquotedbl{}, for\_each=\textquotedbl{}class\textquotedbl{}, show=[\textquotedbl{}average\textquotedbl{}, \textquotedbl{}standard deviation\textquotedbl{}, \textquotedbl{}count\textquotedbl{}])}\\
+(with \code{sdata.\allowbreak{}example(\textquotedbl{}marks\textquotedbl{})}). Several columns: \code{table.\allowbreak{}summary\_\allowbreak{}of([\textquotedbl{}marks\textquotedbl{},\allowbreak{} \textquotedbl{}hours\textquotedbl{}])}. \code{show=} takes any of: \code{\textquotedbl{}count\textquotedbl{}} (numbers, empty cells left out), \code{\textquotedbl{}average\textquotedbl{}}, \code{\textquotedbl{}median\textquotedbl{}}, \code{\textquotedbl{}total\textquotedbl{}}, \code{\textquotedbl{}smallest\textquotedbl{}}, \code{\textquotedbl{}biggest\textquotedbl{}}, \code{\textquotedbl{}standard deviation\textquotedbl{}} (sample, n - 1), \code{\textquotedbl{}variance\textquotedbl{}} (sample, n - 1), \code{\textquotedbl{}standard error\textquotedbl{}} (of the average), \code{\textquotedbl{}confidence interval\textquotedbl{}} (95 \% t interval of the average, as R t.test), \code{\textquotedbl{}range\textquotedbl{}} (biggest minus smallest), \code{\textquotedbl{}interquartile range\textquotedbl{}} (upper quartile minus lower quartile, R type 7) and \code{\textquotedbl{}empty cells\textquotedbl{}}. Without \code{show=}: count, average, standard deviation, smallest, median, biggest. A measure of your own also works: a function that gets one group's numbers (a NumPy array) and gives back one number, \code{show=[\textquotedbl{}average\textquotedbl{},\allowbreak{} my\_\allowbreak{}measure]}. The new table has one row for each column (and each group), so it can be saved or charted. \code{every=} groups a date column in \code{for\_\allowbreak{}each=} by \code{\textquotedbl{}week\textquotedbl{}}, \code{\textquotedbl{}month\textquotedbl{}}, \code{\textquotedbl{}year\textquotedbl{}} ...
 
 \wordfield{Options}{}\par\nopagebreak
 \begin{optiontable}
-\code{column\_\allowbreak{}a} & needed\\
-\code{column\_\allowbreak{}b} & needed\\
+\code{column=} & \\
+\code{show=} & \\
+\code{for\_\allowbreak{}each=} & \\
+\code{every=} & \\
+\end{optiontable}
+
+\wordfield{Underneath}{narwhals (group summaries); SciPy (the t distribution) for the confidence interval}
+\wordfield{Example you can run}{(it uses the practice table \code{marks})}\par\nopagebreak
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+table = sdata.table(sdata.example("marks"))
+table.summary_of("marks", for_each="class", show=["average", "standard deviation", "count"])
+\end{lstlisting}
+\wordentry{table.percent\_of()}{word:table.percent-of}
+What percent of the rows meet a condition, or each group's share.
+
+\codeline{table.percent\_of(\textquotedbl{}marks\textquotedbl{}, above=60, for\_each=\textquotedbl{}class\textquotedbl{})} (with \code{sdata.\allowbreak{}example(\textquotedbl{}marks\textquotedbl{})})\\
+With a condition (the same words as \code{keep\_\allowbreak{}rows}: above, below, \code{at\_\allowbreak{}least}, \code{at\_\allowbreak{}most}, \code{equal\_\allowbreak{}to}, \code{not\_\allowbreak{}equal\_\allowbreak{}to}, between, \code{one\_\allowbreak{}of}, contains, \code{starts\_\allowbreak{}with}, \code{ends\_\allowbreak{}with}, \code{is\_\allowbreak{}empty}): the percent of rows that meet it, out of the rows with a value in the column, with its 95 \% confidence interval (Clopper-Pearson exact interval, as R binom.test). Without a condition:\\
+\codeline{table.percent\_of(for\_each=\textquotedbl{}class\textquotedbl{})}\enspace each group's percent of all rows\\
+\codeline{table.percent\_of(\textquotedbl{}count\textquotedbl{}, for\_each=\textquotedbl{}shop\textquotedbl{})}\enspace each group's share of the total of a\\
+column   (with \code{sdata.\allowbreak{}example(\textquotedbl{}fruit\textquotedbl{})}) Percents go from 0 to 100. Without \code{for\_\allowbreak{}each=} you get one number; with it a new table.
+
+\wordfield{Options}{}\par\nopagebreak
+\begin{optiontable}
+\code{column=} & \\
+\code{for\_\allowbreak{}each=} & \\
+\code{every=} & \\
+\code{above=} & \\
+\code{below=} & \\
+\code{at\_\allowbreak{}least=} & \\
+\code{at\_\allowbreak{}most=} & \\
+\code{equal\_\allowbreak{}to=} & \\
+\code{not\_\allowbreak{}equal\_\allowbreak{}to=} & \\
+\code{between=} & \\
+\code{one\_\allowbreak{}of=} & \\
+\code{contains=} & \\
+\code{starts\_\allowbreak{}with=} & \\
+\code{ends\_\allowbreak{}with=} & \\
+\code{is\_\allowbreak{}empty=} & \\
+\end{optiontable}
+
+\wordfield{Underneath}{narwhals; SciPy (stats.binomtest, the Clopper-Pearson exact interval)}
+\wordfield{Example you can run}{(it uses the practice table \code{marks})}\par\nopagebreak
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+table = sdata.table(sdata.example("marks"))
+table.percent_of("marks", above=60, for_each="class")
+\end{lstlisting}
+\wordentry{table.count\_different\_values()}{word:table.count-different-values}
+How many different values a column has, or how many in each group.
+
+\codeline{table.count\_different\_values(\textquotedbl{}name\textquotedbl{}, for\_each=\textquotedbl{}class\textquotedbl{})} (with \code{sdata.\allowbreak{}example(\textquotedbl{}marks\textquotedbl{})})\\
+Empty cells are not counted (as pandas \code{nunique()}); a note says how many there were. Capital letters matter: \code{\textquotedbl{}Apple\textquotedbl{}} and \code{\textquotedbl{}apple\textquotedbl{}} are two values.
+
+\wordfield{Options}{}\par\nopagebreak
+\begin{optiontable}
+\code{column=} & \\
+\code{for\_\allowbreak{}each=} & \\
+\code{every=} & \\
+\end{optiontable}
+
+\wordfield{Underneath}{narwhals, which runs the step in pandas or Polars (whichever holds the table)}
+\wordfield{Example you can run}{(it uses the practice table \code{marks})}\par\nopagebreak
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+table = sdata.table(sdata.example("marks"))
+table.count_different_values("name", for_each="class")
+\end{lstlisting}
+\wordentry{table.correlation\_between()}{word:table.correlation-between}
+How strongly columns of numbers go up or down together, from -1 to 1.
+
+\codeline{table.correlation\_between(\textquotedbl{}hours\textquotedbl{}, \textquotedbl{}marks\textquotedbl{})} (with \code{sdata.\allowbreak{}example(\textquotedbl{}marks\textquotedbl{})})\\
+\code{method=\textquotedbl{}pearson\textquotedbl{}} (a straight-line link, the usual one) or \code{\textquotedbl{}spearman\textquotedbl{}} (uses ranks, for any link that keeps going one way). Prints the strength in words and the p-value from SciPy. With two columns it gives back the number r; rows with an empty cell in either column are skipped. With three or more columns it gives back a correlation table (as pandas .corr()), and prints the strongest pairs:\\
+\codeline{table.correlation\_between(\textquotedbl{}hours\textquotedbl{}, \textquotedbl{}marks\textquotedbl{}, \textquotedbl{}height\textquotedbl{})}\\
+Each pair uses the rows where both columns have a number. \code{show=\textquotedbl{}p-value\textquotedbl{}} gives the table of p-values instead, and \code{show=\textquotedbl{}each pair\textquotedbl{}} one row per pair (r, p-value, rows), ready for \code{add\_\allowbreak{}adjusted\_\allowbreak{}p\_\allowbreak{}value\_\allowbreak{}column()}: testing many pairs makes a chance finding more likely. Strength words for the size of r: below 0.2 very weak, from 0.2 weak, from 0.4 medium, from 0.6 strong, from 0.8 very strong (after Evans 1996). p below 0.001: \code{\textquotedbl{}very unlikely to be chance\textquotedbl{}}; below 0.05: \code{\textquotedbl{}unlikely to be chance\textquotedbl{}}; otherwise \code{\textquotedbl{}could easily be chance\textquotedbl{}}. A correlation does not show that one thing causes the other.
+
+\wordfield{Options}{}\par\nopagebreak
+\begin{optiontable}
+\code{columns.\allowbreak{}.\allowbreak{}.\allowbreak{}} & as many as you like, separated by commas\\
 \code{method=} & normally \code{\textquotedbl{}pearson\textquotedbl{}}\\
+\code{show=} & normally \code{\textquotedbl{}r\textquotedbl{}}\\
 \end{optiontable}
 
 \wordfield{Underneath}{SciPy (stats.pearsonr or stats.spearmanr)}
@@ -4148,13 +5117,13 @@ table.correlation_between("hours", "marks")
 \wordentry{table.compare\_averages()}{word:table.compare-averages}
 Are the averages of the groups really different, or could it be chance?
 
-\codeline{table.compare\_averages(\textquotedbl{}marks\textquotedbl{}, between=\textquotedbl{}class\textquotedbl{})} (with \code{sdata.\allowbreak{}example(\textquotedbl{}marks\textquotedbl{})})\\
+\codeline{table.compare\_averages(\textquotedbl{}marks\textquotedbl{}, for\_each=\textquotedbl{}class\textquotedbl{})} (with \code{sdata.\allowbreak{}example(\textquotedbl{}marks\textquotedbl{})})\\
 Two groups: Welch's t-test (the R \code{t.\allowbreak{}test()} default). Three or more: Welch's one-way ANOVA (the R \code{oneway.\allowbreak{}test()} default). Neither needs the groups to have the same spread. \code{based\_\allowbreak{}on=\textquotedbl{}ranks\textquotedbl{}} uses ranks instead (Mann-Whitney U or Kruskal-Wallis): safer when groups are small and their values are not bell-shaped. \code{test=} chooses another test: \code{\textquotedbl{}welch\textquotedbl{}}, \code{\textquotedbl{}student\textquotedbl{}}, \code{\textquotedbl{}welch anova\textquotedbl{}}, \code{\textquotedbl{}anova\textquotedbl{}}, \code{\textquotedbl{}mann-whitney\textquotedbl{}} or \code{\textquotedbl{}kruskal-wallis\textquotedbl{}}. Prints the answer in words (with the test used and why) and gives back a one-row table of results. The effect size says how big the difference is: Hedges' g (the difference in standard deviations) for 2 groups, omega-squared (the share of the differences explained by the groups) for 3 or more. Each group is checked for a bell shape (Shapiro-Wilk) and a note says if it does not look like one; with 30 or more values that matters little (the central limit theorem). To see which groups differ, use \code{compare\_\allowbreak{}each\_\allowbreak{}pair()}.
 
 \wordfield{Options}{}\par\nopagebreak
 \begin{optiontable}
 \code{column=} & \\
-\code{between=} & \\
+\code{for\_\allowbreak{}each=} & \\
 \code{based\_\allowbreak{}on=} & normally \code{\textquotedbl{}averages\textquotedbl{}}\\
 \code{test=} & \\
 \end{optiontable}
@@ -4164,20 +5133,20 @@ Two groups: Welch's t-test (the R \code{t.\allowbreak{}test()} default). Three o
 \begin{lstlisting}[style=py]
 import simplydata as sdata
 table = sdata.table(sdata.example("marks"))
-result = table.compare_averages("marks", between="class")
-table.compare_averages("marks", between="class", based_on="ranks")
+result = table.compare_averages("marks", for_each="class")
+table.compare_averages("marks", for_each="class", based_on="ranks")
 result.save("marks_test.csv")
 \end{lstlisting}
 \wordentry{table.compare\_each\_pair()}{word:table.compare-each-pair}
 Which pairs of groups differ? Every pair is compared, with Holm's correction.
 
-\codeline{table.compare\_each\_pair(\textquotedbl{}marks\textquotedbl{}, between=\textquotedbl{}class\textquotedbl{})} (with \code{sdata.\allowbreak{}example(\textquotedbl{}marks\textquotedbl{})})\\
+\codeline{table.compare\_each\_pair(\textquotedbl{}marks\textquotedbl{}, for\_each=\textquotedbl{}class\textquotedbl{})} (with \code{sdata.\allowbreak{}example(\textquotedbl{}marks\textquotedbl{})})\\
 Each pair gets Welch's t-test (or Mann-Whitney U with \code{based\_\allowbreak{}on=\textquotedbl{}ranks\textquotedbl{}}). Testing many pairs makes a false alarm more likely, so the p-values are adjusted with Holm's method: the chance of at least one false alarm stays at 5 \%. This is the same as R \code{pairwise.\allowbreak{}t.\allowbreak{}test(pool.\allowbreak{}sd = FALSE,\allowbreak{} p.\allowbreak{}adjust.\allowbreak{}method = \textquotedbl{}holm\textquotedbl{})}. Gives back a table with one row per pair.
 
 \wordfield{Options}{}\par\nopagebreak
 \begin{optiontable}
 \code{column=} & \\
-\code{between=} & \\
+\code{for\_\allowbreak{}each=} & \\
 \code{based\_\allowbreak{}on=} & normally \code{\textquotedbl{}averages\textquotedbl{}}\\
 \end{optiontable}
 
@@ -4186,7 +5155,7 @@ Each pair gets Welch's t-test (or Mann-Whitney U with \code{based\_\allowbreak{}
 \begin{lstlisting}[style=py]
 import simplydata as sdata
 table = sdata.table(sdata.example("marks"))
-table.compare_each_pair("marks", between="class")
+table.compare_each_pair("marks", for_each="class")
 \end{lstlisting}
 \wordentry{table.compare\_before\_after()}{word:table.compare-before-after}
 Did the values change from one column to the other, row by row, more than chance?
@@ -4234,13 +5203,13 @@ table.compare_average_to("marks", 60)
 Does how often each value turns up differ between groups, more than chance?
 
 \codeline{table.add\_group\_column(\textquotedbl{}result\textquotedbl{}, from\_column=\textquotedbl{}marks\textquotedbl{}, cut\_at=[60], names=[\textquotedbl{}below 60\textquotedbl{}, \textquotedbl{}60 or more\textquotedbl{}])}\\
-\codeline{table.compare\_counts(\textquotedbl{}result\textquotedbl{}, between=\textquotedbl{}class\textquotedbl{})} (with \code{sdata.\allowbreak{}example(\textquotedbl{}marks\textquotedbl{})})\\
+\codeline{table.compare\_counts(\textquotedbl{}result\textquotedbl{}, for\_each=\textquotedbl{}class\textquotedbl{})} (with \code{sdata.\allowbreak{}example(\textquotedbl{}marks\textquotedbl{})})\\
 (Do the classes differ in how many children score 60 or more?) Counts the rows for each pair of values and uses the chi-square test of independence (as R \code{chisq.\allowbreak{}test()}: Yates' continuity correction for 2 x 2 tables only). If an expected count is below 5 a note says so; for a 2 x 2 table \code{test=\textquotedbl{}fisher\textquotedbl{}} then gives Fisher's exact test. Empty cells are skipped. Effect size: Cramer's V, the strength of the link from 0 (none) to 1 (complete). Gives back a one-row table.
 
 \wordfield{Options}{}\par\nopagebreak
 \begin{optiontable}
 \code{column=} & \\
-\code{between=} & \\
+\code{for\_\allowbreak{}each=} & \\
 \code{test=} & \\
 \end{optiontable}
 
@@ -4250,7 +5219,7 @@ Does how often each value turns up differ between groups, more than chance?
 import simplydata as sdata
 table = sdata.table(sdata.example("marks"))
 table.add_group_column("result", from_column="marks", cut_at=[60], names=["below 60", "60 or more"])
-table.compare_counts("result", between="class")
+table.compare_counts("result", for_each="class")
 \end{lstlisting}
 \wordentry{table.fit\_straight\_line()}{word:table.fit-straight-line}
 Fit the straight line y = slope * x + intercept that best follows the points.
@@ -4290,6 +5259,49 @@ import simplydata as sdata
 table = sdata.table(sdata.example("growth"))
 table.keep_rows("country", equal_to="Applia")
 table.fit_formula("population = a * exp(b * (year - 2000))")
+\end{lstlisting}
+\wordentry{table.compare\_shape\_to()}{word:table.compare-shape-to}
+Do the values look bell-shaped (normal), or are they too far from it to be chance?
+
+\codeline{table.compare\_shape\_to(\textquotedbl{}marks\textquotedbl{}, \textquotedbl{}normal\textquotedbl{}, for\_each=\textquotedbl{}class\textquotedbl{})} (with \code{sdata.\allowbreak{}example(\textquotedbl{}marks\textquotedbl{})})\\
+Uses the Shapiro-Wilk test (as R \code{shapiro.\allowbreak{}test()}), for 3 to 5000 values in each group; empty cells are skipped. A small p-value says the shape is too far from a bell shape to be chance. A large p-value does not prove the values are normal: with few values the test can miss a different shape, and with many values (30 or more) it flags even tiny, harmless differences, while tests on averages are then usually fine anyway (the central limit theorem). Gives back a table with one row per group.
+
+\wordfield{Options}{}\par\nopagebreak
+\begin{optiontable}
+\code{column=} & \\
+\code{shape=} & normally \code{\textquotedbl{}normal\textquotedbl{}}\\
+\code{for\_\allowbreak{}each=} & \\
+\end{optiontable}
+
+\wordfield{Underneath}{SciPy (stats.shapiro)}
+\wordfield{Example you can run}{(it uses the practice table \code{marks})}\par\nopagebreak
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+table = sdata.table(sdata.example("marks"))
+table.compare_shape_to("marks", "normal", for_each="class")
+\end{lstlisting}
+\wordentry{table.add\_adjusted\_p\_value\_column()}{word:table.add-adjusted-p-value-column}
+Adjust p-values for testing many things at once, in a new column.
+
+\codeline{table = sdata.table(sdata.example(\textquotedbl{}marks\textquotedbl{})).correlation\_between(\textquotedbl{}hours\textquotedbl{}, \textquotedbl{}marks\textquotedbl{}, \textquotedbl{}height\textquotedbl{}, show=\textquotedbl{}each pair\textquotedbl{})}\\
+\codeline{table.add\_adjusted\_p\_value\_column(\textquotedbl{}q\textquotedbl{}, method=\textquotedbl{}benjamini-hochberg\textquotedbl{})}\\
+(table is now one row per pair of columns, with its p-value) The more tests you run, the more likely one of them looks real by chance; adjusted p-values allow for that. \code{method=\textquotedbl{}holm\textquotedbl{}} (the default, as R \code{p.\allowbreak{}adjust()}): the chance of even one false alarm among all the tests stays at 5 \%. \code{\textquotedbl{}bonferroni\textquotedbl{}}: the same promise, simpler and stricter. \code{\textquotedbl{}benjamini-hochberg\textquotedbl{}} (also \code{\textquotedbl{}bh\textquotedbl{}} or \code{\textquotedbl{}fdr\textquotedbl{}}): about 5 \% of the findings below 0.05 are expected to be false alarms (the false discovery rate); it finds more with many tests. \code{\textquotedbl{}benjamini-yekutieli\textquotedbl{}} (\code{\textquotedbl{}by\textquotedbl{}}): a false discovery rate that is safe however the tests depend on each other. \code{from\_\allowbreak{}column=} is the column of p-values (\code{\textquotedbl{}p-value\textquotedbl{}} in simplydata result tables). Without a name the new column is called, for example, \code{\textquotedbl{}p-value (Holm)\textquotedbl{}}. Empty cells stay empty and are not counted, as R \code{p.\allowbreak{}adjust()}.
+
+\wordfield{Options}{}\par\nopagebreak
+\begin{optiontable}
+\code{name=} & \\
+\code{from\_\allowbreak{}column=} & normally \code{\textquotedbl{}p-value\textquotedbl{}}\\
+\code{method=} & normally \code{\textquotedbl{}holm\textquotedbl{}}\\
+\end{optiontable}
+
+\wordfield{Underneath}{NumPy (Holm, Bonferroni, Benjamini-Hochberg and Benjamini-Yekutieli, written out as in R \code{p.\allowbreak{}adjust()})}
+\wordfield{Example you can run}{(it uses the practice table \code{marks})}\par\nopagebreak
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+table = sdata.table(sdata.example("marks"))
+table = table.correlation_between("hours", "marks", "height", show="each pair")
+table.add_adjusted_p_value_column("q", method="benjamini-hochberg")
+table.show()
 \end{lstlisting}
 \unsection{Combine and reshape}{group:Combine-and-reshape}
 \wordentry{table.join\_with()}{word:table.join-with}
@@ -4956,7 +5968,8 @@ nums.show()
 \wordentry{nums.fill\_empty\_numbers()}{word:nums.fill-empty-numbers}
 Fill the empty values with a number, or with the average, median, value above or value below.
 
-\codeline{nums.fill\_empty\_numbers(with\_value=0)}\enspace or \code{nums.\allowbreak{}fill\_\allowbreak{}empty\_\allowbreak{}numbers(with\_\allowbreak{}the=\textquotedbl{}average\textquotedbl{})}
+\codeline{nums.fill\_empty\_numbers(with\_value=0)}\enspace or \code{nums.\allowbreak{}fill\_\allowbreak{}empty\_\allowbreak{}numbers(with\_\allowbreak{}the=\textquotedbl{}average\textquotedbl{})}\\
+\code{with\_\allowbreak{}the=\textquotedbl{}line between neighbours\textquotedbl{}} fills each gap on the straight line between the values just before and just after it; empty values at the start or end stay empty.
 
 \wordfield{Options}{}\par\nopagebreak
 \begin{optiontable}
@@ -4964,12 +5977,12 @@ Fill the empty values with a number, or with the average, median, value above or
 \code{with\_\allowbreak{}the=} & \\
 \end{optiontable}
 
-\wordfield{Underneath}{NumPy}
+\wordfield{Underneath}{NumPy (interp for the line between neighbours)}
 \wordfield{Example you can run}{}\par\nopagebreak
 \begin{lstlisting}[style=py]
 import simplydata as sdata
-nums = sdata.numbers([12, None, 9, 14])
-nums.fill_empty_numbers(with_the="average")
+nums = sdata.numbers([12, None, 9, None, 14])
+nums.fill_empty_numbers(with_the="line between neighbours")
 nums.show()
 \end{lstlisting}
 \wordentry{nums.sort()}{word:nums.sort}
@@ -5923,6 +6936,15 @@ table.save("five.csv")
 \end{lstlisting}
 \printedoutput{output/solution10_task3.txt}
 \solutionanswer{\code{seed=1} picks the same 5 rows every time, so someone else can repeat it.}
+\solutiontask{4}{With one written condition, keep the rows with marks below 50 or hours above 8. How many rows are there?}
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+table = sdata.table(sdata.example("marks"))
+table.keep_rows("marks < 50 or hours > 8")
+table.count_rows()
+\end{lstlisting}
+\printedoutput{output/solution10_task4.txt}
+\solutionanswer{19 rows: or keeps a row when at least one of the two is true.}
 \par\noindent{\small\sffamily\hyperref[lesson:10]{Back to lesson 10}}
 \unsection{Lesson 11: Tables: clean the data and add new columns}{solutions:11}
 \solutiontask{1}{In the first example, fill the empty marks with the median instead of the average.}
@@ -5957,6 +6979,16 @@ table.show_first_rows()
 \end{lstlisting}
 \printedoutput{output/solution11_task3.txt}
 \solutionanswer{The formula can use a column made earlier (total); \code{best\_\allowbreak{}two} is Maths + Science.}
+\solutiontask{4}{In the shop example, add a column \code{\textquotedbl{}change\textquotedbl{}} with the change in sales from the day before, \code{for\_\allowbreak{}each=\textquotedbl{}shop\textquotedbl{}} and \code{sorted\_\allowbreak{}by=\textquotedbl{}date\textquotedbl{}} (\code{add\_\allowbreak{}change\_\allowbreak{}column}).}
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+table = sdata.table(sdata.example("shop"))
+table.fill_empty_cells("sales", with_the="line between neighbours", sorted_by="date", for_each="shop")
+table.add_change_column("change", from_column="sales", for_each="shop", sorted_by="date")
+table.show(rows=5)
+\end{lstlisting}
+\printedoutput{output/solution11_task4.txt}
+\solutionanswer{Each change is today's sales minus yesterday's, in the same shop; the first day of each shop has nothing before it, so its change is empty.}
 \par\noindent{\small\sffamily\hyperref[lesson:11]{Back to lesson 11}}
 \unsection{Lesson 12: Tables: summaries, and from a table to a chart}{solutions:12}
 \solutiontask{1}{Make the fruit totals \code{for\_\allowbreak{}each=\textquotedbl{}shop\textquotedbl{}} instead. Which shop sold more?}
@@ -5992,6 +7024,14 @@ table.correlation_between("height", "marks")
 \end{lstlisting}
 \printedoutput{output/solution12_task3.txt}
 \solutionanswer{No: r = 0.03, very close to 0, and p = 0.83 says it could easily be chance.}
+\solutiontask{4}{Make a cross table of the average mark \code{for\_\allowbreak{}each=\textquotedbl{}subject\textquotedbl{}} \code{across=\textquotedbl{}class\textquotedbl{}}. Which class is best in Science?}
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+table = sdata.table(sdata.example("marks"))
+table.average_of("marks", for_each="subject", across="class")
+\end{lstlisting}
+\printedoutput{output/solution12_task4.txt}
+\solutionanswer{Class A, with an average of 79.2 in Science, against 67.5 for B and 62.3 for C.}
 \par\noindent{\small\sffamily\hyperref[lesson:12]{Back to lesson 12}}
 \unsection{Lesson 13: Numbers: lists and grids of numbers}{solutions:13}
 \solutiontask{1}{Make the numbers 1 to 10, then square them in two ways: with ** 2 and with \code{power(2)}.}
@@ -6024,11 +7064,11 @@ print(grid)
 \solutionanswer{Three rows of four zeros: a grid to fill in later.}
 \par\noindent{\small\sffamily\hyperref[lesson:13]{Back to lesson 13}}
 \unsection{Lesson 14: Statistical tests: real difference, or chance?}{solutions:14}
-\solutiontask{1}{Compare the average marks \code{between=\textquotedbl{}subject\textquotedbl{}}. Could the differences be chance?}
+\solutiontask{1}{Compare the average marks \code{for\_\allowbreak{}each=\textquotedbl{}subject\textquotedbl{}}. Could the differences be chance?}
 \begin{lstlisting}[style=py]
 import simplydata as sdata
 table = sdata.table(sdata.example("marks"))
-table.compare_averages("marks", between="subject")
+table.compare_averages("marks", for_each="subject")
 \end{lstlisting}
 \printedoutput{output/solution14_task1.txt}
 \solutionanswer{Yes, they could: p = 0.26 is well above 0.05. That does not prove the subjects are the same; these data simply cannot tell.}
@@ -6036,8 +7076,8 @@ table.compare_averages("marks", between="subject")
 \begin{lstlisting}[style=py]
 import simplydata as sdata
 table = sdata.table(sdata.example("weather"))
-table.compare_averages("temperature", between="city")
-table.compare_each_pair("temperature", between="city")
+table.compare_averages("temperature", for_each="city")
+table.compare_each_pair("temperature", for_each="city")
 \end{lstlisting}
 \printedoutput{output/solution14_task2.txt}
 \solutionanswer{Yes: p = 0.0002, very unlikely to be chance. \code{compare\_\allowbreak{}each\_\allowbreak{}pair} then shows which cities differ from each other.}
@@ -6050,16 +7090,25 @@ table.fit_straight_line(x="year", y="forest")
 \end{lstlisting}
 \printedoutput{output/solution14_task3.txt}
 \solutionanswer{In Applia the forest shrinks by about 0.57 percentage points a year (95 \% CI 0.48 to 0.67), and the line explains 94 \% of the differences.}
+\solutiontask{4}{Remove the rows with outliers in \code{\textquotedbl{}marks\textquotedbl{}} \code{for\_\allowbreak{}each=\textquotedbl{}class\textquotedbl{}}, then compare the average marks \code{for\_\allowbreak{}each=\textquotedbl{}class\textquotedbl{}} again. Did the answer change?}
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+table = sdata.table(sdata.example("marks"))
+table.remove_rows_with_outliers("marks", for_each="class")
+table.compare_averages("marks", for_each="class")
+\end{lstlisting}
+\printedoutput{output/solution14_task4.txt}
+\solutionanswer{Only one mark (33 in class B) is removed. Class B goes up from 64.3 to 66.1, but p stays 0.028: the answer does not change. Say in a report that you checked, and how.}
 \par\noindent{\small\sffamily\hyperref[lesson:14]{Back to lesson 14}}
 \unsection{Lesson 15: A whole analysis: from a question to a figure}{solutions:15}
-\solutiontask{1}{Do a whole analysis of \code{sdata.\allowbreak{}example(\textquotedbl{}weather\textquotedbl{})}: look at it, compare the average rain \code{between=\textquotedbl{}city\textquotedbl{}}, draw the rain of each city as boxes, and save the chart and the table.}
+\solutiontask{1}{Do a whole analysis of \code{sdata.\allowbreak{}example(\textquotedbl{}weather\textquotedbl{})}: look at it, compare the average rain \code{for\_\allowbreak{}each=\textquotedbl{}city\textquotedbl{}}, draw the rain of each city as boxes, and save the chart and the table.}
 \begin{lstlisting}[style=py]
 import simplydata as sdata
 table = sdata.table(sdata.example("weather"))
 table.describe_columns()
 table.remove_columns("wind_direction", "wind_speed")
 table.average_of("rain", for_each="city")
-table.compare_averages("rain", between="city")
+table.compare_averages("rain", for_each="city")
 chart = table.chart()
 chart.boxes(x="city", y="rain")
 chart.all_dots(x="city", y="rain")
@@ -6112,10 +7161,17 @@ Every word and option, A to Z, with the page of its dictionary entry. Other spel
 \begin{multicols}{2}\small\raggedright\setlength{\parskip}{0.1em}
 \indexline{word:nums.absolute-value}{nums.absolute\_value()}
 \indexline{word:nums.add}{nums.add()}
+\indexline{word:table.add-adjusted-p-value-column}{table.add\_adjusted\_p\_value\_column()}
+\indexline{word:table.add-change-column}{table.add\_change\_column()}
 \indexline{word:table.add-column}{table.add\_column()}
+\indexline{word:table.add-date-part-column}{table.add\_date\_part\_column()}
 \indexline{word:table.add-group-column}{table.add\_group\_column()}
+\indexline{word:table.add-is-empty-column}{table.add\_is\_empty\_column()}
+\indexline{word:table.add-previous-value-column}{table.add\_previous\_value\_column()}
 \indexline{word:table.add-rank-column}{table.add\_rank\_column()}
+\indexline{word:table.add-rolling-column}{table.add\_rolling\_column()}
 \indexline{word:table.add-rows-from}{table.add\_rows\_from()}
+\indexline{word:table.add-text-part-column}{table.add\_text\_part\_column()}
 \indexline{word:all-dots}{chart.all\_dots()}
 \indexline{word:animate}{chart.animate()}
 \indexline{word:area}{chart.area()}
@@ -6124,6 +7180,7 @@ Every word and option, A to Z, with the page of its dictionary entry. Other spel
 \indexline{word:table.as-polars}{table.as\_polars()}
 \indexline{word:nums.average}{nums.average()}
 \indexline{word:table.average-of}{table.average\_of()}
+\indexline{word:band}{chart.band()}
 \indexline{word:bars}{chart.bar()}
 \indexline{word:bars}{chart.bars()}
 \indexline{word:nums.biggest}{nums.biggest()}
@@ -6131,6 +7188,7 @@ Every word and option, A to Z, with the page of its dictionary entry. Other spel
 \indexline{word:boxes}{chart.box()}
 \indexline{word:boxes}{chart.boxes()}
 \indexline{word:caption-bottom}{chart.caption\_bottom()}
+\indexline{word:table.change-column}{table.change\_column()}
 \indexline{word:nums.chart}{nums.chart()}
 \indexline{word:sdata.chart}{sdata.chart()}
 \indexline{word:table.chart}{table.chart()}
@@ -6139,17 +7197,20 @@ Every word and option, A to Z, with the page of its dictionary entry. Other spel
 \indexline{word:colour}{chart.colour()}
 \indexline{word:colours}{chart.colours()}
 \indexline{word:grid.column}{grid.column()}
+\indexline{word:table.column}{table.column()}
 \indexline{word:table.column-names}{table.column\_names()}
 \indexline{word:table.compare-average-to}{table.compare\_average\_to()}
 \indexline{word:table.compare-averages}{table.compare\_averages()}
 \indexline{word:table.compare-before-after}{table.compare\_before\_after()}
 \indexline{word:table.compare-counts}{table.compare\_counts()}
 \indexline{word:table.compare-each-pair}{table.compare\_each\_pair()}
+\indexline{word:table.compare-shape-to}{table.compare\_shape\_to()}
 \indexline{word:contour}{chart.contour()}
 \indexline{word:table.correlation-between}{table.correlation\_between()}
 \indexline{word:nums.count}{nums.count()}
 \indexline{word:count-bars}{chart.count\_bars()}
 \indexline{word:grid.count-columns}{grid.count\_columns()}
+\indexline{word:table.count-different-values}{table.count\_different\_values()}
 \indexline{word:nums.count-each}{nums.count\_each()}
 \indexline{word:table.count-each}{table.count\_each()}
 \indexline{word:table.count-empty-cells}{table.count\_empty\_cells()}
@@ -6161,6 +7222,7 @@ Every word and option, A to Z, with the page of its dictionary entry. Other spel
 \indexline{word:nums.divide-by}{nums.divide\_by()}
 \indexline{word:dots}{chart.dots()}
 \indexline{word:dots-3d}{chart.dots\_3d()}
+\indexline{word:empty-cells}{chart.empty\_cells()}
 \indexline{word:error-eq}{error=}
 \indexline{word:error-bars}{chart.error\_bars()}
 \indexline{word:sdata.example}{sdata.example()}
@@ -6181,6 +7243,7 @@ Every word and option, A to Z, with the page of its dictionary entry. Other spel
 \indexline{word:hide-legend}{chart.hide\_legend()}
 \indexline{word:histogram}{chart.histogram()}
 \indexline{word:table.join-with}{table.join\_with()}
+\indexline{word:table.keep-biggest-rows}{table.keep\_biggest\_rows()}
 \indexline{word:table.keep-columns}{table.keep\_columns()}
 \indexline{word:nums.keep-first-numbers}{nums.keep\_first\_numbers()}
 \indexline{word:table.keep-first-rows}{table.keep\_first\_rows()}
@@ -6190,8 +7253,10 @@ Every word and option, A to Z, with the page of its dictionary entry. Other spel
 \indexline{word:nums.keep-random-numbers}{nums.keep\_random\_numbers()}
 \indexline{word:table.keep-random-rows}{table.keep\_random\_rows()}
 \indexline{word:table.keep-rows}{table.keep\_rows()}
+\indexline{word:table.keep-smallest-rows}{table.keep\_smallest\_rows()}
 \indexline{word:label-colour-bar}{chart.label\_color\_bar()}
 \indexline{word:label-colour-bar}{chart.label\_colour\_bar()}
+\indexline{word:label-legend}{chart.label\_legend()}
 \indexline{word:label-x}{chart.label\_x()}
 \indexline{word:label-y}{chart.label\_y()}
 \indexline{word:legend-bottom}{chart.legend\_bottom()}
@@ -6213,6 +7278,7 @@ Every word and option, A to Z, with the page of its dictionary entry. Other spel
 \indexline{word:table.make-uppercase}{table.make\_uppercase()}
 \indexline{word:nums.median}{nums.median()}
 \indexline{word:table.median-of}{table.median\_of()}
+\indexline{word:names-on-dots}{chart.names\_on\_dots()}
 \indexline{word:note}{chart.note()}
 \indexline{word:grid.number-at}{grid.number\_at()}
 \indexline{word:nums.number-at}{nums.number\_at()}
@@ -6223,7 +7289,11 @@ Every word and option, A to Z, with the page of its dictionary entry. Other spel
 \indexline{word:numbers-on-bars}{chart.numbers\_on\_bars()}
 \indexline{word:sdata.one-above-other}{sdata.one\_above\_other()}
 \indexline{word:one-chart-per}{chart.one\_chart\_per()}
+\indexline{word:order-legend}{chart.order\_legend()}
+\indexline{word:order-x}{chart.order\_x()}
+\indexline{word:order-y}{chart.order\_y()}
 \indexline{word:sdata.pairs}{sdata.pairs()}
+\indexline{word:table.percent-of}{table.percent\_of()}
 \indexline{word:nums.percentile}{nums.percentile()}
 \indexline{word:pie}{chart.pie()}
 \indexline{word:polar}{chart.polar()}
@@ -6239,12 +7309,15 @@ Every word and option, A to Z, with the page of its dictionary entry. Other spel
 \indexline{word:nums.remove-numbers}{nums.remove\_numbers()}
 \indexline{word:table.remove-rows}{table.remove\_rows()}
 \indexline{word:table.remove-rows-with-empty-cells}{table.remove\_rows\_with\_empty\_cells()}
+\indexline{word:table.remove-rows-with-outliers}{table.remove\_rows\_with\_outliers()}
 \indexline{word:table.rename-column}{table.rename\_column()}
+\indexline{word:table.replace-text}{table.replace\_text()}
 \indexline{word:table.replace-values}{table.replace\_values()}
 \indexline{word:nums.reverse}{nums.reverse()}
 \indexline{word:rotate-labels-x}{chart.rotate\_labels\_x()}
 \indexline{word:rotate-labels-y}{chart.rotate\_labels\_y()}
 \indexline{word:nums.round-to}{nums.round\_to()}
+\indexline{word:table.round-to}{table.round\_to()}
 \indexline{word:grid.row}{grid.row()}
 \indexline{word:nums.running-total}{nums.running\_total()}
 \indexline{word:save}{chart.save()}
@@ -6258,6 +7331,7 @@ Every word and option, A to Z, with the page of its dictionary entry. Other spel
 \indexline{word:show}{chart.show()}
 \indexline{word:nums.show}{nums.show()}
 \indexline{word:show-eq}{show=}
+\indexline{word:table.show}{table.show()}
 \indexline{word:nums.show-first-numbers}{nums.show\_first\_numbers()}
 \indexline{word:grid.show-first-rows}{grid.show\_first\_rows()}
 \indexline{word:table.show-first-rows}{table.show\_first\_rows()}
@@ -6266,6 +7340,7 @@ Every word and option, A to Z, with the page of its dictionary entry. Other spel
 \indexline{word:grid.show-last-rows}{grid.show\_last\_rows()}
 \indexline{word:table.show-last-rows}{table.show\_last\_rows()}
 \indexline{word:show-legend}{chart.show\_legend()}
+\indexline{word:table.show-rows-with-outliers}{table.show\_rows\_with\_outliers()}
 \indexline{word:sdata.side-by-side}{sdata.side\_by\_side()}
 \indexline{word:side-histograms}{chart.side\_histograms()}
 \indexline{word:size}{chart.size()}
@@ -6274,6 +7349,7 @@ Every word and option, A to Z, with the page of its dictionary entry. Other spel
 \indexline{word:smooth-line}{chart.smooth\_line()}
 \indexline{word:nums.sort}{nums.sort()}
 \indexline{word:table.sort-by}{table.sort\_by()}
+\indexline{word:table.split-column}{table.split\_column()}
 \indexline{word:nums.square-root}{nums.square\_root()}
 \indexline{word:nums.standard-deviation}{nums.standard\_deviation()}
 \indexline{word:table.standard-deviation-of}{table.standard\_deviation\_of()}
@@ -6283,6 +7359,7 @@ Every word and option, A to Z, with the page of its dictionary entry. Other spel
 \indexline{word:table.steps}{table.steps()}
 \indexline{word:style}{chart.style()}
 \indexline{word:nums.subtract}{nums.subtract()}
+\indexline{word:table.summary-of}{table.summary\_of()}
 \indexline{word:surface}{chart.surface()}
 \indexline{word:grid.swap-rows-and-columns}{grid.swap\_rows\_and\_columns()}
 \indexline{word:nums.table}{nums.table()}

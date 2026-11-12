@@ -1,0 +1,24 @@
+Do the values of "marks" look bell-shaped (normal) in each "class"? Shapiro-Wilk test (as R shapiro.test()); a small p-value means too far from normal to be chance:
+  A: could well be bell-shaped (W = 0.965, p = 0.700, 18 values)
+  B: could well be bell-shaped (W = 0.954, p = 0.491, 18 values)
+  C: could well be bell-shaped (W = 0.985, p = 0.985, 18 values)
+A large p-value does not prove that the values are bell-shaped.
+Outliers in "marks" by Tukey's rule: values more than 1.5 x IQR below the first quartile (Q1) or above the third quartile (Q3).
+IQR, the interquartile range, is Q3 - Q1: the spread of the middle half of the values.
+For each class:
+  A: below 34.88 or above 107.88 (Q1 = 62.25, Q3 = 80.5); 0 rows found
+  B: below 33.25 or above 97.25 (Q1 = 57.25, Q3 = 73.25); 1 row found
+  C: below 14.88 or above 103.88 (Q1 = 48.25, Q3 = 70.5); 0 rows found
+Found 1 row with an outlier, of 54 rows.
+   name class subject  hours  marks  height
+0  Ivan     B   Maths    0.5     33     147
+Correlations between 3 columns (Pearson, 3 pairs; each pair uses the rows where both columns have a number). The strongest:
+  "hours" and "marks": r = 0.83 (54 rows), very strong, going up, and very unlikely to be chance (p < 0.0001).
+  "hours" and "height": r = 0.06 (54 rows), very weak, going up, and could easily be chance (p = 0.667).
+  "marks" and "height": r = 0.03 (54 rows), very weak, going up, and could easily be chance (p = 0.826).
+Note: these p-values are not adjusted for testing 3 pairs. To adjust them: results = table.correlation_between("hours", "marks", "height", show="each pair"), then results.add_adjusted_p_value_column(from_column="p-value").
+Added "p-value (Holm)": 3 p-values from "p-value" adjusted with Holm's method (as R p.adjust(method = "holm")): the chance of even one false alarm among all the tests stays at 5 %. Below 0.05: 1 of 3 after adjusting (1 before).
+  column 1 column 2   method         r       p-value  rows               strength  p-value (Holm)
+0    hours    marks  Pearson  0.831290  7.176542e-15    54  very strong, going up    2.152963e-14
+1    hours   height  Pearson  0.059806  6.674978e-01    54    very weak, going up    1.000000e+00
+2    marks   height  Pearson  0.030712  8.255157e-01    54    very weak, going up    1.000000e+00

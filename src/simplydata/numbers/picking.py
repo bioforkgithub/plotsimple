@@ -26,7 +26,7 @@ from ._base import NOT_GIVEN, amount, check_seed, check_whole, is_number, plain,
 
 CONDITIONS = ("above", "below", "at_least", "at_most", "equal_to", "not_equal_to", "between", "one_of",
               "is_empty")
-FILL_CHOICES = ("average", "median", "value above", "value below")
+FILL_CHOICES = ("average", "median", "value above", "value below", "line between neighbours")
 
 
 class PickingWords:
@@ -233,6 +233,8 @@ class PickingWords:
         """Fill the empty values with a number, or with the average, median, value above or value below.
 
         nums.fill_empty_numbers(with_value=0)   or   nums.fill_empty_numbers(with_the="average")
+        with_the="line between neighbours" fills each gap on the straight line between the
+        values just before and just after it; empty values at the start or end stay empty.
         """
         if (with_value is None) == (with_the is None):
             raise SimplydataError(
@@ -243,6 +245,8 @@ class PickingWords:
         if with_value is not None and not is_number(with_value):
             raise SimplydataError("with_value= needs a number, like with_value=0." + self._example("fill_empty_numbers(with_value=0)"))
         choice = None if with_the is None else str(with_the).strip().lower().replace("_", " ")
+        if choice is not None:
+            choice = choice.replace("neighbors", "neighbours")
         if choice is not None and choice not in FILL_CHOICES:
             raise choice_error("fill_empty_numbers", "with_the", with_the, FILL_CHOICES)
         empty = self._empty_mask()
@@ -258,6 +262,10 @@ class PickingWords:
                     raise SimplydataError(f"There are no numbers at all, so there is no {choice} to fill with.")
                 value = np.nanmean(v) if choice == "average" else np.nanmedian(v)
                 new = np.where(empty, value, v)
+            elif choice == "line between neighbours":
+                from .._stats import line_between_neighbours
+
+                new = line_between_neighbours(np.where(empty, np.nan, v))
             else:
                 import pandas as pd
 
@@ -266,8 +274,10 @@ class PickingWords:
             how = f"the {choice}"
         left = int(np.isnan(new).sum())
         filled = int(empty.sum()) - left
+        why = ("at the start or end, with a neighbour on one side only" if choice == "line between neighbours"
+               else "nothing to copy from")
         print(f"Filled {amount(filled, 'empty value')}."
-              + (f" {amount(left, 'value')} stayed empty (nothing to copy from)." if left else ""))
+              + (f" {amount(left, 'value')} stayed empty ({why})." if left else ""))
         return self._change(f"fill empty values with {how}", new)
 
     # ================================================================== order

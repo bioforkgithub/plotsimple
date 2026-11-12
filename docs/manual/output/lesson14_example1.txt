@@ -1,8 +1,8 @@
 The average "marks" is 71.8 in A, 64.3 in B and 58.6 in C. Differences this big between the groups are unlikely to be chance (p = 0.028). Omega-squared = 0.0967: the groups explain about 10 % of the differences in "marks".
-Test: Welch's one-way ANOVA (F = 3.99, df = 2 and 34.0), the usual test for three or more averages; it does not assume the groups have the same spread. To see which groups differ: table.compare_each_pair("marks", between="class").
+Test: Welch's one-way ANOVA (F = 3.99, df = 2 and 34.0), the usual test for three or more averages; it does not assume the groups have the same spread. To see which groups differ: table.compare_each_pair("marks", for_each="class").
 Each pair of "class" groups compared on "marks" with Welch's t-test; the p-values are adjusted for 3 pairs with Holm's method, so the chance of any false alarm stays at 5 %.
   A vs B: the average of A is 7.56 higher; could easily be chance (Holm-adjusted p = 0.245).
   A vs C: the average of A is 13.2 higher; unlikely to be chance (Holm-adjusted p = 0.023).
   B vs C: the average of B is 5.67 higher; could easily be chance (Holm-adjusted p = 0.250).
 The median "marks" is 62.0 in English, 64.5 in Maths and 70.0 in Science. Differences this big between the groups could easily be chance (p = 0.398); this does not show that there is no difference. Epsilon-squared = 0.0348: the groups explain about 3 % of the differences in the ranks.
-Test: Kruskal-Wallis test (H = 1.84, df = 2), which compares ranks rather than averages, so it does not need bell-shaped values. To see which groups differ: table.compare_each_pair("marks", between="subject", based_on="ranks").
+Test: Kruskal-Wallis test (H = 1.84, df = 2), which compares ranks rather than averages, so it does not need bell-shaped values. To see which groups differ: table.compare_each_pair("marks", for_each="subject", based_on="ranks").

@@ -108,3 +108,31 @@ def check_error(step: str, error, show: str = "average"):
     if code == "ci":
         return t_interval
     return code  # seaborn's "sd" and "se" use n - 1, matching our rule
+
+
+def line_between_neighbours(values, x=None, groups=None):
+    """Fill empty values (NaN) on the straight line between the nearest filled neighbours.
+
+    Linear interpolation, as pandas Series.interpolate(limit_area="inside"): x gives the place
+    of each value (row positions when None; numbers or dates turned into numbers when the
+    rows follow a column such as a date, so the line is spaced by those values, as pandas
+    method="index"). groups (one code per value) fills each group on its own. Empty values
+    before the first or after the last filled value of a group have only one neighbour, so
+    they stay empty, as do values whose x is empty. Filled values with the same x are
+    averaged first. Gives a new float array.
+    """
+    values = np.asarray(values, dtype=float)
+    out = values.copy()
+    x = np.arange(len(values), dtype=float) if x is None else np.asarray(x, dtype=float)
+    codes = np.zeros(len(values), dtype=int) if groups is None else np.asarray(groups)
+    for code in np.unique(codes):
+        where = np.flatnonzero(codes == code)
+        xs, ys = x[where], values[where]
+        known = ~np.isnan(ys) & ~np.isnan(xs)
+        if not known.any():
+            continue
+        kx, inverse = np.unique(xs[known], return_inverse=True)
+        ky = np.bincount(inverse, weights=ys[known]) / np.bincount(inverse)
+        wanted = np.isnan(ys) & ~np.isnan(xs) & (xs >= kx[0]) & (xs <= kx[-1])
+        out[where[wanted]] = np.interp(xs[wanted], kx, ky)
+    return out

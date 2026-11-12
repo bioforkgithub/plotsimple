@@ -1,0 +1,13 @@
+Rows for each "shop" (rows) and each "fruit" (columns):
+  Corner shop: apple 5, banana 3, cherry 2, grape 1, orange 2, pear 1
+  Market stall: apple 4, banana 5, cherry 2, grape 4, orange 2, pear 2
+Different values of "fruit" for each "shop": Corner shop 6, Market stall 6.
+The average of "marks" for each "class" (rows) and each "subject" (columns): a new table with 3 rows and 3 columns of numbers.
+  A: English 68, Maths 68.33, Science 79.17
+  B: English 59.67, Maths 65.67, Science 67.5
+  C: English 59.17, Maths 54.33, Science 62.33
+Correlations between 3 columns (Pearson, 3 pairs; each pair uses the rows where both columns have a number). The strongest:
+  "hours" and "marks": r = 0.83 (54 rows), very strong, going up, and very unlikely to be chance (p < 0.0001).
+  "hours" and "height": r = 0.06 (54 rows), very weak, going up, and could easily be chance (p = 0.667).
+  "marks" and "height": r = 0.03 (54 rows), very weak, going up, and could easily be chance (p = 0.826).
+Note: these p-values are not adjusted for testing 3 pairs. To adjust them: results = table.correlation_between("hours", "marks", "height", show="each pair"), then results.add_adjusted_p_value_column(from_column="p-value").

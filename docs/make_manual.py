@@ -53,12 +53,15 @@ GROUP_UNDERNEATH = {
     "Words on the chart": "matplotlib",
     "Axes": "matplotlib",
     "Colours and look": "matplotlib",
+    "Order of groups": "pandas (a stable sort of the rows, so every chart type, colour and panel follows the order)",
     "Tables: start and look": "narwhals, which runs the step in pandas or Polars (whichever holds the table)",
     "Choose columns": "narwhals, which runs the step in pandas or Polars (whichever holds the table)",
     "Choose rows": "narwhals, which runs the step in pandas or Polars (whichever holds the table)",
     "Empty cells": "narwhals, which runs the step in pandas or Polars (whichever holds the table)",
     "Fix columns": "narwhals, which runs the step in pandas or Polars (whichever holds the table)",
     "Sort and new columns": "narwhals, which runs the step in pandas or Polars (whichever holds the table)",
+    "Dates and text": "narwhals, which runs the step in pandas or Polars (whichever holds the table)",
+    "Row after row": "narwhals (shift, rolling_mean and over with order_by=, so each group keeps its own rows)",
     "Summaries": "narwhals, which runs the step in pandas or Polars (whichever holds the table)",
     "Combine and reshape": "narwhals, which runs the step in pandas or Polars (whichever holds the table)",
     "Undo and finish": "simplydata itself: it keeps every version of the table",
@@ -90,6 +93,9 @@ UNDERNEATH = {
     "contour": "matplotlib (contourf); SciPy (interpolate.griddata) for scattered points",
     "surface": "matplotlib (mplot3d plot_surface); SciPy (interpolate.griddata) for scattered points",
     "dots_3d": "matplotlib (mplot3d scatter)",
+    "band": "matplotlib (fill_between)",
+    "empty_cells": "pandas finds the empty cells (isna); matplotlib (imshow) draws the grid",
+    "names_on_dots": "matplotlib (annotate), with simplydata choosing a free place for each name",
     # statistics
     "show=": "seaborn (the estimator of barplot and lineplot)",
     "error=": "seaborn (errorbar=\"sd\" or \"se\"); the confidence interval from the t distribution (SciPy)",
@@ -111,6 +117,18 @@ UNDERNEATH = {
     "animate": "matplotlib (animation) and Pillow (the .gif file)",
     # tables
     "sdata.table": "pandas or Polars read the file; narwhals lets every table word run on both",
+    "table.show": "pandas or Polars (printing the table)",
+    "table.column": "NumPy (a column of numbers becomes sdata.numbers)",
+    "table.fill_empty_cells": "narwhals; NumPy (interp) for the line between neighbours",
+    "table.make_dates": "pandas (to_datetime) or Polars (str.strptime), trying the date formats in a fixed order",
+    "table.split_column": "pandas (str.split) or Polars (str.splitn), whichever holds the table",
+    "table.add_rolling_column": "narwhals (rolling_mean, rolling_sum, rolling_std with over(order_by=)); "
+                                "pandas or Polars rolling for median, smallest and biggest",
+    "table.summary_of": "narwhals (group summaries); SciPy (the t distribution) for the confidence interval",
+    "table.percent_of": "narwhals; SciPy (stats.binomtest, the Clopper-Pearson exact interval)",
+    "table.compare_shape_to": "SciPy (stats.shapiro)",
+    "table.add_adjusted_p_value_column": "NumPy (Holm, Bonferroni, Benjamini-Hochberg and Benjamini-Yekutieli, "
+                                         "written out as in R p.adjust())",
     "table.add_rows_from": "pandas (concat) or Polars (concat), whichever holds the table",
     "table.correlation_between": "SciPy (stats.pearsonr or stats.spearmanr)",
     "table.compare_averages": "SciPy (stats.ttest_ind with equal_var=False; Welch's ANOVA written out with "
@@ -132,6 +150,7 @@ UNDERNEATH = {
     "nums.chart": "matplotlib and seaborn, from a pandas table with one column called value",
     "nums.save": "pandas (to_csv, to_excel ...)",
     "nums.keep_random_numbers": "NumPy (random.default_rng)",
+    "nums.fill_empty_numbers": "NumPy (interp for the line between neighbours)",
 }
 
 # ---------------------------------------------------------------- hand-written text
@@ -491,7 +510,7 @@ def _title_page() -> str:
 import simplydata as sdata
 
 table = sdata.table(sdata.example("marks"))
-table.compare_averages("marks", between="class")
+table.compare_averages("marks", for_each="class")
 chart = table.chart()
 chart.boxes(x="class", y="marks")
 chart.save("marks.png")

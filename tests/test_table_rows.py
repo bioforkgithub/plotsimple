@@ -350,6 +350,34 @@ def test_make_dates(messy, capsys):
     assert plain(messy)["when"][0] == "2026-03-15"
 
 
+@pytest.mark.parametrize("order, written, fmt", [
+    ("day month year", ["03/04/2026", "25.12.2026", "1-2-2026", "15 March 2026", "2026-05-06", "12/25/2026"],
+     "%d/%m/%Y"),
+    ("month day year", ["04/03/2026", "12.25.2026", "2-1-2026", "March 15, 2026", "2026-05-06", "25/12/2026"],
+     "%m/%d/%Y"),
+    ("year month day", ["2026/04/03", "2026.12.25", "20260201", "2026 March 15", "2026-05-06", "03/04/2026"],
+     "%Y/%m/%d"),
+])
+def test_make_dates_with_order(engine, order, written, fmt, capsys):
+    t = _engine_table(pd.DataFrame({"when": written}), engine)
+    t.make_dates("when", order=order.upper().replace(" ", "-"))  # capitals and dashes are fine
+    got = [None if pd.isna(v) else pd.Timestamp(v) for v in plain(t)["when"]]
+    expected = ["2026-04-03", "2026-12-25", "2026-02-01", "2026-03-15", "2026-05-06", None]
+    assert got == [None if e is None else pd.Timestamp(e) for e in expected]
+    # the same as pandas reading the first date with that format
+    assert got[0] == pd.to_datetime(written[0], format=fmt)
+    out = capsys.readouterr().out
+    assert f"when is now dates (read as {order})." in out
+    assert f'"{written[-1]}"' in out  # the one that does not fit the order is shown
+    t.steps()
+    assert f'order="{order}"' in capsys.readouterr().out
+
+
+def test_make_dates_order_must_be_known(messy):
+    with pytest.raises(SimplydataError, match="day month year"):
+        messy.make_dates("when", order="dmy")
+
+
 def test_make_dates_from_years(engine):
     growth = _engine_table(sdata.example("growth"), engine)
     growth.make_dates("year")

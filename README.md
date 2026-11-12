@@ -54,7 +54,7 @@ to try yourself.
 - `sdata.words()` lists every word, with an example (also in [docs/cheatsheet.md](docs/cheatsheet.md))
 - `sdata.help("bars")` explains one word: what it does, its options and an example
   (table and number words too: `sdata.help("keep_rows")`, `sdata.help("average")`)
-- `sdata.example()` lists the made-up tables to practise with (marks, weather, fruit, growth, island)
+- `sdata.example()` lists the made-up tables to practise with (marks, weather, fruit, growth, shop, island; shop has dates and empty cells)
 - `sdata.lesson(3, solutions=True)` adds a worked solution to each "Try it yourself" task
 
 ## Manual
@@ -79,7 +79,7 @@ table = sdata.table(sdata.example("marks"))      # or sdata.table("marks.xlsx")
 table.keep_rows("marks", above=50)
 table.sort_by("marks", biggest_first=True)
 table.average_of("marks", for_each="class")  # says the answer in a sentence
-table.compare_averages("marks", between="class")   # real difference, or chance?
+table.compare_averages("marks", for_each="class")   # real difference, or chance?
 table.undo()                               # take the last step back
 table.save("good_marks.xlsx")
 chart = table.chart()                      # draw it
