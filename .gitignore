@@ -11,3 +11,6 @@ venv/
 *.pdf
 *.gif
 !docs/**/*.png
+
+# Private notes, never pushed
+PLAN_PRIVATE.md
