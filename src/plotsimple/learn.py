@@ -98,8 +98,8 @@ HELP_EXAMPLES = {
     "ps.example": textwrap.dedent("""\
         import plotsimple as ps
         ps.example()
-        weather = ps.example("weather")
-        print(weather)"""),
+        marks = ps.example("marks")
+        print(marks)"""),
     "show": _ex("marks", 'chart.bars(x="name", y="marks")\nchart.show()', "marks"),
     "save": textwrap.dedent("""\
         import plotsimple as ps
@@ -306,6 +306,19 @@ def _short_example(key: str) -> str:
     return call or _call_form(key)
 
 
+_TABLE = re.compile(r'ps\.example\("(\w+)"\)')
+
+
+def _example_table(key: str) -> str | None:
+    """The example table a word's examples use: named in the docstring, else in the help example.
+
+    A docstring names its table like this: chart.lines(...) (with ps.example("weather")).
+    """
+    doc = "" if key in OPTIONS else inspect.getdoc(_function(key)) or ""
+    found = _TABLE.search(doc) or _TABLE.search(HELP_EXAMPLES.get(key, ""))
+    return found.group(1) if found else None
+
+
 def _summary(key: str) -> str:
     """The first sentence of the word's docstring (without its example)."""
     if key in OPTIONS:
@@ -332,6 +345,7 @@ def words() -> None:
     pad = max(len(k) for k in _all_keys()) + 2
     print("plotsimple words. Type ps.help(\"bars\") to learn more about any of them.")
     print('Most words are steps on a chart: chart = ps.chart(table), then chart.bars(...).')
+    print('The examples use the practice tables; ps.help("word") shows which one, ready to run.')
     for group, keys in GROUPS:
         print()
         print(group)

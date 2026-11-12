@@ -175,6 +175,55 @@ def test_every_help_example_runs(key, tmp_path, monkeypatch, capsys):
         assert (tmp_path / name).stat().st_size > 0, name
 
 
+# ---------------------------------------------------------------- docstring examples
+def _doc_example_code(key):
+    """The word's own short example (from its docstring, as ps.words() and the cheat sheet show
+    it), after the lines of its help example that come before it: the example table and, for
+    steps such as fit_line, the chart step they go on."""
+    word = key[3:] if key.startswith("ps.") else key
+    lines = learn.HELP_EXAMPLES[key].splitlines()
+    if key in learn.OPTIONS:
+        at = next(i for i, line in enumerate(lines) if key in line)
+    else:
+        at = next(i for i, line in enumerate(lines) if learn._find_call(line, word))
+    return "\n".join(lines[:at] + [f"_result = {learn._short_example(key)}"])
+
+
+@pytest.mark.parametrize("key", [k for k in KEYS if k not in learn.OPTIONS])
+def test_every_word_has_an_example_in_its_docstring(key):
+    word = key[3:] if key.startswith("ps.") else key
+    assert learn._find_call(inspect.getdoc(learn._function(key)), word), f"Add an example to {key}'s docstring"
+
+
+@pytest.mark.parametrize("key", KEYS)
+def test_docstring_table_is_the_help_example_table(key):
+    """A docstring that names its table, (with ps.example("weather")), must match ps.help's example."""
+    if key in learn.OPTIONS:
+        return
+    named = learn._TABLE.search(inspect.getdoc(learn._function(key)) or "")
+    if named:
+        help_table = learn._TABLE.search(learn.HELP_EXAMPLES[key])
+        assert help_table and help_table.group(1) == named.group(1), key
+
+
+@pytest.mark.parametrize("key", KEYS)
+def test_every_docstring_example_runs_and_draws(key, tmp_path, monkeypatch, capsys):
+    code = _doc_example_code(key)
+    monkeypatch.chdir(tmp_path)
+    space = {"__name__": "__main__"}
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")  # chart.show() with no screen only warns
+        exec(compile(code, f"<{key} example>", "exec"), space)
+        result = space["_result"]
+        target = result if hasattr(result, "save") else space.get("chart", space.get("page"))
+        if target is not None:
+            saved = _saved_files(learn.HELP_EXAMPLES[key])
+            ending = Path(saved[-1]).suffix if saved else ".png"
+            target.save(f"doc_example{ending}")
+            assert (tmp_path / f"doc_example{ending}").stat().st_size > 0
+    plt.close("all")
+
+
 # ---------------------------------------------------------------- ps.lesson()
 def test_there_are_eight_lessons(capsys):
     assert len(learn.LESSONS) == 8

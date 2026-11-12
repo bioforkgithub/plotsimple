@@ -151,7 +151,10 @@ def _colour_bar_label(ctx, text):
 class LookWords:
     @friendly
     def style(self, name):
-        """The overall look: "paper" (default), "school", "presentation" or "dark"."""
+        """The overall look. chart.style("school")
+
+        "paper" (default), "school", "presentation" or "dark".
+        """
         self._check_choice("style", "name", name, list(STYLES))
         return self._set(style=name)
 
@@ -226,7 +229,7 @@ class LookWords:
     # ------------------------------------------------------------ colour bar
     @friendly
     def colour_bar_label(self, text):
-        """The name beside the colour bar of a heatmap or contour. chart.colour_bar_label("Depth (m)")"""
+        """The name beside the colour bar of a heatmap or contour. chart.colour_bar_label("Height (m)")"""
         return self._replace("colour_bar_label", "text", _colour_bar_label, text=str(text))
 
     color_bar_label = colour_bar_label  # American spelling, same word

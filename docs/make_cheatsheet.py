@@ -40,16 +40,23 @@ def make() -> str:
         'In Python, `ps.help("bars")` explains any word, `ps.words()` prints this list and',
         "`ps.lesson(1)` starts the one-day course.",
         "",
+        "Every example runs as written on the practice table in the *Table* column:",
+        'for example `weather = ps.example("weather")` then `chart = ps.chart(weather)`.',
+        "Steps such as `fit_line` or `title_top` go after a chart step such as `chart.dots(...)`,",
+        "and `a`, `b` in `ps.side_by_side(a, b)` are charts you made first.",
+        "",
         "*This file is made by `docs/make_cheatsheet.py`. Do not edit it by hand.*",
     ]
     for group, keys in learn.GROUPS:
-        lines += ["", f"## {group}", "", "| Word | Example | What it does |", "|---|---|---|"]
+        lines += ["", f"## {group}", "", "| Word | Example | Table | What it does |",
+                  "|---|---|---|---|"]
         for key in keys:
             word = f"`{key}`"
             if key in aliases:
                 word += " (also " + ", ".join(f"`{a}`" for a in aliases[key]) + ")"
             example = f"`{_cell(learn._short_example(key))}`"
-            lines.append(f"| {word} | {example} | {_cell(learn._summary(key))} |")
+            table = learn._example_table(key) or ""
+            lines.append(f"| {word} | {example} | {table} | {_cell(learn._summary(key))} |")
     lines.append("")
     return "\n".join(lines)
 

@@ -202,7 +202,10 @@ class BaseChart:
 
     # ------------------------------------------------------------------ output
     def save(self, file_name, quality: str = "normal"):
-        """Save the chart. The file name decides the format: "marks.png", "marks.pdf"."""
+        """Save the chart. chart.save("marks.png")
+
+        The end of the file name decides the format: "marks.png", "marks.pdf".
+        """
         self._check_choice("save", "quality", quality, ("normal", "high"))
         path = Path(file_name)
         fmt = path.suffix.lower().lstrip(".")
@@ -226,7 +229,10 @@ class BaseChart:
         raise PlotsimpleError('To save a .gif, first make an animation with chart.animate(over="column").')
 
     def show(self):
-        """Show the chart in a window. (In Jupyter, VS Code and Spyder charts appear by themselves.)"""
+        """Show the chart in a window. chart.show()
+
+        In Jupyter, VS Code and Spyder charts appear by themselves.
+        """
         import matplotlib.pyplot as plt
 
         self._cache = None

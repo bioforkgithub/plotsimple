@@ -502,9 +502,9 @@ class ChartWords:
     @friendly
     def bars(self, x=None, y=None, colour=None, show="average", error=None,
              stacked=False, sideways=False):
-        """Bars. chart.bars(x="name", y="marks")
+        """Bars. chart.bars(x="name", y="marks") (with ps.example("marks"))
 
-        colour="site" gives each group its own colour, or colour="blue" one colour.
+        colour="class" gives each group its own colour, or colour="blue" one colour.
         show="average" (default), "median", "total" or "count".
         error="sd", "se" or "ci" adds error bars (with show="average").
         stacked=True puts groups on top of each other; sideways=True lays bars down.
@@ -531,7 +531,7 @@ class ChartWords:
 
     @friendly
     def lines(self, x=None, y=None, colour=None, show="average", error=None, dots=False, dashed=False):
-        """Lines. chart.lines(x="day", y="temperature")
+        """Lines. chart.lines(x="month", y="temperature", colour="city") (with ps.example("weather"))
 
         colour="city" draws one line per group. dots=True marks each point.
         dashed=True draws a dashed line. error="sd", "se" or "ci" adds a band.
@@ -551,10 +551,10 @@ class ChartWords:
 
     @friendly
     def dots(self, x=None, y=None, colour=None, size=None, shape=None):
-        """Dots (a scatter chart). chart.dots(x="height", y="weight")
+        """Dots (a scatter chart). chart.dots(x="hours", y="marks") (with ps.example("marks"))
 
-        colour="group" colours dots by group. size="age" makes dots bigger for bigger
-        values, or size=10 makes all dots that big. shape="type" gives each group a shape.
+        colour="class" colours dots by group. size="height" makes dots bigger for bigger
+        values, or size=10 makes all dots that big. shape="subject" gives each group a shape.
         """
         x, y = single_list(x, y)
         if x is None or y is None:
@@ -575,9 +575,10 @@ class ChartWords:
 
     @friendly
     def area(self, x=None, y=None, colour=None, stacked=False):
-        """A line with the space under it coloured in. chart.area(x="year", y="sales")
+        """A line with the space under it coloured in.
+        chart.area(x="year", y="population", colour="country") (with ps.example("growth"))
 
-        colour="shop" gives each group its own area; stacked=True piles the groups on top
+        colour="country" gives each group its own area; stacked=True piles the groups on top
         of each other, so the top edge shows the total.
         """
         self._yes_no("area", stacked=stacked)
@@ -595,6 +596,7 @@ class ChartWords:
     @friendly
     def histogram(self, x=None, bins=10, colour=None):
         """Bars that count how many values fall in each range. chart.histogram(x="marks", bins=10)
+        (with ps.example("marks"))
 
         bins= is how many bars (or a list of where each bar starts and ends).
         colour="class" draws one see-through histogram per group.
@@ -630,7 +632,8 @@ class ChartWords:
 
     @friendly
     def boxes(self, x=None, y=None, colour=None):
-        """Boxes that show the middle half of the values and the median. chart.boxes(x="class", y="marks")
+        """Boxes that show the middle half of the values and the median.
+        chart.boxes(x="class", y="marks") (with ps.example("marks"))
 
         The line in the box is the median, the box holds the middle half of the values,
         the whiskers reach the rest, and lone dots are values far away from the others.
@@ -640,6 +643,7 @@ class ChartWords:
     @friendly
     def violins(self, x=None, y=None, colour=None):
         """Shapes that are wide where many values are. chart.violins(x="class", y="marks")
+        (with ps.example("marks"))
 
         Each violin stops at the smallest and the largest value; the small box inside
         shows the middle half of the values.
@@ -648,7 +652,8 @@ class ChartWords:
 
     @friendly
     def count_bars(self, x=None, colour=None, sideways=False):
-        """Bars that count how many rows each group has. chart.count_bars(x="fruit")
+        """Bars that count how many rows each group has. chart.count_bars(x="fruit", colour="shop")
+        (with ps.example("fruit"))
 
         colour="shop" splits each bar by group; sideways=True lays the bars down.
         """
@@ -663,7 +668,8 @@ class ChartWords:
 
     @friendly
     def all_points(self, x=None, y=None, colour=None):
-        """Every value as a dot, spread out so no dot hides another. chart.all_points(x="class", y="marks")
+        """Every value as a dot, spread out so no dot hides another.
+        chart.all_points(x="class", y="marks") (with ps.example("marks"))
 
         Good on top of .boxes() or .violins(), to show each value as well.
         """
@@ -678,7 +684,8 @@ class ChartWords:
 
     @friendly
     def density(self, x=None, colour=None):
-        """A smooth curve that is high where many values are. chart.density(x="marks")
+        """A smooth curve that is high where many values are. chart.density(x="marks", colour="class")
+        (with ps.example("marks"))
 
         colour="class" draws one curve per group; each curve has an area of 1.
         """
@@ -692,10 +699,11 @@ class ChartWords:
 
     @friendly
     def heatmap(self, x=None, y=None, value=None, numbers=False, cluster=False):
-        """A grid of coloured squares, one colour for each number. chart.heatmap(numbers=True)
+        """A grid of coloured squares, one colour for each number.
+        chart.heatmap(x="month", y="city", value="rain", numbers=True) (with ps.example("weather"))
 
         With no columns named, every number column of the table is used (rows are the
-        table's rows). Or name them: chart.heatmap(x="month", y="city", value="rain").
+        table's rows): chart.heatmap(numbers=True).
         numbers=True writes the number in each square. cluster=True puts similar rows
         and columns next to each other and draws a tree of how alike they are.
         """
@@ -722,6 +730,7 @@ class ChartWords:
     @friendly
     def pie(self, labels=None, values=None):
         """A circle cut into slices, one slice per group. chart.pie(labels="fruit", values="count")
+        (with ps.example("fruit"))
 
         Without values= each slice shows how many rows have that label.
         """
@@ -734,7 +743,8 @@ class ChartWords:
 
     @friendly
     def polar(self, angle=None, distance=None, colour=None, degrees=True):
-        """Dots on a round chart: how far round, and how far out. chart.polar(angle="direction", distance="speed")
+        """Dots on a round chart: how far round, and how far out.
+        chart.polar(angle="wind_direction", distance="wind_speed", colour="city") (with ps.example("weather"))
 
         Angles are in degrees (a full turn is 360), going round from the right, the way
         maths measures angles. Use degrees=False if your angles are in radians.
@@ -761,7 +771,8 @@ class ChartWords:
 
     @friendly
     def contour(self, x=None, y=None, z=None, filled=True):
-        """A map where each colour band joins places with the same height. chart.contour(x="lon", y="lat", z="depth")
+        """A map where each colour band joins places with the same height.
+        chart.contour(x="east", y="north", z="height") (with ps.example("island"))
 
         z= is the height (or depth, or temperature). The points can be a full grid or
         scattered; scattered points are joined up with straight lines in between.
@@ -774,7 +785,8 @@ class ChartWords:
 
     @friendly
     def surface(self, x=None, y=None, z=None):
-        """A 3D landscape: z= is how high the ground is. chart.surface(x="lon", y="lat", z="depth")
+        """A 3D landscape: z= is how high the ground is.
+        chart.surface(x="east", y="north", z="height") (with ps.example("island"))
 
         The points can be a full grid or scattered; scattered points are joined up.
         """
@@ -784,9 +796,10 @@ class ChartWords:
 
     @friendly
     def dots_3d(self, x=None, y=None, z=None, colour=None):
-        """Dots floating in a 3D box. chart.dots_3d(x="a", y="b", z="c")
+        """Dots floating in a 3D box. chart.dots_3d(x="hours", y="height", z="marks", colour="class")
+        (with ps.example("marks"))
 
-        colour="group" gives each group its own colour.
+        colour="class" gives each group its own colour.
         """
         group, _ = colour_role(self._data, colour)
         self._xyz("dots_3d", x, y, z, colour=group)

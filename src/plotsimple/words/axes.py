@@ -366,7 +366,7 @@ class AxesWords:
 
     @friendly
     def range_x(self, low=None, high=None):
-        """From where to where the x-axis goes. chart.range_x(0, 100)
+        """From where to where the x-axis goes. chart.range_x(0, 10)
 
         Use None to fix only one end: chart.range_x(0, None) starts at 0 and lets the top choose itself.
         """
@@ -432,9 +432,9 @@ class AxesWords:
 
     @friendly
     def ticks_x(self, *values, labels=None):
-        """Where the marks on the x-axis go. chart.ticks_x(0, 10, 20, 30)
+        """Where the marks on the x-axis go. chart.ticks_x(1, 4, 7, 10)
 
-        labels=["none", "few", "many", "lots"] writes your own words at those places.
+        labels=["Jan", "Apr", "Jul", "Oct"] writes your own words at those places.
         """
         return self._ticks_word("x", values, labels)
 
@@ -487,6 +487,7 @@ class AxesWords:
 
         chart.lines(x="month", y="temperature")
         chart.second_y("rain", chart="bars", label="Rain (mm)")
+        (with ps.example("weather"))
 
         chart= can be "lines", "bars" or "dots". It shares the x-axis with the chart before it.
         """

@@ -696,7 +696,7 @@ class StatsWords:
 
     @friendly
     def line_at_x(self, value, dashed=True, colour="grey", label=None):
-        """A straight up-and-down line at one x value. chart.line_at_x(10, label="start")"""
+        """A straight up-and-down line at one x value. chart.line_at_x(2010, label="2010")"""
         _check_position("line_at_x", "value", value, "line_at_x(10)")
         _fixed_colour("line_at_x", colour)
         return self._add("line_at_x", "extra", _draw_line_at, axis="x", value=value, dashed=bool(dashed),
@@ -724,7 +724,7 @@ class StatsWords:
 
     @friendly
     def shade_between_x(self, low, high, colour="grey"):
-        """Shade the band between two x values, behind the data. chart.shade_between_x(2, 4)"""
+        """Shade the band between two x values, behind the data. chart.shade_between_x(6, 8)"""
         return self._shade("x", low, high, colour)
 
     @friendly
@@ -828,10 +828,10 @@ class PairsChart(TextWords, LookWords, BaseChart):
 
 
 def pairs(data, colour=None, columns=None):
-    """Every number column against every other. ps.pairs("measurements.xlsx")
+    """Every number column against every other. ps.pairs(ps.example("marks"), colour="class")
 
     Histograms on the diagonal (density curves when colour= makes groups), dots
-    everywhere else. colour="species" colours each group. columns=["a", "b"] chooses
+    everywhere else. colour="class" colours each group. columns=["hours", "marks"] chooses
     the columns. Empty cells are skipped. Then use it like any chart:
     .title_top("..."), .save("pairs.png").
     """

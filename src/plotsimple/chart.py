@@ -17,13 +17,13 @@ class Chart(ChartWords, StatsWords, TextWords, AxesWords, LookWords, LayoutWords
 
 
 def chart(data=None, sheet=None, big_data: bool = False) -> Chart:
-    """Start a chart.
+    """Start a chart. ps.chart(ps.example("marks"))
 
-    ps.chart("marks.xlsx")              a file (Excel, CSV, TSV, Parquet, JSON)
-    ps.chart("marks.xlsx", sheet="2026") one sheet of an Excel file
-    ps.chart(table)                     a pandas or Polars table
-    ps.chart()                          no table: give lists to each step instead
-    big_data=True                       always use the fast engine for big files
+    ps.chart(table)                        a pandas or Polars table, like ps.example("marks")
+    ps.chart("my_file.xlsx")               your own file (Excel, CSV, TSV, Parquet, JSON)
+    ps.chart("my_file.xlsx", sheet="2026") one sheet of an Excel file
+    ps.chart()                             no table: give lists to each step instead
+    big_data=True                          always use the fast engine for big files
     """
     if not isinstance(big_data, bool):
         raise PlotsimpleError("big_data= should be True or False.")

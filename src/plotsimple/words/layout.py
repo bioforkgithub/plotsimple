@@ -101,9 +101,10 @@ class LayoutWords:
     # ------------------------------------------------------------ small multiples
     @friendly
     def one_per(self, by=None, row=None, column=None, columns=None, same_x=True, same_y=True):
-        """One small chart for each group. chart.one_per("site", columns=3)
+        """One small chart for each group. chart.one_per("class", columns=3) (with ps.example("marks"))
 
-        row="site", column="year" makes a table of charts: one row per site, one column per year.
+        row="class", column="subject" makes a table of charts: one row per class, one column
+        per subject.
         same_x=False / same_y=False lets each small chart choose its own axis range.
         """
         if by is None and row is None and column is None:
@@ -145,7 +146,7 @@ class LayoutWords:
     # ------------------------------------------------------------ zoom box
     @friendly
     def zoom_box(self, x_from, x_to, y_from, y_to, where="upper right"):
-        """A small box showing part of the chart close up. chart.zoom_box(x_from=2, x_to=4, y_from=10, y_to=20)
+        """A small box showing part of the chart close up. chart.zoom_box(x_from=2, x_to=4, y_from=40, y_to=60)
 
         where="upper right" (default), "upper left", "lower right" or "lower left".
         """
@@ -167,7 +168,7 @@ class LayoutWords:
     def animate(self, over, seconds_per_frame=0.8, keep=False):
         """A moving chart with one picture for each value of a column.
 
-        chart.animate(over="year") then chart.save("growth.gif")
+        chart.animate(over="year") (with ps.example("growth")), then chart.save("growth.gif")
         keep=True builds the chart up: each picture also keeps the values before it.
         """
         data = self._data

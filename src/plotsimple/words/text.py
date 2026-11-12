@@ -193,10 +193,10 @@ class TextWords:
 
     @friendly
     def note(self, text, x=None, y=None, arrow=False):
-        """A note on the chart at a place x, y. chart.note("Highest!", x=5, y=98)
+        """A note on the chart at a place x, y. chart.note("Biggest", x=2024, y=49)
 
         arrow=True puts the note a little away, with an arrow pointing at x, y.
-        On bar charts x can be a name: chart.note("Best", x="Ben", y=90).
+        On bar charts x can be a name: chart.note("Best", x="Ben", y=90) on bars of names.
         """
         text = _check_text("note", text, 'chart.note("Highest!", x=5, y=98)')
         if x is None or y is None:
