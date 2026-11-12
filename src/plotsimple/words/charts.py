@@ -10,8 +10,7 @@ import seaborn as sns
 from .._data import frame_for
 from .._errors import PlotsimpleError, friendly
 from .._stats import SHOW, check_error, check_show
-from .._style import COLOURS
-from ._helpers import check, colour_role, palette_for, single_list
+from ._helpers import check, colour_role, default_colour, palette_for, single_list
 
 
 def _remember(ctx, kind, table, names, **more):
@@ -33,7 +32,7 @@ def _draw_bars(ctx, x, y, colour, show, error, stacked, sideways):
         else:
             wide = table.groupby(cols, sort=False)[n["y"]].agg(how).unstack(n["colour"])
         wide.plot(kind="barh" if sideways else "bar", stacked=True, ax=ax, rot=0, width=0.8,
-                  color=palette_for(table, n["colour"]))
+                  color=palette_for(table, n["colour"], ctx.settings))
         ax.legend(title=n["colour"])
         if sideways:
             ax.set_xlabel(n["y"] or "count")
@@ -42,9 +41,9 @@ def _draw_bars(ctx, x, y, colour, show, error, stacked, sideways):
     else:
         kw = dict(data=table, hue=n["colour"], ax=ax, saturation=1)  # exact colours, as asked
         if n["colour"]:
-            kw["palette"] = palette_for(table, n["colour"])
+            kw["palette"] = palette_for(table, n["colour"], ctx.settings)
         else:
-            kw["color"] = fixed or COLOURS[0]
+            kw["color"] = default_colour(ctx.settings, fixed)
         if how == "count":
             kw.update(y=n["x"]) if sideways else kw.update(x=n["x"])
             sns.countplot(**kw)
@@ -68,9 +67,9 @@ def _draw_lines(ctx, x, y, colour, show, error, dots, dashed):
     kw = dict(data=table, x=n["x"], y=n["y"], hue=n["colour"], ax=ctx.ax,
               estimator=SHOW[show], errorbar=check_error("lines", error, show))
     if n["colour"]:
-        kw["palette"] = palette_for(table, n["colour"])
+        kw["palette"] = palette_for(table, n["colour"], ctx.settings)
     else:
-        kw["color"] = fixed or COLOURS[0]
+        kw["color"] = default_colour(ctx.settings, fixed)
     if dots:
         kw["marker"] = "o"
     if dashed:
@@ -86,9 +85,9 @@ def _draw_dots(ctx, x, y, colour, size, shape):
     table, n = frame_for(ctx.data, x=x, y=y, colour=group, size=size_col, shape=shape)
     kw = dict(data=table, x=n["x"], y=n["y"], hue=n["colour"], size=n["size"], style=n["shape"], ax=ctx.ax)
     if n["colour"]:
-        kw["palette"] = palette_for(table, n["colour"])
+        kw["palette"] = palette_for(table, n["colour"], ctx.settings)
     else:
-        kw["color"] = fixed or COLOURS[0]
+        kw["color"] = default_colour(ctx.settings, fixed)
     if isinstance(size, (int, float)):
         kw["s"] = size ** 2
     sns.scatterplot(**kw)

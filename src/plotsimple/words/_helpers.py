@@ -27,11 +27,25 @@ def colour_role(data: pd.DataFrame, colour):
     raise column_error(colour, data.columns)
 
 
-def palette_for(table: pd.DataFrame, group: str | None):
+def palette_for(table: pd.DataFrame, group: str | None, settings: dict | None = None):
+    """Colours for each group: chart.colours(...) if the user set them, else the default set."""
     if group is None:
         return None
+    base = list((settings or {}).get("colours") or COLOURS)
     n = table[group].nunique(dropna=True)
-    return (COLOURS * (n // len(COLOURS) + 1))[:n]
+    return (base * (n // len(base) + 1))[:n]
+
+
+def default_colour(settings: dict | None = None, fixed=None):
+    """The colour for a chart without groups: colour="red" > chart.colour("red") > first default."""
+    if fixed is not None:
+        return fixed
+    settings = settings or {}
+    if settings.get("colour"):
+        return settings["colour"]
+    if settings.get("colours"):
+        return settings["colours"][0]
+    return COLOURS[0]
 
 
 def single_list(x, y):
