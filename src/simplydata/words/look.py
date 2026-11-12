@@ -8,6 +8,7 @@ from matplotlib.patches import Rectangle
 from .._data import is_listlike
 from .._errors import SimplydataError, friendly, suggest
 from .._style import STYLES
+from .charts import set_order
 
 # Colour names we suggest from when a name is misspelt ("bleu" -> "blue").
 _COLOUR_NAMES = sorted(mcolors.CSS4_COLORS)
@@ -96,6 +97,10 @@ _LEGEND_PLACES = {
 
 def _legend(ctx, where):
     handles, labels, group_title = _collect_entries(ctx)
+    if ctx.settings.get("legend_title") is not None:  # chart.label_legend("Class")
+        group_title = ctx.settings["legend_title"]
+    if where == "hide":
+        ctx.store["legend_hidden"] = True
     if where == "hide" or not handles:
         return
     fig = ctx.fig
@@ -135,6 +140,21 @@ def _legend(ctx, where):
     if where in ("top", "bottom"):
         kw["ncols"] = min(len(handles), 6)  # one row; wraps only when there are many entries
     fig.legend(handles, labels, **kw)
+
+
+def _label_legend(ctx, text):
+    """Put the name above the legend of every panel (and of a second y-axis)."""
+    found = False
+    for ax in list(ctx.axes) + _twins(ctx):
+        leg = ax.get_legend()
+        if leg is not None:
+            leg.set_title(text or None)
+            found = True
+    if not found and not ctx.fig.legends and not ctx.store.get("legend_hidden"):
+        raise SimplydataError(
+            ".label_legend() names the legend, but this chart has no legend.\n"
+            'A legend appears when colour= makes groups, for example chart.dots(x="hours", y="marks", colour="class").'
+        )
 
 
 def _label_colour_bar(ctx, text):
@@ -225,6 +245,31 @@ class LookWords:
     def hide_legend(self):
         """No legend. chart.hide_legend()"""
         return self._legend_step("hide")
+
+    @friendly
+    def label_legend(self, text):
+        """The name above the legend. chart.label_legend("Class")
+        (with chart.dots(x="hours", y="marks", colour="class") on sdata.example("marks"))
+
+        Without it the legend is named after the colour= column. label_legend("") leaves
+        the name out.
+        """
+        if text is None or isinstance(text, bool):
+            raise SimplydataError('.label_legend() needs some words, for example chart.label_legend("Class").')
+        text = str(text)
+        self._set(legend_title=text)
+        return self._replace("label_legend", "finish", _label_legend, scope="figure", text=text)
+
+    @friendly
+    def order_legend(self, *names):
+        """Put the colour groups in your order: in the legend, the colours and side by side.
+        chart.order_legend("Science", "Maths", "English")
+        (with chart.bars(x="class", y="marks", colour="subject") on sdata.example("marks"))
+
+        Groups you leave out come after the ones you name. The slices of a pie follow it too.
+        The first group gets the first colour.
+        """
+        return set_order(self, "colour", names, None)
 
     @friendly
     def show_legend(self):

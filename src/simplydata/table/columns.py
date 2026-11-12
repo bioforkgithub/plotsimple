@@ -6,21 +6,30 @@ decimal numbers can be stacked without fuss).
 
 Calculator-style formulas, add_column("total", "maths + english"), are never run as
 Python code. The text is read with Python's ast module and only these pieces are allowed:
-column names, numbers, + - * / ** // %, brackets, a minus sign in front, and the
-functions round, abs, sqrt and log. Everything else is refused with a friendly message.
+column names, numbers, + - * / ** // %, brackets, a minus sign in front, the functions
+round, abs, sqrt and log, and the summary words average, median, total, smallest, biggest
+and count. Everything else is refused with a friendly message. Rules in
+add_group_column(rules=) are read the same way, with comparisons and and / or / not added.
+
+A few words need each engine's own code, because narwhals has no common word for them:
+the ISO week number, splitting text into columns, pulling out part of a text with a
+pattern, and rolling medians / smallest / biggest values. Both versions are tested
+against plain pandas.
 """
 
 from __future__ import annotations
 
 import ast
+import datetime as _dt
 import keyword
+import numbers
 import re
 import warnings
 
 import narwhals as nw
 
 from .._data import load_native
-from .._errors import SimplydataError, column_error, friendly, suggest
+from .._errors import SimplydataError, choice_error, column_error, friendly, suggest
 
 # ---------------------------------------------------------------------------- formulas
 
@@ -35,11 +44,36 @@ FORMULA_HELP = (
     "  round(x)  round(x, 1)      round, or round to 1 decimal place\n"
     "  abs(x)  sqrt(x)            size without the minus sign, square root\n"
     "  log(x)  log(x, 10)         natural log, log to base 10\n"
-    'Example: table.add_column("marks_per_hour", "marks / hours")   (with sdata.example("marks"))'
+    "  average(x)  median(x)      summary words: one value for the whole column,\n"
+    "  total(x)  count(x)         or for each group with for_each=\n"
+    "  smallest(x)  biggest(x)    (count counts the cells that are not empty)\n"
+    'Example: table.add_column("marks_per_hour", "marks / hours")   (with sdata.example("marks"))\n'
+    'Example: table.add_column("share", "marks / total(marks) * 100", for_each="class")'
 )
 
 FUNCTIONS = {"round": (1, 2), "abs": (1, 1), "sqrt": (1, 1), "log": (1, 2)}
+# summary words inside formulas -> the narwhals method that works them out
+SUMMARY_WORDS = {"average": "mean", "median": "median", "total": "sum",
+                 "smallest": "min", "biggest": "max", "count": "count"}
+# names people bring from other tools -> the simplydata word
+OTHER_TOOL_NAMES = {"mean": "average", "avg": "average", "sum": "total", "min": "smallest",
+                    "max": "biggest", "n": "count", "len": "count", "length": "count"}
 MAX_FORMULA_LENGTH = 500
+
+CONDITION_HELP = (
+    "A rule is a condition: a question each row answers with yes or no.\n"
+    "  marks >= 80                   compare with  >  >=  <  <=  ==  (equal)  !=  (not equal)\n"
+    '  class == "A"                  text goes in quotes\n'
+    '  date >= "2026-03-01"          dates are written year-month-day, in quotes\n'
+    "  marks >= 50 and hours < 5     both must be true\n"
+    '  class == "A" or class == "B"  one of them is enough\n'
+    "  not (marks >= 50)             the opposite\n"
+    "  40 <= marks < 60              between, in one go\n"
+    "  marks / hours > 10            sums work as in add_column()\n"
+    'Example: table.add_group_column("result", rules={"marks >= 60": "pass"}, otherwise="fail")'
+    '   (with sdata.example("marks"))'
+)
+COMPARE_SIGNS = {ast.Gt: ">", ast.GtE: ">=", ast.Lt: "<", ast.LtE: "<=", ast.Eq: "==", ast.NotEq: "!="}
 
 KEEP_CHOICES = {
     "matching rows": "inner",
@@ -69,20 +103,43 @@ def _divide(top, bottom, how="/"):
 
 
 class _FormulaReader:
-    """Turns formula text into a narwhals expression. The text is never run."""
+    """Turns formula text into a narwhals expression. The text is never run.
+
+    After read():
+      used         every column the formula names
+      number_used  the columns that must hold numbers (count(name) may count text)
+      summaries    (temporary column, expression inside, summary word) for each summary
+                   word such as total(marks); _apply_summaries() works them out
+    """
 
     def __init__(self, text, columns):
         self.text = text
         self.columns = list(columns)
         self.used: list = []
+        self.number_used: list = []
         self.placeholders: dict = {}
+        self.summaries: list = []
+        self._in_summary = False
+
+    def _error(self, problem):
+        return _formula_error(problem)
+
+    def _no_column_error(self):
+        return self._error(
+            "The formula has no column in it. For the same value in every row use value=,\n"
+            'for example table.add_column("school", value="Hill School").'
+        )
+
+    def _what(self):
+        return "formula"
 
     def read(self):
         text = self.text
+        what = self._what()
         if not isinstance(text, str) or not text.strip():
-            raise _formula_error('The formula should be some text, for example "marks / hours".')
+            raise self._error(f'The {what} should be some text, for example "marks / hours".')
         if len(text) > MAX_FORMULA_LENGTH:
-            raise _formula_error(f"That formula is very long. Keep it under {MAX_FORMULA_LENGTH} letters.")
+            raise self._error(f"That {what} is very long. Keep it under {MAX_FORMULA_LENGTH} letters.")
 
         def backtick(match):
             name = match.group(1)
@@ -92,29 +149,31 @@ class _FormulaReader:
 
         text = re.sub(r"`([^`]*)`", backtick, text)
         if "`" in text:
-            raise _formula_error(
+            raise self._error(
                 "A backtick ` is missing. Put a column name with spaces between two backticks: `max temp`."
             )
         text = text.replace("×", "*").replace("÷", "/").replace("−", "-")
-        # columns named like Python words (for example "class") still work without backticks
+        # columns named like Python words (for example "class") still work without backticks;
+        # text in quotes (in rules: class == "A") is left alone
         for name in self.columns:
             if isinstance(name, str) and keyword.iskeyword(name):
-                text = re.sub(rf"(?<![\w.]){re.escape(name)}(?!\w)", self._placeholder(name), text)
+                pattern = rf"""('[^']*'|"[^"]*")|(?<![\w.]){re.escape(name)}(?!\w)"""
+                text = re.sub(pattern, lambda m, n=name: m.group(1) or self._placeholder(n), text)
         try:
             tree = ast.parse(text.strip(), mode="eval")
         except SyntaxError:
-            raise _formula_error(
-                f'simplydata cannot read the formula "{self.text}". Check the brackets and signs.'
+            raise self._error(
+                f'simplydata cannot read the {what} "{self.text}". Check the brackets and signs.'
             ) from None
         except (ValueError, RecursionError, MemoryError):
-            raise _formula_error(f'simplydata cannot read the formula "{self.text}".') from None
-        expr = self._node(tree.body)
+            raise self._error(f'simplydata cannot read the {what} "{self.text}".') from None
+        expr = self._top(tree.body)
         if not self.used:
-            raise _formula_error(
-                "The formula has no column in it. For the same value in every row use value=,\n"
-                'for example table.add_column("school", value="Hill School").'
-            )
+            raise self._no_column_error()
         return expr
+
+    def _top(self, node):
+        return self._node(node)
 
     def _placeholder(self, name):
         key = f"_simplydata_column_{len(self.placeholders)}_"
@@ -127,25 +186,35 @@ class _FormulaReader:
             text = text.replace(key, f"`{name}`")
         return text
 
-    def _column(self, name):
+    def _column_name(self, node):
+        """The column a bare name stands for, or None."""
+        if isinstance(node, ast.Name):
+            if node.id in self.placeholders:
+                return self.placeholders[node.id]
+            if node.id in self.columns:
+                return node.id
+        return None
+
+    def _column(self, name, needs_number=True):
         if name not in self.used:
             self.used.append(name)
+        if needs_number and name not in self.number_used:
+            self.number_used.append(name)
         return nw.col(name)
 
     def _node(self, node):
         if isinstance(node, ast.Constant):
             if not _is_number(node.value):
-                raise _formula_error(
-                    f"{node.value!r} is not allowed in a formula: only numbers and column names are."
+                raise self._error(
+                    f"{node.value!r} is not allowed in a {self._what()}: only numbers and column names are."
                 )
             return nw.lit(node.value)
         if isinstance(node, ast.Name):
-            if node.id in self.placeholders:
-                return self._column(self.placeholders[node.id])
-            if node.id in self.columns:
-                return self._column(node.id)
-            if node.id in FUNCTIONS:
-                raise _formula_error(f"{node.id} needs brackets after it, for example {node.id}(marks).")
+            name = self._column_name(node)
+            if name is not None:
+                return self._column(name)
+            if node.id in FUNCTIONS or node.id in SUMMARY_WORDS:
+                raise self._error(f"{node.id} needs brackets after it, for example {node.id}(marks).")
             raise column_error(node.id, self.columns)
         if isinstance(node, ast.UnaryOp) and isinstance(node.op, (ast.USub, ast.UAdd)):
             inner = self._node(node.operand)
@@ -153,10 +222,10 @@ class _FormulaReader:
         if isinstance(node, ast.BinOp):
             op = node.op
             if isinstance(op, ast.BitXor):
-                raise _formula_error("For a power use ** instead of ^, for example height ** 2.")
+                raise self._error("For a power use ** instead of ^, for example height ** 2.")
             kinds = (ast.Add, ast.Sub, ast.Mult, ast.Div, ast.FloorDiv, ast.Mod, ast.Pow)
             if not isinstance(op, kinds):
-                raise _formula_error(f'The sign in "{self._snippet(node)}" is not allowed in a formula.')
+                raise self._error(f'The sign in "{self._snippet(node)}" is not allowed in a {self._what()}.')
             left, right = self._node(node.left), self._node(node.right)
             if isinstance(op, ast.Add):
                 return left + right
@@ -174,23 +243,34 @@ class _FormulaReader:
         if isinstance(node, ast.Call):
             return self._call(node)
         if isinstance(node, ast.Attribute):
-            raise _formula_error(
-                f'"{self._snippet(node)}" is not allowed: a formula cannot use a dot after a name.'
+            raise self._error(
+                f'"{self._snippet(node)}" is not allowed: a {self._what()} cannot use a dot after a name.'
             )
-        raise _formula_error(f'"{self._snippet(node)}" is not allowed in a formula.')
+        if isinstance(node, (ast.Compare, ast.BoolOp)) or (isinstance(node, ast.UnaryOp) and isinstance(node.op, ast.Not)):
+            raise self._error(
+                f'"{self._snippet(node)}" is a condition (yes or no), which a formula cannot use.\n'
+                'Conditions go in rules=, for example table.add_group_column("result", rules={"marks >= 60": "pass"}, '
+                'otherwise="fail").'
+            )
+        raise self._error(f'"{self._snippet(node)}" is not allowed in a {self._what()}.')
 
     def _call(self, node):
+        if isinstance(node.func, ast.Name) and node.func.id in SUMMARY_WORDS:
+            return self._summary(node)
         if not isinstance(node.func, ast.Name) or node.func.id not in FUNCTIONS:
             name = node.func.id if isinstance(node.func, ast.Name) else self._snippet(node.func)
-            guess = suggest(name, list(FUNCTIONS), n=1)
-            hint = f" Did you mean {guess[0]}()?" if guess else ""
-            raise _formula_error(f'"{name}()" is not allowed in a formula.{hint}')
+            if name in OTHER_TOOL_NAMES:
+                hint = f" In simplydata it is called {OTHER_TOOL_NAMES[name]}()."
+            else:
+                guess = suggest(name, [*FUNCTIONS, *SUMMARY_WORDS], n=1)
+                hint = f" Did you mean {guess[0]}()?" if guess else ""
+            raise self._error(f'"{name}()" is not allowed in a {self._what()}.{hint}')
         name = node.func.id
         if node.keywords or any(isinstance(a, ast.Starred) for a in node.args):
-            raise _formula_error(f"Write {name}() simply, like {name}(marks).")
+            raise self._error(f"Write {name}() simply, like {name}(marks).")
         low, high = FUNCTIONS[name]
         if not low <= len(node.args) <= high:
-            raise _formula_error(f"{name}() was given {len(node.args)} things inside the brackets.")
+            raise self._error(f"{name}() was given {len(node.args)} things inside the brackets.")
         inner = self._node(node.args[0])
         if name == "abs":
             return inner.abs()
@@ -198,21 +278,191 @@ class _FormulaReader:
             return inner.cast(nw.Float64).sqrt()
         second = node.args[1] if len(node.args) == 2 else None
         if second is not None and not (isinstance(second, ast.Constant) and _is_number(second.value)):
-            raise _formula_error(
+            raise self._error(
                 f"The second thing in {name}() must be a plain number, for example {name}(marks, 1)."
             )
         if name == "round":
             digits = 0 if second is None else second.value
             if not isinstance(digits, int) or digits < 0:
-                raise _formula_error("round(x, 1) needs a whole number of decimal places, like 0, 1 or 2.")
+                raise self._error("round(x, 1) needs a whole number of decimal places, like 0, 1 or 2.")
             # Halves go to the even number (2.5 -> 2, 3.5 -> 4), like R, NumPy and the
             # IEEE standard. This avoids a small upward bias when many values are rounded.
             return inner.round(digits)
         if second is None:  # log
             return inner.cast(nw.Float64).log()
         if second.value <= 0 or second.value == 1:
-            raise _formula_error("The base of log() must be a positive number other than 1, for example log(x, 10).")
+            raise self._error("The base of log() must be a positive number other than 1, for example log(x, 10).")
         return inner.cast(nw.Float64).log(base=float(second.value))
+
+    def _summary(self, node):
+        """average(marks), total(marks) ...: one value for the whole column (or each group)."""
+        name = node.func.id
+        if self._in_summary:
+            raise self._error(f"{name}() cannot be inside another summary word. Use one at a time, like total(marks).")
+        if node.keywords or len(node.args) != 1 or isinstance(node.args[0], ast.Starred):
+            raise self._error(f"{name}() takes one column, for example {name}(marks).")
+        arg = node.args[0]
+        self._in_summary = True
+        try:
+            column = self._column_name(arg)
+            if name == "count" and column is not None:
+                inner = self._column(column, needs_number=False)  # count may count text cells
+            else:
+                inner = self._node(arg)
+        finally:
+            self._in_summary = False
+        key = f"_simplydata_summary_{len(self.summaries)}_"
+        self.summaries.append((key, inner, name))
+        return nw.col(key)
+
+
+def _apply_summaries(frame, reader, keys):
+    """Add the summary columns a formula asked for (per group when keys are given).
+
+    Gives (frame, temporary column names to drop afterwards). Empty cells are left out of
+    every summary, as in pandas and Polars: count() counts only the cells that are filled.
+    """
+    if not reader.summaries:
+        return frame, []
+    inside = [(key + "in_", expr) for key, expr, _ in reader.summaries]
+    frame = frame.with_columns([expr.alias(name) for name, expr in inside])
+    done = []
+    for (key, _, word), (inner_name, _) in zip(reader.summaries, inside):
+        expr = getattr(nw.col(inner_name), SUMMARY_WORDS[word])()
+        done.append((expr.over(*keys) if keys else expr).alias(key))
+    frame = frame.with_columns(done)
+    return frame, [name for name, _ in inside] + [key for key, _, _ in reader.summaries]
+
+
+def _dtype_kind(dtype) -> str:
+    """The kind of a column in plain words (as in rows.py)."""
+    if dtype == nw.Boolean:
+        return "true/false"
+    if dtype.is_numeric():
+        return "number"
+    if dtype == nw.String or dtype == nw.Categorical or dtype == nw.Enum:
+        return "text"
+    if dtype == nw.Date or dtype == nw.Datetime:
+        return "date"
+    return "other"
+
+
+class _ConditionReader(_FormulaReader):
+    """Reads a rule such as 'marks >= 80 and class == "A"' into a yes/no expression.
+
+    Like formulas, the text is read with ast and never run. Comparisons, and / or / not,
+    text in quotes and dates in quotes are allowed on top of the formula pieces.
+    A comparison with an empty cell is not met (it counts as "no").
+    """
+
+    def __init__(self, text, columns, schema):
+        super().__init__(text, columns)
+        self.schema = schema
+
+    def _error(self, problem):
+        return SimplydataError(f"{problem}\n\n{CONDITION_HELP}")
+
+    def _no_column_error(self):
+        return self._error(f'The rule "{self.text}" has no column in it.')
+
+    def _what(self):
+        return "rule"
+
+    def read(self):
+        if isinstance(self.text, str):
+            outside_quotes = re.sub(r"""'[^']*'|"[^"]*\"""", "", self.text)
+            if re.search(r"(?<![=!<>])=(?!=)", outside_quotes):
+                raise self._error(
+                    f'In the rule "{self.text}", write == (two equal signs) to ask "is equal to", '
+                    'for example class == "A".'
+                )
+            if "&" in outside_quotes or "|" in outside_quotes:
+                raise self._error('Write the words and / or instead of & and |, for example marks > 50 and hours < 5.')
+        return super().read()
+
+    def _top(self, node):
+        return self._condition(node)
+
+    def _condition(self, node):
+        if isinstance(node, ast.BoolOp):
+            parts = [self._condition(v) for v in node.values]
+            out = parts[0]
+            for part in parts[1:]:
+                out = (out & part) if isinstance(node.op, ast.And) else (out | part)
+            return out
+        if isinstance(node, ast.UnaryOp) and isinstance(node.op, ast.Not):
+            return ~self._condition(node.operand)
+        if isinstance(node, ast.Compare):
+            return self._compare(node)
+        raise self._error(
+            f'"{self._snippet(node)}" is not a condition. A rule compares something, for example marks >= 80.'
+        )
+
+    def _operand(self, node):
+        """(expression, kind, column name or value) for one side of a comparison."""
+        if isinstance(node, ast.Constant) and isinstance(node.value, str):
+            return None, "quoted", node.value
+        if isinstance(node, ast.Constant) and isinstance(node.value, bool):
+            return nw.lit(node.value), "true/false", node.value
+        column = self._column_name(node)
+        if column is not None:
+            return self._column(column, needs_number=False), _dtype_kind(self.schema[column]), column
+        return self._node(node), "number", None
+
+    def _date_literal(self, text, column):
+        try:
+            value = _dt.datetime.fromisoformat(text.strip())
+        except ValueError:
+            raise self._error(
+                f'"{column}" holds dates. Write a date as year-month-day in quotes, like {column} >= "2026-03-15".'
+            ) from None
+        return value.date() if self.schema[column] == nw.Date else value
+
+    def _pair(self, left, right, sign):
+        (l_expr, l_kind, l_what), (r_expr, r_kind, r_what) = left, right
+        if l_kind == "quoted" and r_kind == "quoted":
+            raise self._error(f'"{l_what}" {sign} "{r_what}" compares two pieces of text, but no column.')
+        if r_kind == "quoted":
+            l_expr, r_expr = l_expr, self._quoted(r_what, l_kind, l_what)
+        elif l_kind == "quoted":
+            l_expr = self._quoted(l_what, r_kind, r_what)
+        elif l_kind != r_kind and "number" in (l_kind, r_kind) and "text" in (l_kind, r_kind):
+            text_column = l_what if l_kind == "text" else r_what
+            raise self._error(
+                f'"{text_column}" holds text, so compare it with text in quotes, like {text_column} == "A".'
+            )
+        return l_expr, r_expr
+
+    def _quoted(self, value, kind, column):
+        if kind == "text":
+            return nw.lit(value)
+        if kind == "date":
+            return nw.lit(self._date_literal(value, column))
+        if kind == "number":
+            name = column or "the sum"
+            try:
+                float(value)
+                raise self._error(f'{name} is a number, so write the number without quotes: {value.strip()}')
+            except ValueError:
+                raise self._error(f'{name} is a number, so it cannot be compared with the text "{value}".') from None
+        raise self._error(f'"{column}" holds {kind} values, so it cannot be compared with the text "{value}".')
+
+    def _compare(self, node):
+        for op in node.ops:
+            if type(op) not in COMPARE_SIGNS:
+                raise self._error(
+                    f'"{self._snippet(node)}" uses a comparison simplydata does not know. '
+                    'Use > >= < <= == or !=, and "or" for several values: class == "A" or class == "B".'
+                )
+        sides = [self._operand(n) for n in [node.left, *node.comparators]]
+        out = None
+        for op, left, right in zip(node.ops, sides, sides[1:]):
+            sign = COMPARE_SIGNS[type(op)]
+            a, b = self._pair(left, right, sign)
+            part = {">": lambda: a > b, ">=": lambda: a >= b, "<": lambda: a < b, "<=": lambda: a <= b,
+                    "==": lambda: a == b, "!=": lambda: a != b}[sign]()
+            out = part if out is None else out & part
+        return out
 
 
 # ---------------------------------------------------------------------------- helpers
@@ -230,16 +480,92 @@ def _plain(value):
     return f'"{value}"' if isinstance(value, str) else repr(value)
 
 
+def _blank_to_empty(expr):
+    """Text that is only spaces or nothing becomes an empty cell."""
+    return nw.when(expr.str.strip_chars() != "").then(expr)
+
+
+def _escape_mark(text):
+    """Escape a plain piece of text for use inside a pattern (both pandas and Polars read it)."""
+    return "".join("\\" + ch if ch in "\\.^$|?*+()[]{}" else ch for ch in text)
+
+
+def _whole_number(value):
+    return isinstance(value, numbers.Integral) and not isinstance(value, bool)
+
+
+def _rows_word(n):
+    return f"{n} row" if n == 1 else f"{n} rows"
+
+
+def _cells_word(n):
+    return f"{n} cell" if n == 1 else f"{n} cells"
+
+
+def _value_kind(value):
+    """The kind of one value given back by a function in by_running=."""
+    if value is None:
+        return None
+    if isinstance(value, float) and value != value:  # NaN
+        return None
+    if isinstance(value, bool):
+        return "true/false"
+    if isinstance(value, numbers.Real):
+        return "number"
+    if isinstance(value, str):
+        return "text"
+    if isinstance(value, (_dt.date, _dt.datetime)):
+        return "date"
+    return "other"
+
+
+def _plain_cell(value):
+    """A cell as plain Python, the same on both engines: empty cells become None."""
+    if value is None:
+        return None
+    try:
+        if value != value:  # NaN, NaT, pandas NA
+            return None
+    except (TypeError, ValueError):
+        if str(value) in ("<NA>", "NaT"):
+            return None
+    if hasattr(value, "to_pydatetime"):
+        return value.to_pydatetime()
+    if hasattr(value, "item") and not isinstance(value, (str, bytes)):
+        try:
+            return value.item()
+        except (AttributeError, ValueError, TypeError):
+            return value
+    return value
+
+
 ADD_COLUMN_WAYS = (
-    '  a formula        table.add_column("marks_per_hour", "marks / hours")\n'
-    '  by_adding=       table.add_column("study_and_marks", by_adding=["hours", "marks"])\n'
+    '  a formula          table.add_column("marks_per_hour", "marks / hours")\n'
+    '  by_adding=         table.add_column("study_and_marks", by_adding=["hours", "marks"])\n'
     "  by_subtracting=, by_multiplying=, by_dividing=   the same way\n"
-    '  from_column=     table.add_column("half", from_column="marks", divide_by=2)\n'
-    '  value=           table.add_column("school", value="Hill School")\n'
+    '  by_joining_text=   table.add_column("name_and_class", by_joining_text=["name", "class"], separator=" ")\n'
+    '  from_column=       table.add_column("half", from_column="marks", divide_by=2)\n'
+    '  value=             table.add_column("school", value="Hill School")\n'
+    '  by_running=        table.add_column("per_hour", by_running=per_hour)   (a function you wrote)\n'
     '(all with sdata.example("marks"))'
 )
 FROM_COLUMN_EXAMPLE = (
     'For example: table.add_column("half", from_column="marks", divide_by=2)   (with sdata.example("marks"))'
+)
+DATE_PARTS = ("year", "quarter", "month", "month name", "week", "day", "weekday", "weekday name",
+              "day of year", "hour", "minute")
+MONTH_NAMES = ("January", "February", "March", "April", "May", "June", "July", "August",
+               "September", "October", "November", "December")
+WEEKDAY_NAMES = ("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday")
+ROLLING_SHOWS = ("average", "total", "median", "smallest", "biggest", "standard deviation")
+TEXT_PART_WAYS = (
+    '  first_characters=3      the first 3 characters     table.add_text_part_column("initial", from_column="name", first_characters=1)\n'
+    "  last_characters=3       the last 3 characters\n"
+    "  characters=[2, 4]       characters 2 to 4 (counting from 1)\n"
+    '  before=" "              the text before the first " "\n'
+    '  after=" "               the text after the first " "\n'
+    r'  pattern=r"\d+"          the first piece that fits a regular expression' "\n"
+    '(with sdata.example("marks"))'
 )
 
 
@@ -268,9 +594,73 @@ class ColumnWords:
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", RuntimeWarning)
             frame = self._frame.with_columns(expr.alias(name))
+        return self._finish(name, frame, what)
+
+    def _finish(self, name, frame, what):
+        """Record a frame that has the new column. Impossible answers (1/0, sqrt(-1)) become empty cells."""
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", RuntimeWarning)
             if frame.schema[name].is_float():
                 frame = frame.with_columns(nw.when(nw.col(name).is_finite()).then(nw.col(name)).alias(name))
         return self._change(what, frame)
+
+    def _kind(self, column):
+        return _dtype_kind(self._frame.schema[column])
+
+    def _text_of(self, step, column, example):
+        """The column as text, or a friendly error if it does not hold text."""
+        kind = self._kind(column)
+        if kind == "text":
+            return nw.col(column).cast(nw.String)
+        hint = f' To use it as text, first write table.make_text("{column}").' if kind in ("number", "date") else ""
+        raise SimplydataError(f'.{step}() works on text, but "{column}" holds {kind} values.{hint}\n{example}')
+
+    def _group_keys(self, for_each, example):
+        """for_each= as a list of column names (empty when not given)."""
+        if for_each is None:
+            return []
+        keys = _as_list(for_each)
+        if not keys or not all(isinstance(k, str) for k in keys):
+            raise SimplydataError(f"for_each= should be a column name or a list of column names.\n{example}")
+        self._need_columns(*keys)
+        return keys
+
+    def _order_columns(self, sorted_by, example):
+        if sorted_by is None:
+            return []
+        cols = _as_list(sorted_by)
+        if not cols or not all(isinstance(c, str) for c in cols):
+            raise SimplydataError(f"sorted_by= should be a column name, such as a date or a year.\n{example}")
+        self._need_columns(*cols)
+        return cols
+
+    def _row_after_row(self, name, keys, order, make, what):
+        """Work out a column row after row: inside each for_each group, in the order of sorted_by.
+
+        The rows of the table keep their place; only the calculation follows sorted_by.
+        make(frame, over) gets the frame in calculation order and adds the column `name`;
+        over(expr) makes an expression work inside each group, in that order. (narwhals
+        needs order_by= for this on pandas: without it, rolling values per group come out
+        in the wrong rows.)
+        """
+        index, step = "_simplydata_row_", "_simplydata_step_"
+        frame = self._frame.with_row_index(index)
+        if order:
+            frame = nw.maybe_reset_index(frame.sort([*order, index], nulls_last=True))
+        frame = frame.with_row_index(step)
+
+        def over(expr):
+            return expr.over(*keys, order_by=step) if keys else expr
+
+        frame = make(frame, over)
+        if order:
+            frame = frame.sort(index)
+        return self._finish(name, frame.drop([index, step]), what)
+
+    def _order_words(self, keys, order):
+        group = f" (separately for each {', '.join(map(str, keys))})" if keys else ""
+        how = f"in order of {', '.join(map(str, order))}" if order else "in the order the rows are in now"
+        return group, how
 
     def _number_or_column(self, value, option):
         if isinstance(value, str):
@@ -324,6 +714,220 @@ class ColumnWords:
         return self._change(f"sort by {', '.join(map(str, names))} ({order})", frame)
 
     # ------------------------------------------------------------------ new columns
+    def _work_out(self, step, name, formula=None, by_adding=None, by_subtracting=None, by_multiplying=None,
+                  by_dividing=None, by_joining_text=None, separator=None, by_running=None, for_each=None,
+                  from_column=None, plus=None, minus=None, times=None, divide_by=None, value=None):
+        """The new values for add_column() and change_column(): (frame with the column, words for steps())."""
+        lists = {"by_adding": by_adding, "by_subtracting": by_subtracting,
+                 "by_multiplying": by_multiplying, "by_dividing": by_dividing}
+        numbers_given = {"plus": plus, "minus": minus, "times": times, "divide_by": divide_by}
+        given_numbers = [k for k, v in numbers_given.items() if v is not None]
+        ways = (["a formula"] if formula is not None else []) + [f"{k}=" for k, v in lists.items() if v is not None]
+        ways += (["from_column="] if from_column is not None else []) + (["value="] if value is not None else [])
+        ways += (["by_joining_text="] if by_joining_text is not None else [])
+        ways += (["by_running="] if by_running is not None else [])
+        if not ways and given_numbers:
+            raise SimplydataError(
+                f"{given_numbers[0]}= needs from_column= to say which column to start from.\n{FROM_COLUMN_EXAMPLE}"
+            )
+        if not ways:
+            raise SimplydataError(f".{step}() needs to know how to work out the column. Choose one way:\n{ADD_COLUMN_WAYS}")
+        if len(ways) > 1:
+            raise SimplydataError(
+                f".{step}() was given {len(ways)} ways at once ({', '.join(ways)}). Choose exactly one:\n{ADD_COLUMN_WAYS}"
+            )
+        way = ways[0]
+        if way != "from_column=" and given_numbers:
+            raise SimplydataError(f"{given_numbers[0]}= only works together with from_column=.\n{FROM_COLUMN_EXAMPLE}")
+        if separator is not None and way != "by_joining_text=":
+            raise SimplydataError(
+                "separator= only works together with by_joining_text=, for example\n"
+                'table.add_column("name_and_class", by_joining_text=["name", "class"], separator=" ")'
+                '   (with sdata.example("marks"))'
+            )
+        if for_each is not None and way != "a formula":
+            raise SimplydataError(
+                "for_each= only works with a formula that has a summary word in it, for example\n"
+                'table.add_column("share", "marks / total(marks) * 100", for_each="class")   (with sdata.example("marks"))'
+            )
+
+        if way == "a formula":
+            share_example = ('For example: table.add_column("share", "marks / total(marks) * 100", for_each="class")'
+                             '   (with sdata.example("marks"))')
+            reader = _FormulaReader(formula, self._columns)
+            expr = reader.read()
+            self._need_numbers(*reader.number_used, step=step)
+            keys = self._group_keys(for_each, share_example)
+            if keys and not reader.summaries:
+                raise SimplydataError(
+                    "for_each= only matters when the formula has a summary word in it, such as total(marks) or "
+                    f"average(marks): then the summary is worked out for each group.\n{share_example}"
+                )
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore", RuntimeWarning)
+                frame, temporary = _apply_summaries(self._frame, reader, keys)
+                frame = frame.with_columns(expr.alias(name))
+            if temporary:
+                frame = frame.drop(temporary)
+            words = formula + (f" (summaries for each {', '.join(map(str, keys))})" if keys else "")
+            return frame, words
+
+        if way == "value=":
+            if not isinstance(value, (str, int, float, bool)):
+                raise SimplydataError(
+                    f"value= should be one number or one piece of text, not {type(value).__name__}.\n"
+                    'For example: table.add_column("school", value="Hill School")'
+                )
+            return self._frame.with_columns(nw.lit(value).alias(name)), f"{_plain(value)} in every row"
+
+        if way == "by_running=":
+            return self._run_function(step, name, by_running)
+
+        if way == "from_column=":
+            if not isinstance(from_column, str):
+                raise SimplydataError(f"from_column= should be one column name.\n{FROM_COLUMN_EXAMPLE}")
+            self._need_columns(from_column)
+            self._need_numbers(from_column, step=step)
+            if len(given_numbers) != 1:
+                raise SimplydataError(
+                    f"from_column= needs exactly one of plus=, minus=, times= or divide_by=.\n{FROM_COLUMN_EXAMPLE}"
+                )
+            option = given_numbers[0]
+            amount = numbers_given[option]
+            other = self._number_or_column(amount, option)
+            col = nw.col(from_column)
+            if option == "plus":
+                expr, sign = col + other, "+"
+            elif option == "minus":
+                expr, sign = col - other, "-"
+            elif option == "times":
+                expr, sign = col * other, "*"
+            else:
+                expr, sign = _divide(col, other), "/"
+            return self._frame.with_columns(expr.alias(name)), f"{from_column} {sign} {amount}"
+
+        # by_adding= / by_subtracting= / by_multiplying= / by_dividing= / by_joining_text=
+        option = way.rstrip("=")
+        cols = by_joining_text if option == "by_joining_text" else lists[option]
+        if not isinstance(cols, (list, tuple)) or len(cols) < 2 or not all(isinstance(c, str) for c in cols):
+            raise SimplydataError(
+                f"{option}= needs a list of two or more column names, for example\n"
+                f'table.add_column("new", {option}=["hours", "marks"])   (with sdata.example("marks"))'
+            )
+        self._need_columns(*cols)
+        if option == "by_joining_text":
+            return self._join_text(name, cols, separator)
+        if any(self._kind(c) == "date" for c in cols):
+            return self._days_between(name, option, cols)
+        self._need_numbers(*cols, step=step)
+        expr = nw.col(cols[0])
+        for c in cols[1:]:
+            if option == "by_adding":
+                expr = expr + nw.col(c)
+            elif option == "by_subtracting":
+                expr = expr - nw.col(c)
+            elif option == "by_multiplying":
+                expr = expr * nw.col(c)
+            else:
+                expr = _divide(expr, nw.col(c))
+        sign = {"by_adding": " + ", "by_subtracting": " - ", "by_multiplying": " * ", "by_dividing": " / "}[option]
+        return self._frame.with_columns(expr.alias(name)), sign.join(cols)
+
+    def _days_between(self, name, option, cols):
+        """end - start for two date columns: the number of whole days."""
+        example = 'For example: table.add_column("days", by_subtracting=["end", "start"])'
+        not_dates = [c for c in cols if self._kind(c) != "date"]
+        if option != "by_subtracting" or len(cols) != 2 or not_dates:
+            problem = (f"{', '.join(not_dates)} {'is' if len(not_dates) == 1 else 'are'} not dates"
+                       if not_dates and option == "by_subtracting" and len(cols) == 2 else
+                       f"{option}= with dates only works as by_subtracting= with two date columns")
+            raise SimplydataError(f"For the days between two dates, give two date columns: the later one first.\n"
+                                  f"Here {problem}.\n{example}")
+        end, start = cols
+        a, b = nw.col(end), nw.col(start)
+        types = self._frame.schema[end], self._frame.schema[start]
+        if types[0] == nw.Date and types[1] != nw.Date:
+            a = a.cast(types[1])
+        elif types[1] == nw.Date and types[0] != nw.Date:
+            b = b.cast(types[0])
+        seconds = (a - b).dt.total_seconds()
+        # whole days, counted towards zero: 1 day 23 hours is 1 day, and -1 day 23 hours is -1 day
+        days = nw.when(seconds >= 0).then(seconds // 86400).otherwise(-((-seconds) // 86400))
+        try:
+            frame = self._frame.with_columns(days.alias(name))
+        except Exception as error:  # for example one column with a time zone and one without
+            raise SimplydataError(f"The days between {end} and {start} could not be worked out: {error}") from None
+        if frame[name].null_count() == 0:
+            frame = frame.with_columns(nw.col(name).cast(nw.Int64))
+        print(f'"{name}" is the number of whole days from {start} to {end} (negative when {end} is earlier).')
+        return frame, f"{end} - {start} (whole days)"
+
+    def _join_text(self, name, cols, separator):
+        sep = " " if separator is None else separator
+        if not isinstance(sep, str):
+            raise SimplydataError('separator= should be text in quotes, like separator=" " or separator=", ".')
+        parts = []
+        for c in cols:
+            kind, col = self._kind(c), nw.col(c)
+            if kind == "date":
+                text = col.dt.to_string("%Y-%m-%d")
+            elif kind == "true/false":
+                text = nw.when(~col.is_null()).then(nw.when(col).then(nw.lit("True")).otherwise(nw.lit("False")))
+            else:
+                text = col.cast(nw.String)
+            parts.append(_blank_to_empty(text))
+        joined = _blank_to_empty(nw.concat_str(parts, separator=sep, ignore_nulls=True))
+        return self._frame.with_columns(joined.alias(name)), f"{', '.join(cols)} joined with {_plain(sep)}"
+
+    def _run_function(self, step, name, function):
+        """by_running=: call the user's own function once for each row."""
+        example = ('For example:\n'
+                   '  def per_hour(row):\n'
+                   '      return row["marks"] / row["hours"]\n'
+                   f'  table.{step}("{name}", by_running=per_hour)   (with sdata.example("marks"))')
+        if isinstance(function, str) or not callable(function):
+            raise SimplydataError(
+                "by_running= needs the function itself: its name without quotes and without brackets.\n" + example
+            )
+        fname = getattr(function, "__name__", "your function")
+        fname = "your function" if fname == "<lambda>" else f"{fname}()"
+        values = []
+        for i, row in enumerate(self._frame.iter_rows(named=True)):
+            row = {k: _plain_cell(v) for k, v in row.items()}
+            try:
+                result = function(row)
+            except Exception as error:
+                shown = ", ".join(f"{k}={_plain(v)}" for k, v in list(row.items())[:8])
+                raise SimplydataError(
+                    f"{fname} stopped at row {i + 1} ({shown}):\n  {type(error).__name__}: {error}\n"
+                    "An empty cell reaches the function as None. A function can check for it:\n"
+                    '  if row["hours"] is None: return None'
+                ) from None
+            values.append(_plain_cell(result))
+        first = {}
+        for i, v in enumerate(values):
+            kind = _value_kind(v)
+            if kind is not None:
+                first.setdefault(kind, i)
+        if "other" in first:
+            i = first["other"]
+            raise SimplydataError(
+                f"{fname} should give back one number, text, True/False or date for each row, "
+                f"but for row {i + 1} it gave back a {type(values[i]).__name__}.\n{example}"
+            )
+        if len(first) > 1:
+            mix = ", ".join(f"{kind} (row {i + 1})" for kind, i in first.items())
+            raise SimplydataError(f"{fname} gave back a mix of kinds: {mix}. A column holds one kind of value.")
+        values = [None if _value_kind(v) is None else v for v in values]
+        if "number" in first and any(isinstance(v, float) for v in values):
+            values = [None if v is None else float(v) for v in values]
+        try:
+            series = nw.new_series(name, values, backend=self._frame.implementation)
+            frame = self._frame.with_columns(series)
+        except Exception as error:
+            raise SimplydataError(f"The values from {fname} could not become a column: {error}") from None
+        return frame, f"{fname.replace('()', '')}(row) for each row"
+
     @friendly
     def add_column(
         self,
@@ -333,6 +937,10 @@ class ColumnWords:
         by_subtracting=None,
         by_multiplying=None,
         by_dividing=None,
+        by_joining_text=None,
+        separator=None,
+        by_running=None,
+        for_each=None,
         from_column=None,
         plus=None,
         minus=None,
@@ -347,107 +955,101 @@ class ColumnWords:
           table.add_column("half", from_column="marks", divide_by=2)
           table.add_column("school", value="Hill School")         same value in every row
           table.add_column("marks_per_hour", "marks / hours")     calculator style
+          table.add_column("name_and_class", by_joining_text=["name", "class"], separator=" ")
         (all with sdata.example("marks")). by_subtracting=["a", "b"] means a - b and
         by_dividing=["a", "b"] means a / b, in the order written. Dividing by zero gives an
         empty cell. In a formula, a column name with spaces goes in backticks: "`max temp` - 2".
+
+        Days between two dates: by_subtracting=["end", "start"] with two date columns gives
+        the number of whole days from start to end (a part of a day is not counted).
+
+        Summary words in a formula, average() median() total() smallest() biggest() count(),
+        give one value for the whole column, or for each group with for_each=:
+          table.add_column("share", "marks / total(marks) * 100", for_each="class")
+        gives each mark as a percent of its class total (with sdata.example("marks")).
+
+        by_running= runs a function you wrote once for each row. This is ordinary Python:
+        the function gets the row (row["marks"] is that row's mark; an empty cell is None)
+        and gives back the new value.
+          def per_hour(row):
+              return row["marks"] / row["hours"]
+          table.add_column("per_hour", by_running=per_hour)   (with sdata.example("marks"))
         """
         self._check_new_name(name, "add_column")
-        lists = {"by_adding": by_adding, "by_subtracting": by_subtracting,
-                 "by_multiplying": by_multiplying, "by_dividing": by_dividing}
-        numbers = {"plus": plus, "minus": minus, "times": times, "divide_by": divide_by}
-        given_numbers = [k for k, v in numbers.items() if v is not None]
-        ways = (["a formula"] if formula is not None else []) + [f"{k}=" for k, v in lists.items() if v is not None]
-        ways += (["from_column="] if from_column is not None else []) + (["value="] if value is not None else [])
-        if not ways and given_numbers:
-            raise SimplydataError(
-                f"{given_numbers[0]}= needs from_column= to say which column to start from.\n{FROM_COLUMN_EXAMPLE}"
-            )
-        if not ways:
-            raise SimplydataError(f".add_column() needs to know how to work out the new column. Choose one way:\n{ADD_COLUMN_WAYS}")
-        if len(ways) > 1:
-            raise SimplydataError(
-                f".add_column() was given {len(ways)} ways at once ({', '.join(ways)}). Choose exactly one:\n{ADD_COLUMN_WAYS}"
-            )
-        way = ways[0]
-        if way != "from_column=" and given_numbers:
-            raise SimplydataError(f"{given_numbers[0]}= only works together with from_column=.\n{FROM_COLUMN_EXAMPLE}")
-
-        if way == "a formula":
-            reader = _FormulaReader(formula, self._columns)
-            expr = reader.read()
-            self._need_numbers(*reader.used)
-            return self._put_column(name, expr, f'add column "{name}" = {formula}')
-
-        if way == "value=":
-            if not isinstance(value, (str, int, float, bool)):
-                raise SimplydataError(
-                    f"value= should be one number or one piece of text, not {type(value).__name__}.\n"
-                    'For example: table.add_column("school", value="Hill School")'
-                )
-            return self._put_column(name, nw.lit(value), f'add column "{name}" = {_plain(value)} in every row')
-
-        if way == "from_column=":
-            if not isinstance(from_column, str):
-                raise SimplydataError(f"from_column= should be one column name.\n{FROM_COLUMN_EXAMPLE}")
-            self._need_columns(from_column)
-            self._need_numbers(from_column)
-            if len(given_numbers) != 1:
-                raise SimplydataError(
-                    f"from_column= needs exactly one of plus=, minus=, times= or divide_by=.\n{FROM_COLUMN_EXAMPLE}"
-                )
-            option = given_numbers[0]
-            amount = numbers[option]
-            other = self._number_or_column(amount, option)
-            col = nw.col(from_column)
-            if option == "plus":
-                expr, sign = col + other, "+"
-            elif option == "minus":
-                expr, sign = col - other, "-"
-            elif option == "times":
-                expr, sign = col * other, "*"
-            else:
-                expr, sign = _divide(col, other), "/"
-            return self._put_column(name, expr, f'add column "{name}" = {from_column} {sign} {amount}')
-
-        # by_adding= / by_subtracting= / by_multiplying= / by_dividing=
-        option = way.rstrip("=")
-        cols = lists[option]
-        if not isinstance(cols, (list, tuple)) or len(cols) < 2 or not all(isinstance(c, str) for c in cols):
-            raise SimplydataError(
-                f"{option}= needs a list of two or more column names, for example\n"
-                f'table.add_column("new", {option}=["hours", "marks"])   (with sdata.example("marks"))'
-            )
-        self._need_columns(*cols)
-        self._need_numbers(*cols)
-        expr = nw.col(cols[0])
-        for c in cols[1:]:
-            if option == "by_adding":
-                expr = expr + nw.col(c)
-            elif option == "by_subtracting":
-                expr = expr - nw.col(c)
-            elif option == "by_multiplying":
-                expr = expr * nw.col(c)
-            else:
-                expr = _divide(expr, nw.col(c))
-        sign = {"by_adding": " + ", "by_subtracting": " - ", "by_multiplying": " * ", "by_dividing": " / "}[option]
-        return self._put_column(name, expr, f'add column "{name}" = {sign.join(cols)}')
+        frame, words = self._work_out(
+            "add_column", name, formula, by_adding, by_subtracting, by_multiplying, by_dividing, by_joining_text,
+            separator, by_running, for_each, from_column, plus, minus, times, divide_by, value)
+        return self._finish(name, frame, f'add column "{name}" = {words}')
 
     @friendly
-    def add_group_column(self, name=None, from_column=None, cut_at=None, names=None):
-        """Add a column that puts each number into a group, like turning marks into grades.
+    def change_column(
+        self,
+        column=None,
+        formula=None,
+        by_adding=None,
+        by_subtracting=None,
+        by_multiplying=None,
+        by_dividing=None,
+        by_joining_text=None,
+        separator=None,
+        by_running=None,
+        for_each=None,
+        from_column=None,
+        plus=None,
+        minus=None,
+        times=None,
+        divide_by=None,
+        value=None,
+    ):
+        """Change the values of a column in place, with the same ways as add_column().
 
-        cut_at= says where one group ends and the next begins; names= has one more name than
-        cut_at= has numbers. A value exactly on a cut goes into the higher group: with
-        cut_at=[40, 60, 80], a mark of 60 is a "B". Empty cells stay empty.
-        table.add_group_column("grade", from_column="marks", cut_at=[40, 60, 80], names=["D", "C", "B", "A"])
-        (with sdata.example("marks"))
+        The column keeps its name and its place in the table; undo() brings the old values back.
+          table.change_column("marks", "marks / 10")              (with sdata.example("marks"))
+          table.change_column("marks", from_column="marks", plus=5)
+          table.change_column("marks", "marks - average(marks)", for_each="class")
+        """
+        example = 'For example: table.change_column("marks", "marks / 10")   (with sdata.example("marks"))'
+        if not isinstance(column, str):
+            raise SimplydataError(f".change_column() needs the name of the column to change first.\n{example}")
+        self._need_columns(column)
+        frame, words = self._work_out(
+            "change_column", column, formula, by_adding, by_subtracting, by_multiplying, by_dividing,
+            by_joining_text, separator, by_running, for_each, from_column, plus, minus, times, divide_by, value)
+        return self._finish(column, frame, f'change column "{column}" = {words}')
+
+    @friendly
+    def add_group_column(self, name=None, from_column=None, cut_at=None, names=None, rules=None, otherwise=None):
+        """Add a column that puts each row into a group, like turning marks into grades.
+
+        Two ways. With numbers: cut_at= says where one group ends and the next begins; names=
+        has one more name than cut_at= has numbers. A value exactly on a cut goes into the
+        higher group: with cut_at=[40, 60, 80], a mark of 60 is a "B". Empty cells stay empty.
+          table.add_group_column("grade", from_column="marks", cut_at=[40, 60, 80], names=["D", "C", "B", "A"])
+        With rules: each rule is a condition and the group name for rows that meet it. The
+        first rule a row meets wins; rows that meet no rule get otherwise= (or stay empty).
+        An empty cell never meets a rule.
+          table.add_group_column("result", rules={"marks >= 80": "top", "marks >= 50": "pass"}, otherwise="fail")
+        (both with sdata.example("marks")). Rules can also be a list of pairs:
+        rules=[("marks >= 80", "top"), ("marks >= 50", "pass")].
         """
         step = "add_group_column"
         example = ('For example: table.add_group_column("grade", from_column="marks", '
                    'cut_at=[40, 60, 80], names=["D", "C", "B", "A"])   (with sdata.example("marks"))')
         self._check_new_name(name, step)
+        if rules is not None:
+            if from_column is not None or cut_at is not None or names is not None:
+                raise SimplydataError(
+                    "add_group_column() takes rules= or from_column= with cut_at= and names=, not both. Choose one way."
+                )
+            return self._group_by_rules(name, rules, otherwise)
+        if otherwise is not None:
+            raise SimplydataError(
+                "otherwise= goes with rules=, for example\n"
+                'table.add_group_column("result", rules={"marks >= 60": "pass"}, otherwise="fail")'
+                '   (with sdata.example("marks"))'
+            )
         if not isinstance(from_column, str):
-            raise SimplydataError(f"add_group_column() needs from_column= with one column name.\n{example}")
+            raise SimplydataError(f"add_group_column() needs from_column= with one column name (or rules=).\n{example}")
         self._need_columns(from_column)
         self._need_numbers(from_column, step=step)
         if _is_number(cut_at):
@@ -470,6 +1072,66 @@ class ColumnWords:
             expr = nw.when(col < cut).then(nw.lit(label)).otherwise(expr)
         expr = nw.when(~col.is_null()).then(expr)
         return self._put_column(name, expr, f'add group column "{name}" from {from_column} (cut at {list(cut_at)})')
+
+    def _group_by_rules(self, name, rules, otherwise):
+        example = ('For example: table.add_group_column("result", rules={"marks >= 80": "top", "marks >= 50": "pass"}, '
+                   'otherwise="fail")   (with sdata.example("marks"))')
+        if isinstance(rules, dict):
+            pairs = list(rules.items())
+        elif isinstance(rules, (list, tuple)) and all(isinstance(p, (list, tuple)) and len(p) == 2 for p in rules):
+            pairs = [tuple(p) for p in rules]
+        else:
+            raise SimplydataError(
+                "rules= should pair each condition with its group name, in curly brackets or as a list of pairs.\n"
+                + example
+            )
+        if not pairs:
+            raise SimplydataError("rules= needs at least one rule.\n" + example)
+        labels = [label for _, label in pairs] + ([otherwise] if otherwise is not None else [])
+        kinds = {"text" if isinstance(v, str) else "number" if _is_number(v) else "other" for v in labels}
+        if "other" in kinds:
+            raise SimplydataError("Each group name (and otherwise=) should be text or a number.\n" + example)
+        if len(kinds) > 1:
+            raise SimplydataError(
+                "The group names (and otherwise=) should all be text or all be numbers, so the column holds one kind."
+            )
+        schema = dict(self._frame.schema)
+        conditions, used = [], []
+        for condition, _ in pairs:
+            if not isinstance(condition, str):
+                raise SimplydataError(f"Each rule should be a condition in quotes, like \"marks >= 80\".\n{example}")
+            reader = _ConditionReader(condition, self._columns, schema)
+            expr = reader.read()
+            self._need_numbers(*reader.number_used, step="add_group_column")
+            conditions.append(expr.fill_null(False))
+            used += [c for c in reader.used if c not in used]
+        result = nw.lit(otherwise) if otherwise is not None else None
+        for cond, (_, label) in reversed(list(zip(conditions, pairs))):
+            result = (nw.when(cond).then(nw.lit(label)) if result is None
+                      else nw.when(cond).then(nw.lit(label)).otherwise(result))
+        frame = self._frame.with_columns(result.alias(name))
+        counts = []
+        for label in dict.fromkeys(labels):
+            n = int(frame.select((nw.col(name) == label).fill_null(False).cast(nw.Int64).sum()).item() or 0)
+            counts.append(f"{_plain(label)}: {_rows_word(n)}")
+        unmatched = frame[name].null_count()
+        if unmatched:
+            counts.append(f"no group (empty): {_rows_word(unmatched)}")
+        print(f'Groups in "{name}": ' + ", ".join(counts) + ".")
+        empty = None
+        for c in used:
+            e = nw.col(c).is_null()
+            if self._frame.schema[c].is_float():
+                e = e | nw.col(c).is_nan()
+            empty = e if empty is None else empty | e
+        n_empty = int(self._frame.select(empty.cast(nw.Int64).sum()).item() or 0) if len(self._frame) else 0
+        if n_empty:
+            print(f"Note: {_rows_word(n_empty)} have an empty cell in {', '.join(map(str, used))}. "
+                  "An empty cell never meets a rule.")
+        rule_words = "; ".join(f"{cond} -> {_plain(label)}" for cond, label in pairs)
+        if otherwise is not None:
+            rule_words += f"; otherwise {_plain(otherwise)}"
+        return self._finish(name, frame, f'add group column "{name}" by rules ({rule_words})')
 
     @friendly
     def add_rank_column(self, name=None, from_column=None, biggest_first=True):
@@ -494,6 +1156,420 @@ class ColumnWords:
             expr = expr.cast(nw.Int64)
         order = "biggest first" if biggest_first else "smallest first"
         return self._put_column(name, expr, f'add rank column "{name}" from {from_column} ({order})')
+
+    # ------------------------------------------------------------------ dates
+    @friendly
+    def add_date_part_column(self, name=None, from_column=None, part=None):
+        """Add a column with one part of each date, such as its year, month or weekday.
+
+        part= can be "year", "quarter" (1 to 4), "month" (1 to 12), "month name" ("March"),
+        "week" (the ISO week number, 1 to 53), "day" (day of the month), "weekday" (1 is
+        Monday ... 7 is Sunday, as in the ISO 8601 standard), "weekday name" ("Monday"),
+        "day of year" (1 to 366), "hour" or "minute". Empty dates give empty cells.
+          table.make_dates("year")
+          table.add_date_part_column("weekday", from_column="year", part="weekday name")
+        (with sdata.example("growth"): on which weekday did each year start?)
+        """
+        step = "add_date_part_column"
+        example = ('For example: table.make_dates("year")\n'
+                   '             table.add_date_part_column("weekday", from_column="year", part="weekday name")'
+                   '   (with sdata.example("growth"))')
+        self._check_new_name(name, step)
+        if not isinstance(from_column, str):
+            raise SimplydataError(f"add_date_part_column() needs from_column= with the date column.\n{example}")
+        self._need_columns(from_column)
+        if part is None:
+            raise SimplydataError(
+                "add_date_part_column() needs part= to say which part of the date, such as part=\"month\".\n"
+                "You can use: " + ", ".join(f'"{p}"' for p in DATE_PARTS)
+            )
+        self._check_choice(step, "part", part, DATE_PARTS)
+        kind = self._kind(from_column)
+        if kind != "date":
+            hint = (f' If it holds dates written as text or years, first write table.make_dates("{from_column}").'
+                    if kind in ("text", "number") else "")
+            raise SimplydataError(f'"{from_column}" holds {kind} values, not dates.{hint}\n{example}')
+        dtype = self._frame.schema[from_column]
+        if part in ("hour", "minute") and dtype == nw.Date:
+            raise SimplydataError(f'"{from_column}" holds dates without a time of day, so it has no {part}s.')
+        col = nw.col(from_column)
+        if part == "week":
+            return self._finish(name, self._iso_week(name, from_column), f'add date part column "{name}" = week of {from_column}')
+        expr = {
+            "year": lambda: col.dt.year(),
+            "quarter": lambda: (col.dt.month() - 1) // 3 + 1,
+            "month": lambda: col.dt.month(),
+            "month name": lambda: col.dt.month().replace_strict(
+                dict(enumerate(MONTH_NAMES, 1)), return_dtype=nw.String),
+            "day": lambda: col.dt.day(),
+            "weekday": lambda: col.dt.weekday(),
+            "weekday name": lambda: col.dt.weekday().replace_strict(
+                dict(enumerate(WEEKDAY_NAMES, 1)), return_dtype=nw.String),
+            "day of year": lambda: col.dt.ordinal_day(),
+            "hour": lambda: col.dt.hour(),
+            "minute": lambda: col.dt.minute(),
+        }[part]()
+        if part not in ("month name", "weekday name") and self._frame[from_column].null_count() == 0:
+            expr = expr.cast(nw.Int64)
+        return self._put_column(name, expr, f'add date part column "{name}" = {part} of {from_column}')
+
+    def _iso_week(self, name, column):
+        """ISO week numbers (weeks start on Monday; week 1 holds the year's first Thursday)."""
+        native = self._frame[column].to_native()
+        if self._frame.implementation.is_polars():
+            weeks = native.dt.week().rename(name)
+        else:
+            import numpy as np
+            import pandas as pd
+
+            week = native.dt.isocalendar().week
+            values = week.to_numpy(dtype="float64", na_value=np.nan)
+            weeks = pd.Series(values if week.isna().any() else values.astype("int64"), index=native.index, name=name)
+        return self._frame.with_columns(nw.from_native(weeks, series_only=True).alias(name))
+
+    # ------------------------------------------------------------------ text
+    @friendly
+    def split_column(self, column=None, separator=" ", into=None):
+        """Split a text column into several columns at a separator, such as a comma or a space.
+
+        into= names the new columns; they take the place of the old column. The last new
+        column keeps the rest of the text when there are more pieces. Spaces at the ends of
+        each piece are removed, and missing pieces give empty cells.
+          table.split_column("shop", separator=" ", into=["shop_kind", "shop_word"])   (with sdata.example("fruit"))
+        """
+        step = "split_column"
+        example = ('For example: table.split_column("shop", separator=" ", into=["shop_kind", "shop_word"])'
+                   '   (with sdata.example("fruit"))')
+        if not isinstance(column, str):
+            raise SimplydataError(f".split_column() needs the column to split first.\n{example}")
+        self._need_columns(column)
+        self._text_of(step, column, example)
+        if not isinstance(separator, str) or separator == "":
+            raise SimplydataError(f'separator= should be the text to split at, like separator="," or separator=" ".\n{example}')
+        if not isinstance(into, (list, tuple)) or len(into) < 2 or not all(isinstance(n, str) and n.strip() for n in into):
+            raise SimplydataError(f"into= needs a list of two or more names for the new columns.\n{example}")
+        if len(set(into)) != len(into):
+            raise SimplydataError("into= needs different names for the new columns.")
+        taken = [n for n in into if n in self._columns and n != column]
+        if taken:
+            raise SimplydataError(
+                f"The table already has a column called {', '.join(taken)}. Choose other names in into=, "
+                "or remove that column first."
+            )
+        k = len(into)
+        native = self._frame[column].to_native()
+        if self._frame.implementation.is_polars():
+            parts = native.str.splitn(separator, k)
+            pieces = [parts.struct.field(f"field_{i}").rename(into[i]) for i in range(k)]
+        else:
+            import pandas as pd
+
+            split = native.str.split(separator, n=k - 1, expand=True, regex=False)
+            pieces = [split[i].rename(into[i]) if i in split.columns
+                      else pd.Series(None, index=native.index, dtype=native.dtype, name=into[i]) for i in range(k)]
+        frame = self._frame.with_columns([nw.from_native(p, series_only=True).cast(nw.String).alias(n)
+                                          for p, n in zip(pieces, into)])
+        frame = frame.with_columns([_blank_to_empty(nw.col(n).str.strip_chars()).alias(n) for n in into])
+        position = self._columns.index(column)
+        others = [c for c in self._columns if c != column]
+        frame = frame.select([*others[:position], *into, *others[position:]])
+        source = "_simplydata_source_"
+        filled_frame = (frame.with_columns(self._frame[column].alias(source))
+                        .filter(~_blank_to_empty(nw.col(source).cast(nw.String)).is_null()))
+        short = int(filled_frame.select(nw.col(into[-1]).is_null().cast(nw.Int64).sum()).item() or 0) if len(filled_frame) else 0
+        longer = int(filled_frame.select(nw.col(into[-1]).str.contains(separator, literal=True).fill_null(False)
+                                         .cast(nw.Int64).sum()).item() or 0) if len(filled_frame) else 0
+        gone = "" if column in into else f' The column "{column}" is replaced by them.'
+        print(f'Split "{column}" at {_plain(separator)} into {", ".join(into)}.{gone}')
+        if short:
+            print(f"{_cells_word(short)} had fewer than {k} pieces, so {into[-1]} is empty there.")
+        if longer:
+            print(f"{_cells_word(longer)} had more than {k} pieces; the rest stays in {into[-1]}.")
+        return self._change(f"split {column} at {_plain(separator)} into {', '.join(into)}", frame)
+
+    @friendly
+    def replace_text(self, column=None, old=None, with_value=None, pattern=None):
+        """Replace a piece of text inside the cells of a text column, wherever it appears.
+
+        The old text is plain text and capitals matter. with_value="" removes it.
+          table.replace_text("shop", " shop", with_value="")   (with sdata.example("fruit"))
+        pattern= takes a regular expression instead of plain text (a pattern language for
+        text: \\d means a digit, \\s a space, + "one or more"):
+          table.replace_text("shop", pattern=r"\\s+", with_value="_")
+        """
+        step = "replace_text"
+        example = 'For example: table.replace_text("shop", " shop", with_value="")   (with sdata.example("fruit"))'
+        if not isinstance(column, str):
+            raise SimplydataError(f".replace_text() needs the column first.\n{example}")
+        self._need_columns(column)
+        text = self._text_of(step, column, example)
+        if (old is None) == (pattern is None):
+            raise SimplydataError(
+                ".replace_text() needs the old text, or pattern= for a regular expression (one of the two).\n" + example
+            )
+        if with_value is None:
+            raise SimplydataError(f'.replace_text() needs with_value= the new text (with_value="" removes it).\n{example}')
+        if not isinstance(with_value, str):
+            raise SimplydataError(f'with_value= should be text in quotes, like with_value="{with_value}".')
+        if old is not None:
+            if not isinstance(old, str) or old == "":
+                raise SimplydataError(
+                    "The old text should be some text in quotes. To change whole values (also numbers) use "
+                    'table.replace_values().\n' + example
+                )
+            found = text.str.contains(old, literal=True)
+            new = text.str.replace_all(old, with_value, literal=True)
+            what = _plain(old)
+        else:
+            self._check_pattern(pattern)
+            # the new text is used exactly as written, on both engines
+            if self._frame.implementation.is_polars():
+                value = with_value.replace("$", "$$")
+            else:
+                value = with_value.replace("\\", "\\\\")
+            found = text.str.contains(pattern, literal=False)
+            new = text.str.replace_all(pattern, value, literal=False)
+            what = f"the pattern {_plain(pattern)}"
+        try:
+            with warnings.catch_warnings():  # pandas warns about brackets ( ) in a pattern used for finding
+                warnings.simplefilter("ignore", UserWarning)
+                n = int(self._frame.select(found.fill_null(False).cast(nw.Int64).sum()).item() or 0) if len(self._frame) else 0
+            frame = self._frame.with_columns(new.alias(column))
+        except Exception as error:
+            raise self._pattern_engine_error(pattern, error) from None
+        print(f"Replaced {what} in {_cells_word(n)} of {column}.")
+        return self._change(f"replace {what} in {column} with {_plain(with_value)}", frame)
+
+    @staticmethod
+    def _check_pattern(pattern):
+        if not isinstance(pattern, str) or pattern == "":
+            raise SimplydataError('pattern= should be a regular expression in quotes, like pattern=r"\\d+".')
+        try:
+            re.compile(pattern)
+        except re.error as error:
+            raise SimplydataError(f'pattern= "{pattern}" is not a regular expression simplydata can read: {error}.') from None
+
+    def _pattern_engine_error(self, pattern, error):
+        if pattern is not None and self._frame.implementation.is_polars():
+            return SimplydataError(
+                f'The fast engine (Polars) could not use the pattern "{pattern}". It does not know a few '
+                "pattern pieces, such as look-ahead (?=...) and look-behind (?<=...).\n"
+                f"Details: {str(error).splitlines()[0]}"
+            )
+        return SimplydataError(f"The text could not be changed: {str(error).splitlines()[0]}")
+
+    @friendly
+    def add_text_part_column(self, name=None, from_column=None, first_characters=None, last_characters=None,
+                             characters=None, before=None, after=None, pattern=None):
+        """Add a column with one part of each text, such as its first letters or the text before a mark.
+
+        Choose one way:
+          first_characters=3   the first 3 characters (letters, digits, spaces and signs)
+          last_characters=3    the last 3 characters
+          characters=[2, 4]    characters 2 to 4, counting from 1
+          before=" "           the text before the first " "
+          after=" "            the text after the first " "
+          pattern=r"\\d+"       the first piece that fits a regular expression; with
+                               brackets ( ) in it, only the part inside the first brackets
+        Cells where the mark or pattern is not found give empty cells.
+          table.add_text_part_column("initial", from_column="name", first_characters=1)   (with sdata.example("marks"))
+        """
+        step = "add_text_part_column"
+        example = ('For example: table.add_text_part_column("initial", from_column="name", first_characters=1)'
+                   '   (with sdata.example("marks"))')
+        self._check_new_name(name, step)
+        if not isinstance(from_column, str):
+            raise SimplydataError(f"add_text_part_column() needs from_column= with the text column.\n{example}")
+        self._need_columns(from_column)
+        text = self._text_of(step, from_column, example)
+        options = {"first_characters": first_characters, "last_characters": last_characters,
+                   "characters": characters, "before": before, "after": after, "pattern": pattern}
+        given = [k for k, v in options.items() if v is not None]
+        if len(given) != 1:
+            start = "needs one way to say which part" if not given else f"was given {len(given)} ways at once"
+            raise SimplydataError(f"add_text_part_column() {start}. Choose one:\n{TEXT_PART_WAYS}")
+        option = given[0]
+        value = options[option]
+        if option in ("first_characters", "last_characters"):
+            if not _whole_number(value) or value < 1:
+                raise SimplydataError(f"{option}= should be a whole number of characters, like {option}=3.")
+            part = text.str.head(int(value)) if option == "first_characters" else text.str.tail(int(value))
+            words = f"{option.split('_')[0]} {value} character{'' if value == 1 else 's'} of {from_column}"
+            frame = self._frame.with_columns(_blank_to_empty(part).alias(name))
+            return self._finish(name, frame, f'add text part column "{name}" = {words}')
+        if option == "characters":
+            if (not isinstance(value, (list, tuple)) or len(value) != 2 or not all(_whole_number(v) for v in value)
+                    or value[0] < 1 or value[1] < value[0]):
+                raise SimplydataError(
+                    "characters= needs two whole numbers: the first and the last character to keep, counting "
+                    "from 1. characters=[2, 4] keeps characters 2, 3 and 4."
+                )
+            part = text.str.slice(int(value[0]) - 1, int(value[1]) - int(value[0]) + 1)
+            frame = self._frame.with_columns(_blank_to_empty(part).alias(name))
+            words = f"characters {value[0]} to {value[1]} of {from_column}"
+            return self._finish(name, frame, f'add text part column "{name}" = {words}')
+        if option in ("before", "after"):
+            if not isinstance(value, str) or value == "":
+                raise SimplydataError(f'{option}= should be the mark in quotes, like {option}="_" or {option}=" ".')
+            mark = _escape_mark(value)
+            regex = rf"(?s)^(.*?){mark}" if option == "before" else rf"(?s){mark}(.*)$"
+            words = f"text {option} the first {_plain(value)} in {from_column}"
+            missing = f"no {_plain(value)}"
+        else:
+            self._check_pattern(pattern)
+            regex = pattern if re.compile(pattern).groups else f"({pattern})"
+            words = f"the part of {from_column} that fits {_plain(pattern)}"
+            missing = "no match for the pattern"
+        native = self._frame[from_column].to_native()
+        try:
+            if self._frame.implementation.is_polars():
+                found = native.str.extract(regex, 1)
+            else:
+                found = native.str.extract(regex, expand=True)[0]
+        except Exception as error:
+            raise self._pattern_engine_error(pattern, error) from None
+        found = nw.from_native(found, series_only=True).cast(nw.String).alias(name)
+        frame = self._frame.with_columns(found)
+        cleaned = nw.col(name).str.strip_chars() if option in ("before", "after") else nw.col(name)
+        frame = frame.with_columns(_blank_to_empty(cleaned).alias(name))
+        had_text = ~_blank_to_empty(nw.col(from_column).cast(nw.String)).is_null()
+        n = int(frame.select((had_text & nw.col(name).is_null()).cast(nw.Int64).sum()).item() or 0) if len(frame) else 0
+        if n:
+            print(f'{_cells_word(n)} of {from_column} had {missing}, so "{name}" is empty there.')
+        return self._finish(name, frame, f'add text part column "{name}" = {words}')
+
+    # ------------------------------------------------------------------ rolling and previous rows
+    def _sequence_checks(self, step, name, from_column, for_each, sorted_by, example, numbers_only=True):
+        self._check_new_name(name, step)
+        if not isinstance(from_column, str):
+            raise SimplydataError(f"{step}() needs from_column= with one column name.\n{example}")
+        self._need_columns(from_column)
+        if numbers_only:
+            self._need_numbers(from_column, step=step)
+        return self._group_keys(for_each, example), self._order_columns(sorted_by, example)
+
+    @staticmethod
+    def _check_rows_back(rows_back, option="rows_back"):
+        if not _whole_number(rows_back) or rows_back < 1:
+            raise SimplydataError(f"{option}= should be a whole number of rows, like {option}=1.")
+        return int(rows_back)
+
+    @friendly
+    def add_rolling_column(self, name=None, from_column=None, window=3, show="average", for_each=None, sorted_by=None):
+        """Add a rolling (moving) summary: for each row, the average of this row and the rows just before it.
+
+        window= is how many rows go into each summary (this row and the window - 1 rows
+        before it). The first rows of each group are empty until there are enough rows, and a
+        window with an empty cell in it gives an empty cell. show= can be "average", "total",
+        "median", "smallest", "biggest" or "standard deviation". sorted_by= works it out in the
+        order of a column such as a date (the rows themselves keep their place).
+          table.add_rolling_column("rain_3_months", from_column="rain", window=3, show="total",
+                                   for_each="city", sorted_by="month_number")   (with sdata.example("weather"))
+        """
+        step = "add_rolling_column"
+        example = ('For example: table.add_rolling_column("rain_3_months", from_column="rain", window=3, '
+                   'for_each="city", sorted_by="month_number")   (with sdata.example("weather"))')
+        keys, order = self._sequence_checks(step, name, from_column, for_each, sorted_by, example)
+        if isinstance(window, str):
+            raise SimplydataError(
+                f'window= counts rows, like window=7. Windows of time such as "{window}" are not ready yet: '
+                "sort by the date and use the number of rows."
+            )
+        if not _whole_number(window) or window < 1:
+            raise SimplydataError(f"window= should be a whole number of rows, like window=3.\n{example}")
+        window = int(window)
+        self._check_choice(step, "show", show, ROLLING_SHOWS)
+        if show == "standard deviation" and window < 2:
+            raise SimplydataError("A standard deviation needs at least two values, so use window=2 or more.")
+
+        def make(frame, over):
+            col = nw.col(from_column)
+            if show in ("average", "total", "standard deviation"):
+                expr = {"average": col.rolling_mean, "total": col.rolling_sum,
+                        "standard deviation": col.rolling_std}[show](window)
+                return frame.with_columns(over(expr).alias(name))
+            native = frame.to_native()
+            if frame.implementation.is_polars():
+                import polars as pl
+
+                method = {"median": "rolling_median", "smallest": "rolling_min", "biggest": "rolling_max"}[show]
+                expr = getattr(pl.col(from_column), method)(window_size=window)
+                native = native.with_columns((expr.over(keys) if keys else expr).alias(name))
+            else:
+                method = {"median": "median", "smallest": "min", "biggest": "max"}[show]
+
+                def roll(s):
+                    return getattr(s.rolling(window), method)()
+
+                if keys:
+                    values = native.groupby(keys, dropna=False, sort=False)[from_column].transform(roll)
+                else:
+                    values = roll(native[from_column])
+                native = native.assign(**{name: values})
+            return nw.from_native(native, eager_only=True)
+
+        group, how = self._order_words(keys, order)
+        before = "this row only" if window == 1 else f"this row and the {_rows_word(window - 1)} before it"
+        print(f'Each "{name}" is the {show} of {from_column} in {before}{group}, {how}.')
+        return self._row_after_row(
+            name, keys, order, make,
+            f'add rolling column "{name}" = {show} of {from_column} over {_rows_word(window)}{group}')
+
+    @friendly
+    def add_previous_value_column(self, name=None, from_column=None, rows_back=1, for_each=None, sorted_by=None):
+        """Add a column with the value from the row before (or rows_back= rows before).
+
+        The first row of each group has no row before it, so it gets an empty cell.
+          table.add_previous_value_column("last_month", from_column="temperature", for_each="city",
+                                          sorted_by="month_number")   (with sdata.example("weather"))
+        """
+        step = "add_previous_value_column"
+        example = ('For example: table.add_previous_value_column("last_month", from_column="temperature", '
+                   'for_each="city", sorted_by="month_number")   (with sdata.example("weather"))')
+        keys, order = self._sequence_checks(step, name, from_column, for_each, sorted_by, example, numbers_only=False)
+        rows_back = self._check_rows_back(rows_back)
+
+        def make(frame, over):
+            return frame.with_columns(over(nw.col(from_column).shift(rows_back)).alias(name))
+
+        group, how = self._order_words(keys, order)
+        back = "the row before" if rows_back == 1 else f"{_rows_word(rows_back)} before"
+        print(f'Each "{name}" is {from_column} from {back}{group}, {how}.')
+        return self._row_after_row(
+            name, keys, order, make, f'add previous value column "{name}" = {from_column} from {back}{group}')
+
+    @friendly
+    def add_change_column(self, name=None, from_column=None, in_percent=False, rows_back=1, for_each=None,
+                          sorted_by=None):
+        """Add a column with the change from the row before: this value minus the previous one.
+
+        in_percent=True gives the change as a percent of the previous value,
+        (this - previous) / previous * 100; a previous value of 0 gives an empty cell.
+        The first row of each group has nothing to compare with, so it is empty.
+          table.add_change_column("growth", from_column="population", in_percent=True,
+                                  for_each="country", sorted_by="year")   (with sdata.example("growth"))
+        """
+        step = "add_change_column"
+        example = ('For example: table.add_change_column("growth", from_column="population", in_percent=True, '
+                   'for_each="country", sorted_by="year")   (with sdata.example("growth"))')
+        keys, order = self._sequence_checks(step, name, from_column, for_each, sorted_by, example)
+        if not isinstance(in_percent, bool):
+            raise SimplydataError("in_percent= should be True or False.")
+        rows_back = self._check_rows_back(rows_back)
+
+        def make(frame, over):
+            col = nw.col(from_column)
+            previous = over(col.shift(rows_back))
+            change = col - previous
+            expr = _divide(change, previous) * 100 if in_percent else change
+            return frame.with_columns(expr.alias(name))
+
+        group, how = self._order_words(keys, order)
+        back = "the row before" if rows_back == 1 else f"{_rows_word(rows_back)} before"
+        unit = " in percent" if in_percent else ""
+        print(f'Each "{name}" is the change in {from_column} from {back}{unit}{group}, {how}.')
+        return self._row_after_row(
+            name, keys, order, make, f'add change column "{name}" = change in {from_column} from {back}{unit}{group}')
 
     # ------------------------------------------------------------------ combining tables
     @friendly

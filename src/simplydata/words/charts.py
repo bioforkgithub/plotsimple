@@ -14,8 +14,8 @@ import pandas as pd
 import seaborn as sns
 
 from .._core import PHASES
-from .._data import frame_for
-from .._errors import SimplydataError, friendly
+from .._data import frame_for, is_listlike
+from .._errors import SimplydataError, friendly, suggest
 from .._stats import SHOW, check_error, check_show, error_code, say_error
 from ._helpers import check, colour_role, default_colour, palette_for, single_list
 
@@ -26,15 +26,241 @@ JITTER_SEED = 0  # the same "random" spread every time the chart is drawn
 
 
 def _remember(ctx, kind, table, names, **more):
+    # row_order: how _frame() sorted the rows, so values given as a list (second_y) still
+    # meet their own row
+    more.setdefault("row_order", ctx.store.get("row_order"))
     ctx.last = dict(kind=kind, table=table, x=names.get("x"), y=names.get("y"),
                     colour=names.get("colour"), **more)
+
+
+# ---------------------------------------------------------------- order of groups
+# Groups (words) are drawn in the order they first appear in the table. To put them in
+# another order, the rows are sorted (stably) so that the groups appear in that order: every
+# chart type, colour group and statistics word then follows it, and no number changes.
+# Month and weekday names are put in calendar order by themselves.
+_MONTHS = ["january", "february", "march", "april", "may", "june", "july", "august",
+           "september", "october", "november", "december"]
+_WEEKDAYS = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"]
+_LONGER_SHORT = {"sept", "tues", "thur", "thurs"}
+
+
+def _calendar_place(value):
+    """(kind, place) of a month or weekday name: "Mar" -> ("month", 2); else None."""
+    if not isinstance(value, str):
+        return None
+    word = value.strip().lower().rstrip(".")
+    if len(word) < 3:
+        return None
+    for kind, names in (("month", _MONTHS), ("weekday", _WEEKDAYS)):
+        for i, full in enumerate(names):
+            if word == full or (full.startswith(word) and (len(word) == 3 or word in _LONGER_SHORT)):
+                return kind, i
+    return None
+
+
+def calendar_order(values):
+    """The values in calendar order if every one is a month name (or every one a weekday
+    name), such as "Jan", "February", "mon"; otherwise None."""
+    found = list(pd.unique(pd.Series(values).dropna()))
+    if len(found) < 2:
+        return None
+    places = [_calendar_place(v) for v in found]
+    if any(p is None for p in places) or len({p[0] for p in places}) != 1:
+        return None
+    return [v for _, v in sorted(zip([p[1] for p in places], found), key=lambda t: t[0])]
+
+
+def _is_words(series) -> bool:
+    return not (pd.api.types.is_numeric_dtype(series) or pd.api.types.is_datetime64_any_dtype(series)
+                or pd.api.types.is_bool_dtype(series))
+
+
+ORDER_WORDS = {"x": "order_x", "y": "order_y", "colour": "order_legend"}
+
+
+def _numbers_cannot_be_ordered(word, col, where):
+    return SimplydataError(
+        f'.{word}() puts groups (words) in order, but "{col}" holds numbers or dates, '
+        "which are always drawn in number order.\n"
+        + (f"To turn the axis round, use chart.flip_{where}()." if where != "colour"
+           else "A colour scale for numbers has no groups to put in order: leave out .order_legend().")
+    )
+
+
+def check_order_names(word, names, present, column):
+    """Every name given to an order word must be in the column (friendly error if not)."""
+    shown = [str(v) for v in present]
+    for name in names:
+        if str(name) not in shown:
+            same = [s for s in shown if s.lower() == str(name).lower()]
+            guess = same or suggest(str(name), shown, n=1)
+            lines = [f'.{word}() got "{name}", but column "{column}" has no such value.']
+            if guess:
+                lines.append(f'Did you mean "{guess[0]}"?')
+            lines.append("Values you have: " + ", ".join(shown))
+            raise SimplydataError("\n".join(lines))
+
+
+def _biggest_first_order(word, table, col, value, measure, biggest):
+    if measure is None or (measure != "count" and value is None):
+        raise SimplydataError(
+            f".{word}(biggest_first=...) puts groups in order of their size, but this chart type has\n"
+            "no size for a group. It works with bars, count_bars, lines, boxes, violins, all_dots\n"
+            f'and heatmaps. Give the names in order instead: chart.{word}("Low", "Medium", "High").'
+        )
+    groups = table.groupby(col, sort=False, observed=True)
+    sizes = groups.size() if measure == "count" else groups[value].agg(measure)
+    sizes = sizes.dropna()
+    return list(sizes.sort_values(ascending=not biggest, kind="stable").index)
+
+
+def _apply_order(ctx, table, roles, measure=None):
+    """Sort rows so the groups on the x-axis, the y-axis and in the legend appear in order.
+
+    roles maps "x", "y", "colour" (and "value": the numbers biggest_first= sorts by) to the
+    column names of this layer. Order: order_x/order_y/order_legend if given, else the
+    order of a category column, else calendar order for month or weekday names.
+    """
+    keys, changed = [], {}
+    asked_all = ctx.settings.get("order") or {}
+    for where in ("x", "y", "colour"):
+        col = roles.get(where)
+        if col is None or col not in table.columns:
+            continue
+        asked, series = asked_all.get(where), table[col]
+        is_category = isinstance(series.dtype, pd.CategoricalDtype)
+        if asked is not None:
+            word = ORDER_WORDS[where]
+            if not (is_category or _is_words(series)):
+                raise _numbers_cannot_be_ordered(word, col, where)
+            if "names" in asked:
+                check_order_names(word, asked["names"], pd.unique(series.dropna()), col)
+                wanted = list(asked["names"])
+            else:
+                wanted = _biggest_first_order(word, table, col, roles.get("value"), measure,
+                                              asked["biggest_first"])
+        elif is_category:
+            wanted = list(series.cat.categories)
+        elif _is_words(series):
+            wanted = calendar_order(series)
+        else:
+            wanted = None
+        if not wanted:
+            continue
+        full = wanted + [v for v in pd.unique(series.dropna()) if v not in set(wanted)]
+        place = {v: i for i, v in enumerate(full)}
+        codes = series.astype(object).map(place)
+        keys.append(pd.to_numeric(codes, errors="coerce").fillna(len(full)).to_numpy(dtype=float))
+        if is_category:
+            cats = list(series.cat.categories)
+            changed[col] = [v for v in full if v in cats] + [v for v in cats if v not in place]
+    if not keys:
+        return table
+    perm = np.lexsort(keys[::-1])  # the first key (x) matters most; the sort is stable
+    table = table.iloc[perm].copy()
+    for col, cats in changed.items():
+        table[col] = table[col].cat.reorder_categories(cats)
+    ctx.store["row_order"] = perm
+    return table
+
+
+_ORDER_EXAMPLE = {
+    "x": 'chart.order_x("Low", "Medium", "High")',
+    "y": 'chart.order_y("Low", "Medium", "High")',
+    "colour": 'chart.order_legend("C", "B", "A")',
+}
+
+
+def _step_column(step, where):
+    """The column a recorded chart step draws along the x-axis, the y-axis or as colours."""
+    kw = step.kwargs
+    if where == "colour":
+        return kw.get("colour") if step.name != "pie" else kw.get("labels")
+    if step.name in ("pie", "polar", "dots_3d", "surface", "contour"):
+        return None
+    if kw.get("sideways"):
+        return kw.get("y" if where == "x" else "x")
+    return kw.get(where)
+
+
+def set_order(chart, where, names, biggest_first):
+    """Shared by order_x, order_y and order_legend: check at once, then remember the order."""
+    word, example = ORDER_WORDS[where], _ORDER_EXAMPLE[where]
+    if len(names) == 1 and is_listlike(names[0]):
+        names = tuple(names[0])
+    if names and biggest_first is not None:
+        raise SimplydataError(f".{word}() takes names or biggest_first=, not both.\nFor example {example}")
+    if not names and biggest_first is None:
+        raise SimplydataError(
+            f".{word}() needs the names in the order you want them.\nFor example {example}"
+            + ("" if where == "colour" else f", or chart.{word}(biggest_first=True)"))
+    if biggest_first is not None and not isinstance(biggest_first, bool):
+        raise SimplydataError(f"biggest_first= in .{word}() should be True or False, not {biggest_first!r}.")
+    for name in names:
+        if not isinstance(name, (str, int, float, np.integer, np.floating)) or isinstance(name, bool):
+            raise SimplydataError(f".{word}() needs names (words), not {name!r}.\nFor example {example}")
+    repeated = [n for i, n in enumerate(names) if n in names[:i]]
+    if repeated:
+        raise SimplydataError(f'.{word}() got "{repeated[0]}" twice. Give each name once.')
+    # check against the chart types already added (others are checked when drawn)
+    data = chart._data
+    for step in chart._steps:
+        if step.phase != PHASES["draw"]:
+            continue
+        col = _step_column(step, where)
+        if not isinstance(col, str) or col not in data.columns:
+            continue
+        if not (_is_words(data[col]) or isinstance(data[col].dtype, pd.CategoricalDtype)):
+            raise _numbers_cannot_be_ordered(word, col, where)
+        if names:
+            check_order_names(word, names, pd.unique(data[col].dropna()), col)
+    order = dict(chart._settings.get("order") or {})
+    order[where] = {"names": list(names)} if names else {"biggest_first": biggest_first}
+    return chart._set(order=order)
+
+
+def _hue(table, n):
+    """hue= for seaborn, with the groups in the order they appear (seaborn may sort them)."""
+    col = n.get("colour")
+    kw = {"hue": col}
+    if col is not None and (_is_words(table[col]) or isinstance(table[col].dtype, pd.CategoricalDtype)):
+        kw["hue_order"] = list(pd.unique(table[col].dropna()))
+    return kw
+
+
+def _number_role(data, x, y):
+    """Which of x and y holds the numbers of a boxes/violins/all_dots chart (for biggest_first=)."""
+    for role, col in (("y", y), ("x", x)):
+        if is_listlike(col):
+            values = pd.Series(list(col))
+        elif isinstance(col, str) and col in data.columns:
+            values = data[col]
+        else:
+            continue
+        if pd.api.types.is_numeric_dtype(values) and not pd.api.types.is_bool_dtype(values):
+            return role
+    return None
+
+
+def _frame(ctx, on_x="x", on_y="y", measure=None, size_role=None, **roles):
+    """frame_for(), then the groups put in order (order_x, order_y, order_legend, calendar).
+
+    on_x / on_y: the role drawn along each axis (sideways bars swap them).
+    measure / size_role: what biggest_first= sorts the groups by ("mean" of the y role ...).
+    """
+    ctx.store.pop("row_order", None)
+    table, n = frame_for(ctx.data, **roles)
+    place = {"x": n.get(on_x) if on_x else None, "y": n.get(on_y) if on_y else None,
+             "colour": n.get("colour"), "value": n.get(size_role) if size_role else None}
+    return _apply_order(ctx, table, place, measure), n
 
 
 # ---------------------------------------------------------------- bars
 def _draw_bars(ctx, x, y, colour, show, error, stacked, sideways):
     group, fixed = colour_role(ctx.data, colour)
-    table, n = frame_for(ctx.data, x=x, y=y, colour=group)
     how = SHOW[show]
+    table, n = _frame(ctx, on_x="y" if sideways else "x", on_y="x" if sideways else "y",
+                      measure=how, size_role="y", x=x, y=y, colour=group)
     ax = ctx.ax
 
     if stacked:
@@ -43,6 +269,11 @@ def _draw_bars(ctx, x, y, colour, show, error, stacked, sideways):
             wide = table.groupby(cols, sort=False).size().unstack(n["colour"])
         else:
             wide = table.groupby(cols, sort=False)[n["y"]].agg(how).unstack(n["colour"])
+        # unstack sorts by name; keep the order the groups appear in (order_x, order_legend)
+        wide = wide.reindex(index=[v for v in pd.unique(table[n["x"]].dropna()) if v in wide.index],
+                            columns=[v for v in pd.unique(table[n["colour"]].dropna()) if v in wide.columns])
+        if sideways:
+            wide = wide.iloc[::-1]  # barh draws the first row at the bottom; put it at the top
         wide.plot(kind="barh" if sideways else "bar", stacked=True, ax=ax, rot=0, width=0.8,
                   color=palette_for(table, n["colour"], ctx.settings))
         ax.legend(title=n["colour"])
@@ -51,7 +282,7 @@ def _draw_bars(ctx, x, y, colour, show, error, stacked, sideways):
         else:
             ax.set_ylabel(n["y"] or "count")
     else:
-        kw = dict(data=table, hue=n["colour"], ax=ax, saturation=1)  # exact colours, as asked
+        kw = dict(data=table, **_hue(table, n), ax=ax, saturation=1)  # exact colours, as asked
         if n["colour"]:
             kw["palette"] = palette_for(table, n["colour"], ctx.settings)
         else:
@@ -76,8 +307,8 @@ def _draw_bars(ctx, x, y, colour, show, error, stacked, sideways):
 # ---------------------------------------------------------------- lines
 def _draw_lines(ctx, x, y, colour, show, error, dots, dashed):
     group, fixed = colour_role(ctx.data, colour)
-    table, n = frame_for(ctx.data, x=x, y=y, colour=group)
-    kw = dict(data=table, x=n["x"], y=n["y"], hue=n["colour"], ax=ctx.ax,
+    table, n = _frame(ctx, measure=SHOW[show], size_role="y", x=x, y=y, colour=group)
+    kw = dict(data=table, x=n["x"], y=n["y"], **_hue(table, n), ax=ctx.ax,
               estimator=SHOW[show], errorbar=check_error("lines", error, show))
     if n["colour"]:
         kw["palette"] = palette_for(table, n["colour"], ctx.settings)
@@ -95,8 +326,8 @@ def _draw_lines(ctx, x, y, colour, show, error, dots, dashed):
 def _draw_dots(ctx, x, y, colour, size, shape):
     group, fixed = colour_role(ctx.data, colour)
     size_col = size if not isinstance(size, (int, float)) else None
-    table, n = frame_for(ctx.data, x=x, y=y, colour=group, size=size_col, shape=shape)
-    kw = dict(data=table, x=n["x"], y=n["y"], hue=n["colour"], size=n["size"], style=n["shape"], ax=ctx.ax)
+    table, n = _frame(ctx, x=x, y=y, colour=group, size=size_col, shape=shape)
+    kw = dict(data=table, x=n["x"], y=n["y"], **_hue(table, n), size=n["size"], style=n["shape"], ax=ctx.ax)
     if n["colour"]:
         kw["palette"] = palette_for(table, n["colour"], ctx.settings)
     else:
@@ -211,7 +442,7 @@ def _to_grid(table, x, y, z, word):
 # ---------------------------------------------------------------- area
 def _draw_area(ctx, x, y, colour, stacked):
     group, fixed = colour_role(ctx.data, colour)
-    table, n = frame_for(ctx.data, x=x, y=y, colour=group)
+    table, n = _frame(ctx, measure="mean", size_role="y", x=x, y=y, colour=group)
     ax = ctx.ax
     keys = [n["x"]] + ([n["colour"]] if n["colour"] else [])
     # several values at the same x are averaged (like .lines())
@@ -244,8 +475,8 @@ def _draw_area(ctx, x, y, colour, stacked):
 # ---------------------------------------------------------------- histogram
 def _draw_histogram(ctx, x, bins, colour):
     group, fixed = colour_role(ctx.data, colour)
-    table, n = frame_for(ctx.data, x=x, colour=group)
-    kw = dict(data=table, x=n["x"], hue=n["colour"], bins=bins, ax=ctx.ax)
+    table, n = _frame(ctx, x=x, colour=group)
+    kw = dict(data=table, x=n["x"], **_hue(table, n), bins=bins, ax=ctx.ax)
     sns.histplot(**_seaborn_colours(kw, table, n, ctx, fixed))
     ctx.ax.set_ylabel("count")
     _remember(ctx, "histogram", table, n)
@@ -254,8 +485,8 @@ def _draw_histogram(ctx, x, bins, colour):
 # ---------------------------------------------------------------- boxes and violins
 def _draw_boxes(ctx, x, y, colour, violins):
     group, fixed = colour_role(ctx.data, colour)
-    table, n = frame_for(ctx.data, x=x, y=y, colour=group)
-    kw = dict(data=table, x=n["x"], y=n["y"], hue=n["colour"], ax=ctx.ax, saturation=1)
+    table, n = _frame(ctx, measure="median", size_role=_number_role(ctx.data, x, y), x=x, y=y, colour=group)
+    kw = dict(data=table, x=n["x"], y=n["y"], **_hue(table, n), ax=ctx.ax, saturation=1)
     _seaborn_colours(kw, table, n, ctx, fixed)
     if n["colour"] and n["colour"] not in (n["x"], n["y"]):
         kw["gap"] = 0.1  # a little space between the boxes of one group
@@ -272,9 +503,9 @@ def _draw_boxes(ctx, x, y, colour, violins):
 # ---------------------------------------------------------------- all dots
 def _draw_all_dots(ctx, x, y, colour):
     group, fixed = colour_role(ctx.data, colour)
-    table, n = frame_for(ctx.data, x=x, y=y, colour=group)
+    table, n = _frame(ctx, measure="median", size_role=_number_role(ctx.data, x, y), x=x, y=y, colour=group)
     dodge = bool(n["colour"]) and n["colour"] not in (n["x"], n["y"])
-    kw = dict(data=table, x=n["x"], y=n["y"], hue=n["colour"], ax=ctx.ax, dodge=dodge)
+    kw = dict(data=table, x=n["x"], y=n["y"], **_hue(table, n), ax=ctx.ax, dodge=dodge)
     _seaborn_colours(kw, table, n, ctx, fixed)
     keys = [k for k in (n["x"], n["y"]) if k is not None and not _is_number_column(table[k])]
     if dodge:
@@ -297,17 +528,18 @@ def _draw_all_dots(ctx, x, y, colour):
 # ---------------------------------------------------------------- density
 def _draw_density(ctx, x, colour):
     group, fixed = colour_role(ctx.data, colour)
-    table, n = frame_for(ctx.data, x=x, colour=group)
+    table, n = _frame(ctx, x=x, colour=group)
     # common_norm=False: each group's curve has area 1, so small groups are not squashed
-    kw = dict(data=table, x=n["x"], hue=n["colour"], ax=ctx.ax, common_norm=False)
+    kw = dict(data=table, x=n["x"], **_hue(table, n), ax=ctx.ax, common_norm=False)
     sns.kdeplot(**_seaborn_colours(kw, table, n, ctx, fixed))
     _remember(ctx, "density", table, n)
 
 
 # ---------------------------------------------------------------- heatmap
-def _heatmap_table(data, x, y, value):
+def _heatmap_table(ctx, x, y, value):
+    data = ctx.data
     if value is not None:
-        table, n = frame_for(data, x=x, y=y, value=value)
+        table, n = _frame(ctx, measure="mean", size_role="value", x=x, y=y, value=value)
         wide = table.pivot_table(index=n["y"], columns=n["x"], values=n["value"],
                                  aggfunc="mean", sort=False)
         if _ordered(table[n["y"]]):
@@ -347,7 +579,7 @@ def _draw_tree(ax, tree, orientation, n_leaves):
 
 
 def _draw_heatmap(ctx, x, y, value, numbers, cluster):
-    wide, label = _heatmap_table(ctx.data, x, y, value)
+    wide, label = _heatmap_table(ctx, x, y, value)
     if wide.empty:
         raise SimplydataError(".heatmap() found no numbers to draw.")
     ax = ctx.ax
@@ -388,7 +620,7 @@ def _draw_heatmap(ctx, x, y, value, numbers, cluster):
 
 # ---------------------------------------------------------------- pie
 def _draw_pie(ctx, labels, values):
-    table, n = frame_for(ctx.data, labels=labels, values=values)
+    table, n = _frame(ctx, on_x=None, on_y=None, colour=labels, labels=labels, values=values)
     if n["values"] is None:
         sizes = table[n["labels"]].value_counts(sort=False, dropna=True)
         sizes = sizes.reindex(pd.unique(table[n["labels"]].dropna()))
@@ -407,10 +639,89 @@ def _draw_pie(ctx, labels, values):
     ctx.last = dict(kind="pie", table=table, x=n["labels"], y=n["values"], colour=None)
 
 
+# ---------------------------------------------------------------- band
+BAND_SHADE = 0.25  # how solid a band is: 0 is invisible, 1 is solid
+
+
+def _rows_low_above_high(low, high):
+    lo = pd.to_numeric(pd.Series(list(low)), errors="coerce").to_numpy(dtype=float)
+    hi = pd.to_numeric(pd.Series(list(high)), errors="coerce").to_numpy(dtype=float)
+    with np.errstate(invalid="ignore"):
+        return int(np.sum(lo > hi))
+
+
+def _band_swapped_error(count, low, high):
+    low = low if isinstance(low, str) else "the first list"
+    high = high if isinstance(high, str) else "the second list"
+    return SimplydataError(
+        f".band() needs the low edge first: in {count} row{'s' if count != 1 else ''} "
+        f'"{low}" is bigger than "{high}".\n'
+        f"Did you swap them? Write between=[{high!r}, {low!r}] if so."
+    )
+
+
+def _draw_band(ctx, x, low, high, colour, label):
+    group, fixed = colour_role(ctx.data, colour)
+    table, n = _frame(ctx, on_y=None, x=x, low=low, high=high, colour=group)
+    swapped = _rows_low_above_high(table[n["low"]], table[n["high"]])
+    if swapped:
+        raise _band_swapped_error(swapped, low, high)
+    ax = ctx.ax
+    entries = []
+    for (name, rows), c in zip(_groups(table, n["colour"]), _group_colours(table, n["colour"], ctx, fixed)):
+        rows = rows[rows[n["x"]].notna()]
+        repeated = rows[n["x"]][rows[n["x"]].duplicated()]
+        if len(repeated):
+            where = f' in group "{name}"' if name is not None else ""
+            raise SimplydataError(
+                f'.band() found more than one row with {n["x"]} = {repeated.iloc[0]}{where}.\n'
+                "A band needs one low and one high value at each x"
+                + (". Add colour= to draw one band per group." if name is None else ".")
+            )
+        if _ordered(rows[n["x"]]):
+            rows = rows.sort_values(n["x"], kind="stable")
+        # empty cells leave a gap in the band rather than a made-up edge
+        shape = ax.fill_between(rows[n["x"]].to_numpy(),
+                                rows[n["low"]].to_numpy(dtype=float),
+                                rows[n["high"]].to_numpy(dtype=float),
+                                color=c, alpha=BAND_SHADE, linewidth=0)
+        text = label if name is None else str(name)
+        if text:
+            entries.append((shape, text))
+    if ax.get_xlabel() == "":
+        ax.set_xlabel(n["x"])
+    store = ctx.store.setdefault("band_entries", [])
+    store.extend((h, t, n["colour"]) for h, t in entries)
+    if ctx.last is None:  # a band alone is the chart; on top of lines it leaves them in charge
+        _remember(ctx, "band", table, {"x": n["x"], "y": n["high"], "colour": n["colour"]})
+
+
+def _band_legend(ctx):
+    """Add the bands to the legend (after every chart type, so lines cannot replace it)."""
+    entries = ctx.store.pop("band_entries", [])
+    if not entries:
+        return
+    ax = ctx.ax
+    old = ax.get_legend()
+    handles, labels, title = [], [], None
+    if old is not None:
+        handles = list(old.legend_handles)
+        labels = [t.get_text() for t in old.get_texts()]
+        title = old.get_title().get_text() or None
+        old.remove()
+    for handle, text, group in entries:
+        if text not in labels:  # a group already in the legend (its line) keeps one entry
+            handles.append(handle)
+            labels.append(text)
+        if title is None and group:
+            title = group
+    ax.legend(handles, labels, title=title)
+
+
 # ---------------------------------------------------------------- polar
 def _draw_polar(ctx, angle, distance, colour, degrees):
     group, fixed = colour_role(ctx.data, colour)
-    table, n = frame_for(ctx.data, angle=angle, distance=distance, colour=group)
+    table, n = _frame(ctx, on_x=None, on_y=None, angle=angle, distance=distance, colour=group)
     ax = ctx.ax
     for (name, rows), c in zip(_groups(table, n["colour"]), _group_colours(table, n["colour"], ctx, fixed)):
         theta = rows[n["angle"]].to_numpy(dtype=float)
@@ -458,7 +769,7 @@ def _draw_surface(ctx, x, y, z):
 
 def _draw_dots_3d(ctx, x, y, z, colour):
     group, fixed = colour_role(ctx.data, colour)
-    table, n = frame_for(ctx.data, x=x, y=y, z=z, colour=group)
+    table, n = _frame(ctx, on_x=None, on_y=None, x=x, y=y, z=z, colour=group)
     ax = ctx.ax
     g = n["colour"]
     if g is not None and _is_number_column(table[g]) and table[g].nunique() > 8:
@@ -815,6 +1126,43 @@ class ChartWords:
         self._xyz("dots_3d", x, y, z, colour=group)
         self._need_axes("dots_3d", "3d")
         return self._add("dots_3d", "draw", _draw_dots_3d, x=x, y=y, z=z, colour=colour)
+
+    @friendly
+    def band(self, x=None, between=None, colour=None, label=None):
+        """A shaded band between a low and a high column, along x.
+        chart.band(x="month", between=["lowest", "highest"]) (with a table that has those columns)
+
+        between=["low column", "high column"] gives the bottom and the top edge at each x:
+        a range of temperatures, a confidence band you worked out, or a smallest-to-biggest
+        band around a line. Draw .lines() as well to show the middle.
+        colour="city" draws one band per group (in the group's colour), or colour="blue" one
+        colour. label="Range" names the band in the legend. Empty cells leave a gap.
+        """
+        example = 'chart.band(x="month", between=["lowest", "highest"])'
+        if x is None or between is None:
+            raise SimplydataError(f".band() needs x= and between=, for example {example}.")
+        if isinstance(between, str) or not is_listlike(between) or len(between) != 2:
+            raise SimplydataError(
+                f".band() needs two columns in between=: the low edge and the high edge.\nFor example {example}.")
+        low, high = between
+        if isinstance(low, str) and low == high:
+            raise SimplydataError(f'.band() needs two different columns in between=, not "{low}" twice.')
+        if label is not None and not isinstance(label, str):
+            raise SimplydataError(f'label= should be words, for example label="Range", not {label!r}.')
+        group, _ = colour_role(self._data, colour)
+        check(self._data, x=x, low=low, high=high, colour=group)
+        for edge in (low, high):
+            if isinstance(edge, str) and not _is_number_column(self._data[edge]):
+                raise SimplydataError(
+                    f'.band() needs numbers for its edges, but column "{edge}" holds words or other things.\n'
+                    "Pick two columns with numbers in them.")
+        if isinstance(low, str) and isinstance(high, str):
+            swapped = _rows_low_above_high(self._data[low], self._data[high])
+            if swapped:
+                raise _band_swapped_error(swapped, low, high)
+        self._need_axes("band")
+        self._add("band", "draw", _draw_band, x=x, low=low, high=high, colour=colour, label=label)
+        return self._replace("band_legend", "extra", _band_legend)
 
     # standard names, same words
     bar = bars

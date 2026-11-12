@@ -14,6 +14,7 @@ from .._data import is_listlike
 from .._errors import SimplydataError, column_error, friendly
 from .._style import palette
 from ._helpers import check
+from .charts import set_order
 
 SECOND_KINDS = ("lines", "bars", "dots")
 
@@ -213,6 +214,9 @@ def _draw_second_y(ctx, y, drawn_as, label, colour):
                 f".second_y() got {len(values)} values, but the chart under it has {len(table)}.\n"
                 "Give one value for each row."
             )
+        order = last.get("row_order")
+        if order is not None and len(order) == len(values):
+            values = [values[i] for i in order]  # the rows were put in order (order_x, months)
         table["__second_y"] = values
         ycol, yname = "__second_y", label or "second y"
     else:
@@ -479,6 +483,29 @@ class AxesWords:
     def flip_y(self):
         """Turn the y-axis upside down, for example for depth going down. chart.flip_y()"""
         return self._replace("flip_y", "axes", _flip, axis="y")
+
+    # -------------------------------------------------------------- order of groups
+    @friendly
+    def order_x(self, *names, biggest_first=None):
+        """Put the groups along the x-axis in your order. chart.order_x("C", "B", "A")
+        (with chart.bars(x="class", y="marks") on sdata.example("marks"))
+
+        Groups you leave out come after the ones you name. biggest_first=True puts the
+        biggest bar (or box, or line point) first, biggest_first=False the smallest; the size
+        is what the chart shows (average, median, count ...).
+        Month and weekday names ("Jan", "Monday") are put in calendar order without asking.
+        """
+        return set_order(self, "x", names, biggest_first)
+
+    @friendly
+    def order_y(self, *names, biggest_first=None):
+        """Put the groups along the y-axis in your order, the first at the top.
+        chart.order_y("C", "B", "A") (with chart.bars(x="class", y="marks", sideways=True)
+        on sdata.example("marks"))
+
+        Works like order_x, for sideways bars, sideways boxes and heatmap rows.
+        """
+        return set_order(self, "y", names, biggest_first)
 
     # -------------------------------------------------------------- second y-axis
     @friendly(renamed={"chart": "drawn_as"})

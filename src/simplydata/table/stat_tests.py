@@ -28,6 +28,13 @@ Choices (the same defaults as R, so results can be checked there):
   2 x 2 tables only (R chisq.test() and SciPy default). If an expected count is below 5 a
   note says so and suggests test="fisher" (2 x 2 tables); simplydata never switches by
   itself. Effect size: Cramer's V (from the chi-square without correction).
+* compare_shape_to(..., "normal"): the Shapiro-Wilk test (R shapiro.test(), Royston's
+  algorithm), for 3 to 5000 values per group, as R.
+* add_adjusted_p_value_column: Holm (default), Bonferroni, Benjamini-Hochberg or
+  Benjamini-Yekutieli, exactly as R p.adjust(); empty p-values stay empty and are not
+  counted.
+* The groups column is for_each= in every test (between= was its old name and still works
+  for one release, with a note).
 * fit_straight_line: ordinary least squares (R lm(y ~ x)), t-based 95 % intervals.
 * fit_formula: nonlinear least squares (scipy curve_fit, Levenberg-Marquardt), standard
   errors as in R nls().
@@ -54,8 +61,9 @@ import narwhals as nw
 import numpy as np
 
 from .._errors import SimplydataError, choice_error, friendly
+from .._stats import _plain_name
 from .columns import FORMULA_HELP, _formula_error, _FormulaReader, _is_number
-from .summaries import _p_words
+from .summaries import _key, _order, _p_words, _say_label
 
 BASED_ON = ("averages", "ranks")
 AVERAGE_TESTS = ("welch", "student", "welch anova", "anova", "mann-whitney", "kruskal-wallis")
@@ -65,6 +73,24 @@ COUNT_TESTS = ("chi-square", "fisher")
 EXACT_LIMIT = 50  # exact p-values below 50 values without ties, as R wilcox.test()
 CLT_SIZE = 30  # from this many values, a "not bell-shaped" note does not suggest switching
 SHAPIRO_LIMIT = 5000  # SciPy's Shapiro-Wilk is reliable up to 5000 values
+SHAPES = ("normal",)  # compare_shape_to: the shapes it can check
+# add_adjusted_p_value_column: method -> (name in sentences, R p.adjust name)
+ADJUST_METHODS = {
+    "holm": ("Holm", "holm"),
+    "bonferroni": ("Bonferroni", "bonferroni"),
+    "benjamini-hochberg": ("Benjamini-Hochberg", "BH"),
+    "benjamini-yekutieli": ("Benjamini-Yekutieli", "BY"),
+}
+ADJUST_ALIASES = {"bh": "benjamini-hochberg", "fdr": "benjamini-hochberg", "by": "benjamini-yekutieli",
+                  "benjamini hochberg": "benjamini-hochberg", "benjamini yekutieli": "benjamini-yekutieli"}
+ADJUST_MEANING = {
+    "holm": "the chance of even one false alarm among all the tests stays at 5 %",
+    "bonferroni": "the chance of even one false alarm among all the tests stays at 5 %",
+    "benjamini-hochberg": "about 5 % of the findings below 0.05 are expected to be false alarms "
+                          "(the false discovery rate)",
+    "benjamini-yekutieli": "about 5 % of the findings below 0.05 are expected to be false alarms "
+                           "(the false discovery rate), however the tests depend on each other",
+}
 
 
 # ---------------------------------------------------------------------------- small helpers
@@ -145,6 +171,33 @@ def _holm(p_values) -> list[float]:
         running = max(running, min(1.0, (m - rank) * p[i]))
         adjusted[i] = running
     return adjusted.tolist()
+
+
+def _adjust_p(p_values, method: str) -> np.ndarray:
+    """Adjusted p-values exactly as R p.adjust() (no empty values here).
+
+    bonferroni  pmin(1, m * p)
+    holm        pmin(1, cummax((m - i + 1) * p[o]))[ro],  o = order(p)
+    BH          pmin(1, cummin(m / i * p[o]))[ro],        o = order(p, decreasing = TRUE)
+    BY          the same as BH, times sum(1 / (1:m))
+    """
+    p = np.asarray(p_values, dtype=float)
+    m = len(p)
+    if method == "bonferroni":
+        return np.minimum(1.0, m * p)
+    if method == "holm":
+        return np.asarray(_holm(p))
+    factor = 1.0 if method == "benjamini-hochberg" else float(np.sum(1.0 / np.arange(1, m + 1)))
+    order = np.argsort(-p, kind="stable")  # biggest p first
+    ranks = np.arange(m, 0, -1)
+    adjusted = np.minimum.accumulate(factor * m / ranks * p[order])
+    out = np.empty(m)
+    out[order] = np.minimum(1.0, adjusted)
+    return out
+
+
+def _p_shown(p: float) -> str:
+    return "p < 0.0001" if p < 0.0001 else f"p = {p:.4f}" if p < 0.001 else f"p = {p:.3f}"
 
 
 def _welch_anova(groups):
@@ -397,42 +450,42 @@ class StatTestWords:
         _skipped_note(len(frame) - len(kept), columns)
         return [kept[c].to_numpy().astype(float) for c in columns]
 
-    def _groups(self, step: str, column, between, example: str):
+    def _groups(self, step: str, column, for_each, example: str):
         """[(group name, values)] sorted by group; empty cells skipped with a note."""
         self._need_name(step, "the column", column, example)
-        self._need_name(step, "between=", between, example)
-        self._need_columns(column, between)
-        if column == between:
-            raise SimplydataError(f'"{column}" cannot be both the column to compare and the between= column.\n'
+        self._need_name(step, "for_each=", for_each, example)
+        self._need_columns(column, for_each)
+        if column == for_each:
+            raise SimplydataError(f'"{column}" cannot be both the column to compare and the for_each= column.\n'
                                   f"For example, {example}")
         frame = self._number_frame(step, [column])
-        if frame.schema[between].is_float():
-            frame = frame.with_columns(nw.col(between).fill_nan(None))
-        kept = frame.select(between, column).drop_nulls()
-        _skipped_note(len(frame) - len(kept), [column, between])
-        keys = kept[between].to_list()
+        if frame.schema[for_each].is_float():
+            frame = frame.with_columns(nw.col(for_each).fill_nan(None))
+        kept = frame.select(for_each, column).drop_nulls()
+        _skipped_note(len(frame) - len(kept), [column, for_each])
+        keys = kept[for_each].to_list()
         values = kept[column].to_numpy().astype(float)
         order = sorted(set(keys), key=lambda k: (str(type(k)), k))
         keys = np.asarray(keys, dtype=object)
         groups = [(_label(k), values[keys == k]) for k in order]
         if len(groups) < 2:
             found = f'only "{groups[0][0]}"' if groups else "none"
-            raise SimplydataError(f'{step}() needs at least 2 groups in "{between}"; it found {found}.')
+            raise SimplydataError(f'{step}() needs at least 2 groups in "{for_each}"; it found {found}.')
         small = [name for name, v in groups if len(v) < 2]
         if small:
             raise SimplydataError(
                 f"{step}() needs at least 2 values in each group; "
-                + _list_words(f'"{s}"' for s in small) + f' in "{between}" has fewer.\n'
+                + _list_words(f'"{s}"' for s in small) + f' in "{for_each}" has fewer.\n'
                 "Remove that group first, for example with table.remove_rows(...)."
             )
         return groups
 
     # ------------------------------------------------------------------ compare_averages
-    @friendly
-    def compare_averages(self, column=None, between=None, based_on="averages", test=None):
+    @friendly(renamed={"between": "for_each"})
+    def compare_averages(self, column=None, for_each=None, based_on="averages", test=None):
         """Are the averages of the groups really different, or could it be chance?
 
-        table.compare_averages("marks", between="class")   (with sdata.example("marks"))
+        table.compare_averages("marks", for_each="class")   (with sdata.example("marks"))
         Two groups: Welch's t-test (the R t.test() default). Three or more: Welch's one-way
         ANOVA (the R oneway.test() default). Neither needs the groups to have the same spread.
         based_on="ranks" uses ranks instead (Mann-Whitney U or Kruskal-Wallis): safer when
@@ -447,7 +500,7 @@ class StatTestWords:
         To see which groups differ, use compare_each_pair().
         """
         step = "compare_averages"
-        example = 'with sdata.example("marks"): table.compare_averages("marks", between="class")'
+        example = 'with sdata.example("marks"): table.compare_averages("marks", for_each="class")'
         self._check_based_on(step, based_on)
         if test is not None:
             self._check_choice(step, "test", test, AVERAGE_TESTS)
@@ -456,7 +509,7 @@ class StatTestWords:
                     f'test="{test}" compares averages, but based_on="ranks" asks for ranks. '
                     'Use one of them: test="mann-whitney" or test="kruskal-wallis" are the rank tests.'
                 )
-        groups = self._groups(step, column, between, example)
+        groups = self._groups(step, column, for_each, example)
         k = len(groups)
         if test is None:
             if based_on == "ranks":
@@ -469,12 +522,12 @@ class StatTestWords:
         if test in TWO_GROUP_TESTS and k != 2:
             other = "kruskal-wallis" if test == "mann-whitney" else "welch anova"
             raise SimplydataError(
-                f'test="{test}" compares exactly 2 groups, but "{between}" has {k}.\n'
-                f'Use test="{other}" for all groups at once, or table.compare_each_pair("{column}", between="{between}").'
+                f'test="{test}" compares exactly 2 groups, but "{for_each}" has {k}.\n'
+                f'Use test="{other}" for all groups at once, or table.compare_each_pair("{column}", for_each="{for_each}").'
             )
         names = [g[0] for g in groups]
         arrays = [g[1] for g in groups]
-        what = f'the average of "{column}" in each "{between}" ({", ".join(names)})'
+        what = f'the average of "{column}" in each "{for_each}" ({", ".join(names)})'
         row = {"test": None, "what it compares": what}
         means = [float(v.mean()) for v in arrays]
         if test not in RANK_TESTS:
@@ -537,7 +590,7 @@ class StatTestWords:
                      f'Omega-squared = {_num(omega)}: the groups explain {share} of the differences in "{column}".')
             second = f"Test: {name} (F = {_num(f)}, df = {_whole(df1)} and {_whole(df2)}), {why}."
             if k > 2:
-                second += f' To see which groups differ: table.compare_each_pair("{column}", between="{between}").'
+                second += f' To see which groups differ: table.compare_each_pair("{column}", for_each="{for_each}").'
             notes = _shape_notes([(f'group "{n}"', v) for n, v in groups])
         elif test == "mann-whitney":
             a, b = arrays
@@ -570,7 +623,7 @@ class StatTestWords:
             second = (f"Test: Kruskal-Wallis test (H = {_num(h)}, df = {k - 1}), which compares ranks rather than "
                       "averages, so it does not need bell-shaped values.")
             if k > 2:
-                second += (f' To see which groups differ: table.compare_each_pair("{column}", between="{between}", '
+                second += (f' To see which groups differ: table.compare_each_pair("{column}", for_each="{for_each}", '
                            'based_on="ranks").')
         for name, v in groups:
             row[f"count in {name}"] = len(v)
@@ -584,11 +637,11 @@ class StatTestWords:
         return self._result_table(row)
 
     # ------------------------------------------------------------------ compare_each_pair
-    @friendly
-    def compare_each_pair(self, column=None, between=None, based_on="averages"):
+    @friendly(renamed={"between": "for_each"})
+    def compare_each_pair(self, column=None, for_each=None, based_on="averages"):
         """Which pairs of groups differ? Every pair is compared, with Holm's correction.
 
-        table.compare_each_pair("marks", between="class")   (with sdata.example("marks"))
+        table.compare_each_pair("marks", for_each="class")   (with sdata.example("marks"))
         Each pair gets Welch's t-test (or Mann-Whitney U with based_on="ranks"). Testing many
         pairs makes a false alarm more likely, so the p-values are adjusted with Holm's
         method: the chance of at least one false alarm stays at 5 %. This is the same as R
@@ -596,9 +649,9 @@ class StatTestWords:
         one row per pair.
         """
         step = "compare_each_pair"
-        example = 'with sdata.example("marks"): table.compare_each_pair("marks", between="class")'
+        example = 'with sdata.example("marks"): table.compare_each_pair("marks", for_each="class")'
         self._check_based_on(step, based_on)
-        groups = self._groups(step, column, between, example)
+        groups = self._groups(step, column, for_each, example)
         from scipy import stats
 
         rows = []
@@ -631,7 +684,7 @@ class StatTestWords:
             row["p-value (Holm)"] = p
         test = "Welch's t-test" if based_on == "averages" else "Mann-Whitney U test"
         pairs = "pair" if len(rows) == 1 else "pairs"
-        print(f'Each pair of "{between}" groups compared on "{column}" with {test}; the p-values are adjusted for '
+        print(f'Each pair of "{for_each}" groups compared on "{column}" with {test}; the p-values are adjusted for '
               f"{len(rows)} {pairs} with Holm's method, so the chance of any false alarm stays at 5 %.")
         for row in rows:
             if based_on == "averages":
@@ -784,12 +837,12 @@ class StatTestWords:
         return self._result_table(row)
 
     # ------------------------------------------------------------------ compare_counts
-    @friendly
-    def compare_counts(self, column=None, between=None, test=None):
+    @friendly(renamed={"between": "for_each"})
+    def compare_counts(self, column=None, for_each=None, test=None):
         """Does how often each value turns up differ between groups, more than chance?
 
         table.add_group_column("result", from_column="marks", cut_at=[60], names=["below 60", "60 or more"])
-        table.compare_counts("result", between="class")   (with sdata.example("marks"))
+        table.compare_counts("result", for_each="class")   (with sdata.example("marks"))
         (Do the classes differ in how many children score 60 or more?) Counts the rows for
         each pair of values and uses the chi-square test of independence (as R chisq.test():
         Yates' continuity correction for 2 x 2 tables only).
@@ -798,26 +851,26 @@ class StatTestWords:
         strength of the link from 0 (none) to 1 (complete). Gives back a one-row table.
         """
         step = "compare_counts"
-        example = 'with sdata.example("fruit"): table.compare_counts("fruit", between="shop")'
+        example = 'with sdata.example("fruit"): table.compare_counts("fruit", for_each="shop")'
         self._need_name(step, "the column", column, example)
-        self._need_name(step, "between=", between, example)
-        self._need_columns(column, between)
+        self._need_name(step, "for_each=", for_each, example)
+        self._need_columns(column, for_each)
         if test is not None:
             self._check_choice(step, "test", test, COUNT_TESTS)
-        if column == between:
+        if column == for_each:
             raise SimplydataError(f"{step}() needs two different columns, for example {example}.")
         frame = self._frame
-        floats = [c for c in (column, between) if frame.schema[c].is_float()]
+        floats = [c for c in (column, for_each) if frame.schema[c].is_float()]
         if floats:
             frame = frame.with_columns(nw.col(c).fill_nan(None) for c in floats)
-        kept = frame.select(column, between).drop_nulls()
-        _skipped_note(len(frame) - len(kept), [column, between])
+        kept = frame.select(column, for_each).drop_nulls()
+        _skipped_note(len(frame) - len(kept), [column, for_each])
         rows_of = kept[column].to_list()
-        cols_of = kept[between].to_list()
+        cols_of = kept[for_each].to_list()
         order = lambda keys: sorted(set(keys), key=lambda k: (str(type(k)), k))  # noqa: E731
         row_keys, col_keys = order(rows_of), order(cols_of)
         if len(row_keys) < 2 or len(col_keys) < 2:
-            few = column if len(row_keys) < 2 else between
+            few = column if len(row_keys) < 2 else for_each
             raise SimplydataError(f'{step}() needs at least 2 different values in "{few}".')
         observed = np.zeros((len(row_keys), len(col_keys)), dtype=np.int64)
         ri = {k: i for i, k in enumerate(row_keys)}
@@ -832,13 +885,13 @@ class StatTestWords:
         plain_chi = stats.chi2_contingency(observed, correction=False).statistic
         v = math.sqrt(plain_chi / (n * (min(observed.shape) - 1)))
         two_by_two = observed.shape == (2, 2)
-        what = f'how often each "{column}" turns up in each "{between}"'
+        what = f'how often each "{column}" turns up in each "{for_each}"'
         row = {"test": None, "what it compares": what}
         size = f"{observed.shape[0]} x {observed.shape[1]}"
         if test == "fisher":
             if not two_by_two:
                 raise SimplydataError(
-                    f'test="fisher" works on 2 x 2 tables here, but "{column}" and "{between}" make a {size} table.\n'
+                    f'test="fisher" works on 2 x 2 tables here, but "{column}" and "{for_each}" make a {size} table.\n'
                     "Use the chi-square test (leave out test=), or merge groups first."
                 )
             result = stats.fisher_exact(observed)
@@ -869,6 +922,155 @@ class StatTestWords:
                      else "Merge small groups, or collect more data.")
             print(note)
         return self._result_table(row)
+
+    # ------------------------------------------------------------------ compare_shape_to
+    @friendly
+    def compare_shape_to(self, column=None, shape="normal", for_each=None):
+        """Do the values look bell-shaped (normal), or are they too far from it to be chance?
+
+        table.compare_shape_to("marks", "normal", for_each="class")   (with sdata.example("marks"))
+        Uses the Shapiro-Wilk test (as R shapiro.test()), for 3 to 5000 values in each
+        group; empty cells are skipped. A small p-value says the shape is too far from a
+        bell shape to be chance. A large p-value does not prove the values are normal: with
+        few values the test can miss a different shape, and with many values (30 or more)
+        it flags even tiny, harmless differences, while tests on averages are then usually
+        fine anyway (the central limit theorem). Gives back a table with one row per group.
+        """
+        step = "compare_shape_to"
+        example = 'with sdata.example("marks"): table.compare_shape_to("marks", "normal", for_each="class")'
+        self._need_name(step, "the column", column, example)
+        name = shape.strip().lower() if isinstance(shape, str) else shape
+        if name not in SHAPES:
+            raise choice_error(step, "shape", shape, list(SHAPES))
+        groups = self._group_columns(step, for_each, [column]) if for_each is not None else []
+        frame = self._number_frame(step, [column])
+        values = frame.select(nw.col(column).cast(nw.Float64))[column].to_numpy()
+        keys = [_key(r) for r in frame.select(groups).rows()] if groups else [()] * len(values)
+        by_group: dict = {}
+        for key, v in zip(keys, values):
+            by_group.setdefault(key, [])
+            if not math.isnan(v):
+                by_group[key].append(v)
+        order = sorted(by_group, key=lambda k: tuple(_order(v) for v in k))
+        skipped = int(np.isnan(values).sum())
+        _skipped_note(skipped, [column])
+        from scipy import stats
+
+        rows, lines, any_large_flag = [], [], False
+        what = f'the shape of "{column}" with a normal (bell-shaped) distribution'
+        for key in order:
+            v = np.asarray(by_group[key], dtype=float)
+            n = len(v)
+            label = " / ".join(_say_label(x) for x in key)
+            problem = None
+            if n < 3:
+                problem = f"only {n} value{'' if n == 1 else 's'}: Shapiro-Wilk needs at least 3"
+            elif n > SHAPIRO_LIMIT:
+                problem = (f"{n} values: Shapiro-Wilk works up to {SHAPIRO_LIMIT} values (as R); look at the shape "
+                           f'on a chart instead, for example chart.histogram(x="{column}")')
+            elif np.ptp(v) == 0:
+                problem = "every value is the same, so there is no shape to test"
+            if problem and not groups:
+                raise SimplydataError(f'{step}() cannot test "{column}": {problem}.')
+            w = p = math.nan
+            if not problem:
+                result = stats.shapiro(v)
+                w, p = float(result.statistic), float(result.pvalue)
+            row = {g: k for g, k in zip(groups, key)}
+            row.update({"test": "Shapiro-Wilk test", "what it compares": what, "statistic name": "W",
+                        "statistic": w, "p-value": p, "rows": n})
+            rows.append(row)
+            if problem:
+                lines.append(f"  {label}: not tested ({problem}).")
+                continue
+            looks = "do not look bell-shaped" if p < 0.05 else "could well be bell-shaped"
+            if not groups:
+                if p < 0.05:
+                    lines.append(f'The values of "{column}" do not look bell-shaped (normal): a shape this far from '
+                                 f"normal {_chance(p)} (Shapiro-Wilk W = {w:.3f}, {n} values).")
+                else:
+                    lines.append(f'The values of "{column}" could well be bell-shaped (normal) (Shapiro-Wilk '
+                                 f"W = {w:.3f}, {_p_shown(p)}, {n} values). This does not prove that they are.")
+            else:
+                lines.append(f"  {label}: {looks} (W = {w:.3f}, {_p_shown(p)}, {n} values)")
+            any_large_flag = any_large_flag or (p < 0.05 and n >= CLT_SIZE)
+        if groups:
+            print(f'Do the values of "{column}" look bell-shaped (normal) in each {' and '.join(chr(34) + g + chr(34) for g in groups)}? '
+                  "Shapiro-Wilk test (as R shapiro.test()); a small p-value means too far from normal to be chance:")
+        for line in lines:
+            print(line)
+        if not groups:
+            print("Test: Shapiro-Wilk test (as R shapiro.test()), the usual check of a bell shape for 3 to 5000 values.")
+        else:
+            print("A large p-value does not prove that the values are bell-shaped.")
+        if any_large_flag:
+            print(f"Note: with {CLT_SIZE} or more values Shapiro-Wilk flags even small, harmless differences from a bell "
+                  "shape; tests on averages are usually still fine (the central limit theorem).")
+        data = {k: [r[k] for r in rows] for k in rows[0]}
+        return self._new_table(nw.from_dict(data, backend=self._frame.implementation))
+
+    # ------------------------------------------------------------------ many p-values at once
+    @friendly
+    def add_adjusted_p_value_column(self, name=None, from_column="p-value", method="holm"):
+        """Adjust p-values for testing many things at once, in a new column.
+
+        results = table.correlation_between("hours", "marks", "height", show="each pair")
+        results.add_adjusted_p_value_column("q", method="benjamini-hochberg")   (with sdata.example("marks"))
+        The more tests you run, the more likely one of them looks real by chance; adjusted
+        p-values allow for that. method="holm" (the default, as R p.adjust()): the chance
+        of even one false alarm among all the tests stays at 5 %. "bonferroni": the same
+        promise, simpler and stricter. "benjamini-hochberg" (also "bh" or "fdr"): about 5 %
+        of the findings below 0.05 are expected to be false alarms (the false discovery
+        rate); it finds more with many tests. "benjamini-yekutieli" ("by"): a false
+        discovery rate that is safe however the tests depend on each other.
+        from_column= is the column of p-values ("p-value" in simplydata result tables).
+        Without a name the new column is called, for example, "p-value (Holm)". Empty
+        cells stay empty and are not counted, as R p.adjust().
+        """
+        step = "add_adjusted_p_value_column"
+        example = ('results.add_adjusted_p_value_column("q", from_column="p-value", method="benjamini-hochberg")\n'
+                   '              (results from table.correlation_between("hours", "marks", "height", '
+                   'show="each pair") with sdata.example("marks"))')
+        chosen = _plain_name(method)
+        chosen = ADJUST_ALIASES.get(chosen, chosen)
+        if chosen not in ADJUST_METHODS:
+            raise choice_error(step, "method", method, list(ADJUST_METHODS))
+        label, r_name = ADJUST_METHODS[chosen]
+        if not isinstance(from_column, str):
+            raise SimplydataError(f"{step}() needs from_column= as one column name in quotes.\nFor example:  {example}")
+        self._need_columns(from_column)
+        if name is None:
+            name = f"{from_column} ({label})"
+        if not isinstance(name, str) or not name.strip():
+            raise SimplydataError(f"{step}() needs the new column's name in quotes.\nFor example:  {example}")
+        frame = self._number_frame(step, [from_column])
+        p = frame.select(nw.col(from_column).cast(nw.Float64))[from_column].to_numpy()
+        given = ~np.isnan(p)
+        bad = p[given & ((p < 0) | (p > 1))]
+        if len(bad):
+            raise SimplydataError(
+                f'"{from_column}" should hold p-values, which go from 0 to 1, but it has {_num(bad[0])}.\n'
+                f"For example:  {example}"
+            )
+        m = int(given.sum())
+        if m == 0:
+            raise SimplydataError(f'"{from_column}" has no p-values to adjust: every cell is empty.')
+        adjusted = np.full(len(p), np.nan)
+        adjusted[given] = _adjust_p(p[given], chosen)
+        values = [None if math.isnan(v) else float(v) for v in adjusted]
+        base = nw.maybe_reset_index(self._frame)
+        new = nw.new_series(name, values, nw.Float64, backend=base.implementation)
+        before, after = int((p[given] < 0.05).sum()), int((adjusted[given] < 0.05).sum())
+        tests = "p-value" if m == 1 else "p-values"
+        print(f'Added "{name}": {m} {tests} from "{from_column}" adjusted with {label}\'s method '
+              f'(as R p.adjust(method = "{r_name}")): {ADJUST_MEANING[chosen]}. '
+              f"Below 0.05: {after} of {m} after adjusting ({before} before).")
+        if m < len(p):
+            print(f"Note: {len(p) - m} empty cell{'' if len(p) - m == 1 else 's'} in \"{from_column}\" "
+                  f"{'stays' if len(p) - m == 1 else 'stay'} empty and {'was' if len(p) - m == 1 else 'were'} "
+                  "not counted.")
+        return self._change(f'add adjusted p-value column "{name}" from {from_column} ({label})',
+                            base.with_columns(new))
 
     # ------------------------------------------------------------------ fitting
     @friendly

@@ -19,6 +19,7 @@ from .._errors import (SimplydataError, choice_error, column_error, friendly, mi
                        suggest)
 
 HISTORY_LIMIT = 30  # how many steps undo() can take back
+SHOW_LIMIT = 1000  # table.show() with no rows= shows at most this many rows
 SAVE_TYPES = ("csv", "tsv", "xlsx", "parquet", "json")
 
 
@@ -37,6 +38,20 @@ def show(native):
     print(native)
 
 
+def _show_whole(native):
+    """Show a table without hiding any rows or columns behind "..."."""
+    if type(native).__module__.split(".")[0] == "polars":
+        import polars as pl
+
+        with pl.Config(tbl_rows=-1, tbl_cols=-1, fmt_str_lengths=200):
+            show(native)
+        return
+    import pandas as pd
+
+    with pd.option_context("display.max_rows", None, "display.max_columns", None, "display.width", None):
+        show(native)
+
+
 class BaseTable:
     """A table. Make one with sdata.table(...)."""
 
@@ -52,9 +67,9 @@ class BaseTable:
         "done": ("as_pandas", "_done"),  # done() gave back Polars for Polars tables, so it still does
     }
 
-    def __init__(self, data=None, sheet=None, fast: bool = False, _frame=None):
+    def __init__(self, data=None, sheet=None, fast: bool = False, _frame=None, _reading=None):
         if _frame is None:
-            native = load_native(data, sheet=sheet, fast=fast)
+            native = load_native(data, sheet=sheet, fast=fast, options=_reading)
             if fast and type(native).__module__.split(".")[0] == "pandas":
                 try:
                     import polars as pl
@@ -200,6 +215,32 @@ class BaseTable:
         return self
 
     # ------------------------------------------------------------------ looking words
+    @friendly
+    def show(self, rows=None):
+        """Show the whole table, every row and column. table.show()
+
+        rows=10 shows only the first 10 rows. A table with more than 1000 rows shows its
+        first 1000; give rows= to see more. Try it: sdata.table(sdata.example("marks")).show()
+        """
+        total = len(self._frame)
+        if rows is not None and (isinstance(rows, bool) or not isinstance(rows, int) or rows < 0):
+            raise SimplydataError(
+                f"rows= is how many rows to show: a whole number, not {rows!r}.\n"
+                'For example:  sdata.table(sdata.example("marks")).show(rows=10)'
+            )
+        if rows is None:
+            rows = min(total, SHOW_LIMIT)
+            if total > SHOW_LIMIT:
+                print(f"This table has {total} rows; showing the first {SHOW_LIMIT}. "
+                      f"table.show(rows={total}) shows them all.")
+        rows = min(rows, total)
+        _show_whole(self._frame.head(rows).to_native())
+        if rows < total:
+            print(f"Showing {rows} of {total} rows, {len(self._columns)} columns.")
+        else:
+            print(f"{total} rows, {len(self._columns)} columns.")
+        return None
+
     @friendly
     def show_first_rows(self, rows=5):
         """Show the first rows. table.show_first_rows(5)"""

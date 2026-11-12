@@ -9,7 +9,9 @@ import numpy as np
 from matplotlib.colors import to_rgb
 from matplotlib.text import Annotation
 
-from .._errors import SimplydataError, friendly
+from .._core import PHASES
+from .._data import is_listlike
+from .._errors import SimplydataError, column_error, friendly
 from .axes import tick_position
 
 ARROW_OFFSET = 40  # points between a note and the place its arrow points at
@@ -161,6 +163,114 @@ def _numbers_on_bars(ctx, decimals):
     ax.autoscale_view()
 
 
+# ---------------------------------------------------------------- names on dots
+# Each name goes into the first free place around its dot: right, left, above, below, then
+# the four corners. A place is free when the name covers no other name and no other dot and
+# stays inside the chart. A name with no free place is left out (and a line says how many).
+_PLACES = [(1, 0), (-1, 0), (0, 1), (0, -1), (1, 1), (-1, 1), (1, -1), (-1, -1)]
+NAME_GAP = 2.0  # points between a dot's edge and its name
+NAME_ROOM = 2.0  # free points kept around each name, so names never touch
+
+
+def _text_size(text, size):
+    """Width and height of a text in points."""
+    from matplotlib.font_manager import FontProperties
+    from matplotlib.textpath import text_to_path
+
+    width, height, _ = text_to_path.get_text_width_height_descent(
+        text, FontProperties(size=size), ismath=False)
+    return width, max(height, 0.75 * size) * 1.15
+
+
+def _overlaps(box, boxes):
+    x0, y0, x1, y1 = box
+    return any(x0 < b[2] and b[0] < x1 and y0 < b[3] and b[1] < y1 for b in boxes)
+
+
+def _dots_drawn(ax):
+    """The dot collections on the chart: (centres in data units, radius in points)."""
+    found = []
+    for coll in ax.collections:
+        offsets = np.asarray(coll.get_offsets(), float)
+        if offsets.ndim != 2 or not len(offsets) or coll.get_offset_transform() != ax.transData:
+            continue
+        sizes = np.asarray(coll.get_sizes(), float)
+        radius = float(np.sqrt(sizes.max()) / 2) if len(sizes) else 3.0
+        found.append((offsets, radius))
+    return found
+
+
+def _names_on_dots(ctx, column, colour):
+    last = ctx.last
+    if not last or last.get("kind") != "dots":
+        found = last.get("kind") if last else None
+        raise SimplydataError(
+            ".names_on_dots() writes a name next to each dot, but "
+            + (f"the last chart type is {found}." if found else "your chart has no dots yet.")
+            + '\nUse it after chart.dots(x="hours", y="marks").'
+        )
+    ax, table = ctx.ax, last["table"]
+    if is_listlike(column):
+        names = list(column)
+        if len(names) != len(table):
+            raise SimplydataError(
+                f".names_on_dots() got {len(names)} names, but the chart has {len(table)} rows of dots.\n"
+                "Give one name for each dot.")
+        order = last.get("row_order")
+        if order is not None and len(order) == len(names):
+            names = [names[i] for i in order]  # the rows were put in order (order_x, months)
+    else:
+        if column not in table.columns:
+            raise column_error(column, table.columns)
+        names = list(table[column])
+
+    ax.get_xlim(), ax.get_ylim()  # let matplotlib finish its automatic ranges first
+    scale = 72.0 / ctx.fig.dpi  # pixels -> points
+
+    def to_points(xy):
+        return ax.transData.transform(xy) * scale
+
+    dots = _dots_drawn(ax)
+    centres = np.column_stack([ax.xaxis.convert_units(table[last["x"]].to_numpy()),
+                               ax.yaxis.convert_units(table[last["y"]].to_numpy())]).astype(float)
+    radius = max([r for _, r in dots] + [mpl.rcParams["lines.markersize"] / 2])
+    taken = [(px - r, py - r, px + r, py + r) for offsets, r in dots for px, py in to_points(offsets)]
+    frame = ax.get_window_extent()
+    inside = (frame.x0 * scale, frame.y0 * scale, frame.x1 * scale, frame.y1 * scale)
+    size = 0.85 * mpl.rcParams["font.size"]
+    gap = radius + NAME_GAP
+    back = dict(boxstyle="round,pad=0.1", fc=mpl.rcParams["axes.facecolor"], ec="none", alpha=0.7)
+    left_out = 0
+    for (px, py), name in zip(centres, names):
+        if name is None or (isinstance(name, float) and np.isnan(name)) or not np.isfinite([px, py]).all():
+            continue
+        text = str(name)
+        w, h = _text_size(text, size)
+        cx, cy = to_points(np.array([[px, py]]))[0]
+        others = [b for b in taken if not (abs((b[0] + b[2]) / 2 - cx) < 1e-6 and abs((b[1] + b[3]) / 2 - cy) < 1e-6)]
+        for dx, dy in _PLACES:
+            ox, oy = dx * gap, dy * gap
+            left = cx + ox - (0 if dx > 0 else w if dx < 0 else w / 2)
+            bottom = cy + oy - (0 if dy > 0 else h if dy < 0 else h / 2)
+            box = (left, bottom, left + w, bottom + h)
+            if left < inside[0] or box[2] > inside[2] or bottom < inside[1] or box[3] > inside[3]:
+                continue
+            if _overlaps(box, others):
+                continue
+            ax.annotate(text, xy=(px, py), xytext=(ox, oy), textcoords="offset points",
+                        ha="left" if dx > 0 else "right" if dx < 0 else "center",
+                        va="bottom" if dy > 0 else "top" if dy < 0 else "center",
+                        fontsize=size, color=colour or mpl.rcParams["text.color"], zorder=4, bbox=back)
+            taken.append((box[0] - NAME_ROOM, box[1] - NAME_ROOM, box[2] + NAME_ROOM, box[3] + NAME_ROOM))
+            break
+        else:
+            left_out += 1
+    ctx.store["names_left_out"] = ctx.store.get("names_left_out", 0) + left_out
+    if left_out:
+        print(f"names_on_dots: {left_out} name{'s were' if left_out != 1 else ' was'} left out, because "
+              "there was no free space next to the dot. A bigger chart (chart.size(...)) makes room.")
+
+
 # ---------------------------------------------------------------- the words
 def _check_text(step, text, example):
     if text is None or (isinstance(text, str) and not text.strip()):
@@ -219,6 +329,33 @@ class TextWords:
                 ".numbers_on_bars() needs a whole number from 0 to 6 for decimals=, "
                 "for example chart.numbers_on_bars(decimals=1).")
         return self._replace("numbers_on_bars", "extra", _numbers_on_bars, decimals=int(decimals))
+
+    @friendly
+    def names_on_dots(self, column, colour=None):
+        """Write a name next to each dot. chart.names_on_dots("name")
+        (with chart.dots(x="hours", y="marks") on sdata.example("marks"))
+
+        column is the column whose words are written (or a list: one name for each dot).
+        Each name goes where it covers no other name or dot: right of its dot, else left,
+        above, below or in a corner. A name with no free place is left out, and a line says
+        how many; a bigger chart (chart.size(...)) makes room.
+        colour="grey" writes the names in that colour.
+        """
+        if column is None or isinstance(column, bool) or not (isinstance(column, str) or is_listlike(column)):
+            raise SimplydataError(
+                f'.names_on_dots() needs a column of names, for example chart.names_on_dots("name"), not {column!r}.')
+        if isinstance(column, str) and column not in self._data.columns:
+            raise column_error(column, self._data.columns)
+        if colour is not None and not (isinstance(colour, str) and mpl.colors.is_color_like(colour)):
+            raise SimplydataError(
+                f'.names_on_dots() does not know the colour {colour!r}. Use a name such as "grey" or "black".')
+        draws = [s for s in self._steps if s.phase == PHASES["draw"] and s.name != "band"]
+        if draws and draws[-1].name != "dots":
+            raise SimplydataError(
+                f".names_on_dots() writes a name next to each dot, but the last chart type is {draws[-1].name}.\n"
+                'Use it after chart.dots(x="hours", y="marks").')
+        # "text" phase: after range_x/range_y, so free places are found on the final axes
+        return self._replace("names_on_dots", "text", _names_on_dots, column=column, colour=colour)
 
     @friendly
     def font_size(self, size):
