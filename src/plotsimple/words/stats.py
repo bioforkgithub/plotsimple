@@ -4,14 +4,15 @@ These words work on the most recent data layer (ctx.last) and are drawn in the "
 phase, after every chart type. Methods, written so they can be stated in a paper:
 
 * error_bars: for every x value (and colour group) the mean of y, with
-  "sd" = sample standard deviation (n - 1), "se" = sd / sqrt(n),
-  "ci" = 95 % confidence interval of the mean from the t distribution (_stats.t_interval).
+  "standard deviation" (sd) = sample standard deviation (n - 1), "standard error" (se) =
+  sd / sqrt(n), "confidence interval" (ci) = 95 % confidence interval of the mean from the
+  t distribution (_stats.t_interval).
   Empty cells are skipped. An x value with a single y value gets no bar.
   With colour groups sharing an x value, each group's bars, line and dots are shifted
   sideways together (ggplot2's position_dodge), spread over 15 % of the smallest x gap
   (15 % of 1 for categories); dodge=False keeps the true x.
 * fit_line: ordinary least squares, scipy.stats.linregress; R² = rvalue².
-  band=True is the 95 % confidence band of the fitted line (of the mean of y at each x):
+  confidence_band=True is the 95 % confidence band of the fitted line (of the mean of y at each x):
   y_hat ± t(0.975, n - 2) · s · sqrt(1/n + (x - x̄)² / Sxx), with s² = SSE / (n - 2).
 * fit_curve: least-squares polynomial, numpy.polyfit; R² = 1 - SSE / SST.
 * smooth_line: LOWESS (Cleveland 1979), the algorithm of R's lowess() and statsmodels'
@@ -43,7 +44,7 @@ from .. import _style
 from .._core import PHASES, BaseChart
 from .._data import is_listlike
 from .._errors import PlotsimpleError, column_error, friendly
-from .._stats import ERRORS, t_interval
+from .._stats import ERROR_LONG, error_code, say_error, t_interval
 from ._helpers import colour_role, default_colour, palette_for
 from .look import LookWords
 from .text import TextWords
@@ -56,7 +57,7 @@ except ImportError:  # pragma: no cover
 # Chart types that make a data layer. Used to spot a wrong layer at call time.
 _CHART_KINDS = {
     "bars", "lines", "dots", "area", "histogram", "boxes", "violins", "heatmap", "pie",
-    "polar", "contour", "surface", "dots_3d", "density", "count_bars", "all_points",
+    "polar", "contour", "surface", "dots_3d", "density", "count_bars", "all_dots",
 }
 _EXAMPLE = {
     "dots": 'chart.dots(x="hours", y="marks")',
@@ -362,7 +363,8 @@ def _draw_error_bars(ctx, kind, column, dodge=True):
         if last["kind"] == "lines" and table.duplicated(subset=keys).any():
             raise PlotsimpleError(
                 "Your lines join several rows per x value, so one error size per row does not fit.\n"
-                'Use chart.error_bars("sd") to work out the spread instead, or use one row per x value.'
+                'Use chart.error_bars("standard deviation") to work out the spread instead, or use one row '
+                "per x value."
             )
         data = table.assign(_err=values.to_numpy())
         for level, part, colour in _groups(ctx, data, group):
@@ -378,7 +380,7 @@ def _draw_error_bars(ctx, kind, column, dodge=True):
         summary = group_errors(table, x, y, group, kind)
         if summary["half"].isna().all():
             raise PlotsimpleError(
-                f'.error_bars("{kind}") needs at least 2 values for an x value, but every x has only one.\n'
+                f'.error_bars("{ERROR_LONG[kind]}") needs at least 2 values for an x value, but every x has only one.\n'
                 'If your table has its own error sizes, use chart.error_bars(column="your error column").'
             )
         for level, part, colour in _groups(ctx, summary, group):
@@ -624,17 +626,19 @@ class StatsWords:
         return step
 
     @friendly
-    def error_bars(self, kind="sd", column=None, dodge=True):
-        """Error bars on dots or lines. chart.error_bars("sd")
+    def error_bars(self, kind="standard deviation", column=None, dodge=True):
+        """Error bars on dots or lines. chart.error_bars("standard error")
 
-        For every x value the bar shows the average of y and its spread:
-        "sd" standard deviation (n - 1), "se" standard error, "ci" 95 % confidence interval
-        (t distribution). Empty cells are skipped.
+        For every x value the bar shows the average of y and how sure or spread it is:
+        "standard deviation" (n - 1): how spread out the values are around the average;
+        "standard error": how sure we are about the average itself;
+        "confidence interval": the 95 % range the true average is very likely in
+        (t distribution). A line says which one was drawn. Empty cells are skipped.
         column="error" uses error sizes from your own column instead.
         With colour groups, bars at the same x move a little apart (with their lines and
         dots) so they do not hide each other; dodge=False keeps them on the true x.
         """
-        self._check_choice("error_bars", "kind", kind, ERRORS)
+        kind = error_code("error_bars", kind, option="kind")
         if column is not None and not is_listlike(column):
             if not isinstance(column, str):
                 raise PlotsimpleError('column= should be the name of a column, for example column="error".')
@@ -645,20 +649,25 @@ class StatsWords:
             show = step.kwargs.get("show", "average")
             if show not in ("average", "mean"):
                 raise _not_average_error(show)
+        if column is None:
+            say_error(kind)
         return self._add("error_bars", "extra", _draw_error_bars, kind=kind, column=column,
                          dodge=bool(dodge))
 
-    @friendly
-    def fit_line(self, band=False, show_equation=False, colour=None):
-        """A straight line that fits the dots best. chart.fit_line()
+    @friendly(renamed={"band": "confidence_band"})
+    def fit_line(self, confidence_band=False, show_equation=False, colour=None):
+        """A straight line that fits the dots best (linear regression). chart.fit_line()
 
-        band=True shades the 95 % confidence band of the line.
+        The line is found by least squares: it makes the squared distances from the dots
+        to the line as small as possible.
+        confidence_band=True shades the 95 % confidence band: where the true line very
+        likely is.
         show_equation=True writes the equation and R² on the chart.
         Each colour group gets its own line. colour="red" makes every line red.
         """
         _fixed_colour("fit_line", colour)
         self._check_layer_now("fit_line", {"dots"})
-        return self._add("fit_line", "extra", _draw_fit_line, band=bool(band),
+        return self._add("fit_line", "extra", _draw_fit_line, band=bool(confidence_band),
                          show_equation=bool(show_equation), colour=colour)
 
     @friendly

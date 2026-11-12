@@ -10,7 +10,7 @@ from scipy import stats
 import plotsimple as ps
 from plotsimple import PlotsimpleError
 from plotsimple.table import table as make_table
-from plotsimple.table.summaries import _p_words, _strength
+from plotsimple.table.summaries import GROUPS_IN_SENTENCE, _p_words, _say_number, _strength
 
 ENGINES = ["pandas", "polars"]
 
@@ -67,7 +67,10 @@ def test_single_number_matches_pandas(word, engine, marks, capsys):
         got = getattr(t, word)(col)
         assert isinstance(got, (int, float)) and not isinstance(got, np.generic)
         assert got == pytest.approx(WORDS[word][1](marks[col]))
-    assert capsys.readouterr().out == ""  # no empty cells: silence
+    out = capsys.readouterr().out
+    assert "Note" not in out  # no empty cells: no note, only the sentence for each answer
+    start = WORDS[word][0]
+    assert out.splitlines()[0] == f'The {start} of "marks" is {_say_number(WORDS[word][1](marks["marks"]))} (24 values).'
     unchanged(t, before)
 
 
@@ -83,14 +86,14 @@ def test_empty_cells_skipped_with_note(word, engine, gappy, capsys):
     before = snapshot(t)
     got = getattr(t, word)("marks")
     assert got == pytest.approx(WORDS[word][1](gappy["marks"].dropna()))
-    assert capsys.readouterr().out == 'Note: 3 empty cells in "marks" were skipped.\n'
+    assert capsys.readouterr().out.startswith('Note: 3 empty cells in "marks" were skipped.\n')
     unchanged(t, before)
 
 
 def test_one_empty_cell_note(engine, gappy, capsys):
     t = make(gappy, engine)
     t.average_of("hours")
-    assert capsys.readouterr().out == 'Note: 1 empty cell in "hours" was skipped.\n'
+    assert capsys.readouterr().out.startswith('Note: 1 empty cell in "hours" was skipped.\n')
 
 
 def test_nan_in_polars_counts_as_empty():
@@ -114,7 +117,7 @@ def test_for_each_matches_pandas_groupby(word, engine, gappy, capsys):
     start, calc = WORDS[word]
     summary = getattr(t, word)("marks", for_each="class")
     assert summary is not t and summary._is_plotsimple_table
-    got = summary.done()
+    got = summary._done()
     if engine == "polars":
         got = got.to_pandas()
     assert list(got.columns) == ["class", f"{start} of marks"]
@@ -128,14 +131,14 @@ def test_for_each_matches_pandas_groupby(word, engine, gappy, capsys):
             assert pd.isna(value)  # e.g. SD of a single number
         else:
             assert value == pytest.approx(want)
-    assert capsys.readouterr().out == 'Note: 3 empty cells in "marks" were skipped.\n'
+    assert capsys.readouterr().out.startswith('Note: 3 empty cells in "marks" were skipped.\n')
     unchanged(t, before)
 
 
 def test_for_each_many_columns(engine, gappy, capsys):
     t = make(gappy, engine)
     before = snapshot(t)
-    got = t.average_of(["marks", "hours"], for_each=["class", "subject"]).done()
+    got = t.average_of(["marks", "hours"], for_each=["class", "subject"])._done()
     if engine == "polars":
         got = got.to_pandas()
     assert list(got.columns) == ["class", "subject", "average of marks", "average of hours"]
@@ -145,13 +148,13 @@ def test_for_each_many_columns(engine, gappy, capsys):
     assert got["subject"].tolist() == expected["subject"].tolist()
     np.testing.assert_allclose(got["average of marks"], expected["marks"], equal_nan=True)
     np.testing.assert_allclose(got["average of hours"], expected["hours"], equal_nan=True)
-    assert capsys.readouterr().out == 'Note: empty cells were skipped: 3 in "marks", 1 in "hours".\n'
+    assert capsys.readouterr().out.startswith('Note: empty cells were skipped: 3 in "marks", 1 in "hours".\n')
     unchanged(t, before)
 
 
 def test_list_without_for_each_gives_one_row_table(engine, marks):
     t = make(marks, engine)
-    got = t.total_of(["marks", "height"]).done()
+    got = t.total_of(["marks", "height"])._done()
     if engine == "polars":
         got = got.to_pandas()
     assert list(got.columns) == ["total of marks", "total of height"]
@@ -160,7 +163,7 @@ def test_list_without_for_each_gives_one_row_table(engine, marks):
 
 
 def test_pandas_result_has_clean_index(marks):
-    got = make_table(marks).average_of("marks", for_each="class").done()
+    got = make_table(marks).average_of("marks", for_each="class")._done()
     assert got.index.tolist() == [0, 1]
 
 
@@ -184,26 +187,28 @@ def test_count_rows(engine, gappy, capsys):
     t = make(gappy, engine)
     before = snapshot(t)
     assert t.count_rows() == 9 and isinstance(t.count_rows(), int)
-    got = t.count_rows(for_each="class").done()
+    got = t.count_rows(for_each="class")._done()
     if engine == "polars":
         got = got.to_pandas()
     assert list(got.columns) == ["class", "count"]
     assert got["class"].tolist()[:3] == ["A", "B", "C"] and pd.isna(got["class"].iloc[3])
     assert got["count"].tolist() == [3, 3, 2, 1]
-    two = t.count_rows(for_each=["class", "subject"]).done()
+    two = t.count_rows(for_each=["class", "subject"])._done()
     if engine == "polars":
         two = two.to_pandas()
     assert two["count"].sum() == 9
     expected = gappy.groupby(["class", "subject"], dropna=False).size()
     assert len(two) == len(expected)
-    assert capsys.readouterr().out == ""
+    out = capsys.readouterr().out.splitlines()
+    assert out[0] == "The table has 9 rows."
+    assert out[2] == 'Rows for each "class": A 3, B 3, C 2, (empty) 1.'
     unchanged(t, before)
 
 
 def test_count_each(engine, gappy):
     t = make(gappy, engine)
     before = snapshot(t)
-    got = t.count_each("subject").done()
+    got = t.count_each("subject")._done()
     if engine == "polars":
         got = got.to_pandas()
     assert list(got.columns) == ["subject", "count", "percent"]
@@ -212,7 +217,7 @@ def test_count_each(engine, gappy):
     assert got["count"].tolist() == expected.tolist() == [5, 4]
     assert got["percent"].tolist() == [55.6, 44.4]
     # empty cells are a value of their own, and ties sort by value
-    cls = t.count_each("class").done()
+    cls = t.count_each("class")._done()
     if engine == "polars":
         cls = cls.to_pandas()
     assert cls["class"].tolist()[:3] == ["A", "B", "C"] and pd.isna(cls["class"].iloc[3])
@@ -222,7 +227,7 @@ def test_count_each(engine, gappy):
 
 
 def test_count_each_numbers(engine, marks):
-    got = make(marks, engine).count_each("test").done()
+    got = make(marks, engine).count_each("test")._done()
     if engine == "polars":
         got = got.to_pandas()
     assert got["test"].tolist() == [1, 2, 3] and got["count"].tolist() == [8, 8, 8]
@@ -314,3 +319,36 @@ def test_correlation_errors(engine):
         t.correlation_between("a", "b")
     with pytest.raises(PlotsimpleError, match="at least 3 rows"):
         t.correlation_between("a", "c")
+
+
+# ---------------------------------------------------------------- the printed sentence
+def test_every_summary_prints_one_sentence(engine, gappy, capsys):
+    t = make(gappy, engine)
+    t.average_of("marks", for_each="class")
+    out = capsys.readouterr().out.splitlines()
+    assert out[-1] == 'The average of "marks" for each "class": A 60, B 60, C 90, (empty) 60.'
+    t.median_of(["marks", "hours"])
+    assert capsys.readouterr().out.splitlines()[-1] == (
+        'The median of "marks" is 65 (6 values); the median of "hours" is 2.5 (8 values).')
+    t.total_of(["marks", "hours"], for_each="class")
+    assert capsys.readouterr().out.splitlines()[-1] == (
+        'The total of "marks" and "hours" for each "class": a new table with 4 rows.')
+
+
+def test_count_each_prints_a_sentence(capsys):
+    make_table(ps.example("fruit")).count_each("shop")
+    assert capsys.readouterr().out.startswith('How many rows have each "shop" (2 different values): ')
+
+
+def test_long_sentences_stop_after_a_few_groups(capsys):
+    data = pd.DataFrame({"g": list(range(12)), "x": list(range(12))})
+    make_table(data).total_of("x", for_each="g")
+    out = capsys.readouterr().out
+    assert out.count(",") == GROUPS_IN_SENTENCE - 1 and "and 4 more (the new table has them all)" in out
+
+
+def test_sentence_numbers_are_short():
+    assert _say_number(64.9074) == "64.91"
+    assert _say_number(3.0) == "3"
+    assert _say_number(0.004213) == "0.0042"
+    assert _say_number(float("nan")) == "empty"

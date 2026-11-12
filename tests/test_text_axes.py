@@ -56,7 +56,7 @@ def test_caption_replaces_earlier(marks):
 
 
 def test_caption_several_panels_below_shared_label(marks):
-    chart = ps.chart(marks).lines(x="test", y="marks").one_per("class")
+    chart = ps.chart(marks).lines(x="test", y="marks").one_chart_per("class")
     chart.label_x("Test").caption_bottom("Made-up marks")
     fig = chart._render()
     r = draw(fig)
@@ -69,7 +69,7 @@ def test_caption_several_panels_below_shared_label(marks):
 
 
 def test_caption_several_panels_without_label(marks):
-    chart = ps.chart(marks).lines(x="test", y="marks").one_per("class").caption_bottom("Only caption")
+    chart = ps.chart(marks).lines(x="test", y="marks").one_chart_per("class").caption_bottom("Only caption")
     assert chart._render().get_supxlabel() == "Only caption"
 
 
@@ -346,7 +346,7 @@ def test_flip(weather):
 
 
 def test_flip_shared_panels(marks):
-    chart = ps.chart(marks).lines(x="test", y="marks").one_per("class").flip_y()
+    chart = ps.chart(marks).lines(x="test", y="marks").one_chart_per("class").flip_y()
     assert all(ax.yaxis_inverted() for ax in chart._render().axes)
 
 
@@ -372,7 +372,7 @@ def test_second_y_lines(weather):
 
 
 def test_second_y_bars_under_lines(weather):
-    chart = ps.chart(weather).lines(x="month", y="temperature").second_y("rain", chart="bars")
+    chart = ps.chart(weather).lines(x="month", y="temperature").second_y("rain", drawn_as="bars")
     main, twin = second(chart._render())
     assert [p.get_height() for p in twin.patches] == weather["rain"].tolist()
     assert main.get_zorder() > twin.get_zorder()   # the line is drawn in front of the bars
@@ -380,14 +380,14 @@ def test_second_y_bars_under_lines(weather):
 
 
 def test_second_y_bars_next_to_bars(weather):
-    chart = ps.chart(weather).bars(x="month", y="temperature").second_y("rain", chart="bars")
+    chart = ps.chart(weather).bars(x="month", y="temperature").second_y("rain", drawn_as="bars")
     main, twin = second(chart._render())
     for a, b in zip(main.patches, twin.patches):
         assert a.get_x() + a.get_width() == pytest.approx(b.get_x())  # side by side, not on top
 
 
 def test_second_y_dots_and_colour(weather):
-    chart = ps.chart(weather).lines(x="month", y="temperature").second_y("rain", chart="dots", colour="red")
+    chart = ps.chart(weather).lines(x="month", y="temperature").second_y("rain", drawn_as="dots", colour="red")
     _, twin = second(chart._render())
     pts = twin.collections[0].get_offsets()
     assert list(pts[:, 1]) == weather["rain"].tolist()
@@ -407,8 +407,8 @@ def test_second_y_keeps_groups_in_legend(marks):
 def test_second_y_errors(weather):
     with pytest.raises(PlotsimpleError, match='Did you mean "rain"'):
         ps.chart(weather).second_y("rian")
-    with pytest.raises(PlotsimpleError, match='Did you mean chart="bars"'):
-        ps.chart(weather).second_y("rain", chart="bar")
+    with pytest.raises(PlotsimpleError, match='Did you mean drawn_as="bars"'):
+        ps.chart(weather).second_y("rain", drawn_as="bar")
     with pytest.raises(PlotsimpleError, match="one colour name"):
         ps.chart(weather).second_y("rain", colour=3)
     with pytest.raises(PlotsimpleError, match="needs a chart to sit on"):
@@ -428,7 +428,7 @@ def test_second_y_stored_in_store(weather):
 # ================================================================ a full chart saves
 def test_everything_together_saves(tmp_path, weather):
     chart = ps.chart(weather).lines(x="month", y="temperature", dots=True)
-    chart.second_y("rain", chart="bars", label="Rain (mm)").title_top("Weather").label_x("Month")
+    chart.second_y("rain", drawn_as="bars", label="Rain (mm)").title_top("Weather").label_x("Month")
     chart.caption_bottom("Made-up numbers").note("Warmest", x=7, y=17, arrow=True)
     chart.ticks_x(range(1, 13), labels=list("JFMAMJJASOND")).rotate_labels_x(0).range_y(0, None).font_size(14)
     chart.save(tmp_path / "weather.png")

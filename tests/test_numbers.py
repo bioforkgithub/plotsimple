@@ -21,7 +21,7 @@ def test_from_list_and_from_several_numbers():
     assert isinstance(numbers([3, 5, 2, 8]), Numbers)
     same(numbers([3, 5, 2, 8]), [3, 5, 2, 8])
     same(numbers(3, 5, 2, 8), [3, 5, 2, 8])
-    assert numbers([3, 5]).done().dtype.kind == "i"  # whole numbers stay whole
+    assert numbers([3, 5]).as_numpy().dtype.kind == "i"  # whole numbers stay whole
     same(numbers([1, None, 3]), [1, NAN, 3])
     same(numbers(np.array([1.5, 2.5])), [1.5, 2.5])
     same(numbers(pd.Series([1, 2])), [1, 2])
@@ -36,7 +36,7 @@ def test_counting_includes_the_end():
     same(numbers(0, to=1, step=0.1), np.linspace(0, 1, 11))
     same(numbers(0, to=1, how_many=5), np.linspace(0, 1, 5))
     same(numbers(1, to=10, step=4), [1, 5, 9])
-    assert numbers(1, to=10).done().dtype.kind == "i"
+    assert numbers(1, to=10).as_numpy().dtype.kind == "i"
 
 
 def test_making_numbers_errors():
@@ -127,8 +127,8 @@ def test_positions_count_from_one():
 
 def test_show_words(capsys):
     nums = numbers(1, to=10)
-    nums.show_first(3)
-    nums.show_last(2)
+    nums.show_first_numbers(3)
+    nums.show_last_numbers(2)
     nums.show()
     out = capsys.readouterr().out.splitlines()
     assert out[0] == "[1, 2, 3]" and out[1] == "[ 9, 10]"
@@ -191,7 +191,7 @@ def test_first_last_random_empty_duplicate():
     same(picked, expected)
 
 
-def test_fill_empty(capsys):
+def test_fill_empty_numbers(capsys):
     values = [1, NAN, 3, NAN]
     for kw, expected in [
         (dict(with_value=0), [1, 0, 3, 0]), (dict(with_the="average"), [1, 2, 3, 2]),
@@ -199,13 +199,13 @@ def test_fill_empty(capsys):
         (dict(with_the="value below"), [1, 3, 3, NAN]),
     ]:
         nums = numbers(values)
-        nums.fill_empty(**kw)
+        nums.fill_empty_numbers(**kw)
         same(nums, expected)
     assert "1 value stayed empty" in capsys.readouterr().out
     with pytest.raises(PlotsimpleError, match="exactly one"):
-        numbers(values).fill_empty()
+        numbers(values).fill_empty_numbers()
     with pytest.raises(PlotsimpleError, match="with_the"):
-        numbers(values).fill_empty(with_the="mode")
+        numbers(values).fill_empty_numbers(with_the="mode")
 
 
 # ====================================================================== maths words and symbols
@@ -265,7 +265,7 @@ def test_power_edge_cases(capsys):
     assert "power with decimals" in capsys.readouterr().out
     big = numbers([10]) ** 30
     assert big.number_at(1) == pytest.approx(1e30)  # no silent whole-number overflow
-    assert (numbers([2, 3]) ** 2).done().dtype.kind == "i"
+    assert (numbers([2, 3]) ** 2).as_numpy().dtype.kind == "i"
 
 
 def test_one_at_a_time_words(capsys):
@@ -294,7 +294,7 @@ def test_round_half_to_even():
     nums = numbers([0.5, 1.5, 2.5, 3.5, 2.675, 1234])
     nums.round_to(0)
     same(nums, np.round([0.5, 1.5, 2.5, 3.5, 2.675, 1234]))
-    same(nums.done()[:4], [0, 2, 2, 4])
+    same(nums.as_numpy()[:4], [0, 2, 2, 4])
     nums.undo()
     nums.round_to(2)
     same(nums, np.round([0.5, 1.5, 2.5, 3.5, 2.675, 1234], 2))
@@ -347,7 +347,7 @@ def test_summaries_match_numpy(capsys):
     assert nums.standard_deviation() == pytest.approx(np.nanstd(v, ddof=1))
     assert nums.standard_deviation() == pytest.approx(pd.Series(v).std())
     assert nums.percentile(90) == pytest.approx(np.nanpercentile(v, 90))
-    assert nums.count() == 5 and nums.count_empty() == 1 and len(nums) == 5
+    assert nums.count() == 5 and nums.count_empty_numbers() == 1 and len(nums) == 5
     assert "1 empty value was skipped" in capsys.readouterr().out
     assert isinstance(numbers([1, 2]).total(), int)
 
@@ -364,7 +364,7 @@ def test_summaries_on_nothing(capsys):
 
 def test_count_each():
     table = numbers([2, 1, 2, NAN, 2, 1]).count_each()
-    plain = table.done()
+    plain = table._done()
     assert list(plain.columns) == ["number", "count", "percent"]
     assert plain["number"].tolist()[:2] == [2, 1]
     assert plain["count"].tolist() == [3, 2, 1]
@@ -424,10 +424,10 @@ def test_grid_maths_and_swap():
 # ====================================================================== finishing and charts
 def test_done_table_save(tmp_path):
     nums = numbers([1, 2, 3])
-    plain = nums.done()
+    plain = nums.as_numpy()
     assert isinstance(plain, np.ndarray)
     plain[0] = 99
-    assert nums.number_at(1) == 1  # done() gives a copy
+    assert nums.number_at(1) == 1  # as_numpy() gives a copy
     assert nums.table(name="marks").column_names() == ["marks"]
     nums.save(tmp_path / "nums.csv")
     assert pd.read_csv(tmp_path / "nums.csv")["value"].tolist() == [1, 2, 3]

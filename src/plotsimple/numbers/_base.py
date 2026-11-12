@@ -27,7 +27,7 @@ import sys
 
 import numpy as np
 
-from .._errors import MissingWordError, PlotsimpleError, friendly, suggest
+from .._errors import MissingWordError, PlotsimpleError, friendly, old_word, suggest
 
 HISTORY_LIMIT = 30  # how many steps undo() can take back
 
@@ -41,13 +41,17 @@ HINTS = {
     "keep_rows": "keep_numbers", "remove_rows": "remove_numbers", "filter": "keep_numbers",
     "keep_first_rows": "keep_first_numbers", "keep_last_rows": "keep_last_numbers",
     "keep_random_rows": "keep_random_numbers", "remove_empty_rows": "remove_empty_numbers",
+    "remove_rows_with_empty_cells": "remove_empty_numbers", "count_empty_cells": "count_empty_numbers",
+    "fill_empty_cells": "fill_empty_numbers", "show_first_rows": "show_first_numbers",
+    "show_last_rows": "show_last_numbers", "as_pandas": "as_numpy", "as_polars": "as_numpy",
     "remove_empty": "remove_empty_numbers", "dropna": "remove_empty_numbers",
     "remove_duplicate_rows": "remove_duplicate_numbers", "unique": "remove_duplicate_numbers",
-    "sort_by": "sort", "sorted": "sort", "reversed": "reverse", "fillna": "fill_empty",
+    "sort_by": "sort", "sorted": "sort", "reversed": "reverse", "fillna": "fill_empty_numbers",
     "transpose": "swap_rows_and_columns", "T": "swap_rows_and_columns", "flatten": "numbers",
-    "ravel": "numbers", "reshape": "number_grid", "grid": "number_grid", "to_numpy": "done",
-    "numpy": "done", "array": "done", "get": "number_at", "at": "number_at", "item": "number_at",
-    "column_names": "count_columns", "count_numbers": "count", "head": "show_first", "tail": "show_last",
+    "ravel": "numbers", "reshape": "number_grid", "grid": "number_grid", "to_numpy": "as_numpy",
+    "numpy": "as_numpy", "array": "as_numpy", "get": "number_at", "at": "number_at", "item": "number_at",
+    "column_names": "count_columns", "count_numbers": "count", "head": "show_first_numbers",
+    "tail": "show_last_numbers",
     "print": "show", "sqrt_": "square_root", "log10": "log", "log2": "log", "ln": "log",
 }
 
@@ -243,6 +247,8 @@ class BaseNumbers:
 
     _name = "nums"  # the name used in examples
     _noun = "numbers"
+    # Old names that still work for one release (with a note the first time): old -> new.
+    _OLD_WORDS = {"count_empty": "count_empty_numbers", "done": "as_numpy"}
 
     def __init__(self, values):
         object.__setattr__(self, "_values", values)
@@ -375,14 +381,14 @@ class BaseNumbers:
         return int(self._values.size)
 
     @friendly
-    def count_empty(self):
-        """How many values are empty (missing). nums.count_empty()"""
+    def count_empty_numbers(self):
+        """How many values are empty (missing). nums.count_empty_numbers()"""
         return int(self._empty_mask().sum())
 
     # ------------------------------------------------------------------ finishing words
     @friendly
-    def done(self):
-        """Give back a plain NumPy array. plain = nums.done()"""
+    def as_numpy(self):
+        """Give back the numbers as a plain NumPy array, for other Python tools. array = nums.as_numpy()"""
         return self._values.copy()
 
     @friendly
@@ -452,7 +458,7 @@ class BaseNumbers:
         raise PlotsimpleError(
             "Matrix multiplication (@) is planned for a later version of plotsimple (v0.7, with "
             "matrices and linear algebra).\nFor now use done() to get a NumPy array: "
-            f"{self._name}.done() @ other.done()"
+            f"{self._name}.as_numpy() @ other.as_numpy()"
         )
 
     __rmatmul__ = __matmul__
@@ -492,6 +498,8 @@ class BaseNumbers:
     def __getattr__(self, name):
         if name.startswith("_"):
             raise AttributeError(name)
+        if name in self._OLD_WORDS:
+            return old_word(self, name, self._OLD_WORDS)
         known = self._word_names()
         target = HINTS.get(name)
         if target is None and name.endswith("_of") and name[:-3] in known:

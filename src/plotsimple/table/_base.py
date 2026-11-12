@@ -1,7 +1,7 @@
 """The heart of plotsimple tables.
 
 A table holds its data in a narwhals frame, so every word is written once and runs on
-both pandas (normal files) and Polars (big files, Polars tables, big_data=True).
+both pandas (normal files) and Polars (big files, Polars tables, fast=True).
 
 Every step that changes the table goes through self._change(...), which remembers the
 table as it was before. That gives undo(), steps() and start_again() for free.
@@ -15,7 +15,8 @@ from pathlib import Path
 import narwhals as nw
 
 from .._data import load_native
-from .._errors import PlotsimpleError, choice_error, column_error, friendly, missing_word_error, suggest
+from .._errors import (PlotsimpleError, choice_error, column_error, friendly, missing_word_error, old_word,
+                       suggest)
 
 HISTORY_LIMIT = 30  # how many steps undo() can take back
 SAVE_TYPES = ("csv", "tsv", "xlsx", "parquet", "json")
@@ -41,15 +42,25 @@ class BaseTable:
 
     _is_plotsimple_table = True
 
-    def __init__(self, data=None, sheet=None, big_data: bool = False, _frame=None):
+    # Old names that still work for one release (with a note the first time): old -> new.
+    _OLD_WORDS = {
+        "show_first": "show_first_rows",
+        "show_last": "show_last_rows",
+        "count_empty": "count_empty_cells",
+        "remove_empty_rows": "remove_rows_with_empty_cells",
+        "fill_empty": "fill_empty_cells",
+        "done": ("as_pandas", "_done"),  # done() gave back Polars for Polars tables, so it still does
+    }
+
+    def __init__(self, data=None, sheet=None, fast: bool = False, _frame=None):
         if _frame is None:
-            native = load_native(data, sheet=sheet, big_data=big_data)
-            if big_data and type(native).__module__.split(".")[0] == "pandas":
+            native = load_native(data, sheet=sheet, fast=fast)
+            if fast and type(native).__module__.split(".")[0] == "pandas":
                 try:
                     import polars as pl
                 except ImportError:
                     raise PlotsimpleError(
-                        "big_data=True needs the fast engine.\nInstall it with:  pip install plotsimple[fast]"
+                        "fast=True needs the fast engine.\nInstall it with:  pip install plotsimple[fast]"
                     ) from None
                 native = pl.from_pandas(native)
             _frame = nw.from_native(native, eager_only=True)
@@ -124,8 +135,31 @@ class BaseTable:
 
     # ------------------------------------------------------------------ finishing words
     @friendly
-    def done(self):
-        """Give back the plain table (pandas, or Polars for big data). plain = table.done()"""
+    def as_pandas(self):
+        """Give back the table as a plain pandas table, for other Python tools. df = table.as_pandas()
+
+        Only needed when another library wants pandas: plotsimple words never need it.
+        """
+        return self._frame.to_pandas()
+
+    @friendly
+    def as_polars(self):
+        """Give back the table as a plain Polars table, for other Python tools. df = table.as_polars()
+
+        Needs Polars (pip install plotsimple[fast]). plotsimple words never need it.
+        """
+        try:
+            import polars  # noqa: F401
+        except ImportError:
+            raise PlotsimpleError(
+                "as_polars() needs Polars, the fast engine.\n"
+                "Install it with:  pip install plotsimple[fast]\n"
+                "Or use table.as_pandas() to get a pandas table instead."
+            ) from None
+        return self._frame.to_polars()
+
+    def _done(self):
+        """The old done(): the table as it is stored (pandas, or Polars for Polars tables)."""
         return self._frame.to_native()
 
     @friendly
@@ -167,14 +201,14 @@ class BaseTable:
 
     # ------------------------------------------------------------------ looking words
     @friendly
-    def show_first(self, rows=5):
-        """Show the first rows. table.show_first(5)"""
+    def show_first_rows(self, rows=5):
+        """Show the first rows. table.show_first_rows(5)"""
         show(self._frame.head(int(rows)).to_native())
         return None
 
     @friendly
-    def show_last(self, rows=5):
-        """Show the last rows. table.show_last(5)"""
+    def show_last_rows(self, rows=5):
+        """Show the last rows. table.show_last_rows(5)"""
         show(self._frame.tail(int(rows)).to_native())
         return None
 
@@ -203,6 +237,8 @@ class BaseTable:
     def __getattr__(self, name):
         if name.startswith("_"):
             raise AttributeError(name)
+        if name in self._OLD_WORDS:
+            return old_word(self, name, self._OLD_WORDS)
         raise missing_word_error(name, self._word_names())
 
     def __setattr__(self, name, value):

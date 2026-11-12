@@ -8,6 +8,7 @@ for_each="class", and then give back one answer per row or column as new numbers
 Rules (the same as tables, see table/summaries.py):
 
 * empty values are skipped, and a short note says how many were skipped
+* every summary also prints its answer as one short sentence, like table summaries do
 * standard deviation uses the sample formula (divide by n - 1), like pandas and R
 * percentile uses NumPy's usual "linear" method, the same as pandas and R's default (type 7)
 """
@@ -19,7 +20,10 @@ import warnings
 import numpy as np
 
 from .._errors import PlotsimpleError, choice_error, friendly
-from ._base import amount, is_number, plain
+from ..table.summaries import _say_number
+from ._base import amount, is_number, plain, say
+
+IN_SENTENCE = 8  # a sentence lists at most this many answers; the new numbers have them all
 
 FOR_EACH = ("row", "column")
 
@@ -43,6 +47,16 @@ SUMMARIES = {
 }
 
 
+def _ordinal(q: float) -> str:
+    """90 -> "90th", 1 -> "1st", 2.5 -> "2.5th"."""
+    text = say(q)
+    if not float(q).is_integer():
+        return text + "th"
+    n = int(q)
+    end = "th" if n % 100 in (11, 12, 13) else {1: "st", 2: "nd", 3: "rd"}.get(n % 10, "th")
+    return f"{n}{end}"
+
+
 def _quiet(func, *args, **kwargs):
     """Run a NumPy summary without its warnings: empty answers are explained by our own notes."""
     with warnings.catch_warnings(), np.errstate(all="ignore"):
@@ -60,6 +74,7 @@ class SummaryCore:
 
     def _summary(self, step: str, func, for_each=None, **more):
         values = self._values
+        what = f"the {_ordinal(more['q'])} percentile" if step == "percentile" else f"the {step.replace('_', ' ')}"
         if for_each is not None:
             if for_each not in FOR_EACH:
                 raise choice_error(step, "for_each", for_each, FOR_EACH)
@@ -69,10 +84,16 @@ class SummaryCore:
             else:
                 result = _quiet(func, values, axis=axis, **more)
             self._note_skipped()
+            answers = [_say_number(v) for v in np.asarray(result).ravel()]
+            listed = ", ".join(answers[:IN_SENTENCE])
+            if len(answers) > IN_SENTENCE:
+                listed += f" ... and {len(answers) - IN_SENTENCE} more"
+            print(f"{what[0].upper()}{what[1:]} of each {for_each}: {listed}.")
             return self._wrap(np.asarray(result))
         filled = values[~self._empty_mask()]
         if filled.size == 0:
             if func is np.nansum:
+                print(f"The total of the {self._noun} is 0 (there are no numbers).")
                 return 0
             print(f"Note: there are no numbers here, so the {step.replace('_', ' ')} is empty (nan).")
             return float("nan")
@@ -80,7 +101,9 @@ class SummaryCore:
             print("Note: the standard deviation needs at least 2 numbers, so it is empty (nan).")
             return float("nan")
         self._note_skipped()
-        return plain(_quiet(func, filled, **more))
+        answer = plain(_quiet(func, filled, **more))
+        print(f"{what[0].upper()}{what[1:]} of the {self._noun} is {_say_number(answer)} ({amount(filled.size)}).")
+        return answer
 
     def _check_percent(self, percent):
         if not is_number(percent) or not 0 <= percent <= 100:
@@ -142,6 +165,10 @@ class SummaryWords(SummaryCore):
         counts["percent"] = (counts["count"] * 100.0 / max(len(series), 1)).round(1)
         counts = counts.sort_values(["count", "number"], ascending=[False, True], na_position="last",
                                     kind="stable").reset_index(drop=True)
+        items = [f"{'(empty)' if np.isnan(n) else say(n)} ({c} time{'' if c == 1 else 's'})" for n, c in
+                 zip(counts["number"].astype(float), counts["count"])]
+        listed = ", ".join(items[:IN_SENTENCE]) + (f" ... and {len(items) - IN_SENTENCE} more" if len(items) > IN_SENTENCE else "")
+        print(f"How many times each number appears ({len(items)} different): {listed}.")
         return Table(counts)
 
 

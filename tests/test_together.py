@@ -6,7 +6,7 @@ import plotsimple as ps
 def test_second_y_with_legend_bottom_keeps_both_series(marks):
     chart = ps.chart(marks)
     chart.lines(x="test", y="marks", colour="class")
-    chart.second_y("height", chart="lines", label="Height (cm)")
+    chart.second_y("height", drawn_as="lines", label="Height (cm)")
     chart.legend_bottom()
     fig = chart._render()
     labels = [t.get_text() for leg in fig.legends for t in leg.get_texts()]
@@ -34,8 +34,8 @@ def test_full_sentence_renders(marks, tmp_path):
 
 def test_page_of_different_charts(marks, tmp_path):
     a = ps.chart(marks).bars(x="name", y="marks").title_top("Bars")
-    b = ps.chart(marks).dots(x="height", y="marks").fit_line(band=True).title_top("Fit")
+    b = ps.chart(marks).dots(x="height", y="marks").fit_line(confidence_band=True).title_top("Fit")
     c = ps.chart(marks).histogram(x="marks").title_top("Spread")
     d = ps.chart(marks).heatmap(x="name", y="test", value="marks", numbers=True)
-    ps.grid(a, b, c, d, columns=2).title_top("Everything").save(tmp_path / "page.png")
+    ps.grid(a, b, c, d, per_row=2).title_top("Everything").save(tmp_path / "page.png")
     assert (tmp_path / "page.png").stat().st_size > 0

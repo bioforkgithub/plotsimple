@@ -100,7 +100,7 @@ def test_legend_top_keeps_title_above(marks):
 
 
 def test_one_legend_for_all_panels_without_overlap(marks):
-    chart = (ps.chart(marks).bars(x="name", y="marks", colour="class").one_per("test")
+    chart = (ps.chart(marks).bars(x="name", y="marks", colour="class").one_chart_per("test")
              .title_top("Big title").label_x("Student").label_y("Marks"))
     for where in ("top", "bottom", "left", "right"):
         getattr(chart, f"legend_{where}")()
@@ -149,60 +149,60 @@ def test_legend_takes_twin_axis_entries(marks):
 
 
 # ---------------------------------------------------------------- colour bar label
-def test_colour_bar_label(marks):
+def test_label_colour_bar(marks):
     def fake_heatmap(ctx):
         image = ctx.ax.imshow(np.arange(9).reshape(3, 3))
         ctx.store["colour_bar"] = ctx.fig.colorbar(image, ax=ctx.ax)
 
-    chart = ps.chart(marks).colour_bar_label("Depth (m)")
+    chart = ps.chart(marks).label_colour_bar("Depth (m)")
     chart._add("heatmap", "draw", fake_heatmap)
     fig = chart._render()
     assert any(ax.get_ylabel() == "Depth (m)" for ax in fig.axes)
 
 
-def test_colour_bar_label_without_bar(marks):
+def test_label_colour_bar_without_bar(marks):
     with pytest.raises(PlotsimpleError, match="colour bar"):
-        ps.chart(marks).bars(x="name", y="marks").colour_bar_label("x")._render()
+        ps.chart(marks).bars(x="name", y="marks").label_colour_bar("x")._render()
 
 
 # ---------------------------------------------------------------- one_per
-def test_one_per_panels_and_titles(marks):
-    fig = ps.chart(marks).bars(x="name", y="marks").one_per("test")._render()
+def test_one_chart_per_panels_and_titles(marks):
+    fig = ps.chart(marks).bars(x="name", y="marks").one_chart_per("test")._render()
     visible = [ax for ax in fig.axes if ax.get_visible()]
     assert len(visible) == 3
     assert [ax.get_title() for ax in visible] == ["test = 1", "test = 2", "test = 3"]
 
 
-def test_one_per_columns_and_size(marks):
-    chart = ps.chart(marks).bars(x="name", y="marks").one_per("name", columns=2)
+def test_one_chart_per_columns_and_size(marks):
+    chart = ps.chart(marks).bars(x="name", y="marks").one_chart_per("name", per_row=2)
     fig = chart._render()
     assert len([ax for ax in fig.axes if ax.get_visible()]) == 4
     assert chart._settings["height"] > 6  # two rows: grew taller
 
 
-def test_one_per_keeps_user_size(marks):
-    chart = ps.chart(marks).size(5, 4).bars(x="name", y="marks").one_per("test")
+def test_one_chart_per_keeps_user_size(marks):
+    chart = ps.chart(marks).size(5, 4).bars(x="name", y="marks").one_chart_per("test")
     assert (chart._settings["width"], chart._settings["height"]) == (5.0, 4.0)
 
 
-def test_one_per_row_column(marks):
-    fig = ps.chart(marks).dots(x="height", y="marks").one_per(row="class", column="test")._render()
+def test_one_chart_per_row_column(marks):
+    fig = ps.chart(marks).dots(x="height", y="marks").one_chart_per(down="class", across="test")._render()
     assert len(fig.axes) == 6
     assert fig.axes[0].get_title() == "class = A, test = 1"
 
 
-def test_one_per_errors(marks):
+def test_one_chart_per_errors(marks):
     chart = ps.chart(marks)
     with pytest.raises(PlotsimpleError, match="needs a column"):
-        chart.one_per()
+        chart.one_chart_per()
     with pytest.raises(PlotsimpleError, match='Did you mean "class"'):
-        chart.one_per("clas")
+        chart.one_chart_per("clas")
     with pytest.raises(PlotsimpleError, match="whole number"):
-        chart.one_per("class", columns=0)
+        chart.one_chart_per("class", per_row=0)
     with pytest.raises(PlotsimpleError, match="not both"):
-        chart.one_per("class", row="test")
+        chart.one_chart_per("class", down="test")
     with pytest.raises(PlotsimpleError, match="True or"):
-        chart.one_per("class", same_y="yes")
+        chart.one_chart_per("class", same_y="yes")
 
 
 # ---------------------------------------------------------------- pages
@@ -237,8 +237,8 @@ def test_grid_same_y_and_legends_stay_with_their_chart(marks):
     charts = [ps.chart(marks).bars(x="name", y="marks", colour="class").legend_bottom(),
               ps.chart(marks).bars(x="class", y="height"),
               ps.chart(marks).dots(x="height", y="marks"),
-              ps.chart(marks).bars(x="name", y="marks").one_per("test")]
-    page = ps.grid(*charts, columns=2, same_y=True)
+              ps.chart(marks).bars(x="name", y="marks").one_chart_per("test")]
+    page = ps.grid(*charts, per_row=2, same_y=True)
     fig = page._render()
     assert len(fig.subfigs) == 4
     assert len(fig.subfigs[0].legends) == 1 and not fig.subfigs[1].legends
@@ -263,7 +263,7 @@ def test_page_errors(marks):
     with pytest.raises(PlotsimpleError, match="already a page"):
         ps.grid(ps.side_by_side(a, a), a)
     with pytest.raises(PlotsimpleError, match="whole number"):
-        ps.grid(a, a, columns=0)
+        ps.grid(a, a, per_row=0)
     with pytest.raises(PlotsimpleError, match="title_top"):
         ps.side_by_side(a, a).title_topp("x")
 
@@ -275,7 +275,7 @@ def test_page_accepts_a_list(marks):
 
 # ---------------------------------------------------------------- zoom box
 def test_zoom_box(marks):
-    fig = ps.chart(marks).lines(x="height", y="marks").zoom_box(145, 155, 40, 80)._render()
+    fig = ps.chart(marks).lines(x="height", y="marks").zoom_box(x_between=[145, 155], y_between=[40, 80])._render()
     ax = fig.axes[0]
     inset = ax.child_axes[0]
     assert inset.get_xlim() == (145, 155) and inset.get_ylim() == (40, 80)
@@ -285,12 +285,23 @@ def test_zoom_box(marks):
 
 def test_zoom_box_errors(marks):
     chart = ps.chart(marks)
-    with pytest.raises(PlotsimpleError, match="smaller than"):
-        chart.zoom_box(5, 2, 0, 1)
-    with pytest.raises(PlotsimpleError, match='where="upper left"'):
-        chart.zoom_box(1, 2, 0, 1, where="upper lft")
-    with pytest.raises(PlotsimpleError, match="number"):
-        chart.zoom_box("a", 2, 0, 1)
+    with pytest.raises(PlotsimpleError, match="two different numbers"):
+        chart.zoom_box(x_between=[2, 2], y_between=[0, 1])
+    with pytest.raises(PlotsimpleError, match='where="top left"'):
+        chart.zoom_box(x_between=[1, 2], y_between=[0, 1], where="top lft")
+    with pytest.raises(PlotsimpleError, match="numbers in x_between"):
+        chart.zoom_box(x_between=["a", 2], y_between=[0, 1])
+    with pytest.raises(PlotsimpleError, match="two numbers"):
+        chart.zoom_box(x_between=2, y_between=[0, 1])
+    with pytest.raises(PlotsimpleError, match=r"needs y_between=\[low, high\]"):
+        chart.zoom_box(x_between=[1, 2])
+    with pytest.raises(PlotsimpleError, match="has no option called x_too"):
+        chart.zoom_box(x_between=[1, 2], x_too=3)
+
+
+def test_zoom_box_span_order_does_not_matter(marks):
+    fig = ps.chart(marks).lines(x="height", y="marks").zoom_box(x_between=(155, 145), y_between=[80, 40])._render()
+    assert fig.axes[0].child_axes[0].get_xlim() == (145, 155)
 
 
 # ---------------------------------------------------------------- animation
@@ -325,8 +336,8 @@ def test_animate_fixed_ranges_and_last_frame(marks):
     assert len(ax.collections[0].get_offsets()) == 8
 
 
-def test_animate_with_one_per(marks, tmp_path):
-    chart = ps.chart(marks).bars(x="name", y="marks").one_per("class").animate(over="test")
+def test_animate_with_one_chart_per(marks, tmp_path):
+    chart = ps.chart(marks).bars(x="name", y="marks").one_chart_per("class").animate(over="test")
     chart.save(tmp_path / "a.gif")
     assert _frames(tmp_path / "a.gif")[0] == 3
 

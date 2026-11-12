@@ -21,7 +21,7 @@ def build(data, engine):
 
 def plain(t):
     """The table as pandas, with a fresh row index, for comparing."""
-    native = t.done()
+    native = t._done()
     if not isinstance(native, pd.DataFrame):
         native = native.to_pandas()
     return native.reset_index(drop=True)
@@ -505,7 +505,7 @@ def test_round_uses_half_to_even_like_r(engine):
     t.add_column("r", "round(x)")
     t.add_column("r2", "round(x, 2)")
     t.add_column("r1", "round(x, 1)")
-    out = t.done()
+    out = t._done()
     r = [None if v is None or v != v else v for v in list(out["r"])]
     assert r == [0.0, 2.0, 2.0, -2.0, 3.0, 1.0, None]  # same as R round() and numpy.round
     assert list(out["r2"])[:6] == [0.5, 1.5, 2.5, -2.5, 2.68, 1.24]

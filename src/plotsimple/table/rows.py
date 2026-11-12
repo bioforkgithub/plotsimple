@@ -424,10 +424,10 @@ class RowWords:
         return None
 
     @friendly
-    def count_empty(self):
+    def count_empty_cells(self):
         """Show how many empty cells each column has.
 
-        table.count_empty()   (with ps.example("marks"))
+        table.count_empty_cells()   (with ps.example("marks"))
         """
         counts = {name: self._count(self._empty(name)) for name in self._columns}
         width = max((len(str(n)) for n in counts), default=0)
@@ -597,10 +597,10 @@ class RowWords:
 
     # ================================================================== empty cells
     @friendly
-    def remove_empty_rows(self, column=None):
+    def remove_rows_with_empty_cells(self, column=None):
         """Remove rows with an empty cell (in any column, or only in the column you name).
 
-        table.remove_empty_rows("marks")   (with ps.example("marks"))
+        table.remove_rows_with_empty_cells("marks")   (with ps.example("marks"))
         """
         if column is None:
             names, what = self._columns, "remove rows with an empty cell"
@@ -612,34 +612,34 @@ class RowWords:
         return self._filter(what, ~any_empty.fill_null(False), kept_word=False)
 
     @friendly
-    def fill_empty(self, column=None, with_value=None, with_the=None):
+    def fill_empty_cells(self, column=None, with_value=None, with_the=None):
         """Fill the empty cells of a column with a value, or with the average, median, value above or value below.
 
-        table.fill_empty("marks", with_the="average")   (with ps.example("marks"))
+        table.fill_empty_cells("marks", with_the="average")   (with ps.example("marks"))
         """
-        example = 'table.fill_empty("marks", with_the="average")'
-        self._need_one_column("fill_empty", column, example)
+        example = 'table.fill_empty_cells("marks", with_the="average")'
+        self._need_one_column("fill_empty_cells", column, example)
         if (with_value is None) == (with_the is None):
             raise PlotsimpleError(
-                ".fill_empty() needs exactly one of with_value= or with_the=."
-                + _example('table.fill_empty("marks", with_value=0)')
+                ".fill_empty_cells() needs exactly one of with_value= or with_the=."
+                + _example('table.fill_empty_cells("marks", with_value=0)')
                 + _example(example)
             )
         empty = self._empty(column)
         kind = self._kind_of(column)
         col = nw.col(column)
         if with_value is not None:
-            value = self._value_for("with_value", column, with_value, 'table.fill_empty("marks", with_value=0)')
+            value = self._value_for("with_value", column, with_value, 'table.fill_empty_cells("marks", with_value=0)')
             new_col, how = nw.when(empty).then(nw.lit(value)).otherwise(col), _say(value)
         else:
             choice = str(with_the).strip().lower().replace("_", " ")
-            self._check_choice("fill_empty", "with_the", choice, FILL_CHOICES)
+            self._check_choice("fill_empty_cells", "with_the", choice, FILL_CHOICES)
             if choice in ("average", "median"):
                 if kind != "number":
                     raise PlotsimpleError(
                         f'with_the="{choice}" needs numbers, but "{column}" is a {kind} column. '
                         f'Try with_the="value above" or with_value= instead.'
-                        + _example('table.fill_empty("subject", with_the="value above")')
+                        + _example('table.fill_empty_cells("subject", with_the="value above")')
                     )
                 filled = self._frame.filter(~empty)
                 if len(filled) == 0:

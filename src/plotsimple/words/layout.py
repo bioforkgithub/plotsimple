@@ -1,7 +1,7 @@
 """Several charts together, small multiples, zoom boxes and animation.
 
 How the hard tricks work underneath (users never see this):
-* one_per        sets settings["split"]; BaseChart._render_split draws one panel per group.
+* one_chart_per  sets settings["split"]; BaseChart._render_split draws one panel per group.
 * side_by_side,  a Page gives every chart its own matplotlib SubFigure, so each chart keeps
   one_above_other, its own title, labels and legend, and figure-wide steps of one chart
   grid             (labels, legends) cannot land on another chart.
@@ -21,16 +21,19 @@ from matplotlib.figure import Figure
 from .. import _style
 from .._core import PHASES, BaseChart, Context
 from .._data import is_listlike
-from .._errors import PlotsimpleError, column_error, friendly
+from .._errors import PlotsimpleError, column_error, friendly, option_error, renamed_note
 from .look import LookWords
 
 # Inset positions inside the main plot: [left, bottom, width, height] as parts of the plot.
 _ZOOM_PLACES = {
-    "upper right": [0.58, 0.56, 0.39, 0.4],
-    "upper left": [0.03, 0.56, 0.39, 0.4],
-    "lower right": [0.58, 0.05, 0.39, 0.4],
-    "lower left": [0.03, 0.05, 0.39, 0.4],
+    "top right": [0.58, 0.56, 0.39, 0.4],
+    "top left": [0.03, 0.56, 0.39, 0.4],
+    "bottom right": [0.58, 0.05, 0.39, 0.4],
+    "bottom left": [0.03, 0.05, 0.39, 0.4],
 }
+# Old place names (matplotlib's words), still understood for one release.
+_OLD_PLACES = {"upper right": "top right", "upper left": "top left",
+               "lower right": "bottom right", "lower left": "bottom left"}
 # Steps that must not be drawn again inside a zoom box.
 _NOT_IN_ZOOM = {"zoom_box", "second_y"}
 
@@ -53,7 +56,7 @@ def _check_bool(step, name, value):
 
 
 # ---------------------------------------------------------------- zoom box
-def _zoom_box(ctx, chart, x_from, x_to, y_from, y_to, where):
+def _zoom_box(ctx, chart, x_between, y_between, where):
     ax = ctx.ax
     if ax.name != "rectilinear":
         raise PlotsimpleError(".zoom_box() works on flat charts with an x and a y axis, not on polar or 3D charts.")
@@ -65,8 +68,8 @@ def _zoom_box(ctx, chart, x_from, x_to, y_from, y_to, where):
     chart._run(again, sub)
     if inset.get_legend() is not None:
         inset.get_legend().remove()
-    inset.set_xlim(x_from, x_to)
-    inset.set_ylim(y_from, y_to)
+    inset.set_xlim(*x_between)
+    inset.set_ylim(*y_between)
     inset.set_xlabel("")
     inset.set_ylabel("")
     inset.set_title("")
@@ -99,34 +102,38 @@ def _label_frame(fig, axes, over, value):
 
 class LayoutWords:
     # ------------------------------------------------------------ small multiples
-    @friendly
-    def one_per(self, by=None, row=None, column=None, columns=None, same_x=True, same_y=True):
-        """One small chart for each group. chart.one_per("class", columns=3) (with ps.example("marks"))
+    @friendly(renamed={"row": "down", "column": "across", "columns": "per_row"})
+    def one_chart_per(self, by=None, down=None, across=None, per_row=None, same_x=True, same_y=True):
+        """One small chart for each group. chart.one_chart_per("class", per_row=3) (with ps.example("marks"))
 
-        row="class", column="subject" makes a table of charts: one row per class, one column
-        per subject.
+        per_row=3 puts 3 small charts in each row.
+        down="class", across="subject" makes a table of charts: the classes go down (one
+        row of charts each) and the subjects go across (one column of charts each).
         same_x=False / same_y=False lets each small chart choose its own axis range.
         """
+        row, column, columns = down, across, per_row
         if by is None and row is None and column is None:
             raise PlotsimpleError(
-                '.one_per() needs a column to split by, for example chart.one_per("class")\n'
-                'or chart.one_per(row="class", column="subject").'
+                '.one_chart_per() needs a column to split by, for example chart.one_chart_per("class")\n'
+                'or chart.one_chart_per(down="class", across="subject").'
             )
         if by is not None and (row is not None or column is not None):
             raise PlotsimpleError(
-                '.one_per() takes either one column (chart.one_per("class"))\n'
-                'or row= and column= (chart.one_per(row="class", column="subject")), not both.'
+                '.one_chart_per() takes either one column (chart.one_chart_per("class"))\n'
+                'or down= and across= (chart.one_chart_per(down="class", across="subject")), not both.'
             )
         if columns is not None:
             if by is None:
-                raise PlotsimpleError('columns= only works with one column, for example chart.one_per("class", columns=3).')
+                raise PlotsimpleError(
+                    'per_row= only works with one column, for example chart.one_chart_per("class", per_row=3).')
             if isinstance(columns, bool) or not isinstance(columns, int) or columns < 1:
-                raise PlotsimpleError(f"columns= should be a whole number such as 2 or 3, not {columns!r}.")
-        _check_bool("one_per", "same_x", same_x)
-        _check_bool("one_per", "same_y", same_y)
+                raise PlotsimpleError(f"per_row= should be a whole number such as 2 or 3, not {columns!r}.")
+        _check_bool("one_chart_per", "same_x", same_x)
+        _check_bool("one_chart_per", "same_y", same_y)
         data = self._data
         if data is None or len(data.columns) == 0:
-            raise PlotsimpleError('.one_per() needs a table, for example ps.chart(ps.example("marks")).one_per("class").')
+            raise PlotsimpleError(
+                '.one_chart_per() needs a table, for example ps.chart(ps.example("marks")).one_chart_per("class").')
         for name in (by, row, column):
             if name is not None and name not in data.columns:
                 raise column_error(name, data.columns)
@@ -145,23 +152,48 @@ class LayoutWords:
 
     # ------------------------------------------------------------ zoom box
     @friendly
-    def zoom_box(self, x_from, x_to, y_from, y_to, where="upper right"):
-        """A small box showing part of the chart close up. chart.zoom_box(x_from=2, x_to=4, y_from=40, y_to=60)
+    def zoom_box(self, x_between=None, y_between=None, where="top right", **old):
+        """A small box showing part of the chart close up.
 
-        where="upper right" (default), "upper left", "lower right" or "lower left".
+        chart.zoom_box(x_between=[2, 4], y_between=[40, 60]) (with ps.example("marks"))
+        x_between= and y_between= are the part to show: [low, high] on each axis.
+        where="top right" (default), "top left", "bottom right" or "bottom left".
         """
+        example = "chart.zoom_box(x_between=[2, 4], y_between=[40, 60])"
+        spans = {"x": x_between, "y": y_between}
+        for key in old:  # x_from=, x_to=, y_from=, y_to= are the old way of writing the spans
+            if key not in ("x_from", "x_to", "y_from", "y_to"):
+                raise option_error("zoom_box", key, ["x_between", "y_between", "where"])
+        for axis in "xy":
+            low, high = old.get(f"{axis}_from"), old.get(f"{axis}_to")
+            if low is None and high is None:
+                continue
+            renamed_note(f"{axis}_from= and {axis}_to=", f"{axis}_between=")
+            if spans[axis] is not None:
+                raise PlotsimpleError(f"Give {axis}_between= only ({axis}_from= and {axis}_to= are its old names).")
+            spans[axis] = [low, high]
+        if isinstance(where, str) and where.strip().lower() in _OLD_PLACES:
+            new = _OLD_PLACES[where.strip().lower()]
+            renamed_note(f'where="{where}"', f'where="{new}"')
+            where = new
         self._check_choice("zoom_box", "where", where, list(_ZOOM_PLACES))
-        for name, value in (("x_from", x_from), ("x_to", x_to), ("y_from", y_from), ("y_to", y_to)):
-            if isinstance(value, bool) or not isinstance(value, numbers.Real):
-                raise PlotsimpleError(f".zoom_box() needs a number for {name}=, not {value!r}.")
-        for a, b, axis in ((x_from, x_to, "x"), (y_from, y_to, "y")):
-            if a >= b:
-                raise PlotsimpleError(
-                    f"{axis}_from= should be smaller than {axis}_to=, for example "
-                    f"{axis}_from={min(a, b)}, {axis}_to={max(a, b)}."
-                )
-        return self._replace("zoom_box", "finish", _zoom_box, chart=self, x_from=x_from, x_to=x_to,
-                             y_from=y_from, y_to=y_to, where=where)
+        for axis, span in spans.items():
+            name = f"{axis}_between"
+            if span is None:
+                raise PlotsimpleError(f".zoom_box() needs {name}=[low, high].\nFor example {example}")
+            if isinstance(span, (str, bytes)) or not is_listlike(span) or len(span) != 2:
+                raise PlotsimpleError(f".zoom_box() needs two numbers in {name}=[low, high], not {span!r}.\n"
+                                      f"For example {example}")
+            for value in span:
+                if isinstance(value, bool) or not isinstance(value, numbers.Real):
+                    raise PlotsimpleError(f".zoom_box() needs numbers in {name}=, not {value!r}.\n"
+                                          f"For example {example}")
+            low, high = sorted(float(v) for v in span)
+            if low == high:
+                raise PlotsimpleError(f".zoom_box() needs two different numbers in {name}=.\nFor example {example}")
+            spans[axis] = (low, high)
+        return self._replace("zoom_box", "finish", _zoom_box, chart=self, x_between=spans["x"],
+                             y_between=spans["y"], where=where)
 
     # ------------------------------------------------------------ animation
     @friendly
@@ -336,7 +368,7 @@ def _page_charts(step, charts):
         if isinstance(c, Page):
             raise PlotsimpleError(
                 f"Chart {i} given to ps.{step}() is already a page of charts.\n"
-                "Give the single charts instead, for example ps.grid(a, b, c, d, columns=2)."
+                "Give the single charts instead, for example ps.grid(a, b, c, d, per_row=2)."
             )
         if not isinstance(c, BaseChart):
             raise PlotsimpleError(
@@ -370,11 +402,15 @@ def one_above_other(*charts, same_x=False, same_y=False):
     return Page(charts, len(charts), 1, same_x, same_y, how="one above the other")
 
 
-def grid(*charts, columns=2, same_x=False, same_y=False):
-    """Charts in rows and columns. ps.grid(a, b, c, d, columns=2)"""
+@friendly(renamed={"columns": "per_row"})
+def grid(*charts, per_row=2, same_x=False, same_y=False):
+    """Charts in rows and columns. ps.grid(a, b, c, d, per_row=2)
+
+    per_row=2 puts 2 charts in each row.
+    """
     charts = _page_charts("grid", charts)
-    if isinstance(columns, bool) or not isinstance(columns, int) or columns < 1:
-        raise PlotsimpleError(f"columns= should be a whole number such as 2 or 3, not {columns!r}.")
+    if isinstance(per_row, bool) or not isinstance(per_row, int) or per_row < 1:
+        raise PlotsimpleError(f"per_row= should be a whole number such as 2 or 3, not {per_row!r}.")
     _check_page_options("grid", same_x, same_y)
-    columns = min(columns, len(charts))
+    columns = min(per_row, len(charts))
     return Page(charts, math.ceil(len(charts) / columns), columns, same_x, same_y, how=f"grid of {columns} columns")

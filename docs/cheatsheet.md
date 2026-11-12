@@ -16,17 +16,30 @@ Table words are steps on a table, for looking at data, cleaning it and summing i
 ```python
 table = ps.table(ps.example("marks"))   # or ps.table("my_file.xlsx")
 table.keep_rows("marks", above=50)
-print(table.average_of("marks", for_each="class"))
+table.average_of("marks", for_each="class")   # says the answer in a sentence
 table.save("good_marks.xlsx")
 chart = table.chart()                   # a chart of the table
 ```
 
+Number words are steps on a list (or a grid) of numbers:
+
+```python
+nums = ps.numbers([12, 15, 9, 20, 14])
+bigger = nums * 2                       # symbols make new numbers
+nums.keep_numbers(above=10)             # words change the numbers (undo() takes it back)
+nums.average()
+grid = ps.number_grid([[3, 5, 2], [8, 6, 4]])
+```
+
 In Python, `ps.help("bars")` explains any word, `ps.words()` prints this list and
-`ps.lesson(1)` starts the one-day course (lessons 9 to 12 are about tables).
+`ps.lesson(1)` starts the one-day course (lessons 9 to 12 are about tables, lesson 13
+about numbers and lesson 14 about statistical tests).
 
 Every example runs as written on the practice table in the *Table* column:
 for example `weather = ps.example("weather")` then `chart = ps.chart(weather)`,
 or `table = ps.table(ps.example("weather"))` for table words.
+Number words use `nums = ps.numbers([12, 15, 9, 20, 14])` and grid words
+`grid = ps.number_grid([[3, 5, 2], [8, 6, 4]])`; `ps.help("word")` shows each example ready to run.
 Steps such as `fit_line` or `title_top` go after a chart step such as `chart.dots(...)`,
 and `a`, `b` in `ps.side_by_side(a, b)` are charts you made first.
 
@@ -64,14 +77,14 @@ and `a`, `b` in `ps.side_by_side(a, b)` are charts you made first.
 | Word | Example | Table | What it does |
 |---|---|---|---|
 | `show=` | `chart.bars(x="class", y="marks", show="median")` | marks | What each bar or point on a line stands for, when a group has many rows. |
-| `error=` | `chart.bars(x="class", y="marks", error="sd")` | marks | Error bars on top of averages: how spread out the values are. |
-| `error_bars` | `chart.error_bars("sd")` | marks | Error bars on dots or lines. |
-| `fit_line` | `chart.fit_line()` | marks | A straight line that fits the dots best. |
+| `error=` | `chart.bars(x="class", y="marks", error="standard deviation")` | marks | Error bars on top of averages: how spread out, or how sure, the values are. |
+| `error_bars` | `chart.error_bars("standard error")` | marks | Error bars on dots or lines. |
+| `fit_line` | `chart.fit_line()` | marks | A straight line that fits the dots best (linear regression). |
 | `fit_curve` | `chart.fit_curve(degree=2)` | weather | A curve that fits the dots best. |
 | `smooth_line` | `chart.smooth_line()` | weather | A smooth line that follows the dots (LOWESS). |
 | `density` | `chart.density(x="marks", colour="class")` | marks | A smooth curve that is high where many values are. |
 | `count_bars` | `chart.count_bars(x="fruit", colour="shop")` | fruit | Bars that count how many rows each group has. |
-| `all_points` | `chart.all_points(x="class", y="marks")` | marks | Every value as a dot, spread out so no dot hides another. |
+| `all_dots` | `chart.all_dots(x="class", y="marks")` | marks | Every value as a dot, spread out so no dot hides another. |
 | `side_histograms` | `chart.side_histograms()` | marks | Small histograms along the top and right edges of a dots chart. |
 | `ps.pairs` | `ps.pairs(ps.example("marks"), colour="class")` | marks | Every number column against every other. |
 
@@ -108,7 +121,7 @@ and `a`, `b` in `ps.side_by_side(a, b)` are charts you made first.
 | `ticks_y` | `chart.ticks_y(0, 50, 100)` | marks | Where the marks on the y-axis go. |
 | `rotate_labels_x` | `chart.rotate_labels_x()` | marks | Turn the names under the x-axis so long ones do not bump into each other. |
 | `rotate_labels_y` | `chart.rotate_labels_y(30)` | fruit | Turn the names beside the y-axis. |
-| `second_y` | `chart.second_y("rain", chart="bars", label="Rain (mm)")` | weather | A second y-axis on the right, for a column measured in other units. |
+| `second_y` | `chart.second_y("rain", drawn_as="bars", label="Rain (mm)")` | weather | A second y-axis on the right, for a column measured in other units. |
 | `flip_x` | `chart.flip_x()` | marks | Turn the x-axis around, so numbers grow from right to left. |
 | `flip_y` | `chart.flip_y()` | island | Turn the y-axis upside down, for example for depth going down. |
 
@@ -127,17 +140,18 @@ and `a`, `b` in `ps.side_by_side(a, b)` are charts you made first.
 | `legend_left` | `chart.legend_left()` | weather | The legend to the left of the chart. |
 | `legend_right` | `chart.legend_right()` | weather | The legend to the right of the chart, outside the plot. |
 | `hide_legend` | `chart.hide_legend()` | weather | No legend. |
-| `colour_bar_label` (also `color_bar_label`) | `chart.colour_bar_label("Height (m)")` | island | The name beside the colour bar of a heatmap or contour. |
+| `show_legend` | `chart.show_legend()` | weather | The legend in its usual place, for example after hide_legend(). |
+| `label_colour_bar` (also `label_color_bar`) | `chart.label_colour_bar("Height (m)")` | island | The name beside the colour bar of a heatmap or contour. |
 
 ## Several charts
 
 | Word | Example | Table | What it does |
 |---|---|---|---|
-| `one_per` | `chart.one_per("class", columns=3)` | marks | One small chart for each group. |
+| `one_chart_per` | `chart.one_chart_per("class", per_row=3)` | marks | One small chart for each group. |
 | `ps.side_by_side` | `ps.side_by_side(a, b)` | marks | Charts next to each other. |
 | `ps.one_above_other` | `ps.one_above_other(a, b)` | weather | Charts on top of each other. |
-| `ps.grid` | `ps.grid(a, b, c, d, columns=2)` | marks | Charts in rows and columns. |
-| `zoom_box` | `chart.zoom_box(x_from=2, x_to=4, y_from=40, y_to=60)` | marks | A small box showing part of the chart close up. |
+| `ps.grid` | `ps.grid(a, b, c, d, per_row=2)` | marks | Charts in rows and columns. |
+| `zoom_box` | `chart.zoom_box(x_between=[2, 4], y_between=[40, 60])` | marks | A small box showing part of the chart close up. |
 | `animate` | `chart.animate(over="year")` | growth | A moving chart with one picture for each value of a column. |
 
 ## Tables: start and look
@@ -145,8 +159,8 @@ and `a`, `b` in `ps.side_by_side(a, b)` are charts you made first.
 | Word | Example | Table | What it does |
 |---|---|---|---|
 | `ps.table` | `ps.table(ps.example("marks"))` | marks | Start a table. |
-| `show_first` | `table.show_first(5)` | marks | Show the first rows. |
-| `show_last` | `table.show_last(5)` | marks | Show the last rows. |
+| `show_first_rows` | `table.show_first_rows(5)` | marks | Show the first rows. |
+| `show_last_rows` | `table.show_last_rows(5)` | marks | Show the last rows. |
 | `column_names` | `table.column_names()` | marks | The names of all columns. |
 | `describe_columns` | `table.describe_columns()` | marks | Describe every column: its kind, empty cells, smallest, biggest and average. |
 
@@ -173,9 +187,9 @@ and `a`, `b` in `ps.side_by_side(a, b)` are charts you made first.
 
 | Word | Example | Table | What it does |
 |---|---|---|---|
-| `count_empty` | `table.count_empty()` | marks | Show how many empty cells each column has. |
-| `remove_empty_rows` | `table.remove_empty_rows("marks")` | marks | Remove rows with an empty cell (in any column, or only in the column you name). |
-| `fill_empty` | `table.fill_empty("marks", with_the="average")` | marks | Fill the empty cells of a column with a value, or with the average, median, value above or value below. |
+| `count_empty_cells` | `table.count_empty_cells()` | marks | Show how many empty cells each column has. |
+| `remove_rows_with_empty_cells` | `table.remove_rows_with_empty_cells("marks")` | marks | Remove rows with an empty cell (in any column, or only in the column you name). |
+| `fill_empty_cells` | `table.fill_empty_cells("marks", with_the="average")` | marks | Fill the empty cells of a column with a value, or with the average, median, value above or value below. |
 
 ## Fix columns
 
@@ -242,7 +256,94 @@ and `a`, `b` in `ps.side_by_side(a, b)` are charts you made first.
 | `start_again` | `table.start_again()` | marks | Go back to the table as it was at the start. |
 | `save` | `table.save("clean.xlsx")` | marks | Save the table; the end of the file name decides the type. |
 | `chart` | `table.chart()` | marks | Start a chart from this table. |
-| `done` | `table.done()` | marks | Give back the plain table (pandas, or Polars for big data). |
+| `as_pandas` | `table.as_pandas()` | marks | Give back the table as a plain pandas table, for other Python tools. |
+| `as_polars` | `table.as_polars()` | marks | Give back the table as a plain Polars table, for other Python tools. |
+
+## Numbers: make and look
+
+| Word | Example | Table | What it does |
+|---|---|---|---|
+| `ps.numbers` | `ps.numbers([3, 5, 2, 8])` |  | Make a list of numbers. |
+| `ps.random_numbers` | `ps.random_numbers(how_many=10, between=[0, 1], seed=1)` |  | Make random numbers; give seed= to get the same numbers every time. |
+| `show` | `nums.show()` |  | Show every number. |
+| `show_first_numbers` | `nums.show_first_numbers(5)` |  | Show the first numbers. |
+| `show_last_numbers` | `nums.show_last_numbers(5)` |  | Show the last numbers. |
+| `number_at` | `nums.number_at(1)` |  | The number at a position, counting from 1: number_at(1) is the first number. |
+| `count` | `nums.count()` |  | How many numbers there are (empty ones included). |
+| `count_empty_numbers` | `nums.count_empty_numbers()` |  | How many values are empty (missing). |
+
+## Numbers: maths in words
+
+| Word | Example | Table | What it does |
+|---|---|---|---|
+| `add` | `nums.add(5)` |  | Add a number to every number (or add numbers one by one). |
+| `subtract` | `nums.subtract(2)` |  | Take a number away from every number. |
+| `times` | `nums.times(2)` |  | Multiply every number by a number. |
+| `divide_by` | `nums.divide_by(4)` |  | Divide every number by a number. |
+| `power` | `nums.power(2)` |  | Raise every number to a power: power(2) squares, power(3) cubes. |
+| `square_root` | `nums.square_root()` |  | The square root of every number: 9 becomes 3. |
+| `absolute_value` | `nums.absolute_value()` |  | Every number without its minus sign: -3 becomes 3. |
+| `round_to` | `nums.round_to(2)` |  | Round every number to this many decimal places. |
+| `log` | `nums.log()` |  | The logarithm of every number: natural (base e) unless you give base=10 or base=2. |
+| `exp` | `nums.exp()` |  | e (about 2.718) to the power of every number; it undoes log(). |
+| `running_total` | `nums.running_total()` |  | Each number becomes the total so far (the cumulative sum): 1, 2, 3 becomes 1, 3, 6. |
+
+## Numbers: choose, sort and fill
+
+| Word | Example | Table | What it does |
+|---|---|---|---|
+| `keep_numbers` | `nums.keep_numbers(above=50)` |  | Keep only the numbers that match one condition. |
+| `remove_numbers` | `nums.remove_numbers(below=0)` |  | Remove the numbers that match one condition (the opposite of keep_numbers). |
+| `keep_first_numbers` | `nums.keep_first_numbers(10)` |  | Keep only the first numbers. |
+| `keep_last_numbers` | `nums.keep_last_numbers(10)` |  | Keep only the last numbers. |
+| `keep_random_numbers` | `nums.keep_random_numbers(10, seed=1)` |  | Keep some numbers picked at random (they keep their order); a seed gives the same pick every time. |
+| `remove_duplicate_numbers` | `nums.remove_duplicate_numbers()` |  | Remove numbers that repeat an earlier number, so each number is left once, in its first place. |
+| `remove_empty_numbers` | `nums.remove_empty_numbers()` |  | Remove the empty (missing) values. |
+| `fill_empty_numbers` | `nums.fill_empty_numbers(with_value=0)` |  | Fill the empty values with a number, or with the average, median, value above or value below. |
+| `sort` | `nums.sort(biggest_first=True)` |  | Put the numbers in order, smallest first; empty values go last. |
+| `reverse` | `nums.reverse()` |  | Turn the order round: the last number comes first. |
+
+## Numbers: summaries
+
+| Word | Example | Table | What it does |
+|---|---|---|---|
+| `average` | `nums.average()` |  | The average (mean) of the numbers; empty values are skipped. |
+| `median` | `nums.median()` |  | The middle number once the numbers are sorted; empty values are skipped. |
+| `total` | `nums.total()` |  | All the numbers added up; empty values are skipped. |
+| `smallest` | `nums.smallest()` |  | The smallest number; empty values are skipped. |
+| `biggest` | `nums.biggest()` |  | The biggest number; empty values are skipped. |
+| `standard_deviation` | `nums.standard_deviation()` |  | How spread out the numbers are: the sample standard deviation (divide by n - 1). |
+| `percentile` | `nums.percentile(90)` |  | The number that this percent of the numbers are below: percentile(50) is the median. |
+| `count_each` | `nums.count_each()` |  | Each different number, how many times it appears, and its percent, as a table. |
+
+## Grids of numbers
+
+| Word | Example | Table | What it does |
+|---|---|---|---|
+| `ps.number_grid` | `ps.number_grid([[1, 2, 3], [4, 5, 6]])` |  | Make a grid of numbers in rows and columns. |
+| `number_grid` | `nums.number_grid(columns=3)` |  | Make a NEW grid from these numbers, filled row by row. |
+| `count_rows` | `grid.count_rows()` |  | How many rows the grid has. |
+| `count_columns` | `grid.count_columns()` |  | How many columns the grid has. |
+| `shape` | `grid.shape()` |  | How many rows and columns, as (rows, columns). |
+| `show_first_rows` | `grid.show_first_rows(5)` |  | Show the first rows. |
+| `show_last_rows` | `grid.show_last_rows(5)` |  | Show the last rows. |
+| `number_at` | `grid.number_at(row=1, column=2)` |  | The number at a row and column, counting from 1. |
+| `row` | `grid.row(1)` |  | One row of the grid as new numbers, counting from 1: row(1) is the top row. |
+| `column` | `grid.column(1)` |  | One column of the grid as new numbers, counting from 1: column(1) is the left one. |
+| `numbers` | `grid.numbers()` |  | All the numbers of the grid as a list, row by row (flatten). |
+| `swap_rows_and_columns` | `grid.swap_rows_and_columns()` |  | Turn rows into columns and columns into rows (the transpose in maths). |
+
+## Numbers: undo and finish
+
+| Word | Example | Table | What it does |
+|---|---|---|---|
+| `undo` | `nums.undo()` |  | Take the last step back. |
+| `steps` | `nums.steps()` |  | List every step you did, in order. |
+| `start_again` | `nums.start_again()` |  | Go back to the numbers as they were at the start. |
+| `table` | `nums.table(name="marks")` |  | Turn the numbers into a plotsimple table. |
+| `chart` | `nums.chart()` |  | Start a chart from these numbers. |
+| `save` | `nums.save("nums.csv")` |  | Save the numbers; the end of the file name decides the type. |
+| `as_numpy` | `nums.as_numpy()` |  | Give back the numbers as a plain NumPy array, for other Python tools. |
 
 ## Help
 

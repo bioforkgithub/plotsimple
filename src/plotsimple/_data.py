@@ -54,7 +54,7 @@ def _missing_file_error(path: Path) -> PlotsimpleError:
     return PlotsimpleError("\n".join(lines))
 
 
-def read_file(path, sheet=None, big_data: bool = False, keep_fast: bool = False):
+def read_file(path, sheet=None, fast: bool = False, keep_fast: bool = False):
     """Read a file. Big files use the fast engine; keep_fast=True keeps its Polars table."""
     path = Path(path)
     if not path.exists():
@@ -66,18 +66,19 @@ def read_file(path, sheet=None, big_data: bool = False, keep_fast: bool = False)
             "It can read: " + ", ".join(sorted(_READERS))
         )
 
-    fast = big_data or path.stat().st_size > BIG_FILE_BYTES
+    asked = fast
+    fast = asked or path.stat().st_size > BIG_FILE_BYTES
     if fast and kind in ("csv", "tsv", "parquet"):
         try:
             import polars as pl
         except ImportError:
-            if big_data:
+            if asked:
                 raise PlotsimpleError(
-                    "big_data=True needs the fast engine.\n"
+                    "fast=True needs the fast engine.\n"
                     "Install it with:  pip install plotsimple[fast]"
                 ) from None
         else:
-            if not big_data:
+            if not asked:
                 print("This file is large, so plotsimple is using its fast mode.")
             if kind == "parquet":
                 fast_table = pl.read_parquet(path)
@@ -108,16 +109,16 @@ def read_file(path, sheet=None, big_data: bool = False, keep_fast: bool = False)
     return pd.read_json(path)
 
 
-def load(source=None, sheet=None, big_data: bool = False) -> pd.DataFrame:
+def load(source=None, sheet=None, fast: bool = False) -> pd.DataFrame:
     """Turn anything a beginner might give us into a pandas table."""
     if source is None:
         return pd.DataFrame()
     if getattr(source, "_is_plotsimple_table", False):
-        return load(source.done())
+        return load(source._frame.to_native())
     if _is_plotsimple_numbers(source):
         return source._as_pandas(for_chart=True)
     if isinstance(source, (str, os.PathLike)):
-        return read_file(source, sheet=sheet, big_data=big_data)
+        return read_file(source, sheet=sheet, fast=fast)
     if isinstance(source, pd.DataFrame):
         return source
     if isinstance(source, pd.Series):
@@ -212,10 +213,10 @@ def frame_for(data: pd.DataFrame, **roles):
     return table, names
 
 
-def load_native(source=None, sheet=None, big_data: bool = False):
+def load_native(source=None, sheet=None, fast: bool = False):
     """Like load(), but Polars tables (and big files) stay in Polars. Used by tables."""
     if getattr(source, "_is_plotsimple_table", False):
-        return source.done()
+        return source._frame.to_native()
     if _is_plotsimple_numbers(source):
         return source._as_pandas()
     if _is_polars(source):
@@ -225,5 +226,5 @@ def load_native(source=None, sheet=None, big_data: bool = False):
             source = source.to_frame()
         return source
     if isinstance(source, (str, os.PathLike)):
-        return read_file(source, sheet=sheet, big_data=big_data, keep_fast=True)
-    return load(source, sheet=sheet, big_data=big_data)
+        return read_file(source, sheet=sheet, fast=fast, keep_fast=True)
+    return load(source, sheet=sheet, fast=fast)

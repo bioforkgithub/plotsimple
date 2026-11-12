@@ -79,12 +79,51 @@ def choice_error(step: str, option: str, value, choices) -> PlotsimpleError:
     return PlotsimpleError("\n".join(lines))
 
 
-def friendly(func):
+# ---------------------------------------------------------------- old names
+# When a word or option gets a better name, the old one keeps working for one release.
+# The first time it is used in a session, one gentle line says what it is called now.
+_NOTED: set[str] = set()
+
+
+def _quoted(name: str) -> str:
+    return name if '"' in name else f'"{name}"'
+
+
+def renamed_note(old: str, new: str) -> None:
+    """Print, once per session, that an old word or option now has a new name."""
+    if old in _NOTED:
+        return
+    _NOTED.add(old)
+    print(f"Note: {_quoted(old)} is now called {_quoted(new)}. "
+          "The old name will stop working in a later version.")
+
+
+def old_word(obj, name: str, old_words: dict):
+    """The word an old name now stands for (after the note), or None if it is not an old name.
+
+    old_words maps an old name to the new name, or to (new name to show, attribute to use)
+    when the old word behaves a little differently from the new one.
+    """
+    new = old_words.get(name)
+    if new is None:
+        return None
+    shown, attribute = new if isinstance(new, tuple) else (new, new)
+    renamed_note(name, shown)
+    return getattr(obj, attribute)
+
+
+def friendly(func=None, *, renamed: dict | None = None):
     """Decorator for every public step.
 
     * accepts both spellings (color/colour, gray/grey) for option names
     * turns unknown options into a friendly message with a suggestion
+    * renamed={"band": "confidence_band"}: an old option name still works, with a note once
+
+    Use it as @friendly, or as @friendly(renamed={...}).
     """
+    if func is None:
+        return lambda f: friendly(f, renamed=renamed)
+    renamed = renamed or {}
     sig = inspect.signature(func)
     params = [p for p in sig.parameters if p != "self"]
     takes_any = any(p.kind is p.VAR_KEYWORD for p in sig.parameters.values())
@@ -99,9 +138,16 @@ def friendly(func):
                     if candidate in params:
                         key = candidate
                     break
+            if key in renamed and key not in params:
+                new = renamed[key]
+                renamed_note(f"{key}=", f"{new}=")
+                if new in kwargs or new in fixed:
+                    raise PlotsimpleError(f"Give {new}= only once ({key}= is its old name).")
+                key = new
             if key not in params and not takes_any:
                 raise option_error(func.__name__, key, params)
             fixed[key] = value
         return func(*args, **fixed)
 
+    wrapper._renamed_options = dict(renamed)
     return wrapper

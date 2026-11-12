@@ -5,8 +5,10 @@ right calculation and say which one it used. Decisions:
 
 * standard deviation uses the sample formula (divide by n - 1), like pandas and R
 * empty cells are skipped
-* error="ci" is a 95 % confidence interval of the mean from the t distribution
-  (same as R's t.test). It gives the same answer every time, unlike bootstrapping.
+* error="confidence interval" is a 95 % confidence interval of the mean from the t
+  distribution (same as R's t.test). It gives the same answer every time, unlike bootstrapping.
+* measure names are the same everywhere: show="biggest" on a chart is table.biggest_of,
+  error="standard deviation" is table.standard_deviation_of.
 """
 
 from __future__ import annotations
@@ -16,6 +18,8 @@ from scipy import stats
 
 from ._errors import PlotsimpleError, choice_error
 
+# show= on bars and lines: the name people write -> the calculation pandas/seaborn does.
+# The taught names match the table words (average_of, median_of ...); "mean" and "sum" also work.
 SHOW = {
     "average": "mean",
     "mean": "mean",
@@ -23,9 +27,36 @@ SHOW = {
     "total": "sum",
     "sum": "sum",
     "count": "count",
+    "smallest": "min",
+    "biggest": "max",
+    "standard deviation": "std",
+}
+SHOW_NAMES = ("average", "median", "total", "count", "smallest", "biggest", "standard deviation")
+
+# error= and error_bars(): the long names are taught; "sd", "se" and "ci" are the usual
+# abbreviations and keep working.
+ERRORS = {
+    "standard deviation": "sd",
+    "standard error": "se",
+    "confidence interval": "ci",
+    "sd": "sd",
+    "se": "se",
+    "ci": "ci",
+}
+ERROR_NAMES = ("standard deviation", "standard error", "confidence interval")
+ERROR_LONG = {"sd": "standard deviation", "se": "standard error", "ci": "confidence interval"}
+ERROR_MEANING = {
+    "sd": "the standard deviation of the values (how spread out they are around the average)",
+    "se": "the standard error of the average (how sure we are about the average itself)",
+    "ci": "the 95 % confidence interval of the average (where the true average very likely is)",
 }
 
-ERRORS = ("sd", "se", "ci")
+
+def _plain_name(value):
+    """ "Standard_Deviation" -> "standard deviation"; anything that is not text stays as it is."""
+    if isinstance(value, str):
+        return " ".join(value.strip().lower().replace("_", " ").split())
+    return value
 
 
 def t_interval(values, level: float = 0.95):
@@ -41,23 +72,39 @@ def t_interval(values, level: float = 0.95):
     return (m - half, m + half)
 
 
-def check_show(step: str, show: str) -> str:
-    if show not in SHOW:
-        raise choice_error(step, "show", show, list(SHOW))
-    return SHOW[show]
+def check_show(step: str, show) -> str:
+    """The show= name, written the usual way ("Biggest" -> "biggest"), or a friendly error."""
+    name = _plain_name(show)
+    if name not in SHOW:
+        raise choice_error(step, "show", show, list(SHOW_NAMES))
+    return name
+
+
+def error_code(step: str, error, option: str = "error"):
+    """"standard error" (or "se") -> "se". None stays None."""
+    if error is None:
+        return None
+    name = _plain_name(error)
+    if name not in ERRORS:
+        raise choice_error(step, option, error, list(ERROR_NAMES))
+    return ERRORS[name]
+
+
+def say_error(code: str, what: str = "Error bars") -> None:
+    """One line that says which error was drawn, so the choice is never hidden."""
+    print(f"{what}: {ERROR_MEANING[code]}.")
 
 
 def check_error(step: str, error, show: str = "average"):
     """Return what seaborn's errorbar= option needs for this error choice."""
-    if error is None:
+    code = error_code(step, error)
+    if code is None:
         return None
-    if error not in ERRORS:
-        raise choice_error(step, "error", error, ERRORS)
-    if SHOW.get(show) != "mean":
+    if SHOW.get(_plain_name(show)) != "mean":
         raise PlotsimpleError(
-            f'error="{error}" goes with show="average".\n'
+            f'error="{ERROR_LONG[code]}" goes with show="average".\n'
             f'You asked for show="{show}". Remove error= or use show="average".'
         )
-    if error == "ci":
+    if code == "ci":
         return t_interval
-    return error  # seaborn's "sd" and "se" use n - 1, matching our rule
+    return code  # seaborn's "sd" and "se" use n - 1, matching our rule

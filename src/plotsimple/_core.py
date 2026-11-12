@@ -3,7 +3,7 @@
 Why record instead of drawing straight away?
 * the order of a user's lines does not matter (legend before bars still works)
 * style and size can be changed at any time
-* the same steps can be drawn again on many panels (one_per, side_by_side)
+* the same steps can be drawn again on many panels (one_chart_per, side_by_side)
 
 Every public step:
 1. checks its input straight away, so mistakes are reported on the line that made them
@@ -24,7 +24,7 @@ from matplotlib.figure import Figure
 
 from . import _style
 from ._data import load
-from ._errors import PlotsimpleError, choice_error, missing_word_error, suggest
+from ._errors import PlotsimpleError, choice_error, missing_word_error, old_word, suggest
 
 # Phases decide drawing order, whatever order the user wrote the steps in.
 PHASES = {
@@ -76,8 +76,16 @@ class Context:
 class BaseChart:
     """A chart. Make one with ps.chart(...)."""
 
-    def __init__(self, data=None, sheet=None, big_data: bool = False):
-        self._data = load(data, sheet=sheet, big_data=big_data)
+    # Old names that still work for one release (with a note the first time): old -> new.
+    _OLD_WORDS = {
+        "all_points": "all_dots",
+        "colour_bar_label": "label_colour_bar",
+        "color_bar_label": "label_colour_bar",
+        "one_per": "one_chart_per",
+    }
+
+    def __init__(self, data=None, sheet=None, fast: bool = False):
+        self._data = load(data, sheet=sheet, fast=fast)
         self._steps: list[Step] = []
         self._settings = {
             "style": "paper",
@@ -85,7 +93,7 @@ class BaseChart:
             "height": 6.0,
             "font_size": None,
             "grid": None,
-            "split": None,  # set by one_per(): dict(by=, row=, column=, columns=)
+            "split": None,  # set by one_chart_per(): dict(by=, row=, column=, columns=)
             "projection": None,  # "polar" or "3d" for charts that need special axes
         }
         self._cache: Figure | None = None
@@ -265,6 +273,8 @@ class BaseChart:
     def __getattr__(self, name):
         if name.startswith("_"):
             raise AttributeError(name)
+        if self._OLD_WORDS.get(name) in self._word_names():
+            return old_word(self, name, self._OLD_WORDS)
         raise missing_word_error(name, self._word_names())
 
     def __setattr__(self, name, value):

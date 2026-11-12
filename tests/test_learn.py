@@ -2,6 +2,7 @@
 
 import importlib.util
 import inspect
+import re
 import warnings
 from pathlib import Path
 
@@ -64,7 +65,7 @@ def test_example_files_are_inside_the_package():
 
 # ---------------------------------------------------------------- the grouping
 def _public_ps_functions():
-    skip = {"Chart", "PlotsimpleError", "Table", "__version__"}
+    skip = {"Chart", "NumberGrid", "Numbers", "PlotsimpleError", "Table", "__version__"}
     return [n for n in ps.__all__ if n not in skip]
 
 
@@ -78,6 +79,17 @@ def test_every_table_word_is_in_a_group():
     aliases = {a for key, names in learn._aliases().items() if key.startswith("table.") for a in names}
     missing = [w for w in ps.Table._word_names() if f"table.{w}" not in KEYS and w not in aliases]
     assert not missing, f"Add these table words to a group in learn.GROUPS: {missing}"
+
+
+def test_every_numbers_word_is_in_a_group():
+    missing = [w for w in ps.Numbers._word_names() if f"nums.{w}" not in KEYS]
+    assert not missing, f"Add these number words to a group in learn.GROUPS: {missing}"
+
+
+def test_every_grid_word_is_in_a_group():
+    """Grid words that numbers also have (add, average, undo ...) are explained once, as nums words."""
+    missing = [w for w in ps.NumberGrid._word_names() if f"grid.{w}" not in KEYS and f"nums.{w}" not in KEYS]
+    assert not missing, f"Add these grid words to a group in learn.GROUPS: {missing}"
 
 
 def test_every_ps_function_is_in_a_group():
@@ -178,6 +190,15 @@ def test_help_for_a_word_on_charts_and_tables_explains_both(capsys):
     assert out.startswith("chart.save()") and "table.save()" not in out
 
 
+@pytest.mark.parametrize("typed, expected", [
+    ("average", "nums.average()"), ("nums.average", "nums.average()"), ("grid.row", "grid.row()"),
+    ("swap_rows_and_columns", "grid.swap_rows_and_columns()"), ("numbers", "ps.numbers()"),
+])
+def test_help_finds_number_words(typed, expected, capsys):
+    ps.help(typed)
+    assert capsys.readouterr().out.startswith(expected)
+
+
 def test_help_table_word_options_hide_internal_details(capsys):
     ps.help("keep_rows")
     out = capsys.readouterr().out
@@ -255,8 +276,8 @@ def test_every_docstring_example_runs_and_draws(key, tmp_path, monkeypatch, caps
         target = result if hasattr(result, "save") else space.get("chart", space.get("page"))
         if target is not None:
             saved = _saved_files(learn.HELP_EXAMPLES[key])
-            if getattr(target, "_is_plotsimple_table", False):
-                ending = ".csv"  # a table (a step or a summary) saves as a table file
+            if any(getattr(target, f"_is_plotsimple_{kind}", False) for kind in ("table", "numbers", "grid")):
+                ending = ".csv"  # a table, numbers or a grid saves as a table file
             else:
                 ending = Path(saved[-1]).suffix if saved else ".png"
             target.save(f"doc_example{ending}")
@@ -265,14 +286,14 @@ def test_every_docstring_example_runs_and_draws(key, tmp_path, monkeypatch, caps
 
 
 # ---------------------------------------------------------------- ps.lesson()
-LESSON_NUMBERS = range(1, 13)
+LESSON_NUMBERS = range(1, 15)
 
 
-def test_there_are_twelve_lessons(capsys):
-    assert len(learn.LESSONS) == 12
+def test_there_are_fourteen_lessons(capsys):
+    assert len(learn.LESSONS) == 14
     ps.lesson()
     out = capsys.readouterr().out
-    assert "12 lessons" in out
+    assert "14 lessons" in out
     for i in LESSON_NUMBERS:
         assert f"ps.lesson({i})" in out
 
@@ -311,9 +332,9 @@ def test_every_group_comes_up_in_a_lesson():
         assert taught & set(keys), f"No lesson teaches anything from {group}"
 
 
-@pytest.mark.parametrize("bad", [0, 13, "1", 1.0, True])
+@pytest.mark.parametrize("bad", [0, 15, "1", 1.0, True])
 def test_wrong_lesson_number_is_explained(bad):
-    with pytest.raises(ps.PlotsimpleError, match="lessons 1 to 12"):
+    with pytest.raises(ps.PlotsimpleError, match="lessons 1 to 14"):
         ps.lesson(bad)
 
 
@@ -331,3 +352,68 @@ def test_readme_example_runs(tmp_path, monkeypatch):
     code = text.split("```python", 1)[1].split("```", 1)[0]
     assert 'ps.example("marks")' in code
     _run(code, tmp_path, monkeypatch)
+
+
+# ---------------------------------------------------------------- old names
+OLD_WORDS = {  # old name -> what ps.help shows instead
+    "show_first": "table.show_first_rows()",
+    "remove_empty_rows": "table.remove_rows_with_empty_cells()",
+    "count_empty": "table.count_empty_cells()",
+    "fill_empty": "table.fill_empty_cells()",
+    "done": "table.as_pandas()",
+    "all_points": "chart.all_dots()",
+    "colour_bar_label": "chart.label_colour_bar()",
+    "one_per": "chart.one_chart_per()",
+}
+
+
+@pytest.mark.parametrize("old, new", list(OLD_WORDS.items()))
+def test_help_for_an_old_name_points_to_the_new_one(old, new, capsys):
+    ps.help(old)
+    out = capsys.readouterr().out
+    assert out.startswith(f'"{old}" is now called "{_new_word(new)}"')
+    assert f"\n{new}\n" in out  # and the help of the new word follows
+
+
+def _new_word(call):
+    return call.split(".", 1)[1][:-2]
+
+
+@pytest.mark.parametrize("old, new, where", [
+    ("band=", "confidence_band=", "chart.fit_line()"), ("big_data", "fast=", "ps.chart()"),
+    ("drawn_as", None, None),
+])
+def test_help_for_an_old_option_points_to_the_new_one(old, new, where, capsys):
+    ps.help(old)
+    out = capsys.readouterr().out
+    if new is None:  # a new option name is not a word of its own
+        assert "no word called" in out
+    else:
+        assert f'is now called "{new}" in {where}' in out
+
+
+def test_old_names_are_not_listed(capsys):
+    ps.words()
+    out = capsys.readouterr().out
+    for old in OLD_WORDS:
+        assert f"  {old} " not in out and f".{old}(" not in out
+    for keys in [k for _, keys in learn.GROUPS for k in keys]:
+        assert learn._word(keys) not in OLD_WORDS
+    cheat = (ROOT / "docs" / "cheatsheet.md").read_text(encoding="utf-8")
+    for old in ("all_points", "colour_bar_label", "remove_empty_rows", "big_data", "one_per(", "x_from",
+                ".done()", "show_first(", "band="):
+        assert not re.search(r"(?<![a-z_])" + re.escape(old), cheat), old
+    lessons = "\n".join(code + explain for les in learn.LESSONS for _, steps in les["parts"]
+                        for code, explain in steps)
+    for old in ("all_points", "colour_bar_label", "remove_empty_rows", "big_data", "one_per(", "x_from",
+                ".done()", "show_first(", "band=", 'error="sd"', 'chart="'):
+        assert not re.search(r"(?<![a-z_])" + re.escape(old), lessons), old
+
+
+def test_new_numbers_words_are_exported():
+    assert isinstance(ps.numbers([1, 2]), ps.Numbers)
+    assert isinstance(ps.number_grid([[1, 2], [3, 4]]), ps.NumberGrid)
+    assert isinstance(ps.random_numbers(how_many=3, seed=1), ps.Numbers)
+    assert callable(ps.words) and callable(ps.table)  # functions, not the subpackages
+    for name in ("numbers", "number_grid", "random_numbers", "Numbers", "NumberGrid"):
+        assert name in ps.__all__

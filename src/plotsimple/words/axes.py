@@ -190,13 +190,13 @@ def _main_handle(ax, kind):
     return None
 
 
-def _draw_second_y(ctx, y, chart, label, colour):
+def _draw_second_y(ctx, y, drawn_as, label, colour):
     last = ctx.last
     if last is None or last.get("x") is None:
         raise PlotsimpleError(
             ".second_y() adds a second y-axis to a chart, so it needs a chart to sit on.\n"
             'Draw one first, for example:\n  chart.lines(x="month", y="temperature")\n'
-            '  chart.second_y("rain", chart="bars", label="Rain (mm)")'
+            '  chart.second_y("rain", drawn_as="bars", label="Rain (mm)")'
         )
     if last.get("sideways"):
         raise PlotsimpleError(
@@ -241,7 +241,7 @@ def _draw_second_y(ctx, y, chart, label, colour):
         order = np.argsort(pos)
         px, py = pos[order], grouped.to_numpy()[order]
         width = 0.8
-    elif chart == "dots":
+    elif drawn_as == "dots":
         px, py = xs.to_numpy(), table[ycol].to_numpy()
         width = None
     else:
@@ -254,9 +254,9 @@ def _draw_second_y(ctx, y, chart, label, colour):
     ctx.store["second_y"] = twin
     twin.grid(False)
     twin.spines["right"].set_visible(True)
-    if chart == "lines":
+    if drawn_as == "lines":
         handle = twin.plot(px, py, color=colour, marker="o" if categorical else None, label=yname)[0]
-    elif chart == "dots":
+    elif drawn_as == "dots":
         handle = twin.scatter(px, py, color=colour, label=yname)
     else:
         if main_is_bars:
@@ -481,17 +481,17 @@ class AxesWords:
         return self._replace("flip_y", "axes", _flip, axis="y")
 
     # -------------------------------------------------------------- second y-axis
-    @friendly
-    def second_y(self, y, chart="lines", label=None, colour=None):
+    @friendly(renamed={"chart": "drawn_as"})
+    def second_y(self, y, drawn_as="lines", label=None, colour=None):
         """A second y-axis on the right, for a column measured in other units.
 
         chart.lines(x="month", y="temperature")
-        chart.second_y("rain", chart="bars", label="Rain (mm)")
+        chart.second_y("rain", drawn_as="bars", label="Rain (mm)")
         (with ps.example("weather"))
 
-        chart= can be "lines", "bars" or "dots". It shares the x-axis with the chart before it.
+        drawn_as= can be "lines", "bars" or "dots". It shares the x-axis with the chart before it.
         """
-        self._check_choice("second_y", "chart", chart, SECOND_KINDS)
+        self._check_choice("second_y", "drawn_as", drawn_as, SECOND_KINDS)
         if y is None or not (isinstance(y, str) or is_listlike(y)):
             raise PlotsimpleError(
                 f'.second_y() needs a column name, for example chart.second_y("rain"), not {y!r}.')
@@ -502,4 +502,5 @@ class AxesWords:
         if colour is not None and not (isinstance(colour, str) and is_color_like(colour)):
             raise PlotsimpleError(
                 f'.second_y() needs one colour name for colour=, such as "red" or "green", not {colour!r}.')
-        return self._replace("second_y", "extra", _draw_second_y, y=y, chart=chart, label=label, colour=colour)
+        return self._replace("second_y", "extra", _draw_second_y, y=y, drawn_as=drawn_as, label=label,
+                             colour=colour)

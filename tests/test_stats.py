@@ -100,8 +100,8 @@ def test_error_bars_need_two_values():
 
 
 def test_error_bars_bad_kind_and_layer(marks):
-    with pytest.raises(PlotsimpleError, match='Did you mean kind="sd"'):
-        ps.chart(marks).error_bars("sdd")
+    with pytest.raises(PlotsimpleError, match='Did you mean kind="standard deviation"'):
+        ps.chart(marks).error_bars("standard devation")
     with pytest.raises(PlotsimpleError, match="last chart type is bars"):
         ps.chart(marks).bars(x="name", y="marks").error_bars()
     with pytest.raises(PlotsimpleError, match="median"):
@@ -136,7 +136,7 @@ def test_band_matches_matrix_formula(xy):
 
 
 def test_fit_line_drawn(xy):
-    fig = ps.chart(xy).dots(x="x", y="y").fit_line(band=True, show_equation=True)._render()
+    fig = ps.chart(xy).dots(x="x", y="y").fit_line(confidence_band=True, show_equation=True)._render()
     ax = fig.axes[0]
     line = ax.lines[-1]
     ref = stats.linregress(xy.x, xy.y)
@@ -343,7 +343,7 @@ def test_reference_line_checks():
 
 
 def test_lines_work_on_each_panel_and_save(marks, tmp_path):
-    chart = ps.chart(marks).dots(x="height", y="marks").fit_line(band=True).line_at_y(50)
+    chart = ps.chart(marks).dots(x="height", y="marks").fit_line(confidence_band=True).line_at_y(50)
     chart.save(tmp_path / "fit.png")
     assert (tmp_path / "fit.png").stat().st_size > 1000
 

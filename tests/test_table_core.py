@@ -17,11 +17,11 @@ def test_engine_follows_input(marks):
     assert ps.table(marks)._engine == "pandas"
     pl = pytest.importorskip("polars")
     assert ps.table(pl.from_pandas(marks))._engine == "Polars"
-    assert ps.table(marks, big_data=True)._engine == "Polars"
+    assert ps.table(marks, fast=True)._engine == "Polars"
 
 
 def test_done_gives_plain_table(table, marks):
-    native = table.done()
+    native = table._done()
     assert len(native) == len(marks)
     assert list(native.columns) == list(marks.columns)
 
@@ -81,12 +81,12 @@ def test_column_names_and_repr(table, marks):
 def test_rows_are_numbered_again_after_every_step(marks, capsys):
     t = ps.table(marks)
     t.keep_rows("marks", above=60)
-    assert list(t.done().index) == list(range(len(t)))
+    assert list(t._done().index) == list(range(len(t)))
     t.sort_by("marks", biggest_first=True)
-    assert list(t.done().index) == list(range(len(t)))
+    assert list(t._done().index) == list(range(len(t)))
     t.undo()
     t.undo()
-    pd.testing.assert_frame_equal(t.done(), marks)
+    pd.testing.assert_frame_equal(t._done(), marks)
 
 
 def test_column_error_without_columns_suits_charts_and_tables():

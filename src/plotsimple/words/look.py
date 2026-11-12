@@ -137,11 +137,11 @@ def _legend(ctx, where):
     fig.legend(handles, labels, **kw)
 
 
-def _colour_bar_label(ctx, text):
+def _label_colour_bar(ctx, text):
     bar = ctx.store.get("colour_bar")
     if bar is None:
         raise PlotsimpleError(
-            ".colour_bar_label() needs a chart with a colour bar,\n"
+            ".label_colour_bar() needs a chart with a colour bar,\n"
             'for example chart.heatmap() or chart.contour(x="east", y="north", z="height").'
         )
     for one in bar if isinstance(bar, (list, tuple)) else [bar]:
@@ -164,7 +164,7 @@ class LookWords:
         for name, value in (("width", width), ("height", height)):
             if isinstance(value, bool) or not isinstance(value, (int, float)) or value <= 0:
                 raise PlotsimpleError(f"{name}= should be a number bigger than 0, not {value!r}.")
-        # size_set tells one_per() and pages not to choose a size themselves
+        # size_set tells one_chart_per() and pages not to choose a size themselves
         return self._set(width=float(width), height=float(height), size_set=True)
 
     # ------------------------------------------------------------ colours
@@ -226,10 +226,20 @@ class LookWords:
         """No legend. chart.hide_legend()"""
         return self._legend_step("hide")
 
+    @friendly
+    def show_legend(self):
+        """The legend in its usual place, for example after hide_legend(). chart.show_legend()
+
+        A legend only appears when colour= (or shape=) makes groups.
+        """
+        self._steps = [s for s in self._steps if s.name != "legend"]
+        self._cache = None
+        return self
+
     # ------------------------------------------------------------ colour bar
     @friendly
-    def colour_bar_label(self, text):
-        """The name beside the colour bar of a heatmap or contour. chart.colour_bar_label("Height (m)")"""
-        return self._replace("colour_bar_label", "text", _colour_bar_label, text=str(text))
+    def label_colour_bar(self, text):
+        """The name beside the colour bar of a heatmap or contour. chart.label_colour_bar("Height (m)")"""
+        return self._replace("label_colour_bar", "text", _label_colour_bar, text=str(text))
 
-    color_bar_label = colour_bar_label  # American spelling, same word
+    label_color_bar = label_colour_bar  # American spelling, same word

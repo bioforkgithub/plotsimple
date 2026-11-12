@@ -21,6 +21,8 @@ class Numbers(PickingWords, MathsWords, SummaryWords, BaseNumbers):
     _is_plotsimple_numbers = True
     _name = "nums"
     _noun = "numbers"
+    _OLD_WORDS = {**BaseNumbers._OLD_WORDS, "fill_empty": "fill_empty_numbers",
+                  "show_first": "show_first_numbers", "show_last": "show_last_numbers"}
 
     def _as_pandas(self, name="value", for_chart=False):
         import pandas as pd
@@ -36,7 +38,7 @@ class Numbers(PickingWords, MathsWords, SummaryWords, BaseNumbers):
             "    nums.number_at(nums.count())   the last number\n"
             "    nums.keep_first_numbers(3)     keep only the first 3\n"
             "Python's [ ] counts from 0, so plotsimple does not use it. "
-            "For a NumPy array, use nums.done()."
+            "For a NumPy array, use nums.as_numpy()."
         )
 
     def __repr__(self):
@@ -50,6 +52,7 @@ class NumberGrid(GridSummaryWords, MathsWords, BaseNumbers):
     _is_plotsimple_grid = True
     _name = "grid"
     _noun = "grid"
+    _OLD_WORDS = {**BaseNumbers._OLD_WORDS, "show_first": "show_first_rows", "show_last": "show_last_rows"}
 
     def _as_pandas(self, name=None, for_chart=False):
         """A table with columns called "1", "2", ...; for charts the rows are numbered from 1 too."""
@@ -68,7 +71,7 @@ class NumberGrid(GridSummaryWords, MathsWords, BaseNumbers):
             "    grid.row(1)                       the first row, as numbers\n"
             "    grid.column(2)                    the second column, as numbers\n"
             "Python's [ ] counts from 0, so plotsimple does not use it. "
-            "For a NumPy array, use grid.done()."
+            "For a NumPy array, use grid.as_numpy()."
         )
 
     def __repr__(self):
@@ -96,16 +99,16 @@ class NumberGrid(GridSummaryWords, MathsWords, BaseNumbers):
         return tuple(int(n) for n in self._values.shape)
 
     @friendly
-    def show_first(self, rows=5):
-        """Show the first rows. grid.show_first(5)"""
-        n = check_whole("show_first", "show_first()", rows, "grid.show_first(5)")
+    def show_first_rows(self, rows=5):
+        """Show the first rows. grid.show_first_rows(5)"""
+        n = check_whole("show_first_rows", "show_first_rows()", rows, "grid.show_first_rows(5)")
         print(np.array2string(self._values[:n], threshold=sys.maxsize, separator=", "))
         return None
 
     @friendly
-    def show_last(self, rows=5):
-        """Show the last rows. grid.show_last(5)"""
-        n = check_whole("show_last", "show_last()", rows, "grid.show_last(5)")
+    def show_last_rows(self, rows=5):
+        """Show the last rows. grid.show_last_rows(5)"""
+        n = check_whole("show_last_rows", "show_last_rows()", rows, "grid.show_last_rows(5)")
         size = self._values.shape[0]
         print(np.array2string(self._values[size - min(n, size):], threshold=sys.maxsize, separator=", "))
         return None

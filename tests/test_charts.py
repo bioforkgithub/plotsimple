@@ -125,16 +125,16 @@ def test_boxes_need_y():
 
 
 # ---------------------------------------------------------------- all points
-def test_all_points_shows_every_value(marks):
-    ax = draw(ps.chart(marks).all_points(x="class", y="marks")).ax
+def test_all_dots_shows_every_value(marks):
+    ax = draw(ps.chart(marks).all_dots(x="class", y="marks")).ax
     ys = np.concatenate([c.get_offsets()[:, 1] for c in ax.collections])
     assert sorted(ys) == sorted(marks["marks"])
 
 
-def test_all_points_strip_is_same_every_time(big):
+def test_all_dots_strip_is_same_every_time(big):
     state = np.random.get_state()
-    a = draw(ps.chart(big).all_points(x="class", y="marks")).ax.collections[0].get_offsets()
-    b = draw(ps.chart(big).all_points(x="class", y="marks")).ax.collections[0].get_offsets()
+    a = draw(ps.chart(big).all_dots(x="class", y="marks")).ax.collections[0].get_offsets()
+    b = draw(ps.chart(big).all_dots(x="class", y="marks")).ax.collections[0].get_offsets()
     assert np.array_equal(a, b)
     assert np.array_equal(np.random.get_state()[1], state[1])  # user's random numbers untouched
 
@@ -294,7 +294,7 @@ def test_every_new_word_saves(marks, grid, tmp_path):
         ps.chart(marks).area(x="test", y="marks"),
         ps.chart(marks).histogram(x="marks"),
         ps.chart(marks).box(x="class", y="marks", colour="name"),
-        ps.chart(marks).violin(x="class", y="marks").all_points(x="class", y="marks"),
+        ps.chart(marks).violin(x="class", y="marks").all_dots(x="class", y="marks"),
         ps.chart(marks).count_bars(x="name", colour="class"),
         ps.chart(marks).density(x="marks", colour="class"),
         ps.chart(marks).heatmap(x="test", y="name", value="marks", numbers=True, cluster=True),

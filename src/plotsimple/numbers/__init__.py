@@ -5,7 +5,7 @@
     bigger = nums * 2      # symbols make new numbers
     nums.average()
 
-Not exported from plotsimple yet (ps.numbers comes with its lessons and help).
+ps.lesson(13) teaches them.
 """
 
 from .numbers import NumberGrid, Numbers, number_grid, numbers, random_numbers

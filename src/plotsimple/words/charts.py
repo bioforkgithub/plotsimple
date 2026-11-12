@@ -16,10 +16,10 @@ import seaborn as sns
 from .._core import PHASES
 from .._data import frame_for
 from .._errors import PlotsimpleError, friendly
-from .._stats import SHOW, check_error, check_show
+from .._stats import SHOW, check_error, check_show, error_code, say_error
 from ._helpers import check, colour_role, default_colour, palette_for, single_list
 
-# all_points: up to this many points in one group, dots are packed side by side (a swarm);
+# all_dots: up to this many points in one group, dots are packed side by side (a swarm);
 # above it they are spread at random (a strip), because a swarm would not fit.
 SWARM_LIMIT = 100
 JITTER_SEED = 0  # the same "random" spread every time the chart is drawn
@@ -269,8 +269,8 @@ def _draw_boxes(ctx, x, y, colour, violins):
     _remember(ctx, "violins" if violins else "boxes", table, n)
 
 
-# ---------------------------------------------------------------- all points
-def _draw_all_points(ctx, x, y, colour):
+# ---------------------------------------------------------------- all dots
+def _draw_all_dots(ctx, x, y, colour):
     group, fixed = colour_role(ctx.data, colour)
     table, n = frame_for(ctx.data, x=x, y=y, colour=group)
     dodge = bool(n["colour"]) and n["colour"] not in (n["x"], n["y"])
@@ -291,7 +291,7 @@ def _draw_all_points(ctx, x, y, colour):
             sns.stripplot(alpha=0.6, **kw)
         finally:
             np.random.set_state(state)
-    _remember(ctx, "all_points", table, n)
+    _remember(ctx, "all_dots", table, n)
 
 
 # ---------------------------------------------------------------- density
@@ -505,12 +505,15 @@ class ChartWords:
         """Bars. chart.bars(x="name", y="marks") (with ps.example("marks"))
 
         colour="class" gives each group its own colour, or colour="blue" one colour.
-        show="average" (default), "median", "total" or "count".
-        error="sd", "se" or "ci" adds error bars (with show="average").
+        show= says what each bar stands for when a group has many rows: "average" (default),
+        "median", "total", "count", "smallest", "biggest" or "standard deviation".
+        error="standard deviation", "standard error" or "confidence interval" adds error
+        bars (with show="average"); a line says which one was drawn.
         stacked=True puts groups on top of each other; sideways=True lays bars down.
         """
-        check_show("bars", show)
+        show = check_show("bars", show)
         check_error("bars", error, show)
+        error = error_code("bars", error)
         x, y = single_list(x, y)
         if x is None:
             raise PlotsimpleError('.bars() needs x=, for example chart.bars(x="name", y="marks").')
@@ -526,6 +529,8 @@ class ChartWords:
             raise PlotsimpleError("Error bars cannot be drawn on stacked bars. Remove error= or stacked=True.")
         check(self._data, x=x, y=y, colour=group)
         self._need_axes("bars")
+        if error:
+            say_error(error)
         return self._add("bars", "draw", _draw_bars, x=x, y=y, colour=colour, show=show,
                          error=error, stacked=stacked, sideways=sideways)
 
@@ -534,18 +539,23 @@ class ChartWords:
         """Lines. chart.lines(x="month", y="temperature", colour="city") (with ps.example("weather"))
 
         colour="city" draws one line per group. dots=True marks each point.
-        dashed=True draws a dashed line. error="sd", "se" or "ci" adds a band.
+        dashed=True draws a dashed line. show= works as in bars (not "count").
+        error="standard deviation", "standard error" or "confidence interval" adds a shaded
+        band; a line says which one was drawn.
         """
-        check_show("lines", show)
+        show = check_show("lines", show)
         if SHOW[show] == "count":
             raise PlotsimpleError('.lines() cannot use show="count". Use "average", "median" or "total".')
         check_error("lines", error, show)
+        error = error_code("lines", error)
         x, y = single_list(x, y)
         if x is None or y is None:
             raise PlotsimpleError('.lines() needs x= and y=, for example chart.lines(x="month", y="temperature").')
         group, _ = colour_role(self._data, colour)
         check(self._data, x=x, y=y, colour=group)
         self._need_axes("lines")
+        if error:
+            say_error(error, "Shaded band")
         return self._add("lines", "draw", _draw_lines, x=x, y=y, colour=colour, show=show,
                          error=error, dots=dots, dashed=dashed)
 
@@ -667,20 +677,20 @@ class ChartWords:
                          error=None, stacked=False, sideways=sideways)
 
     @friendly
-    def all_points(self, x=None, y=None, colour=None):
+    def all_dots(self, x=None, y=None, colour=None):
         """Every value as a dot, spread out so no dot hides another.
-        chart.all_points(x="class", y="marks") (with ps.example("marks"))
+        chart.all_dots(x="class", y="marks") (with ps.example("marks"))
 
         Good on top of .boxes() or .violins(), to show each value as well.
         """
         if x is None and y is None:
             raise PlotsimpleError(
-                '.all_points() needs y= (and usually x=), for example chart.all_points(x="class", y="marks").'
+                '.all_dots() needs y= (and usually x=), for example chart.all_dots(x="class", y="marks").'
             )
         group, _ = colour_role(self._data, colour)
         check(self._data, x=x, y=y, colour=group)
-        self._need_axes("all_points")
-        return self._add("all_points", "draw", _draw_all_points, x=x, y=y, colour=colour)
+        self._need_axes("all_dots")
+        return self._add("all_dots", "draw", _draw_all_dots, x=x, y=y, colour=colour)
 
     @friendly
     def density(self, x=None, colour=None):

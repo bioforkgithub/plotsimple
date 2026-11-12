@@ -4,8 +4,10 @@ The names follow tables, with "numbers" in place of "rows", so they can be guess
 
     table.keep_rows("marks", above=50)    ->  nums.keep_numbers(above=50)
     table.keep_first_rows(10)             ->  nums.keep_first_numbers(10)
-    table.remove_empty_rows()             ->  nums.remove_empty_numbers()
-    table.fill_empty("marks", with_the="average")  ->  nums.fill_empty(with_the="average")
+    table.show_first_rows(5)              ->  nums.show_first_numbers(5)
+    table.remove_rows_with_empty_cells()  ->  nums.remove_empty_numbers()
+    table.count_empty_cells()             ->  nums.count_empty_numbers()
+    table.fill_empty_cells("marks", with_the="average")  ->  nums.fill_empty_numbers(with_the="average")
 
 Conditions are the same as keep_rows (without the text ones), and empty values never
 match a condition except is_empty=True.
@@ -133,16 +135,16 @@ class PickingWords:
         return plain(self._values[self._check_position("number_at", position)])
 
     @friendly
-    def show_first(self, how_many=5):
-        """Show the first numbers. nums.show_first(5)"""
-        n = check_whole("show_first", "show_first()", how_many, "nums.show_first(5)")
+    def show_first_numbers(self, how_many=5):
+        """Show the first numbers. nums.show_first_numbers(5)"""
+        n = check_whole("show_first_numbers", "show_first_numbers()", how_many, "nums.show_first_numbers(5)")
         print(np.array2string(self._values[:n], threshold=sys.maxsize, separator=", "))
         return None
 
     @friendly
-    def show_last(self, how_many=5):
-        """Show the last numbers. nums.show_last(5)"""
-        n = check_whole("show_last", "show_last()", how_many, "nums.show_last(5)")
+    def show_last_numbers(self, how_many=5):
+        """Show the last numbers. nums.show_last_numbers(5)"""
+        n = check_whole("show_last_numbers", "show_last_numbers()", how_many, "nums.show_last_numbers(5)")
         print(np.array2string(self._values[self._values.size - min(n, self._values.size):],
                               threshold=sys.maxsize, separator=", "))
         return None
@@ -227,21 +229,22 @@ class PickingWords:
         return self._keep("remove duplicate numbers", mask, kept_word=False)
 
     @friendly
-    def fill_empty(self, with_value=None, with_the=None):
+    def fill_empty_numbers(self, with_value=None, with_the=None):
         """Fill the empty values with a number, or with the average, median, value above or value below.
 
-        nums.fill_empty(with_value=0)   or   nums.fill_empty(with_the="average")
+        nums.fill_empty_numbers(with_value=0)   or   nums.fill_empty_numbers(with_the="average")
         """
         if (with_value is None) == (with_the is None):
             raise PlotsimpleError(
-                ".fill_empty() needs exactly one of with_value= or with_the=."
-                + self._example("fill_empty(with_value=0)") + self._example('fill_empty(with_the="average")')
+                ".fill_empty_numbers() needs exactly one of with_value= or with_the=."
+                + self._example("fill_empty_numbers(with_value=0)")
+                + self._example('fill_empty_numbers(with_the="average")')
             )
         if with_value is not None and not is_number(with_value):
-            raise PlotsimpleError("with_value= needs a number, like with_value=0." + self._example("fill_empty(with_value=0)"))
+            raise PlotsimpleError("with_value= needs a number, like with_value=0." + self._example("fill_empty_numbers(with_value=0)"))
         choice = None if with_the is None else str(with_the).strip().lower().replace("_", " ")
         if choice is not None and choice not in FILL_CHOICES:
-            raise choice_error("fill_empty", "with_the", with_the, FILL_CHOICES)
+            raise choice_error("fill_empty_numbers", "with_the", with_the, FILL_CHOICES)
         empty = self._empty_mask()
         if not empty.any():
             print("There are no empty values to fill.")

@@ -6,6 +6,15 @@ import numpy as np
 import pandas as pd
 import pytest
 
+from plotsimple import _errors
+
+
+@pytest.fixture(autouse=True)
+def fresh_old_name_notes():
+    """Each test starts like a new session: an old name prints its note again the first time."""
+    _errors._NOTED.clear()
+    yield
+
 
 @pytest.fixture
 def marks():

@@ -147,10 +147,10 @@ def test_polars_input(marks):
     assert len(chart._render().axes[0].patches) == 4
 
 
-def test_big_data_uses_polars(marks, tmp_path):
+def test_fast_uses_polars(marks, tmp_path):
     pytest.importorskip("polars")
     marks.to_csv(tmp_path / "m.csv", index=False)
-    data = ps.chart(tmp_path / "m.csv", big_data=True)._data
+    data = ps.chart(tmp_path / "m.csv", fast=True)._data
     pd.testing.assert_frame_equal(data.reset_index(drop=True), marks, check_dtype=False)
 
 

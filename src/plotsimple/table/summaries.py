@@ -7,6 +7,7 @@ Rules (the same as the rest of plotsimple, see _stats.py):
 * without for_each= you get one plain number; with for_each= you get a NEW small table
   with one row per group, sorted by group. Rows with an empty group cell form their own
   group, shown last.
+* every summary also prints its answer as one short sentence, so a script needs no print()
 
 Correlation strength words (size of r, whichever direction), after Evans (1996):
 
@@ -63,6 +64,49 @@ def _as_list(step: str, option: str, value) -> list[str]:
         f'For example, with ps.example("marks"): table.{step}("marks", for_each="class")\n'
         f'or table.{step}(["marks", "hours"], for_each=["class", "subject"])'
     )
+
+
+GROUPS_IN_SENTENCE = 8  # a sentence lists at most this many groups; the table has them all
+
+
+def _say_number(value) -> str:
+    """A number for a sentence: 61, 61.24, 0.0042 (never more digits than people need)."""
+    value = _plain(value)
+    if value is None or (isinstance(value, float) and math.isnan(value)):
+        return "empty"
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        return str(value)
+    if isinstance(value, float) and value.is_integer() and abs(value) < 1e15:
+        return str(int(value))
+    if isinstance(value, int):
+        return str(value)
+    if abs(value) >= 0.01:
+        return f"{round(value, 2):g}" if abs(value) < 1e6 else f"{value:.4g}"
+    return f"{value:.2g}"
+
+
+def _say_label(value) -> str:
+    value = _plain(value)
+    if value is None or (isinstance(value, float) and math.isnan(value)):
+        return "(empty)"
+    return str(value)
+
+
+def _say_groups(frame, groups: list[str], column: str) -> str:
+    """ "A 62.1, B 58.3, C 65" from a small table: one item per row, the groups then a value."""
+    rows = frame.select(*groups, column).rows()
+    items = [" / ".join(_say_label(v) for v in row[:-1]) + " " + _say_number(row[-1])
+             for row in rows[:GROUPS_IN_SENTENCE]]
+    text = ", ".join(items)
+    if len(rows) > GROUPS_IN_SENTENCE:
+        text += f" ... and {len(rows) - GROUPS_IN_SENTENCE} more (the new table has them all)"
+    return text
+
+
+def _names(names) -> str:
+    """ "class" or "class" and "subject" """
+    quoted = [f'"{n}"' for n in names]
+    return quoted[0] if len(quoted) == 1 else ", ".join(quoted[:-1]) + " and " + quoted[-1]
 
 
 def _strength(r: float) -> str:
@@ -159,11 +203,21 @@ class SummaryWords:
         if groups is None:
             result = frame.select(*exprs)
             self._note_empty(frame, columns)
+            counts = frame.select(nw.col(c).count().alias(c) for c in columns).row(0)
+            sentence = "; ".join(f'the {start} of "{c}" is {_say_number(v)} ({n} values)'
+                                 for c, v, n in zip(columns, result.row(0), counts))
+            print(sentence[0].upper() + sentence[1:] + ".")
             if isinstance(column, str):
                 return _plain(result.item())
             return self._new_table(result)
         result = self._grouped(frame, groups, exprs)
         self._note_empty(frame, columns)
+        each = " and ".join(f'"{g}"' for g in groups)
+        if len(columns) == 1:
+            values = _say_groups(result._frame, groups, f"{start} of {columns[0]}")
+            print(f'The {start} of "{columns[0]}" for each {each}: {values}.')
+        else:
+            print(f"The {start} of {_names(columns)} for each {each}: a new table with {len(result)} rows.")
         return result
 
     # ------------------------------------------------------------------ number words
@@ -224,10 +278,15 @@ class SummaryWords:
         table.count_rows(for_each="class")   (with ps.example("marks"))
         """
         if for_each is None:
-            return len(self._frame)
+            n = len(self._frame)
+            print(f"The table has {n} row{'' if n == 1 else 's'}.")
+            return n
         groups = self._group_columns("count_rows", for_each)
         summary = self._grouped(self._frame, groups, [nw.len().alias("count")])
-        return self._new_table(summary._frame.with_columns(nw.col("count").cast(nw.Int64)))
+        result = self._new_table(summary._frame.with_columns(nw.col("count").cast(nw.Int64)))
+        each = " and ".join(f'"{g}"' for g in groups)
+        print(f"Rows for each {each}: {_say_groups(result._frame, groups, 'count')}.")
+        return result
 
     @friendly
     def count_each(self, column):
@@ -256,6 +315,9 @@ class SummaryWords:
             .with_columns((nw.col("count") * 100.0 / max(total, 1)).round(1).alias("percent"))
             .sort(["count", column], descending=[True, False], nulls_last=True)
         )
+        kinds = len(result)
+        print(f'How many rows have each "{column}" ({kinds} different value{"" if kinds == 1 else "s"}): '
+              f"{_say_groups(result, [column], 'count')}.")
         return self._new_table(nw.maybe_reset_index(result))
 
     # ------------------------------------------------------------------ correlation

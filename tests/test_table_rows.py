@@ -49,7 +49,7 @@ def messy(engine, messy_df):
 
 def plain(t):
     """The table as plain pandas with a fresh index, whatever the engine."""
-    native = t.done()
+    native = t._done()
     if not isinstance(native, pd.DataFrame):
         native = native.to_pandas()
     return native.reset_index(drop=True)
@@ -92,13 +92,13 @@ def test_describe_messy(messy, capsys):
 
 
 def test_count_empty(messy, marks, capsys):
-    messy.count_empty()
+    messy.count_empty_cells()
     out = capsys.readouterr().out
     import re
     counts = dict(re.findall(r"^  (\w+) +(\d+)$", out, flags=re.M))
     assert counts == {"name": "2", "marks": "1", "num": "2", "when": "0", "passed": "0"}
     assert "Total: 5 cells empty." in out
-    marks.count_empty()
+    marks.count_empty_cells()
     assert "No empty cells." in capsys.readouterr().out
 
 
@@ -271,39 +271,39 @@ def test_remove_duplicate_rows(marks, marks_df, capsys):
 
 # ---------------------------------------------------------------------- empty cells
 def test_remove_empty_rows(messy, messy_df, capsys):
-    messy.remove_empty_rows()
+    messy.remove_rows_with_empty_cells()
     same(messy, messy_df.iloc[[0, 2]])
     assert "Removed 4 of 6 rows. 2 rows left." in capsys.readouterr().out
     messy.undo()
-    messy.remove_empty_rows("marks")
+    messy.remove_rows_with_empty_cells("marks")
     same(messy, messy_df.drop(index=1))
     messy.undo()
-    messy.remove_empty_rows("name")
+    messy.remove_rows_with_empty_cells("name")
     same(messy, messy_df.drop(index=[3, 5]))
 
 
 def test_fill_empty(messy, messy_df, capsys):
     filled = messy_df["marks"].fillna(messy_df["marks"].mean())
-    messy.fill_empty("marks", with_the="average")
+    messy.fill_empty_cells("marks", with_the="average")
     assert plain(messy)["marks"].tolist() == pytest.approx(filled.tolist())
     assert "Filled 1 cell in marks." in capsys.readouterr().out
     messy.undo()
-    messy.fill_empty("marks", with_the="median")
+    messy.fill_empty_cells("marks", with_the="median")
     assert plain(messy)["marks"][1] == messy_df["marks"].median()
     messy.undo()
-    messy.fill_empty("marks", with_the="value above")
+    messy.fill_empty_cells("marks", with_the="value above")
     assert plain(messy)["marks"].tolist() == messy_df["marks"].ffill().tolist()
     messy.undo()
-    messy.fill_empty("marks", with_the="value_below")
+    messy.fill_empty_cells("marks", with_the="value_below")
     assert plain(messy)["marks"].tolist() == messy_df["marks"].bfill().tolist()
     messy.undo()
-    messy.fill_empty("marks", with_value=0)
+    messy.fill_empty_cells("marks", with_value=0)
     assert plain(messy)["marks"].tolist() == messy_df["marks"].fillna(0).tolist()
     messy.undo()
-    messy.fill_empty("name", with_value="?")
+    messy.fill_empty_cells("name", with_value="?")
     assert plain(messy)["name"].tolist() == ["Asha", " Ben  ", "Chen", "?", "Dina", "?"]
     messy.undo()
-    messy.fill_empty("name", with_the="value above")
+    messy.fill_empty_cells("name", with_the="value above")
     assert plain(messy)["name"].tolist() == ["Asha", " Ben  ", "Chen", "Chen", "Dina", "Dina"]
     messy.steps()
     assert "fill empty cells in name with the value above" in capsys.readouterr().out
@@ -311,15 +311,15 @@ def test_fill_empty(messy, messy_df, capsys):
 
 def test_fill_empty_errors(messy):
     with pytest.raises(PlotsimpleError, match="exactly one"):
-        messy.fill_empty("marks")
+        messy.fill_empty_cells("marks")
     with pytest.raises(PlotsimpleError, match="exactly one"):
-        messy.fill_empty("marks", with_value=0, with_the="average")
+        messy.fill_empty_cells("marks", with_value=0, with_the="average")
     with pytest.raises(PlotsimpleError, match="needs numbers"):
-        messy.fill_empty("name", with_the="average")
+        messy.fill_empty_cells("name", with_the="average")
     with pytest.raises(PlotsimpleError, match='Did you mean with_the="median"'):
-        messy.fill_empty("marks", with_the="medium")
+        messy.fill_empty_cells("marks", with_the="medium")
     with pytest.raises(PlotsimpleError, match="needs text in quotes"):
-        messy.fill_empty("name", with_value=0)
+        messy.fill_empty_cells("name", with_value=0)
 
 
 # ---------------------------------------------------------------------- fixing columns
@@ -414,8 +414,8 @@ STEPS = [
     lambda t: t.keep_last_rows(2),
     lambda t: t.keep_random_rows(2, seed=3),
     lambda t: t.remove_duplicate_rows(columns="marks"),
-    lambda t: t.remove_empty_rows(),
-    lambda t: t.fill_empty("marks", with_the="average"),
+    lambda t: t.remove_rows_with_empty_cells(),
+    lambda t: t.fill_empty_cells("marks", with_the="average"),
     lambda t: t.make_numbers("num"),
     lambda t: t.make_dates("when"),
     lambda t: t.make_text("marks"),

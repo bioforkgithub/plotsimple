@@ -37,14 +37,15 @@ grammar.
 | Python | 3.10 and newer |
 | Audience | Everyone: beginners, students, teachers and researchers. "Simple enough for a school child to read" is the test for every word, not a limit on what it can do |
 | Data | Plain lists, Excel/CSV files, pandas tables, Polars tables; results stay plain pandas/NumPy (or Polars, if Polars went in) |
-| Speed | Automatic: Polars tables stay Polars, files over 100 MB use Polars, everything else pandas. Override in plain words: `big_data=True`. A one-line message says when fast mode is used. |
+| Speed | Automatic: Polars tables stay Polars, files over 100 MB use Polars, everything else pandas. Override in plain words: `fast=True`. A one-line message says when fast mode is used. |
 | Style | One step per line on a chart; chaining also allowed |
 | Look | Clean paper style by default (white, large text, colour-blind-safe colours) |
 | Showing | Charts appear automatically in Jupyter/VS Code/Spyder; `chart.show()` in scripts |
 | Saving | `chart.save("x.png")` or `chart.save("x.pdf")`, format from the file name |
 | Spelling | Both `colour` and `color`, `grey` and `gray` |
 | Errors | Friendly message, "did you mean …?", list of columns, link to request a missing word on GitHub |
-| Learning | Built-in lessons `ps.lesson(1)` … `ps.lesson(8)`, `ps.help("bars")`, `ps.words()` |
+| Learning | Built-in lessons `ps.lesson(1)` … `ps.lesson(14)`, `ps.help("bars")`, `ps.words()` |
+| Renaming | A renamed word or option keeps working for one release and prints one line, once per session: `Note: "remove_empty_rows" is now called "remove_rows_with_empty_cells".` Old names are never listed in `ps.words()`, the cheat sheet or the lessons; `ps.help("old_name")` points to the new one |
 
 ## 4. Grammar rules
 
@@ -55,6 +56,35 @@ grammar.
 4. **Mathematical terms keep their names**: log, histogram, density, polar.
 5. Other jargon becomes plain words: `dots` (scatter), `sideways=True` (horizontal bars).
 6. Calling two chart types on the same chart puts them on top of each other.
+
+### Six patterns for the whole vocabulary
+
+A user who knows one word of a pattern should be able to guess the others.
+
+| # | Pattern | Examples |
+|---|---|---|
+| 1 | **verb + thing** changes a table or numbers: `keep_`, `remove_`, `add_`, `make_`, `fill_`, `turn_`, `rename_`, `sort_` + rows / columns / cells / numbers | `keep_rows`, `remove_columns`, `fill_empty_cells`, `remove_rows_with_empty_cells`, `fill_empty_numbers` |
+| 2 | **chart type** draws on a chart (a plain noun on a `chart`) | `bars`, `histogram`, `dots`, `all_dots` |
+| 3 | **thing + where** places something on a chart; where = `top`/`bottom`/`left`/`right`/`x`/`y`/`at`/`between` | `title_top`, `label_y`, `label_colour_bar`, `line_at_y`, `legend_bottom`, `zoom_box(where="top right")` |
+| 4 | **measure + `_of`(column, `for_each=`)** for one column; **relation + `_between`(a, b)** for two; **`compare_` + measure** for tests | `median_of`, `correlation_between`, `compare_averages` |
+| 5 | **`show_` / `hide_` + thing** to look at something without changing it | `show_first_rows`, `show_grid`/`hide_grid`, `show_legend`/`hide_legend` |
+| 6 | **`as_` + library** hands the data to another Python tool | `as_pandas`, `as_polars`, `as_numpy` |
+
+**One option name, one meaning, everywhere:** `for_each=` (groups), `colour=` (one colour, or a
+colour per group), `between=[low, high]` and `x_between=`/`y_between=` (every span),
+`from_column=`, `with_value=`, `biggest_first=`, `per_row=` (charts in a row), `columns=` (table
+columns only), `label=` (text on a line or band), `fast=`, `drawn_as=`. Measure names are the same
+wherever they appear: `"average"`, `"median"`, `"total"`, `"count"`, `"smallest"`, `"biggest"`,
+`"standard deviation"`, `"standard error"`, `"confidence interval"` (in `show=`, `error=`,
+`error_bars` and the `_of` words). Summary words print their answer as one sentence, so a story
+needs no `print()`.
+
+**The word names the idea.** The word says the question in plain words; help and the printed
+result name the technical term ("Welch's t-test", "linear regression"), so a learner can follow
+a paper's Methods section.
+
+**Checklist for a new word:** can a user who has never seen it guess it from one sibling? If
+not, rename it before it is released.
 
 ```python
 import plotsimple as ps
@@ -99,15 +129,15 @@ chart.save("marks.png")
 ### 5.3 Statistics
 | Word | Example |
 |---|---|
-| `show=` | `chart.bars(x="class", y="marks", show="average")` · `"median"` · `"total"` · `"count"` |
-| `error=` | `error="sd"` · `"se"` · `"ci"` |
-| `error_bars` | `chart.error_bars("sd")` · `chart.error_bars(column="error")` |
-| `fit_line` | `chart.fit_line()` · `band=True` · `show_equation=True` |
+| `show=` | `chart.bars(x="class", y="marks", show="average")` · `"median"` · `"total"` · `"count"` · `"smallest"` · `"biggest"` · `"standard deviation"` |
+| `error=` | `error="standard deviation"` · `"standard error"` · `"confidence interval"` (`"sd"`, `"se"`, `"ci"` also work) |
+| `error_bars` | `chart.error_bars("standard error")` · `chart.error_bars(column="error")` |
+| `fit_line` | `chart.fit_line()` · `confidence_band=True` · `show_equation=True` |
 | `fit_curve` | `chart.fit_curve(degree=2)` |
 | `smooth_line` | `chart.smooth_line()` |
 | `density` | `chart.density(x="marks", colour="class")` |
 | `count_bars` | `chart.count_bars(x="fruit")` |
-| `all_points` | `chart.all_points(x="class", y="marks")` |
+| `all_dots` | `chart.all_dots(x="class", y="marks")` |
 | `side_histograms` | `chart.side_histograms()` |
 | `ps.pairs` | `ps.pairs(table)` |
 
@@ -130,7 +160,7 @@ chart.save("marks.png")
 | `log_scale_x` / `log_scale_y` | `chart.log_scale_y()` |
 | `ticks_x` / `ticks_y` | `chart.ticks_x(0, 10, 20, 30)` |
 | `rotate_labels_x` | `chart.rotate_labels_x(45)` |
-| `second_y` | `chart.second_y("rain", chart="lines", label="Rain (mm)")` |
+| `second_y` | `chart.second_y("rain", drawn_as="bars", label="Rain (mm)")` |
 | `flip_y` | `chart.flip_y()` |
 
 ### 5.6 Colours and look
@@ -142,23 +172,23 @@ chart.save("marks.png")
 | `size` | `chart.size(width=8, height=6)` |
 | `show_grid` / `hide_grid` | `chart.hide_grid()` |
 | `legend_top` / `_bottom` / `_left` / `_right` | `chart.legend_bottom()` |
-| `hide_legend` | `chart.hide_legend()` |
-| `colour_bar_label` | `chart.colour_bar_label("Depth (m)")` |
+| `hide_legend` / `show_legend` | `chart.hide_legend()` |
+| `label_colour_bar` | `chart.label_colour_bar("Depth (m)")` |
 
 ### 5.7 Several charts and hard tricks
 | Word | Example |
 |---|---|
 | `ps.side_by_side` | `ps.side_by_side(a, b).save("both.png")` |
 | `ps.one_above_other` | `ps.one_above_other(a, b)` |
-| `ps.grid` | `ps.grid(a, b, c, d, columns=2, same_y=True)` |
-| `one_per` | `chart.one_per("site", columns=3)` · `one_per(row="site", column="year")` |
-| `zoom_box` | `chart.zoom_box(x_from=2, x_to=4, y_from=10, y_to=20)` |
+| `ps.grid` | `ps.grid(a, b, c, d, per_row=2, same_y=True)` |
+| `one_chart_per` | `chart.one_chart_per("site", per_row=3)` · `one_chart_per(down="site", across="year")` |
+| `zoom_box` | `chart.zoom_box(x_between=[2, 4], y_between=[10, 20], where="top right")` |
 | `animate` | `chart.animate(over="year")` then `chart.save("growth.gif")` |
 
 ### 5.8 Help and learning
 | Word | Example |
 |---|---|
-| `ps.lesson` | `ps.lesson(1)` … `ps.lesson(8)` |
+| `ps.lesson` | `ps.lesson(1)` … `ps.lesson(14)` |
 | `ps.help` | `ps.help("bars")` |
 | `ps.words` | `ps.words()` prints the whole list |
 
@@ -200,7 +230,7 @@ statistics are checked against SciPy, seaborn and R on reference data.
 |---|---|
 | v0.1 | Charts (sections 5.1–5.8), lessons 1–8, friendly errors |
 | v0.1 (also) | Accept Polars tables as chart input |
-| v0.2 | Tables: plain-word layer over pandas and Polars (read, clean, keep, group, summarise), with automatic engine choice and `big_data=True` |
+| v0.2 | Tables: plain-word layer over pandas and Polars (read, clean, keep, group, summarise), with automatic engine choice and `fast=True` |
 | v0.3 | Arrays: plain-word layer over NumPy; statistical tests in plain words (comparing averages, comparing counts, fitting formulas) over SciPy |
 | v0.4 | More statistics: regression with several predictors, mixed models, survival curves, multiple-testing correction, power analysis, PCA and ordination |
 | v0.5 | Curve fitting and optimisation: fit any formula, find minima and maxima, solve equations |
