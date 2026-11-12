@@ -1,4 +1,4 @@
-"""Learning simplydata: sdata.words(), sdata.help("bars") and sdata.lesson(1) ... sdata.lesson(15).
+"""Learning simplydata: sdata.words(), sdata.help("bars") and sdata.lesson(1) ... sdata.lesson(18).
 
 The word list is built from the real words and their docstrings, so it cannot go out of
 date. Only the grouping (GROUPS) and the runnable examples (HELP_EXAMPLES, LESSONS) are
@@ -65,6 +65,13 @@ GROUPS = [
     ("Statistical tests", ["table.compare_averages", "table.compare_each_pair", "table.compare_before_after",
                            "table.compare_average_to", "table.compare_counts", "table.fit_straight_line",
                            "table.fit_formula", "table.compare_shape_to", "table.add_adjusted_p_value_column"]),
+    ("Models", ["table.explain", "table.add_predicted_column"]),
+    ("Patterns across columns", ["table.add_principal_components", "table.principal_components_of",
+                                 "table.add_clusters", "table.distances_between_rows", "table.add_nmds",
+                                 "table.compare_profiles"]),
+    ("Survival", ["table.survival_over_time", "table.compare_survival", "table.explain_survival",
+                  "survival_curves"]),
+    ("Planning a study", ["sdata.how_many_needed", "sdata.chance_to_find"]),
     ("Combine and reshape", ["table.join_with", "table.add_rows_from", "table.turn_columns_into_rows",
                              "table.turn_rows_into_columns"]),
     ("Undo and finish", ["table.undo", "table.steps", "table.start_again", "table.save",
@@ -468,6 +475,51 @@ HELP_EXAMPLES = {
                                 'chart.save("maths_marks.png")'),
     "table.as_pandas": _tx("marks", 'table.keep_rows("marks", above=50)\ndf = table.as_pandas()\nprint(type(df))'),
     "table.as_polars": _tx("marks", 'table.keep_rows("marks", above=50)\ndf = table.as_polars()\nprint(type(df))'),
+    # models
+    "table.explain": _tx("school", """\
+        table.explain("marks", using=["hours", "sleep", "breakfast"])
+        table.explain("passed", using=["hours", "breakfast"], outcome="yes or no")
+        table.explain("marks", using=["hours", "breakfast"], grouped_by="school")"""),
+    "table.add_predicted_column": _tx("school", """\
+        table.add_predicted_column("marks", using=["hours", "breakfast"])
+        table.show_first_rows(5)"""),
+    # patterns across columns
+    "table.add_principal_components": _tx("meadow", """\
+        table.add_principal_components(how_many=2)
+        chart = table.chart()
+        chart.dots(x="PC1", y="PC2", colour="grazed")
+        chart.save("meadow_pca.png")"""),
+    "table.principal_components_of": _tx("meadow", """\
+        components = table.principal_components_of()
+        components.show()"""),
+    "table.add_clusters": _tx("meadow", """\
+        table.add_clusters(how_many=2)
+        table.count_rows(for_each="cluster", across="grazed")"""),
+    "table.distances_between_rows": _tx("meadow", """\
+        distances = table.distances_between_rows(measure="bray-curtis", names="plot")
+        distances.show_first_rows(3)"""),
+    "table.add_nmds": _tx("meadow", """\
+        table.add_nmds(measure="bray-curtis")
+        chart = table.chart()
+        chart.dots(x="NMDS1", y="NMDS2", colour="grazed")
+        chart.save("meadow_nmds.png")"""),
+    "table.compare_profiles": _tx("meadow", 'table.compare_profiles(for_each="grazed")'),
+    # survival
+    "table.survival_over_time": _tx("trial", 'table.survival_over_time(time="days", event="died", for_each="treatment")'),
+    "table.compare_survival": _tx("trial", 'table.compare_survival(time="days", event="died", for_each="treatment")'),
+    "table.explain_survival": _tx("trial", 'table.explain_survival(time="days", event="died", '
+                                           'using=["treatment", "age"])'),
+    "survival_curves": _ex("trial", 'chart.survival_curves(time="days", event="died", colour="treatment", '
+                                    'confidence_band=True)', "survival_curves"),
+    # planning a study
+    "sdata.how_many_needed": textwrap.dedent("""\
+        import simplydata as sdata
+        sdata.how_many_needed(effect_size=0.5, power=0.8)
+        sdata.how_many_needed(test="compare_averages", difference=5, spread=10)
+        sdata.how_many_needed(test="compare_averages", effect_size=0.25, groups=3)"""),
+    "sdata.chance_to_find": textwrap.dedent("""\
+        import simplydata as sdata
+        sdata.chance_to_find(effect_size=0.5, values_per_group=20)"""),
     # numbers: make and look
     "sdata.numbers": textwrap.dedent("""\
         import simplydata as sdata
@@ -2662,6 +2714,278 @@ LESSONS = [
                "table.compare_averages", "table.chart", "boxes", "all_dots", "dots", "fit_line",
                "sdata.grid", "style", "table.save", "table.steps", "table.as_pandas", "sdata.chart"],
     ),
+    dict(
+        title="Models: explain one column from several others",
+        learn=[
+            "how to explain one column from several others at once (multiple regression)",
+            "how to explain a yes/no column (logistic regression) and a column of counts (Poisson regression)",
+            "how to allow for groups such as schools (a mixed model)",
+            "how to use rows with empty cells without guessing once (multiple imputation)",
+        ],
+        parts=[
+            ("Marks depend on more than one thing. explain() looks at several columns together, so each "
+             "effect is the effect with the other columns held fixed.", [
+                ("import simplydata as sdata", "Load simplydata."),
+                ('table = sdata.table(sdata.example("school"))', "Pupils in 12 schools: study, sleep, "
+                                                                 "breakfast and marks."),
+                ('table.explain("marks", using=["hours", "sleep", "breakfast"])',
+                 "Explain the marks from hours of study, hours of sleep and breakfast. Each extra hour of "
+                 "study goes with about 2.7 more marks, each extra hour of sleep with 2.3 more, and "
+                 "breakfast with 3.2 more, each with its 95 % confidence interval and p-value. This is "
+                 "a linear model (multiple regression) by least squares."),
+                ('table.explain("marks", using=["hours * breakfast"])',
+                 "hours * breakfast also asks: does the effect of study depend on breakfast? That is an "
+                 "interaction. Here it could easily be chance (p = 0.31)."),
+            ]),
+            ("Not every column is a number to explain. A yes/no column needs the chance of yes, and a "
+             "count needs a model for counts.", [
+                ("import simplydata as sdata", "Load simplydata."),
+                ('table = sdata.table(sdata.example("school"))', "The school table."),
+                ('table.explain("passed", using=["hours", "breakfast"], outcome="yes or no")',
+                 'Did the pupil pass? outcome="yes or no" is logistic regression. Each extra hour of '
+                 "study multiplies the odds of passing by 1.66 (an odds ratio)."),
+                ('table.explain("days_absent", using=["hours", "sleep"], outcome="counts")',
+                 'Days absent are counts (0, 1, 2 ...). outcome="counts" is Poisson regression; each '
+                 "extra hour of study multiplies the expected days absent by 0.88 (a rate ratio)."),
+                ('table.add_predicted_column("marks", using=["hours", "breakfast"])',
+                 'Add a column "predicted marks": what the model expects for each pupil.'),
+                ("table.show_first_rows(5)", "Look at the marks next to the predicted marks."),
+            ]),
+            ("Pupils in the same school are alike in ways the columns do not show. A mixed model allows "
+             "for that, and multiple imputation uses the rows with empty cells.", [
+                ("import simplydata as sdata", "Load simplydata."),
+                ('table = sdata.table(sdata.example("school"))', "The school table."),
+                ('table.explain("marks", using=["hours", "breakfast"], grouped_by="school")',
+                 "A mixed model: each school gets its own starting level (a random intercept). About 39 % "
+                 "of the differences the columns do not explain lie between schools (the ICC)."),
+                ('table.explain("marks", using=["hours", "sleep", "breakfast"], '
+                 'empty_cells="multiple imputation")',
+                 "19 pupils did not say how long they slept. Instead of leaving them out, multiple "
+                 "imputation fills the empty cells 20 times, fits the model to each filled-in table and "
+                 "pools the 20 answers (Rubin's rules), so the extra uncertainty is counted."),
+            ]),
+        ],
+        notes=[
+            "Each effect in explain() holds the other columns fixed: the effect of sleep is the effect "
+            "for pupils who study the same number of hours and have the same breakfast.",
+            "A text column such as breakfast is compared with its first group in A to Z order (here "
+            '"no"); the answer says which group is the baseline.',
+            "An odds ratio above 1 means higher odds of yes; a rate ratio above 1 means more counts. "
+            "1 means no difference.",
+            "If counts vary much more than a Poisson model expects (overdispersion), simplydata says so "
+            'and suggests outcome="counts (overdispersed)"; it never switches by itself.',
+            "grouped_by= is for rows that come in groups: pupils in schools, measurements on the same "
+            "animal, samples from the same site. Without it, the p-values are too small.",
+            "Multiple imputation needs the empty cells to be explainable by the other columns (missing "
+            "at random). Say in your report how many cells were empty and how they were handled.",
+            "grouped_by= and multiple imputation need the statsmodels package: "
+            'pip install "simplydata[stats]".',
+        ],
+        task=[
+            'Explain "marks" using "hours" and "school" (school as a column of groups). Which schools '
+            "differ from School A, and is school as a whole important?",
+            'Explain "passed" using "hours" and "sleep" with outcome="yes or no".',
+            'Explain "days_absent" using "hours" and "breakfast" with outcome="counts". Does breakfast '
+            "matter?",
+        ],
+        solutions=[
+            (_sx("""\
+                import simplydata as sdata
+                table = sdata.table(sdata.example("school"))
+                table.explain("marks", using=["hours", "school"])"""),
+             "School as a whole matters a lot (F = 10.4, p < 0.0001); School D scores about 15 marks "
+             "more than School A for the same hours of study. grouped_by= would instead treat the "
+             "schools as a sample of many possible schools."),
+            (_sx("""\
+                import simplydata as sdata
+                table = sdata.table(sdata.example("school"))
+                table.explain("passed", using=["hours", "sleep"], outcome="yes or no")"""),
+             "Each extra hour of study multiplies the odds of passing by 1.69 and each extra hour of "
+             "sleep by 1.98; both are unlikely to be chance."),
+            (_sx("""\
+                import simplydata as sdata
+                table = sdata.table(sdata.example("school"))
+                table.explain("days_absent", using=["hours", "breakfast"], outcome="counts")"""),
+             "Breakfast could easily be chance (rate ratio 0.94, p = 0.45); study hours matter (rate "
+             "ratio 0.86 for each hour)."),
+        ],
+        words=["table.explain", "table.add_predicted_column", "table.show_first_rows"],
+    ),
+    dict(
+        title="Patterns across many columns",
+        learn=[
+            "how to sum up many columns in two new ones (principal components)",
+            "how to measure how different rows are (Bray-Curtis and other distances)",
+            "how to draw a map of the rows (NMDS) and test groups on all columns at once (PERMANOVA)",
+            "how to find groups of similar rows (clustering)",
+        ],
+        parts=[
+            ("Ten plant counts per plot are too many to look at one by one. Principal components "
+             "make a few new columns that hold most of the spread.", [
+                ("import simplydata as sdata", "Load simplydata."),
+                ('table = sdata.table(sdata.example("meadow"))', "Plants counted in 30 plots, half of them "
+                                                                 "grazed by sheep."),
+                ("table.add_principal_components(how_many=2)",
+                 "Principal component analysis (PCA): adds PC1 and PC2. PC1 holds 30 % of the spread, "
+                 "PC2 15 %. The printout says which plants weigh most in each."),
+                ("chart = table.chart()", "Start a chart."),
+                ('chart.dots(x="PC1", y="PC2", colour="grazed")', "Each plot is a dot; grazed and ungrazed "
+                                                                 "plots sit apart."),
+                ('chart.save("lesson17_pca.png")', "Save it."),
+            ]),
+            ("Ecologists compare plots by how different their make-up is. Bray-Curtis is the usual "
+             "distance for counts, and NMDS draws a map that keeps the order of the distances.", [
+                ("import simplydata as sdata", "Load simplydata."),
+                ('table = sdata.table(sdata.example("meadow"))', "The meadow table."),
+                ('distances = table.distances_between_rows(measure="bray-curtis", names="plot")',
+                 "A table of the Bray-Curtis distance between every pair of plots: 0 means the same "
+                 "plants in the same numbers, 1 means nothing in common."),
+                ("distances.show_first_rows(3)", "Look at the first rows."),
+                ('table.add_nmds(measure="bray-curtis")',
+                 "Non-metric multidimensional scaling (NMDS): adds NMDS1 and NMDS2. The stress (0.195) "
+                 "says how well the map keeps the distances: usable."),
+                ('table.compare_profiles(for_each="grazed")',
+                 "Do grazed and ungrazed plots differ in make-up? PERMANOVA tests all ten plants at "
+                 "once: grazing explains 25 % of the differences (p = 0.001)."),
+                ("chart = table.chart()", "Start a chart."),
+                ('chart.dots(x="NMDS1", y="NMDS2", colour="grazed")', "The NMDS map."),
+                ('chart.save("lesson17_nmds.png")', "Save it."),
+            ]),
+            ("Clustering finds groups of similar rows without being told the groups.", [
+                ("import simplydata as sdata", "Load simplydata."),
+                ('table = sdata.table(sdata.example("meadow"))', "The meadow table."),
+                ("table.add_clusters(how_many=2)", 'k-means clustering: adds a column "cluster" with 1 or 2.'),
+                ('table.count_rows(for_each="cluster", across="grazed")',
+                 "Did the clusters find the grazing? Cluster 1 is 14 grazed plots, cluster 2 is the 15 "
+                 "ungrazed plots and one grazed one."),
+            ]),
+        ],
+        notes=[
+            "same_scale=True (the normal choice for PCA and clusters) puts every column on the same "
+            "scale first, so a column with big numbers does not drown the others.",
+            "The signs and the rotation of PC and NMDS axes are arbitrary; only the distances between "
+            "the dots mean something.",
+            "Clarke's rule for NMDS stress: below 0.05 excellent, below 0.1 good, below 0.2 usable, "
+            "above 0.2 hard to trust. Try dimensions=3 if the stress is high.",
+            "PERMANOVA can mistake a difference in spread for a difference in make-up, so "
+            "compare_profiles also checks the spread of each group and says if it differs.",
+            "Clusters always appear, even in data without groups: check them against what you know.",
+            'method="hierarchical" clusters step by step (Ward linkage) instead of k-means.',
+        ],
+        task=[
+            'Add principal components of "hours", "sleep", "marks" and "days_absent" in '
+            'sdata.example("school"). Which columns weigh most in PC1?',
+            "Make an NMDS map of the meadow in 3 dimensions. Is the stress lower than in 2?",
+            'Do the three fields differ in make-up? Use compare_profiles with for_each="field".',
+            'Cluster the meadow plots with method="hierarchical". Do the clusters match the grazing?',
+        ],
+        solutions=[
+            (_sx("""\
+                import simplydata as sdata
+                table = sdata.table(sdata.example("school"))
+                table.add_principal_components(columns=["hours", "sleep", "marks", "days_absent"])"""),
+             "PC1 (50 % of the spread) is mostly hours, marks and, the other way, days absent: pupils "
+             "who study more get better marks and miss fewer days. PC2 is mostly sleep."),
+            (_sx("""\
+                import simplydata as sdata
+                table = sdata.table(sdata.example("meadow"))
+                table.add_nmds(measure="bray-curtis", dimensions=3)"""),
+             "Yes: the stress drops from 0.195 to 0.127. That is still in the usable band (good is below "
+             "0.1), but the map keeps the distances clearly better."),
+            (_sx("""\
+                import simplydata as sdata
+                table = sdata.table(sdata.example("meadow"))
+                table.compare_profiles(for_each="field")"""),
+             "The fields explain 12 % of the differences (p = 0.037), much less than grazing, and they "
+             "do not differ in spread (p = 0.54)."),
+            (_sx("""\
+                import simplydata as sdata
+                table = sdata.table(sdata.example("meadow"))
+                table.add_clusters(how_many=2, method="hierarchical")
+                table.count_rows(for_each="cluster", across="grazed")"""),
+             "Exactly: cluster 1 is the 15 grazed plots and cluster 2 the 15 ungrazed ones."),
+        ],
+        words=["table.add_principal_components", "table.principal_components_of", "table.add_clusters",
+               "table.distances_between_rows", "table.add_nmds", "table.compare_profiles", "dots"],
+    ),
+    dict(
+        title="Survival, and planning a study",
+        learn=[
+            "how to draw survival curves (Kaplan-Meier) and compare them (log-rank test)",
+            "how to explain the risk of an event from several columns (a Cox model)",
+            "how many values a study needs, before you collect them (power analysis)",
+        ],
+        parts=[
+            ("In a trial, some patients are still alive when the follow-up ends. Survival words use "
+             "their time too: they count as followed without the event (censored).", [
+                ("import simplydata as sdata", "Load simplydata."),
+                ('table = sdata.table(sdata.example("trial"))', "120 patients, a new medicine or usual "
+                                                                "care, followed for up to 3 years."),
+                ('table.survival_over_time(time="days", event="died", for_each="treatment")',
+                 "The Kaplan-Meier estimate: the share still alive at each time, and the median time "
+                 "(706 days with the new medicine, 545 with usual care)."),
+                ("chart = table.chart()", "Start a chart."),
+                ('chart.survival_curves(time="days", event="died", colour="treatment", '
+                 'confidence_band=True, at_risk_table=True)',
+                 "Survival curves with their 95 % bands, ticks where patients were censored, and the "
+                 "number still followed under the x-axis."),
+                ('chart.save("lesson18_survival.png")', "Save it."),
+            ]),
+            ("Is the difference real? And what else changes the risk?", [
+                ("import simplydata as sdata", "Load simplydata."),
+                ('table = sdata.table(sdata.example("trial"))', "The trial table."),
+                ('table.compare_survival(time="days", event="died", for_each="treatment")',
+                 "The log-rank test compares the whole curves: here the difference could easily be "
+                 "chance (p = 0.22)."),
+                ('table.explain_survival(time="days", event="died", using=["treatment", "age"])',
+                 "A Cox model: each year of age raises the risk of dying at any moment by about 5 % "
+                 "(hazard ratio 1.05), with the treatment held fixed."),
+            ]),
+            ("Was the trial big enough? Power analysis tells you how many values you need before you "
+             "collect them.", [
+                ("import simplydata as sdata", "Load simplydata."),
+                ("sdata.how_many_needed(effect_size=0.5, power=0.8)",
+                 "To find a medium difference between two averages (half a standard deviation) with an "
+                 "80 % chance, you need 64 values in each group."),
+                ("sdata.chance_to_find(effect_size=0.5, values_per_group=20)",
+                 "With only 20 values in each group, the chance to find it is just 34 %."),
+            ]),
+        ],
+        notes=[
+            "Never leave out the censored rows or count them as survivors: the survival words use the "
+            "time they were followed, which is what makes these methods right.",
+            "A hazard ratio above 1 means a higher risk of the event at any moment; 1 means no "
+            "difference. The Cox model assumes the ratio stays the same over time, and simplydata "
+            "checks this and says so if it does not.",
+            "A study that is too small often finds nothing even when there is something to find. Plan "
+            "the size before collecting data, not after.",
+            "effect_size= is Cohen's d for averages, f for 3 or more groups, w for counts and r for a "
+            "correlation. You can also give difference= and spread= in your own units.",
+        ],
+        task=[
+            'Explain the risk of dying from "age" alone with explain_survival.',
+            "How many pairs does a before/after study need to find a small change (effect_size=0.3)?",
+            "What is the chance to find a medium difference (effect_size=0.25) between 3 groups with "
+            "30 values in each?",
+        ],
+        solutions=[
+            (_sx("""\
+                import simplydata as sdata
+                table = sdata.table(sdata.example("trial"))
+                table.explain_survival(time="days", event="died", using="age")"""),
+             "Each year of age multiplies the risk by 1.05 (95 % CI 1.03 to 1.08), p < 0.0001."),
+            (_sx("""\
+                import simplydata as sdata
+                sdata.how_many_needed(test="compare_before_after", effect_size=0.3)"""),
+             "90 pairs, each with a before and an after value."),
+            (_sx("""\
+                import simplydata as sdata
+                sdata.chance_to_find(test="compare_averages", effect_size=0.25, groups=3, values_per_group=30)"""),
+             "Only 54 %: too small. how_many_needed with groups=3 tells you how many to aim for."),
+        ],
+        words=["table.survival_over_time", "survival_curves", "table.compare_survival",
+               "table.explain_survival", "sdata.how_many_needed", "sdata.chance_to_find"],
+    ),
 ]
 
 def _wrap(text: str, indent: str = "", width: int = WIDTH) -> str:
@@ -2677,7 +3001,8 @@ def _list_lessons() -> None:
     print(f"Learn simplydata in one day: {len(LESSONS)} lessons of about 30 minutes.")
     print("Lessons 1 to 8 teach charts, lessons 9 to 12 teach tables, lesson 13 teaches numbers,")
     print("lesson 14 teaches statistical tests and lesson 15 puts it all together, from a question")
-    print("to a figure.\n")
+    print("to a figure. Lessons 16 to 18 go further: models, patterns across many columns,")
+    print("survival, and planning how big a study must be.\n")
     for i, les in enumerate(LESSONS, start=1):
         print(f"  sdata.lesson({i}){' ' * (5 - len(str(i)))}{les['title']}")
     print("\nStart with sdata.lesson(1). Each lesson ends with a small task to try yourself.")

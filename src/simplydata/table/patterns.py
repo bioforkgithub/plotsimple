@@ -471,7 +471,7 @@ class PatternWords:
     def add_principal_components(self, columns=None, how_many=2, same_scale=True):
         """Add principal components: a few new columns that hold most of the spread of many columns.
 
-        table.add_principal_components(how_many=2)   (with sdata.example("school"))
+        table.add_principal_components(how_many=2)   (with sdata.example("meadow"))
         Principal component analysis turns many related columns into new columns PC1, PC2 ...
         that do not overlap: PC1 holds the most spread, PC2 the most of what is left, and so
         on. The new columns are the scores of each row. columns=None uses every number
@@ -485,7 +485,7 @@ class PatternWords:
         Method: singular value decomposition, as R prcomp().
         """
         step = "add_principal_components"
-        example = 'with sdata.example("school"): table.add_principal_components(how_many=2)'
+        example = 'with sdata.example("meadow"): table.add_principal_components(how_many=2)'
         columns, keep, sdev, share, rotation, scores = self._pca(step, columns, same_scale, example)
         most = len(sdev)
         self._check_whole(step, "how_many=", how_many, 1, most, example)
@@ -513,7 +513,7 @@ class PatternWords:
     def principal_components_of(self, columns=None, same_scale=True):
         """A table of the principal components: how much spread each explains and the weight of each column.
 
-        table.principal_components_of()   (with sdata.example("school"))
+        table.principal_components_of()   (with sdata.example("meadow"))
         One row per component (PC1, PC2 ...) with its standard deviation, the share of the
         spread it explains, the cumulative share, and one column of weights per original
         column, "weight of hours" and so on (the loadings, R prcomp()$rotation). A large
@@ -522,7 +522,7 @@ class PatternWords:
         R prcomp(scale. = TRUE).
         """
         step = "principal_components_of"
-        example = 'with sdata.example("school"): table.principal_components_of()'
+        example = 'with sdata.example("meadow"): table.principal_components_of()'
         columns, _, sdev, share, rotation, _ = self._pca(step, columns, same_scale, example)
         cumulative = np.cumsum(share)
         data = {"component": [f"PC{i}" for i in range(1, len(sdev) + 1)],
