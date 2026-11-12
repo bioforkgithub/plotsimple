@@ -481,8 +481,9 @@ class StatTestWords:
             spread = [float(v.std(ddof=1)) for v in arrays]
             if all(s == 0 for s in spread) or (test in ("welch anova",) and any(s == 0 for s in spread)):
                 flat = [n for n, s in zip(names, spread) if s == 0]
+                groups = _list_words('"' + str(n) + '"' for n in flat)
                 raise SimplydataError(
-                    f'Every value is the same within {_list_words(f'"{n}"' for n in flat)}, so a test on averages '
+                    f'Every value is the same within {groups}, so a test on averages '
                     f'cannot measure the spread there. Use based_on="ranks", or check the data.'
                 )
         from scipy import stats

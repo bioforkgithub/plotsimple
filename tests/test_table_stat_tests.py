@@ -137,7 +137,12 @@ def test_welch_anova_formula_on_unequal_groups_matches_r_and_scipy():
     assert f == pytest.approx(16.5370012871309484, rel=REL)
     assert df2 == pytest.approx(6.6502681032443043, rel=REL)
     assert p == pytest.approx(0.0026240684447844, rel=1e-8)
-    scipy = stats.f_oneway(x, y, z, equal_var=False)
+    # SciPy only has Welch's ANOVA from version 1.16 (not available for Python 3.10);
+    # the R values above are the main check.
+    try:
+        scipy = stats.f_oneway(x, y, z, equal_var=False)
+    except TypeError:
+        return
     assert f == pytest.approx(scipy.statistic) and p == pytest.approx(scipy.pvalue)
 
 
