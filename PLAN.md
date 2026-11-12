@@ -1,19 +1,19 @@
-# plotsimple — design plan
+# simplydata — design plan
 
 *Status: design stage, no code yet. Last updated 2026-11-12.*
 
 ## 1. The idea
 
-plotsimple is **a dictionary, not a new engine**. One small, plain-English vocabulary
+simplydata is **a dictionary, not a new engine**. One small, plain-English vocabulary
 that translates into the right calls in **matplotlib, seaborn, plotnine, pandas and NumPy**
-(plus SciPy for statistics). Learn plotsimple, and you never have to learn the five
+(plus SciPy for statistics). Learn simplydata, and you never have to learn the five
 libraries underneath.
 
 Like a phrasebook that lets you speak Spanish, Italian and French without learning each
 grammar.
 
 - The libraries underneath do all drawing and calculation.
-- plotsimple's job is the **translation**: each word must map to the right call with the
+- simplydata's job is the **translation**: each word must map to the right call with the
   right settings. That is what we test.
 - Users never see the libraries underneath. There is **no bridge** to raw matplotlib
   (no `show_code()`, no `.matplotlib()`).
@@ -32,7 +32,7 @@ grammar.
 
 | Topic | Decision |
 |---|---|
-| Name | `plotsimple`, used as `import plotsimple as ps` (name free on PyPI on 2026-11-12) |
+| Name | `simplydata`, used as `import simplydata as sdata` (name free on PyPI on 2026-11-12) |
 | Licence | MIT, open on GitHub, contributions welcome |
 | Python | 3.10 and newer |
 | Audience | Everyone: beginners, students, teachers and researchers. "Simple enough for a school child to read" is the test for every word, not a limit on what it can do |
@@ -44,8 +44,8 @@ grammar.
 | Saving | `chart.save("x.png")` or `chart.save("x.pdf")`, format from the file name |
 | Spelling | Both `colour` and `color`, `grey` and `gray` |
 | Errors | Friendly message, "did you mean …?", list of columns, link to request a missing word on GitHub |
-| Learning | Built-in lessons `ps.lesson(1)` … `ps.lesson(15)`, `ps.help("bars")`, `ps.words()` |
-| Renaming | A renamed word or option keeps working for one release and prints one line, once per session: `Note: "remove_empty_rows" is now called "remove_rows_with_empty_cells".` Old names are never listed in `ps.words()`, the cheat sheet or the lessons; `ps.help("old_name")` points to the new one |
+| Learning | Built-in lessons `sdata.lesson(1)` … `sdata.lesson(15)`, `sdata.help("bars")`, `sdata.words()` |
+| Renaming | A renamed word or option keeps working for one release and prints one line, once per session: `Note: "remove_empty_rows" is now called "remove_rows_with_empty_cells".` Old names are never listed in `sdata.words()`, the cheat sheet or the lessons; `sdata.help("old_name")` points to the new one |
 
 ## 4. Grammar rules
 
@@ -87,9 +87,9 @@ a paper's Methods section.
 not, rename it before it is released.
 
 ```python
-import plotsimple as ps
+import simplydata as sdata
 
-chart = ps.chart("marks.xlsx")
+chart = sdata.chart("marks.xlsx")
 chart.bars(x="name", y="marks")
 chart.title_top("My class marks")
 chart.label_x("Student")
@@ -105,7 +105,7 @@ chart.save("marks.png")
 ### 5.1 Start, show, save
 | Word | Example |
 |---|---|
-| `ps.chart` | `chart = ps.chart("marks.xlsx")` · `ps.chart(table)` · `ps.chart()` for lists |
+| `sdata.chart` | `chart = sdata.chart("marks.xlsx")` · `sdata.chart(table)` · `sdata.chart()` for lists |
 | `show` | `chart.show()` |
 | `save` | `chart.save("marks.png")` · `chart.save("marks.pdf")` |
 
@@ -139,7 +139,7 @@ chart.save("marks.png")
 | `count_bars` | `chart.count_bars(x="fruit")` |
 | `all_dots` | `chart.all_dots(x="class", y="marks")` |
 | `side_histograms` | `chart.side_histograms()` |
-| `ps.pairs` | `ps.pairs(table)` |
+| `sdata.pairs` | `sdata.pairs(table)` |
 
 ### 5.4 Lines, shading, words
 | Word | Example |
@@ -178,9 +178,9 @@ chart.save("marks.png")
 ### 5.7 Several charts and hard tricks
 | Word | Example |
 |---|---|
-| `ps.side_by_side` | `ps.side_by_side(a, b).save("both.png")` |
-| `ps.one_above_other` | `ps.one_above_other(a, b)` |
-| `ps.grid` | `ps.grid(a, b, c, d, per_row=2, same_y=True, letters=True)` (`letters=True` writes A, B, C … on the panels; all three page words take it) |
+| `sdata.side_by_side` | `sdata.side_by_side(a, b).save("both.png")` |
+| `sdata.one_above_other` | `sdata.one_above_other(a, b)` |
+| `sdata.grid` | `sdata.grid(a, b, c, d, per_row=2, same_y=True, letters=True)` (`letters=True` writes A, B, C … on the panels; all three page words take it) |
 | `one_chart_per` | `chart.one_chart_per("site", per_row=3)` · `one_chart_per(down="site", across="year")` |
 | `zoom_box` | `chart.zoom_box(x_between=[2, 4], y_between=[10, 20], where="top right")` |
 | `animate` | `chart.animate(over="year")` then `chart.save("growth.gif")` |
@@ -188,9 +188,9 @@ chart.save("marks.png")
 ### 5.8 Help and learning
 | Word | Example |
 |---|---|
-| `ps.lesson` | `ps.lesson(1)` … `ps.lesson(15)` |
-| `ps.help` | `ps.help("bars")` |
-| `ps.words` | `ps.words()` prints the whole list |
+| `sdata.lesson` | `sdata.lesson(1)` … `sdata.lesson(15)` |
+| `sdata.help` | `sdata.help("bars")` |
+| `sdata.words` | `sdata.words()` prints the whole list |
 
 ## 6. Libraries underneath
 
@@ -205,7 +205,7 @@ chart.save("marks.png")
 | NumPy | Arrays and arithmetic |
 | SciPy | t-based confidence intervals, curve fitting, KDE, clustering |
 
-Design rule: each plotsimple word translates to **one** library. seaborn draws on matplotlib
+Design rule: each simplydata word translates to **one** library. seaborn draws on matplotlib
 charts, so those two mix freely; plotnine builds its own charts, so words that use it must
 not be mixed with matplotlib/seaborn words on the same chart. Which library each word uses
 is decided per word.
@@ -216,8 +216,8 @@ The libraries do the calculations. **We are responsible for correct translation*
 the right function and settings for each word. Known traps:
 
 - Standard deviation: NumPy defaults to population SD (n), pandas to sample SD (n−1).
-  plotsimple default: sample SD (n−1).
-- Missing values: NumPy returns `nan`, pandas skips them. plotsimple must choose and say so.
+  simplydata default: sample SD (n−1).
+- Missing values: NumPy returns `nan`, pandas skips them. simplydata must choose and say so.
 - Confidence intervals: seaborn bootstraps, a t-interval differs slightly. Default to be
   decided; the method is always stated.
 

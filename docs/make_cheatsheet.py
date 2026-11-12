@@ -1,4 +1,4 @@
-"""Write docs/cheatsheet.md from the same word list that ps.words() prints.
+"""Write docs/cheatsheet.md from the same word list that sdata.words() prints.
 
 Run it after adding or changing a word:
 
@@ -11,7 +11,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from plotsimple import learn
+from simplydata import learn
 
 HERE = Path(__file__).resolve().parent
 OUT = HERE / "cheatsheet.md"
@@ -24,18 +24,18 @@ def _cell(text: str) -> str:
 def make() -> str:
     aliases = learn._aliases()
     lines = [
-        "# plotsimple cheat sheet",
+        "# simplydata cheat sheet",
         "",
         "Every word on one page. Table words are steps on a table, for looking at data, cleaning",
         "it and summing it up; chart words are steps on a chart:",
         "",
         "```python",
-        "import plotsimple as ps",
-        'table = ps.table(ps.example("marks"))   # or ps.table("my_file.xlsx")',
+        "import simplydata as sdata",
+        'table = sdata.table(sdata.example("marks"))   # or sdata.table("my_file.xlsx")',
         'table.keep_rows("marks", above=50)',
         'table.average_of("marks", for_each="class")   # says the answer in a sentence',
         'table.save("good_marks.xlsx")',
-        "chart = table.chart()                   # or ps.chart(table), ps.chart(\"my_file.xlsx\")",
+        "chart = table.chart()                   # or sdata.chart(table), sdata.chart(\"my_file.xlsx\")",
         'chart.bars(x="class", y="marks", error="standard error")',
         'chart.title_top("Good marks")',
         'chart.save("marks.png")',
@@ -44,24 +44,24 @@ def make() -> str:
         "Number words are steps on a list (or a grid) of numbers:",
         "",
         "```python",
-        "nums = ps.numbers([12, 15, 9, 20, 14])",
+        "nums = sdata.numbers([12, 15, 9, 20, 14])",
         "bigger = nums * 2                       # symbols make new numbers",
         "nums.keep_numbers(above=10)             # words change the numbers (undo() takes it back)",
         "nums.average()",
-        "grid = ps.number_grid([[3, 5, 2], [8, 6, 4]])",
+        "grid = sdata.number_grid([[3, 5, 2], [8, 6, 4]])",
         "```",
         "",
-        'In Python, `ps.help("bars")` explains any word, `ps.words()` prints this list and',
-        "`ps.lesson(1)` starts the one-day course (lessons 9 to 12 are about tables, lesson 13",
+        'In Python, `sdata.help("bars")` explains any word, `sdata.words()` prints this list and',
+        "`sdata.lesson(1)` starts the one-day course (lessons 9 to 12 are about tables, lesson 13",
         "about numbers, lesson 14 about statistical tests and lesson 15 puts it all together).",
         "",
         "Every example runs as written on the practice table in the *Table* column:",
-        'for example `weather = ps.example("weather")` then `chart = ps.chart(weather)`,',
-        'or `table = ps.table(ps.example("weather"))` for table words.',
-        "Number words use `nums = ps.numbers([12, 15, 9, 20, 14])` and grid words",
-        "`grid = ps.number_grid([[3, 5, 2], [8, 6, 4]])`; `ps.help(\"word\")` shows each example ready to run.",
+        'for example `weather = sdata.example("weather")` then `chart = sdata.chart(weather)`,',
+        'or `table = sdata.table(sdata.example("weather"))` for table words.',
+        "Number words use `nums = sdata.numbers([12, 15, 9, 20, 14])` and grid words",
+        "`grid = sdata.number_grid([[3, 5, 2], [8, 6, 4]])`; `sdata.help(\"word\")` shows each example ready to run.",
         "Steps such as `fit_line` or `title_top` go after a chart step such as `chart.dots(...)`,",
-        "and `a`, `b` in `ps.side_by_side(a, b)` are charts you made first.",
+        "and `a`, `b` in `sdata.side_by_side(a, b)` are charts you made first.",
         "",
         "*This file is made by `docs/make_cheatsheet.py`. Do not edit it by hand.*",
     ]

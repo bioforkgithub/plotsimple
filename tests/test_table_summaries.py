@@ -7,10 +7,10 @@ import pandas as pd
 import pytest
 from scipy import stats
 
-import plotsimple as ps
-from plotsimple import PlotsimpleError
-from plotsimple.table import table as make_table
-from plotsimple.table.summaries import GROUPS_IN_SENTENCE, _p_words, _say_number, _strength
+import simplydata as sdata
+from simplydata import SimplydataError
+from simplydata.table import table as make_table
+from simplydata.table.summaries import GROUPS_IN_SENTENCE, _p_words, _say_number, _strength
 
 ENGINES = ["pandas", "polars"]
 
@@ -116,7 +116,7 @@ def test_for_each_matches_pandas_groupby(word, engine, gappy, capsys):
     before = snapshot(t)
     start, calc = WORDS[word]
     summary = getattr(t, word)("marks", for_each="class")
-    assert summary is not t and summary._is_plotsimple_table
+    assert summary is not t and summary._is_simplydata_table
     got = summary._done()
     if engine == "polars":
         got = got.to_pandas()
@@ -260,9 +260,9 @@ def test_correlation_skips_empty_rows(engine, gappy, capsys):
 
 
 def test_correlation_words_on_example():
-    t = make_table(ps.example("marks"))
+    t = make_table(sdata.example("marks"))
     r = t.correlation_between("hours", "marks")
-    ex = ps.example("marks")
+    ex = sdata.example("marks")
     assert r == pytest.approx(stats.pearsonr(ex["hours"], ex["marks"])[0])
 
 
@@ -284,40 +284,40 @@ def test_strength_and_p_words():
 def test_friendly_errors(engine, gappy):
     t = make(gappy, engine)
     before = snapshot(t)
-    with pytest.raises(PlotsimpleError, match='average_of needs a column of numbers; "name" has text'):
+    with pytest.raises(SimplydataError, match='average_of needs a column of numbers; "name" has text'):
         t.average_of("name")
-    with pytest.raises(PlotsimpleError, match='"passed" has True/False'):
+    with pytest.raises(SimplydataError, match='"passed" has True/False'):
         t.total_of("passed")
-    with pytest.raises(PlotsimpleError, match='Did you mean "marks"'):
+    with pytest.raises(SimplydataError, match='Did you mean "marks"'):
         t.average_of("mark")
-    with pytest.raises(PlotsimpleError, match='Column "klass" not found'):
+    with pytest.raises(SimplydataError, match='Column "klass" not found'):
         t.average_of("marks", for_each="klass")
-    with pytest.raises(PlotsimpleError, match="both"):
+    with pytest.raises(SimplydataError, match="both"):
         t.average_of("marks", for_each="marks")
-    with pytest.raises(PlotsimpleError, match="in quotes"):
+    with pytest.raises(SimplydataError, match="in quotes"):
         t.average_of("marks", for_each=3)
-    with pytest.raises(PlotsimpleError, match="in quotes"):
+    with pytest.raises(SimplydataError, match="in quotes"):
         t.median_of(5)
-    with pytest.raises(PlotsimpleError, match="no option called"):
+    with pytest.raises(SimplydataError, match="no option called"):
         t.average_of("marks", for_eech="class")
-    with pytest.raises(PlotsimpleError, match='Did you mean method="spearman"'):
+    with pytest.raises(SimplydataError, match='Did you mean method="spearman"'):
         t.correlation_between("marks", "hours", method="spearmen")
-    with pytest.raises(PlotsimpleError, match="two different columns"):
+    with pytest.raises(SimplydataError, match="two different columns"):
         t.correlation_between("marks", "marks")
-    with pytest.raises(PlotsimpleError, match='"name" has text'):
+    with pytest.raises(SimplydataError, match='"name" has text'):
         t.correlation_between("marks", "name")
-    with pytest.raises(PlotsimpleError, match="one column name"):
+    with pytest.raises(SimplydataError, match="one column name"):
         t.count_each(["class"])
-    with pytest.raises(PlotsimpleError, match="Column"):
+    with pytest.raises(SimplydataError, match="Column"):
         t.count_rows(for_each="klass")
     unchanged(t, before)
 
 
 def test_correlation_errors(engine):
     t = make(pd.DataFrame({"a": [1.0, 2.0, 3.0, np.nan], "b": [5.0, 5.0, 5.0, 1.0], "c": [1.0, np.nan, 2.0, 3.0]}), engine)
-    with pytest.raises(PlotsimpleError, match='every number in "b" is the same'):
+    with pytest.raises(SimplydataError, match='every number in "b" is the same'):
         t.correlation_between("a", "b")
-    with pytest.raises(PlotsimpleError, match="at least 3 rows"):
+    with pytest.raises(SimplydataError, match="at least 3 rows"):
         t.correlation_between("a", "c")
 
 
@@ -336,7 +336,7 @@ def test_every_summary_prints_one_sentence(engine, gappy, capsys):
 
 
 def test_count_each_prints_a_sentence(capsys):
-    make_table(ps.example("fruit")).count_each("shop")
+    make_table(sdata.example("fruit")).count_each("shop")
     assert capsys.readouterr().out.startswith('How many rows have each "shop" (2 different values): ')
 
 

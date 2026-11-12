@@ -4,9 +4,9 @@ import numpy as np
 import pandas as pd
 import pytest
 
-import plotsimple as ps
-from plotsimple import PlotsimpleError
-from plotsimple.table import table as make_table
+import simplydata as sdata
+from simplydata import SimplydataError
+from simplydata.table import table as make_table
 
 
 def _engine_table(data, engine):
@@ -23,7 +23,7 @@ def engine(request):
 
 @pytest.fixture
 def marks_df():
-    return ps.example("marks")
+    return sdata.example("marks")
 
 
 @pytest.fixture
@@ -69,7 +69,7 @@ def test_describe_columns(marks, capsys):
     out = capsys.readouterr().out
     assert "54 rows and 6 columns" in out
     line = next(l for l in out.splitlines() if l.strip().startswith("marks"))
-    df = ps.example("marks")
+    df = sdata.example("marks")
     assert "number" in line and str(df["marks"].min()) in line and str(df["marks"].max()) in line
     assert str(round(df["marks"].mean(), 2)) in line
     name_line = next(l for l in out.splitlines() if l.strip().startswith("name"))
@@ -122,17 +122,17 @@ def test_keep_remove_rename_columns(marks, marks_df, capsys):
 
 
 def test_column_errors(marks):
-    with pytest.raises(PlotsimpleError, match='Did you mean "marks"'):
+    with pytest.raises(SimplydataError, match='Did you mean "marks"'):
         marks.keep_columns("mark")
-    with pytest.raises(PlotsimpleError, match="For example"):
+    with pytest.raises(SimplydataError, match="For example"):
         marks.keep_columns()
-    with pytest.raises(PlotsimpleError, match="every column"):
+    with pytest.raises(SimplydataError, match="every column"):
         marks.remove_columns(*marks.column_names())
-    with pytest.raises(PlotsimpleError, match="already a column"):
+    with pytest.raises(SimplydataError, match="already a column"):
         marks.rename_column("marks", to="name")
-    with pytest.raises(PlotsimpleError, match="to="):
+    with pytest.raises(SimplydataError, match="to="):
         marks.rename_column("marks")
-    with pytest.raises(PlotsimpleError, match="no option called new="):
+    with pytest.raises(SimplydataError, match="no option called new="):
         marks.rename_column("marks", new="score")
 
 
@@ -200,33 +200,33 @@ def test_keep_rows_on_dates(messy):
 
 
 def test_row_condition_errors(marks):
-    with pytest.raises(PlotsimpleError, match="needs one condition"):
+    with pytest.raises(SimplydataError, match="needs one condition"):
         marks.keep_rows("marks")
-    with pytest.raises(PlotsimpleError, match="one condition at a time"):
+    with pytest.raises(SimplydataError, match="one condition at a time"):
         marks.keep_rows("marks", above=40, below=80)
-    with pytest.raises(PlotsimpleError, match="without quotes: above=50"):
+    with pytest.raises(SimplydataError, match="without quotes: above=50"):
         marks.keep_rows("marks", above="50")
-    with pytest.raises(PlotsimpleError, match="needs a number"):
+    with pytest.raises(SimplydataError, match="needs a number"):
         marks.remove_rows("marks", equal_to="lots")
-    with pytest.raises(PlotsimpleError, match='needs text in quotes, like equal_to="1"'):
+    with pytest.raises(SimplydataError, match='needs text in quotes, like equal_to="1"'):
         marks.keep_rows("class", equal_to=1)
-    with pytest.raises(PlotsimpleError, match="compares numbers or dates"):
+    with pytest.raises(SimplydataError, match="compares numbers or dates"):
         marks.keep_rows("name", above=3)
-    with pytest.raises(PlotsimpleError, match="looks inside text"):
+    with pytest.raises(SimplydataError, match="looks inside text"):
         marks.keep_rows("marks", contains="5")
-    with pytest.raises(PlotsimpleError, match="two values"):
+    with pytest.raises(SimplydataError, match="two values"):
         marks.keep_rows("marks", between=50)
-    with pytest.raises(PlotsimpleError, match="list in square brackets"):
+    with pytest.raises(SimplydataError, match="list in square brackets"):
         marks.keep_rows("class", one_of="A")
-    with pytest.raises(PlotsimpleError, match='Did you mean "marks"'):
+    with pytest.raises(SimplydataError, match='Did you mean "marks"'):
         marks.keep_rows("mark", above=50)
-    with pytest.raises(PlotsimpleError, match="Did you mean above="):
+    with pytest.raises(SimplydataError, match="Did you mean above="):
         marks.keep_rows("marks", abve=50)
-    with pytest.raises(PlotsimpleError, match="one plain word"):
+    with pytest.raises(SimplydataError, match="one plain word"):
         marks.keep_rows("marks", 50)
-    with pytest.raises(PlotsimpleError, match="True or False"):
+    with pytest.raises(SimplydataError, match="True or False"):
         marks.keep_rows("marks", is_empty="yes")
-    with pytest.raises(PlotsimpleError, match=r'ps.example\("marks"\)'):
+    with pytest.raises(SimplydataError, match=r'sdata.example\("marks"\)'):
         marks.keep_rows("marks")
     assert len(marks) == 54 and not marks._history  # errors never change the table
 
@@ -249,9 +249,9 @@ def test_first_last_random_rows(marks, marks_df, engine, capsys):
     marks.undo()
     marks.keep_random_rows(500)
     assert len(marks) == 54
-    with pytest.raises(PlotsimpleError, match="whole number"):
+    with pytest.raises(SimplydataError, match="whole number"):
         marks.keep_first_rows(2.5)
-    with pytest.raises(PlotsimpleError, match="seed="):
+    with pytest.raises(SimplydataError, match="seed="):
         marks.keep_random_rows(3, seed="abc")
 
 
@@ -265,7 +265,7 @@ def test_remove_duplicate_rows(marks, marks_df, capsys):
     marks.undo()
     marks.keep_columns("class", "subject").remove_duplicate_rows()
     same(marks, marks_df[["class", "subject"]].drop_duplicates())
-    with pytest.raises(PlotsimpleError, match="not found"):
+    with pytest.raises(SimplydataError, match="not found"):
         marks.remove_duplicate_rows(columns=["nope"])
 
 
@@ -310,15 +310,15 @@ def test_fill_empty(messy, messy_df, capsys):
 
 
 def test_fill_empty_errors(messy):
-    with pytest.raises(PlotsimpleError, match="exactly one"):
+    with pytest.raises(SimplydataError, match="exactly one"):
         messy.fill_empty_cells("marks")
-    with pytest.raises(PlotsimpleError, match="exactly one"):
+    with pytest.raises(SimplydataError, match="exactly one"):
         messy.fill_empty_cells("marks", with_value=0, with_the="average")
-    with pytest.raises(PlotsimpleError, match="needs numbers"):
+    with pytest.raises(SimplydataError, match="needs numbers"):
         messy.fill_empty_cells("name", with_the="average")
-    with pytest.raises(PlotsimpleError, match='Did you mean with_the="median"'):
+    with pytest.raises(SimplydataError, match='Did you mean with_the="median"'):
         messy.fill_empty_cells("marks", with_the="medium")
-    with pytest.raises(PlotsimpleError, match="needs text in quotes"):
+    with pytest.raises(SimplydataError, match="needs text in quotes"):
         messy.fill_empty_cells("name", with_value=0)
 
 
@@ -336,7 +336,7 @@ def test_make_numbers(messy, capsys):
     assert "already numbers" in capsys.readouterr().out
     messy.undo().undo()
     assert plain(messy)["num"].tolist()[:2] == ["12.5", "1,200"]
-    with pytest.raises(PlotsimpleError, match="not found"):
+    with pytest.raises(SimplydataError, match="not found"):
         messy.make_numbers("nums")
 
 
@@ -351,15 +351,15 @@ def test_make_dates(messy, capsys):
 
 
 def test_make_dates_from_years(engine):
-    growth = _engine_table(ps.example("growth"), engine)
+    growth = _engine_table(sdata.example("growth"), engine)
     growth.make_dates("year")
     assert pd.Timestamp(plain(growth)["year"][0]) == pd.Timestamp("2000-01-01")
-    with pytest.raises(PlotsimpleError, match="decimals"):
+    with pytest.raises(SimplydataError, match="decimals"):
         growth.make_dates("population")
 
 
 def test_make_text(engine, messy):
-    weather = _engine_table(ps.example("weather"), engine)
+    weather = _engine_table(sdata.example("weather"), engine)
     weather.make_text("month_number")
     assert plain(weather)["month_number"].tolist()[:3] == ["1", "2", "3"]
     weather.keep_rows("month_number", equal_to="1")
@@ -381,7 +381,7 @@ def test_text_case_and_spaces(marks, marks_df, messy):
     messy.remove_extra_spaces("name")
     names = plain(messy)["name"].tolist()
     assert names[:3] == ["Asha", "Ben", "Chen"] and names[5] == ""
-    with pytest.raises(PlotsimpleError, match="works on text"):
+    with pytest.raises(SimplydataError, match="works on text"):
         marks.make_lowercase("marks")
 
 
@@ -397,9 +397,9 @@ def test_replace_values(marks, marks_df, capsys):
     assert plain(marks)["marks"].isna().sum() == (marks_df["marks"] == 61).sum()
     marks.steps()
     assert 'replace 61 in marks with empty' in capsys.readouterr().out
-    with pytest.raises(PlotsimpleError, match="with_value="):
+    with pytest.raises(SimplydataError, match="with_value="):
         marks.replace_values("subject", "Maths")
-    with pytest.raises(PlotsimpleError, match="needs a number"):
+    with pytest.raises(SimplydataError, match="needs a number"):
         marks.replace_values("hours", 6.3, with_value="six")
 
 

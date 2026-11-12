@@ -1,15 +1,15 @@
-# plotsimple cheat sheet
+# simplydata cheat sheet
 
 Every word on one page. Table words are steps on a table, for looking at data, cleaning
 it and summing it up; chart words are steps on a chart:
 
 ```python
-import plotsimple as ps
-table = ps.table(ps.example("marks"))   # or ps.table("my_file.xlsx")
+import simplydata as sdata
+table = sdata.table(sdata.example("marks"))   # or sdata.table("my_file.xlsx")
 table.keep_rows("marks", above=50)
 table.average_of("marks", for_each="class")   # says the answer in a sentence
 table.save("good_marks.xlsx")
-chart = table.chart()                   # or ps.chart(table), ps.chart("my_file.xlsx")
+chart = table.chart()                   # or sdata.chart(table), sdata.chart("my_file.xlsx")
 chart.bars(x="class", y="marks", error="standard error")
 chart.title_top("Good marks")
 chart.save("marks.png")
@@ -18,24 +18,24 @@ chart.save("marks.png")
 Number words are steps on a list (or a grid) of numbers:
 
 ```python
-nums = ps.numbers([12, 15, 9, 20, 14])
+nums = sdata.numbers([12, 15, 9, 20, 14])
 bigger = nums * 2                       # symbols make new numbers
 nums.keep_numbers(above=10)             # words change the numbers (undo() takes it back)
 nums.average()
-grid = ps.number_grid([[3, 5, 2], [8, 6, 4]])
+grid = sdata.number_grid([[3, 5, 2], [8, 6, 4]])
 ```
 
-In Python, `ps.help("bars")` explains any word, `ps.words()` prints this list and
-`ps.lesson(1)` starts the one-day course (lessons 9 to 12 are about tables, lesson 13
+In Python, `sdata.help("bars")` explains any word, `sdata.words()` prints this list and
+`sdata.lesson(1)` starts the one-day course (lessons 9 to 12 are about tables, lesson 13
 about numbers, lesson 14 about statistical tests and lesson 15 puts it all together).
 
 Every example runs as written on the practice table in the *Table* column:
-for example `weather = ps.example("weather")` then `chart = ps.chart(weather)`,
-or `table = ps.table(ps.example("weather"))` for table words.
-Number words use `nums = ps.numbers([12, 15, 9, 20, 14])` and grid words
-`grid = ps.number_grid([[3, 5, 2], [8, 6, 4]])`; `ps.help("word")` shows each example ready to run.
+for example `weather = sdata.example("weather")` then `chart = sdata.chart(weather)`,
+or `table = sdata.table(sdata.example("weather"))` for table words.
+Number words use `nums = sdata.numbers([12, 15, 9, 20, 14])` and grid words
+`grid = sdata.number_grid([[3, 5, 2], [8, 6, 4]])`; `sdata.help("word")` shows each example ready to run.
 Steps such as `fit_line` or `title_top` go after a chart step such as `chart.dots(...)`,
-and `a`, `b` in `ps.side_by_side(a, b)` are charts you made first.
+and `a`, `b` in `sdata.side_by_side(a, b)` are charts you made first.
 
 *This file is made by `docs/make_cheatsheet.py`. Do not edit it by hand.*
 
@@ -43,8 +43,8 @@ and `a`, `b` in `ps.side_by_side(a, b)` are charts you made first.
 
 | Word | Example | Table | What it does |
 |---|---|---|---|
-| `ps.chart` | `ps.chart(ps.example("marks"))` | marks | Start a chart. |
-| `ps.example` | `ps.example("marks")` | marks | A small made-up table to practise with. |
+| `sdata.chart` | `sdata.chart(sdata.example("marks"))` | marks | Start a chart. |
+| `sdata.example` | `sdata.example("marks")` | marks | A small made-up table to practise with. |
 | `show` | `chart.show()` | marks | Show the chart in a window. |
 | `save` | `chart.save("marks.png")` | marks | Save the chart. |
 
@@ -80,7 +80,7 @@ and `a`, `b` in `ps.side_by_side(a, b)` are charts you made first.
 | `count_bars` | `chart.count_bars(x="fruit", colour="shop")` | fruit | Bars that count how many rows each group has. |
 | `all_dots` | `chart.all_dots(x="class", y="marks")` | marks | Every value as a dot, spread out so no dot hides another. |
 | `side_histograms` | `chart.side_histograms()` | marks | Small histograms along the top and right edges of a dots chart. |
-| `ps.pairs` | `ps.pairs(ps.example("marks"), colour="class")` | marks | Every number column against every other. |
+| `sdata.pairs` | `sdata.pairs(sdata.example("marks"), colour="class")` | marks | Every number column against every other. |
 
 ## Lines and shading
 
@@ -142,9 +142,9 @@ and `a`, `b` in `ps.side_by_side(a, b)` are charts you made first.
 | Word | Example | Table | What it does |
 |---|---|---|---|
 | `one_chart_per` | `chart.one_chart_per("class", per_row=3)` | marks | One small chart for each group. |
-| `ps.side_by_side` | `ps.side_by_side(a, b)` | marks | Charts next to each other. |
-| `ps.one_above_other` | `ps.one_above_other(a, b)` | weather | Charts on top of each other. |
-| `ps.grid` | `ps.grid(a, b, c, d, per_row=2)` | marks | Charts in rows and columns. |
+| `sdata.side_by_side` | `sdata.side_by_side(a, b)` | marks | Charts next to each other. |
+| `sdata.one_above_other` | `sdata.one_above_other(a, b)` | weather | Charts on top of each other. |
+| `sdata.grid` | `sdata.grid(a, b, c, d, per_row=2)` | marks | Charts in rows and columns. |
 | `zoom_box` | `chart.zoom_box(x_between=[2, 4], y_between=[40, 60])` | marks | A small box showing part of the chart close up. |
 | `animate` | `chart.animate(over="year")` | growth | A moving chart with one picture for each value of a column. |
 
@@ -152,7 +152,7 @@ and `a`, `b` in `ps.side_by_side(a, b)` are charts you made first.
 
 | Word | Example | Table | What it does |
 |---|---|---|---|
-| `ps.table` | `ps.table(ps.example("marks"))` | marks | Start a table. |
+| `sdata.table` | `sdata.table(sdata.example("marks"))` | marks | Start a table. |
 | `show_first_rows` | `table.show_first_rows(5)` | marks | Show the first rows. |
 | `show_last_rows` | `table.show_last_rows(5)` | marks | Show the last rows. |
 | `column_names` | `table.column_names()` | marks | The names of all columns. |
@@ -237,7 +237,7 @@ and `a`, `b` in `ps.side_by_side(a, b)` are charts you made first.
 | Word | Example | Table | What it does |
 |---|---|---|---|
 | `join_with` | `table.join_with({"name": ["Asha", "Ben"], "age": [12, 13]}, using="name")` | marks | Bring in the columns of another table, matching rows on a column such as a name. |
-| `add_rows_from` | `table.add_rows_from(ps.example("marks"))` | marks | Put the rows of another table under this one; columns are matched by their names. |
+| `add_rows_from` | `table.add_rows_from(sdata.example("marks"))` | marks | Put the rows of another table under this one; columns are matched by their names. |
 | `turn_columns_into_rows` | `table.turn_columns_into_rows(["temperature", "rain"])` | weather | Turn some columns into rows: each value gets its own row, with its old column name beside it. |
 | `turn_rows_into_columns` | `table.turn_rows_into_columns(names_from="city", values_from="temperature")` | weather | Turn rows into columns: each different value in names_from= becomes a new column, filled from values_from=. |
 
@@ -257,8 +257,8 @@ and `a`, `b` in `ps.side_by_side(a, b)` are charts you made first.
 
 | Word | Example | Table | What it does |
 |---|---|---|---|
-| `ps.numbers` | `ps.numbers([3, 5, 2, 8])` |  | Make a list of numbers. |
-| `ps.random_numbers` | `ps.random_numbers(how_many=10, between=[0, 1], seed=1)` |  | Make random numbers; give seed= to get the same numbers every time. |
+| `sdata.numbers` | `sdata.numbers([3, 5, 2, 8])` |  | Make a list of numbers. |
+| `sdata.random_numbers` | `sdata.random_numbers(how_many=10, between=[0, 1], seed=1)` |  | Make random numbers; give seed= to get the same numbers every time. |
 | `show` | `nums.show()` |  | Show every number. |
 | `show_first_numbers` | `nums.show_first_numbers(5)` |  | Show the first numbers. |
 | `show_last_numbers` | `nums.show_last_numbers(5)` |  | Show the last numbers. |
@@ -314,7 +314,7 @@ and `a`, `b` in `ps.side_by_side(a, b)` are charts you made first.
 
 | Word | Example | Table | What it does |
 |---|---|---|---|
-| `ps.number_grid` | `ps.number_grid([[1, 2, 3], [4, 5, 6]])` |  | Make a grid of numbers in rows and columns. |
+| `sdata.number_grid` | `sdata.number_grid([[1, 2, 3], [4, 5, 6]])` |  | Make a grid of numbers in rows and columns. |
 | `number_grid` | `nums.number_grid(columns=3)` |  | Make a NEW grid from these numbers, filled row by row. |
 | `count_rows` | `grid.count_rows()` |  | How many rows the grid has. |
 | `count_columns` | `grid.count_columns()` |  | How many columns the grid has. |
@@ -334,7 +334,7 @@ and `a`, `b` in `ps.side_by_side(a, b)` are charts you made first.
 | `undo` | `nums.undo()` |  | Take the last step back. |
 | `steps` | `nums.steps()` |  | List every step you did, in order. |
 | `start_again` | `nums.start_again()` |  | Go back to the numbers as they were at the start. |
-| `table` | `nums.table(name="marks")` |  | Turn the numbers into a plotsimple table. |
+| `table` | `nums.table(name="marks")` |  | Turn the numbers into a simplydata table. |
 | `chart` | `nums.chart()` |  | Start a chart from these numbers. |
 | `save` | `nums.save("nums.csv")` |  | Save the numbers; the end of the file name decides the type. |
 | `as_numpy` | `nums.as_numpy()` |  | Give back the numbers as a plain NumPy array, for other Python tools. |
@@ -343,6 +343,6 @@ and `a`, `b` in `ps.side_by_side(a, b)` are charts you made first.
 
 | Word | Example | Table | What it does |
 |---|---|---|---|
-| `ps.words` | `ps.words()` |  | Print every plotsimple word with a short example. |
-| `ps.help` | `ps.help("bars")` |  | Explain one word: what it does, its options and an example you can run. |
-| `ps.lesson` | `ps.lesson(1)` |  | A lesson: an example to run, what each line does, and a task. |
+| `sdata.words` | `sdata.words()` |  | Print every simplydata word with a short example. |
+| `sdata.help` | `sdata.help("bars")` |  | Explain one word: what it does, its options and an example you can run. |
+| `sdata.lesson` | `sdata.lesson(1)` |  | A lesson: an example to run, what each line does, and a task. |

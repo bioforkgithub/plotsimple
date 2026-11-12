@@ -4,9 +4,9 @@ import numpy as np
 import pandas as pd
 import pytest
 
-import plotsimple as ps
-from plotsimple import PlotsimpleError
-from plotsimple.table import table as make_table
+import simplydata as sdata
+from simplydata import SimplydataError
+from simplydata.table import table as make_table
 
 ENGINES = ["pandas", "polars"]
 
@@ -78,11 +78,11 @@ def test_sort_ties_keep_order(engine):
 
 
 def test_sort_errors_and_undo(table, marks):
-    with pytest.raises(PlotsimpleError, match='Did you mean "marks"'):
+    with pytest.raises(SimplydataError, match='Did you mean "marks"'):
         table.sort_by("mark")
-    with pytest.raises(PlotsimpleError, match="needs a column"):
+    with pytest.raises(SimplydataError, match="needs a column"):
         table.sort_by()
-    with pytest.raises(PlotsimpleError, match="True or False"):
+    with pytest.raises(SimplydataError, match="True or False"):
         table.sort_by("marks", biggest_first="yes")
     table.sort_by("marks")
     table.undo()
@@ -142,29 +142,29 @@ def test_add_column_replaces_and_undo(table, marks):
 
 
 def test_add_column_friendly_errors(table):
-    with pytest.raises(PlotsimpleError, match="Choose one way"):
+    with pytest.raises(SimplydataError, match="Choose one way"):
         table.add_column("x")
-    with pytest.raises(PlotsimpleError, match="2 ways at once"):
+    with pytest.raises(SimplydataError, match="2 ways at once"):
         table.add_column("x", "marks + 1", value=3)
-    with pytest.raises(PlotsimpleError, match="needs a name"):
+    with pytest.raises(SimplydataError, match="needs a name"):
         table.add_column(by_adding=["marks", "test"])
-    with pytest.raises(PlotsimpleError, match="two or more column names"):
+    with pytest.raises(SimplydataError, match="two or more column names"):
         table.add_column("x", by_adding="marks")
-    with pytest.raises(PlotsimpleError, match='Did you mean "marks"'):
+    with pytest.raises(SimplydataError, match='Did you mean "marks"'):
         table.add_column("x", by_adding=["marks", "mrks"])
-    with pytest.raises(PlotsimpleError, match="holds text"):
+    with pytest.raises(SimplydataError, match="holds text"):
         table.add_column("x", by_adding=["marks", "name"])
-    with pytest.raises(PlotsimpleError, match="needs from_column"):
+    with pytest.raises(SimplydataError, match="needs from_column"):
         table.add_column("x", divide_by=2)
-    with pytest.raises(PlotsimpleError, match="exactly one of"):
+    with pytest.raises(SimplydataError, match="exactly one of"):
         table.add_column("x", from_column="marks", plus=1, times=2)
-    with pytest.raises(PlotsimpleError, match="exactly one of"):
+    with pytest.raises(SimplydataError, match="exactly one of"):
         table.add_column("x", from_column="marks")
-    with pytest.raises(PlotsimpleError, match="only works together with from_column"):
+    with pytest.raises(SimplydataError, match="only works together with from_column"):
         table.add_column("x", value=1, plus=2)
-    with pytest.raises(PlotsimpleError, match="number or a column name"):
+    with pytest.raises(SimplydataError, match="number or a column name"):
         table.add_column("x", from_column="marks", plus=[1])
-    with pytest.raises(PlotsimpleError, match="has no option called"):
+    with pytest.raises(SimplydataError, match="has no option called"):
         table.add_column("x", by_add=["marks", "test"])
 
 
@@ -197,9 +197,9 @@ def test_formula_backticks_and_keyword_columns(engine):
     same_values(plain(t)["range"], [10.0, 10.0])
     t.add_column("next", "class + 1")
     same_values(plain(t)["next"], [2, 3])
-    with pytest.raises(PlotsimpleError, match='Column "max tmp" not found'):
+    with pytest.raises(SimplydataError, match='Column "max tmp" not found'):
         t.add_column("x", "`max tmp` * 2")
-    with pytest.raises(PlotsimpleError, match="backtick"):
+    with pytest.raises(SimplydataError, match="backtick"):
         t.add_column("x", "`max temp * 2")
 
 
@@ -247,30 +247,30 @@ def test_formula_empty_cells_stay_empty(engine):
     ],
 )
 def test_formula_safety(table, formula):
-    with pytest.raises(PlotsimpleError):
+    with pytest.raises(SimplydataError):
         table.add_column("x", formula)
     assert "x" not in table.column_names()
 
 
 def test_formula_friendly_messages(table):
-    with pytest.raises(PlotsimpleError, match='Did you mean "marks"') as err:
+    with pytest.raises(SimplydataError, match='Did you mean "marks"') as err:
         table.add_column("x", "mraks + 1")
     assert "Columns you have" in str(err.value)
-    with pytest.raises(PlotsimpleError, match=r"\*\* instead of \^"):
+    with pytest.raises(SimplydataError, match=r"\*\* instead of \^"):
         table.add_column("x", "marks ^ 2")
-    with pytest.raises(PlotsimpleError, match="A formula can use"):
+    with pytest.raises(SimplydataError, match="A formula can use"):
         table.add_column("x", "__import__('os')")
-    with pytest.raises(PlotsimpleError, match=r"Did you mean sqrt\(\)"):
+    with pytest.raises(SimplydataError, match=r"Did you mean sqrt\(\)"):
         table.add_column("x", "sqr(marks)")
-    with pytest.raises(PlotsimpleError, match="needs brackets"):
+    with pytest.raises(SimplydataError, match="needs brackets"):
         table.add_column("x", "marks + sqrt")
-    with pytest.raises(PlotsimpleError, match="no column in it"):
+    with pytest.raises(SimplydataError, match="no column in it"):
         table.add_column("x", "1 + 2")
-    with pytest.raises(PlotsimpleError, match="holds text"):
+    with pytest.raises(SimplydataError, match="holds text"):
         table.add_column("x", "name + 1")
-    with pytest.raises(PlotsimpleError, match="cannot read"):
+    with pytest.raises(SimplydataError, match="cannot read"):
         table.add_column("x", "marks + ")
-    with pytest.raises(PlotsimpleError, match="base of log"):
+    with pytest.raises(SimplydataError, match="base of log"):
         table.add_column("x", "log(marks, 1)")
 
 
@@ -289,15 +289,15 @@ def test_group_column_boundaries(engine):
 
 
 def test_group_column_errors(table):
-    with pytest.raises(PlotsimpleError, match="one more name"):
+    with pytest.raises(SimplydataError, match="one more name"):
         table.add_group_column("g", from_column="marks", cut_at=[40, 60], names=["low", "high"])
-    with pytest.raises(PlotsimpleError, match="small to big"):
+    with pytest.raises(SimplydataError, match="small to big"):
         table.add_group_column("g", from_column="marks", cut_at=[60, 40], names=["a", "b", "c"])
-    with pytest.raises(PlotsimpleError, match="list of numbers"):
+    with pytest.raises(SimplydataError, match="list of numbers"):
         table.add_group_column("g", from_column="marks", cut_at=["40"], names=["a", "b"])
-    with pytest.raises(PlotsimpleError, match="holds text"):
+    with pytest.raises(SimplydataError, match="holds text"):
         table.add_group_column("g", from_column="name", cut_at=[40], names=["a", "b"])
-    with pytest.raises(PlotsimpleError, match="from_column="):
+    with pytest.raises(SimplydataError, match="from_column="):
         table.add_group_column("g", cut_at=[40], names=["a", "b"])
     table.add_group_column("g", from_column="marks", cut_at=50, names=["fail", "pass"])
     assert set(plain(table)["g"]) <= {"fail", "pass"}
@@ -319,9 +319,9 @@ def test_rank_matches_pandas_and_empty_cells(table, marks, engine):
     t = build({"p": [3.0, None, 1.0]}, engine)
     t.add_rank_column("place", from_column="p")
     same_values(plain(t)["place"], [1, np.nan, 2])
-    with pytest.raises(PlotsimpleError, match="from_column="):
+    with pytest.raises(SimplydataError, match="from_column="):
         t.add_rank_column("place")
-    with pytest.raises(PlotsimpleError, match="not found"):
+    with pytest.raises(SimplydataError, match="not found"):
         t.add_rank_column("place", from_column="q")
 
 
@@ -366,16 +366,16 @@ def test_join_with_any_kind_of_other(engine, marks, people, tmp_path, capsys):
 
 
 def test_join_with_errors(table, people, capsys):
-    with pytest.raises(PlotsimpleError, match="needs using=") as err:
+    with pytest.raises(SimplydataError, match="needs using=") as err:
         table.join_with(people)
     assert "Columns in both tables: name, height" in str(err.value)
-    with pytest.raises(PlotsimpleError, match='Did you mean keep="matching rows"'):
+    with pytest.raises(SimplydataError, match='Did you mean keep="matching rows"'):
         table.join_with(people, using="name", keep="matching row")
-    with pytest.raises(PlotsimpleError, match='other table has no column "class"'):
+    with pytest.raises(SimplydataError, match='other table has no column "class"'):
         table.join_with(people, using="class")
-    with pytest.raises(PlotsimpleError, match="needs another table"):
+    with pytest.raises(SimplydataError, match="needs another table"):
         table.join_with(using="name")
-    with pytest.raises(PlotsimpleError, match="text in this table but numbers"):
+    with pytest.raises(SimplydataError, match="text in this table but numbers"):
         table.join_with({"name": [1, 2]}, using="name")
 
 
@@ -407,12 +407,12 @@ def test_add_rows_whole_numbers_and_decimals(engine):
 
 
 def test_add_rows_from_errors(table):
-    with pytest.raises(PlotsimpleError) as err:
+    with pytest.raises(SimplydataError) as err:
         table.add_rows_from({"name": ["Asha"], "mark": [3]})
     text = str(err.value)
     assert "Only in this table: class, test, marks, height" in text
     assert "Only in the other table: mark" in text
-    with pytest.raises(PlotsimpleError, match="needs another table"):
+    with pytest.raises(SimplydataError, match="needs another table"):
         table.add_rows_from()
 
 
@@ -429,13 +429,13 @@ def test_turn_columns_into_rows_matches_pandas(table, marks):
 
 
 def test_turn_columns_into_rows_errors(table):
-    with pytest.raises(PlotsimpleError, match="needs the columns"):
+    with pytest.raises(SimplydataError, match="needs the columns"):
         table.turn_columns_into_rows()
-    with pytest.raises(PlotsimpleError, match='already has a column "name"'):
+    with pytest.raises(SimplydataError, match='already has a column "name"'):
         table.turn_columns_into_rows(["marks"], names_to="name")
-    with pytest.raises(PlotsimpleError, match="all hold numbers or all hold text"):
+    with pytest.raises(SimplydataError, match="all hold numbers or all hold text"):
         table.turn_columns_into_rows(["marks", "name"])
-    with pytest.raises(PlotsimpleError, match="not found"):
+    with pytest.raises(SimplydataError, match="not found"):
         table.turn_columns_into_rows(["marks", "weight"])
 
 
@@ -457,7 +457,7 @@ def test_turn_rows_into_columns_matches_pandas(engine, marks):
 
 
 def test_round_trip_long_and_wide(engine):
-    weather = ps.example("weather")[["month", "city", "temperature", "rain"]]
+    weather = sdata.example("weather")[["month", "city", "temperature", "rain"]]
     t = build(weather, engine)
     t.turn_columns_into_rows(["temperature", "rain"])
     t.turn_rows_into_columns(names_from="column", values_from="value")
@@ -466,18 +466,18 @@ def test_round_trip_long_and_wide(engine):
 
 def test_turn_rows_into_columns_errors(table):
     t = build({"name": ["a", "a", "b"], "test": [1, 1, 1], "m": [1, 2, 3]}, "pandas")
-    with pytest.raises(PlotsimpleError, match='average_of\\("m", for_each=\\["name", "test"\\]\\)'):
+    with pytest.raises(SimplydataError, match='average_of\\("m", for_each=\\["name", "test"\\]\\)'):
         t.turn_rows_into_columns(names_from="test", values_from="m")
-    with pytest.raises(PlotsimpleError, match="needs names_from= and values_from="):
+    with pytest.raises(SimplydataError, match="needs names_from= and values_from="):
         table.turn_rows_into_columns(names_from="test")
-    with pytest.raises(PlotsimpleError, match="not found"):
+    with pytest.raises(SimplydataError, match="not found"):
         table.turn_rows_into_columns(names_from="tests", values_from="marks")
 
 
 # ---------------------------------------------------------------------------- docstrings
 def test_docstring_examples_run():
     for engine in ENGINES:
-        marks = build(ps.example("marks"), engine)
+        marks = build(sdata.example("marks"), engine)
         marks.sort_by("marks", biggest_first=True)
         marks.add_column("study_and_marks", by_adding=["hours", "marks"])
         marks.add_column("half", from_column="marks", divide_by=2)
@@ -487,7 +487,7 @@ def test_docstring_examples_run():
         marks.add_rank_column("place", from_column="marks")
         marks.join_with({"name": ["Asha", "Ben"], "age": [12, 13]}, using="name")
         marks.add_rows_from(marks)
-        weather = build(ps.example("weather"), engine)
+        weather = build(sdata.example("weather"), engine)
         weather.turn_columns_into_rows(["temperature", "rain"])
         weather.undo()
         weather.turn_rows_into_columns(names_from="city", values_from="temperature")

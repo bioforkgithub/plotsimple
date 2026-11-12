@@ -2,11 +2,11 @@
 
 import pytest
 
-import plotsimple as ps
+import simplydata as sdata
 
 
 def test_second_y_with_legend_bottom_keeps_both_series(marks):
-    chart = ps.chart(marks)
+    chart = sdata.chart(marks)
     chart.lines(x="test", y="marks", colour="class")
     chart.second_y("height", drawn_as="lines", label="Height (cm)")
     chart.legend_bottom()
@@ -18,7 +18,7 @@ def test_second_y_with_legend_bottom_keeps_both_series(marks):
 
 
 def test_full_sentence_renders(marks, tmp_path):
-    chart = ps.chart(marks)
+    chart = sdata.chart(marks)
     chart.bars(x="name", y="marks", colour="class", error="sd")
     chart.title_top("My class marks")
     chart.label_x("Student")
@@ -35,39 +35,39 @@ def test_full_sentence_renders(marks, tmp_path):
 
 
 def test_page_of_different_charts(marks, tmp_path):
-    a = ps.chart(marks).bars(x="name", y="marks").title_top("Bars")
-    b = ps.chart(marks).dots(x="height", y="marks").fit_line(confidence_band=True).title_top("Fit")
-    c = ps.chart(marks).histogram(x="marks").title_top("Spread")
-    d = ps.chart(marks).heatmap(x="name", y="test", value="marks", numbers=True)
-    ps.grid(a, b, c, d, per_row=2).title_top("Everything").save(tmp_path / "page.png")
+    a = sdata.chart(marks).bars(x="name", y="marks").title_top("Bars")
+    b = sdata.chart(marks).dots(x="height", y="marks").fit_line(confidence_band=True).title_top("Fit")
+    c = sdata.chart(marks).histogram(x="marks").title_top("Spread")
+    d = sdata.chart(marks).heatmap(x="name", y="test", value="marks", numbers=True)
+    sdata.grid(a, b, c, d, per_row=2).title_top("Everything").save(tmp_path / "page.png")
     assert (tmp_path / "page.png").stat().st_size > 0
 
 
 def test_grid_with_letters_labels_each_chart(tmp_path):
-    marks, weather = ps.example("marks"), ps.example("weather")
-    a = ps.chart(marks).bars(x="class", y="marks")
-    b = ps.chart(weather).lines(x="month", y="rain")
-    c = ps.chart(marks).histogram(x="marks")
-    page = ps.grid(a, b, c, per_row=2, letters=True)
+    marks, weather = sdata.example("marks"), sdata.example("weather")
+    a = sdata.chart(marks).bars(x="class", y="marks")
+    b = sdata.chart(weather).lines(x="month", y="rain")
+    c = sdata.chart(marks).histogram(x="marks")
+    page = sdata.grid(a, b, c, per_row=2, letters=True)
     fig = page._render()
     assert [ax.get_title(loc="left") for ax in fig.axes if ax.get_title(loc="left")] == ["A", "B", "C"]
     page.save(tmp_path / "grid.png")
     assert (tmp_path / "grid.png").stat().st_size > 0
-    fig = ps.side_by_side(a, b)._render()
+    fig = sdata.side_by_side(a, b)._render()
     assert not [ax for ax in fig.axes if ax.get_title(loc="left")]  # no letters unless asked
 
 
 def test_one_above_other_with_letters(tmp_path):
-    marks = ps.example("marks")
-    a = ps.chart(marks).boxes(x="class", y="marks")
-    b = ps.chart(marks).dots(x="hours", y="marks")
-    fig = ps.one_above_other(a, b, letters=True)._render()
+    marks = sdata.example("marks")
+    a = sdata.chart(marks).boxes(x="class", y="marks")
+    b = sdata.chart(marks).dots(x="hours", y="marks")
+    fig = sdata.one_above_other(a, b, letters=True)._render()
     assert [ax.get_title(loc="left") for ax in fig.axes if ax.get_title(loc="left")] == ["A", "B"]
 
 
 def test_page_letters_must_be_true_or_false():
-    a = ps.chart(ps.example("marks")).bars(x="class", y="marks")
-    with pytest.raises(ps.PlotsimpleError, match="letters=True or letters=False"):
-        ps.side_by_side(a, a, letters="yes")
-    with pytest.raises(ps.PlotsimpleError, match="letters=True or letters=False"):
-        ps.grid(a, a, letters=1)
+    a = sdata.chart(sdata.example("marks")).bars(x="class", y="marks")
+    with pytest.raises(sdata.SimplydataError, match="letters=True or letters=False"):
+        sdata.side_by_side(a, a, letters="yes")
+    with pytest.raises(sdata.SimplydataError, match="letters=True or letters=False"):
+        sdata.grid(a, a, letters=1)

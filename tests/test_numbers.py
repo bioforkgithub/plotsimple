@@ -4,10 +4,10 @@ import numpy as np
 import pandas as pd
 import pytest
 
-import plotsimple as ps
-from plotsimple import PlotsimpleError
-from plotsimple._data import frame_for, is_listlike, load
-from plotsimple.numbers import NumberGrid, Numbers, number_grid, numbers, random_numbers
+import simplydata as sdata
+from simplydata import SimplydataError
+from simplydata._data import frame_for, is_listlike, load
+from simplydata.numbers import NumberGrid, Numbers, number_grid, numbers, random_numbers
 
 NAN = np.nan
 
@@ -40,23 +40,23 @@ def test_counting_includes_the_end():
 
 
 def test_making_numbers_errors():
-    with pytest.raises(PlotsimpleError, match="ps.numbers\\(1, to=5\\)"):
+    with pytest.raises(SimplydataError, match="sdata.numbers\\(1, to=5\\)"):
         numbers(5)
-    with pytest.raises(PlotsimpleError, match="text"):
+    with pytest.raises(SimplydataError, match="text"):
         numbers(["a", 2])
-    with pytest.raises(PlotsimpleError, match="without quotes"):
+    with pytest.raises(SimplydataError, match="without quotes"):
         numbers(["3", "4"])
-    with pytest.raises(PlotsimpleError, match="True/False"):
+    with pytest.raises(SimplydataError, match="True/False"):
         numbers([True, False])
-    with pytest.raises(PlotsimpleError, match="number_grid"):
+    with pytest.raises(SimplydataError, match="number_grid"):
         numbers([[1, 2], [3, 4]])
-    with pytest.raises(PlotsimpleError, match="never gets there"):
+    with pytest.raises(SimplydataError, match="never gets there"):
         numbers(1, to=10, step=-1)
-    with pytest.raises(PlotsimpleError, match="not both"):
+    with pytest.raises(SimplydataError, match="not both"):
         numbers(0, to=1, step=0.1, how_many=3)
-    with pytest.raises(PlotsimpleError, match="not 0"):
+    with pytest.raises(SimplydataError, match="not 0"):
         numbers(0, to=1, step=0)
-    with pytest.raises(PlotsimpleError, match="has no option called start="):
+    with pytest.raises(SimplydataError, match="has no option called start="):
         numbers(start=1, to=10)
 
 
@@ -74,15 +74,15 @@ def test_random_numbers_match_numpy():
 
 
 def test_random_numbers_errors():
-    with pytest.raises(PlotsimpleError, match="how_many"):
+    with pytest.raises(SimplydataError, match="how_many"):
         random_numbers(seed=1)
-    with pytest.raises(PlotsimpleError, match="not both"):
+    with pytest.raises(SimplydataError, match="not both"):
         random_numbers(how_many=3, between=[0, 1], average=2, standard_deviation=1)
-    with pytest.raises(PlotsimpleError, match="seed="):
+    with pytest.raises(SimplydataError, match="seed="):
         random_numbers(how_many=3, seed=-1)
-    with pytest.raises(PlotsimpleError, match="both average= and standard_deviation="):
+    with pytest.raises(SimplydataError, match="both average= and standard_deviation="):
         random_numbers(how_many=3, average=5)
-    with pytest.raises(PlotsimpleError, match="whole numbers in between"):
+    with pytest.raises(SimplydataError, match="whole numbers in between"):
         random_numbers(how_many=3, between=[0.5, 2], whole_numbers=True)
 
 
@@ -97,11 +97,11 @@ def test_making_grids():
     same(number_grid([1, 2, 3, 4, 5, 6], columns=3), np.arange(1, 7).reshape(2, 3))
     same(number_grid([1, 2, 3, 4, 5, 6], rows=3), np.arange(1, 7).reshape(3, 2))
     same(numbers(1, to=6).number_grid(columns=2), np.arange(1, 7).reshape(3, 2))
-    with pytest.raises(PlotsimpleError, match="same length"):
+    with pytest.raises(SimplydataError, match="same length"):
         number_grid([[1, 2], [3]])
-    with pytest.raises(PlotsimpleError, match="cannot fill"):
+    with pytest.raises(SimplydataError, match="cannot fill"):
         number_grid([1, 2, 3, 4, 5], columns=2)
-    with pytest.raises(PlotsimpleError, match="rows= and columns="):
+    with pytest.raises(SimplydataError, match="rows= and columns="):
         number_grid()
 
 
@@ -110,18 +110,18 @@ def test_positions_count_from_one():
     nums = numbers([3, 5, 2, 8])
     assert nums.number_at(1) == 3 and nums.number_at(4) == 8
     assert isinstance(nums.number_at(1), int)
-    with pytest.raises(PlotsimpleError, match="from 1 to 4"):
+    with pytest.raises(SimplydataError, match="from 1 to 4"):
         nums.number_at(0)
-    with pytest.raises(PlotsimpleError, match="count from 1"):
+    with pytest.raises(SimplydataError, match="count from 1"):
         nums[0]
     grid = number_grid([[1, 2, 3], [4, 5, 6]])
     assert grid.number_at(row=2, column=3) == 6
     same(grid.row(1), [1, 2, 3])
     same(grid.column(2), [2, 5])
     same(grid.numbers(), [1, 2, 3, 4, 5, 6])
-    with pytest.raises(PlotsimpleError, match="from 1 to 2"):
+    with pytest.raises(SimplydataError, match="from 1 to 2"):
         grid.row(3)
-    with pytest.raises(PlotsimpleError, match="number_at"):
+    with pytest.raises(SimplydataError, match="number_at"):
         grid[0, 0]
 
 
@@ -132,7 +132,7 @@ def test_show_words(capsys):
     nums.show()
     out = capsys.readouterr().out.splitlines()
     assert out[0] == "[1, 2, 3]" and out[1] == "[ 9, 10]"
-    assert "plotsimple numbers: 10 numbers" in repr(nums)
+    assert "simplydata numbers: 10 numbers" in repr(nums)
     assert "2 rows, 3 columns" in repr(number_grid(rows=2, columns=3))
 
 
@@ -159,17 +159,17 @@ def test_keep_and_remove_use_table_conditions(capsys):
 
 def test_keep_errors():
     nums = numbers([1, 2, 3])
-    with pytest.raises(PlotsimpleError, match="one condition"):
+    with pytest.raises(SimplydataError, match="one condition"):
         nums.keep_numbers()
-    with pytest.raises(PlotsimpleError, match="one condition at a time"):
+    with pytest.raises(SimplydataError, match="one condition at a time"):
         nums.keep_numbers(above=1, below=3)
-    with pytest.raises(PlotsimpleError, match="without quotes"):
+    with pytest.raises(SimplydataError, match="without quotes"):
         nums.keep_numbers(above="2")
-    with pytest.raises(PlotsimpleError, match="two numbers"):
+    with pytest.raises(SimplydataError, match="two numbers"):
         nums.keep_numbers(between=5)
-    with pytest.raises(PlotsimpleError, match="no option called contains="):
+    with pytest.raises(SimplydataError, match="no option called contains="):
         nums.keep_numbers(contains="1")
-    with pytest.raises(PlotsimpleError, match="above=50"):
+    with pytest.raises(SimplydataError, match="above=50"):
         nums.keep_numbers(50)
 
 
@@ -202,9 +202,9 @@ def test_fill_empty_numbers(capsys):
         nums.fill_empty_numbers(**kw)
         same(nums, expected)
     assert "1 value stayed empty" in capsys.readouterr().out
-    with pytest.raises(PlotsimpleError, match="exactly one"):
+    with pytest.raises(SimplydataError, match="exactly one"):
         numbers(values).fill_empty_numbers()
-    with pytest.raises(PlotsimpleError, match="with_the"):
+    with pytest.raises(SimplydataError, match="with_the"):
         numbers(values).fill_empty_numbers(with_the="mode")
 
 
@@ -239,11 +239,11 @@ def test_reflected_symbols_and_numbers_with_numbers():
     same(abs(numbers([-1, 2])), [1, 2])
     same(np.array([1, 1, 1]) * nums, [1, 2, 4])
     assert isinstance(np.float64(2) * nums, Numbers)
-    with pytest.raises(PlotsimpleError, match="3 numbers"):
+    with pytest.raises(SimplydataError, match="3 numbers"):
         nums + [1, 2]
-    with pytest.raises(PlotsimpleError, match="without quotes"):
+    with pytest.raises(SimplydataError, match="without quotes"):
         nums.add("5")
-    with pytest.raises(PlotsimpleError, match="v0.7"):
+    with pytest.raises(SimplydataError, match="v0.7"):
         nums @ nums
 
 
@@ -286,7 +286,7 @@ def test_one_at_a_time_words(capsys):
     out = capsys.readouterr().out
     assert "a negative number has no square root, so 1 number is now empty" in out
     assert "the log only exists for numbers above 0, so 2 numbers are now empty" in out
-    with pytest.raises(PlotsimpleError, match="base="):
+    with pytest.raises(SimplydataError, match="base="):
         numbers(v).log(base=1)
 
 
@@ -300,7 +300,7 @@ def test_round_half_to_even():
     same(nums, np.round([0.5, 1.5, 2.5, 3.5, 2.675, 1234], 2))
     nums.round_to(-2)
     assert nums.number_at(6) == 1200
-    with pytest.raises(PlotsimpleError, match="whole number"):
+    with pytest.raises(SimplydataError, match="whole number"):
         nums.round_to(1.5)
 
 
@@ -315,7 +315,7 @@ def test_order_words():
     nums = numbers([1, 2, NAN, 3])
     nums.running_total()
     same(nums, pd.Series([1, 2, NAN, 3]).cumsum())
-    with pytest.raises(PlotsimpleError, match="True or False"):
+    with pytest.raises(SimplydataError, match="True or False"):
         nums.sort(biggest_first="yes")
 
 
@@ -358,7 +358,7 @@ def test_summaries_on_nothing(capsys):
     assert empty.total() == 0
     assert np.isnan(numbers([4]).standard_deviation())
     assert "at least 2 numbers" in capsys.readouterr().out
-    with pytest.raises(PlotsimpleError, match="0 to 100"):
+    with pytest.raises(SimplydataError, match="0 to 100"):
         numbers([1, 2]).percentile(120)
 
 
@@ -373,13 +373,13 @@ def test_count_each():
 
 def test_summary_names_and_hints():
     nums = numbers([1, 2])
-    with pytest.raises(PlotsimpleError, match=r"nums\.average\(\)"):
+    with pytest.raises(SimplydataError, match=r"nums\.average\(\)"):
         nums.average_of()
-    with pytest.raises(PlotsimpleError, match=r"nums\.average\(\)"):
+    with pytest.raises(SimplydataError, match=r"nums\.average\(\)"):
         nums.mean()
-    with pytest.raises(PlotsimpleError, match=r"keep_numbers"):
+    with pytest.raises(SimplydataError, match=r"keep_numbers"):
         nums.keep_rows()
-    with pytest.raises(PlotsimpleError, match="brackets"):
+    with pytest.raises(SimplydataError, match="brackets"):
         nums.total = 3
     assert not hasattr(nums, "dtype")  # still an AttributeError for Python tools
 
@@ -395,7 +395,7 @@ def test_grid_summaries_for_each():
     same(grid.standard_deviation(for_each="column"), [np.std([1, 4], ddof=1), np.std([2, 5], ddof=1), NAN])
     same(grid.percentile(50, for_each="row"), np.nanmedian(g, axis=1))
     assert isinstance(grid.median(for_each="row"), Numbers)
-    with pytest.raises(PlotsimpleError, match='Did you mean for_each="row"'):
+    with pytest.raises(SimplydataError, match='Did you mean for_each="row"'):
         grid.average(for_each="rows")
 
 
@@ -415,7 +415,7 @@ def test_grid_maths_and_swap():
     assert grid.shape() == (3, 2)
     grid.undo()
     same(grid, g)
-    with pytest.raises(PlotsimpleError, match="one for each column"):
+    with pytest.raises(SimplydataError, match="one for each column"):
         grid + [1, 2]
     same(np.sin(grid), np.sin(g))
     assert list(grid) == [[1, 2, 3], [4, 5, 6]]
@@ -435,7 +435,7 @@ def test_done_table_save(tmp_path):
     assert grid.table().column_names() == ["1", "2"]
     grid.save(tmp_path / "grid.csv")
     assert pd.read_csv(tmp_path / "grid.csv").values.tolist() == [[1, 2], [3, 4]]
-    with pytest.raises(PlotsimpleError, match="file type"):
+    with pytest.raises(SimplydataError, match="file type"):
         nums.save(tmp_path / "nums")
     same(np.asarray(nums), [1, 2, 3])
 
@@ -450,12 +450,12 @@ def test_charts_and_tables_accept_numbers():
     assert list(frame.columns) == ["1", "2"] and list(frame.index) == [1, 2]
     table, names = frame_for(pd.DataFrame(), y=nums)
     assert table[names["y"]].tolist() == [3, 5, 2]
-    ps.chart().lines(nums).dots(x=nums, y=nums * 2).histogram(x=nums)._render()
-    ps.chart(grid).heatmap(numbers=True)._render()
+    sdata.chart().lines(nums).dots(x=nums, y=nums * 2).histogram(x=nums)._render()
+    sdata.chart(grid).heatmap(numbers=True)._render()
     grid.chart().heatmap()._render()
     nums.chart().bars(x=numbers(1, to=3), y="value")._render()
-    assert ps.table(nums).column_names() == ["value"]
-    assert ps.table(grid).count_rows() == 2
+    assert sdata.table(nums).column_names() == ["value"]
+    assert sdata.table(grid).count_rows() == 2
 
 
 def test_every_word_has_a_docstring_with_an_example():

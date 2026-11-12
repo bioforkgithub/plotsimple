@@ -3,7 +3,7 @@ requires = ["hatchling>=1.26"]
 build-backend = "hatchling.build"
 
 [project]
-name = "plotsimple"
+name = "simplydata"
 dynamic = ["version"]
 description = "Plain-English plotting and data for everyone: one easy vocabulary over matplotlib, seaborn, pandas, Polars and NumPy."
 readme = "README.md"
@@ -35,14 +35,14 @@ fast = ["polars>=0.20", "pyarrow>=14"]
 test = ["pytest>=7", "polars>=0.20", "pyarrow>=14"]
 
 [project.urls]
-Homepage = "https://github.com/bioforkgithub/plotsimple"
-Issues = "https://github.com/bioforkgithub/plotsimple/issues"
+Homepage = "https://github.com/bioforkgithub/simplydata"
+Issues = "https://github.com/bioforkgithub/simplydata/issues"
 
 [tool.hatch.version]
-path = "src/plotsimple/__init__.py"
+path = "src/simplydata/__init__.py"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/plotsimple"]
+packages = ["src/simplydata"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

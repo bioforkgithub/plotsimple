@@ -1,23 +1,23 @@
 import pandas as pd
 import pytest
 
-import plotsimple as ps
-from plotsimple import PlotsimpleError
+import simplydata as sdata
+from simplydata import SimplydataError
 
 
 @pytest.fixture(params=["pandas", "polars"])
 def table(request, marks):
     if request.param == "polars":
         pl = pytest.importorskip("polars")
-        return ps.table(pl.from_pandas(marks))
-    return ps.table(marks)
+        return sdata.table(pl.from_pandas(marks))
+    return sdata.table(marks)
 
 
 def test_engine_follows_input(marks):
-    assert ps.table(marks)._engine == "pandas"
+    assert sdata.table(marks)._engine == "pandas"
     pl = pytest.importorskip("polars")
-    assert ps.table(pl.from_pandas(marks))._engine == "Polars"
-    assert ps.table(marks, fast=True)._engine == "Polars"
+    assert sdata.table(pl.from_pandas(marks))._engine == "Polars"
+    assert sdata.table(marks, fast=True)._engine == "Polars"
 
 
 def test_done_gives_plain_table(table, marks):
@@ -52,25 +52,25 @@ def test_save_types(table, tmp_path):
     for kind in ("csv", "tsv", "xlsx", "parquet", "json"):
         table.save(tmp_path / f"t.{kind}")
         assert (tmp_path / f"t.{kind}").stat().st_size > 0
-    again = ps.table(tmp_path / "t.xlsx")
+    again = sdata.table(tmp_path / "t.xlsx")
     assert len(again) == len(table)
-    with pytest.raises(PlotsimpleError, match=".xlsx"):
+    with pytest.raises(SimplydataError, match=".xlsx"):
         table.save(tmp_path / "t")
 
 
 def test_chart_from_table(table):
     chart = table.chart().bars(x="name", y="marks")
     assert len(chart._render().axes[0].patches) == 4
-    assert len(ps.chart(table)._data) == len(table)
+    assert len(sdata.chart(table)._data) == len(table)
 
 
 def test_friendly_errors(table):
-    with pytest.raises(PlotsimpleError, match="no step called"):
+    with pytest.raises(SimplydataError, match="no step called"):
         table.remove_emptyrows()
-    with pytest.raises(PlotsimpleError, match="brackets"):
+    with pytest.raises(SimplydataError, match="brackets"):
         table.title = "x"
-    with pytest.raises(PlotsimpleError, match="needs some data"):
-        ps.table()
+    with pytest.raises(SimplydataError, match="needs some data"):
+        sdata.table()
 
 
 def test_column_names_and_repr(table, marks):
@@ -79,7 +79,7 @@ def test_column_names_and_repr(table, marks):
 
 
 def test_rows_are_numbered_again_after_every_step(marks, capsys):
-    t = ps.table(marks)
+    t = sdata.table(marks)
     t.keep_rows("marks", above=60)
     assert list(t._done().index) == list(range(len(t)))
     t.sort_by("marks", biggest_first=True)
@@ -90,7 +90,7 @@ def test_rows_are_numbered_again_after_every_step(marks, capsys):
 
 
 def test_column_error_without_columns_suits_charts_and_tables():
-    from plotsimple._errors import column_error
+    from simplydata._errors import column_error
     message = str(column_error("marks", []))
     assert "chart has no table" not in message
-    assert "ps.table(" in message and "ps.chart(" in message
+    assert "sdata.table(" in message and "sdata.chart(" in message

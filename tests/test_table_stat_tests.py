@@ -2,7 +2,7 @@
 
 Every number is checked against SciPy and against R 4.6.2 (reference values hard-coded below,
 with the R call that made them), on pandas and Polars tables. The R data is the practice
-table ps.example("marks"), read in R with read.csv(".../data/marks.csv").
+table sdata.example("marks"), read in R with read.csv(".../data/marks.csv").
 """
 
 import math
@@ -13,10 +13,10 @@ import pytest
 from scipy import stats
 from scipy.stats.contingency import association
 
-import plotsimple as ps
-from plotsimple import PlotsimpleError
-from plotsimple.table import table as make_table
-from plotsimple.table.stat_tests import _hedges_correction, _holm, _num, _welch_anova
+import simplydata as sdata
+from simplydata import SimplydataError
+from simplydata.table import table as make_table
+from simplydata.table.stat_tests import _hedges_correction, _holm, _num, _welch_anova
 
 ENGINES = ["pandas", "polars"]
 REL = 1e-9  # SciPy and R agree to about this many digits for closed-form tests
@@ -36,7 +36,7 @@ def make(data, engine):
 
 @pytest.fixture
 def marks():
-    return ps.example("marks")
+    return sdata.example("marks")
 
 
 def group(df, name, column="marks", by="class"):
@@ -385,7 +385,7 @@ def test_small_counts_note_suggests_fisher_and_never_switches(engine, capsys):
 
 
 def test_fisher_needs_two_by_two(marks):
-    with pytest.raises(PlotsimpleError, match="2 x 2"):
+    with pytest.raises(SimplydataError, match="2 x 2"):
         make_table(with_result(marks)).compare_counts("result", between="class", test="fisher")
 
 
@@ -411,7 +411,7 @@ def test_straight_line_matches_r_lm(marks, engine, capsys):
 
 # ---------------------------------------------------------------- fit_formula
 def growth_applia(engine):
-    t = make(ps.example("growth"), engine)
+    t = make(sdata.example("growth"), engine)
     t.keep_rows("country", equal_to="Applia")
     return t
 
@@ -468,15 +468,15 @@ def test_fit_formula_matches_scipy_curve_fit(marks):
     ("nothing = a * hours", 'Column "nothing" not found'),
 ])
 def test_fit_formula_friendly_errors(marks, formula, message):
-    with pytest.raises(PlotsimpleError, match=message):
+    with pytest.raises(SimplydataError, match=message):
         make_table(marks).fit_formula(formula)
 
 
 def test_fit_formula_failed_fit_is_explained(marks):
-    t = make_table(ps.example("growth"))
-    with pytest.raises(PlotsimpleError, match="impossible numbers"):
+    t = make_table(sdata.example("growth"))
+    with pytest.raises(SimplydataError, match="impossible numbers"):
         t.fit_formula("population = a * exp(b * year)")
-    with pytest.raises(PlotsimpleError, match="not in the formula"):
+    with pytest.raises(SimplydataError, match="not in the formula"):
         make_table(marks).fit_formula("marks = a * hours", start={"c": 1})
 
 
@@ -507,7 +507,7 @@ def test_tiny_group_note_and_error(capsys):
     make_table(data).compare_averages("v", between="g")
     assert 'group "a" has only 2 values: too few to check' in capsys.readouterr().out
     single = pd.DataFrame({"g": ["a", "b", "b"], "v": [1.0, 3.0, 4.0]})
-    with pytest.raises(PlotsimpleError, match="at least 2 values in each group"):
+    with pytest.raises(SimplydataError, match="at least 2 values in each group"):
         make_table(single).compare_averages("v", between="g")
 
 
@@ -530,7 +530,7 @@ def test_empty_cells_skipped_with_a_note(engine, capsys):
 
 def test_result_is_a_table_on_the_same_engine_and_can_be_saved(marks, engine, tmp_path):
     result = make(marks, engine).compare_averages("marks", between="class")
-    assert getattr(result, "_is_plotsimple_table", False)
+    assert getattr(result, "_is_simplydata_table", False)
     assert result._engine == ("Polars" if engine == "polars" else "pandas")
     result.save(tmp_path / "test.csv")
     back = pd.read_csv(tmp_path / "test.csv")
@@ -563,18 +563,18 @@ def test_numbers_are_written_plainly():
     (lambda t: t.fit_straight_line(x="hours", y="hours"), "two different columns"),
 ])
 def test_friendly_errors(marks, call, message):
-    with pytest.raises(PlotsimpleError, match=message):
+    with pytest.raises(SimplydataError, match=message):
         call(make_table(marks))
 
 
 def test_one_group_only_is_explained(marks):
     t = make_table(marks)
     t.keep_rows("class", equal_to="A")
-    with pytest.raises(PlotsimpleError, match='at least 2 groups in "class"; it found only "A"'):
+    with pytest.raises(SimplydataError, match='at least 2 groups in "class"; it found only "A"'):
         t.compare_averages("marks", between="class")
 
 
 def test_all_values_the_same_is_explained():
     data = pd.DataFrame({"g": ["a", "a", "b", "b"], "v": [1.0, 1.0, 2.0, 2.0]})
-    with pytest.raises(PlotsimpleError, match="Every value is the same"):
+    with pytest.raises(SimplydataError, match="Every value is the same"):
         make_table(data).compare_averages("v", between="g")

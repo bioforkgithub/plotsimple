@@ -8,10 +8,10 @@ from matplotlib.collections import PolyCollection
 from matplotlib.figure import Figure
 from scipy import stats
 
-import plotsimple as ps
-from plotsimple import PlotsimpleError
-from plotsimple._stats import t_interval
-from plotsimple.words.stats import (equation_text, group_errors, line_band, linear_fit, lowess,
+import simplydata as sdata
+from simplydata import SimplydataError
+from simplydata._stats import t_interval
+from simplydata.words.stats import (equation_text, group_errors, line_band, linear_fit, lowess,
                                     nice_number, poly_fit)
 
 
@@ -59,7 +59,7 @@ def test_group_errors_skip_empty_cells():
 
 @pytest.mark.parametrize("kind", ["sd", "se", "ci"])
 def test_error_bars_drawn_on_dots(marks, kind):
-    fig = ps.chart(marks).dots(x="name", y="marks").error_bars(kind)._render()
+    fig = sdata.chart(marks).dots(x="name", y="marks").error_bars(kind)._render()
     halves, centres = _bar_halves(fig.axes[0].containers[0])
     expected = group_errors(marks, "name", "marks", kind=kind)
     assert np.allclose(halves, expected["half"])
@@ -67,7 +67,7 @@ def test_error_bars_drawn_on_dots(marks, kind):
 
 
 def test_error_bars_per_colour_group_on_lines(marks):
-    fig = ps.chart(marks).lines(x="test", y="marks", colour="class").error_bars("se")._render()
+    fig = sdata.chart(marks).lines(x="test", y="marks", colour="class").error_bars("se")._render()
     containers = fig.axes[0].containers
     assert len(containers) == 2
     for cont, cls in zip(containers, ["A", "B"]):
@@ -79,35 +79,35 @@ def test_error_bars_per_colour_group_on_lines(marks):
 
 def test_error_bars_from_column():
     t = pd.DataFrame({"day": [1, 2, 3], "temp": [3.0, 5.0, 4.0], "error": [0.5, 1.0, 0.25]})
-    fig = ps.chart(t).lines(x="day", y="temp").error_bars(column="error")._render()
+    fig = sdata.chart(t).lines(x="day", y="temp").error_bars(column="error")._render()
     halves, centres = _bar_halves(fig.axes[0].containers[0])
     assert np.allclose(halves, [0.5, 1.0, 0.25])
     assert np.allclose(centres, [3, 5, 4])
 
 
 def test_error_bars_column_checks(marks):
-    with pytest.raises(PlotsimpleError, match='Did you mean "marks"'):
-        ps.chart(marks).dots(x="name", y="marks").error_bars(column="mraks")
+    with pytest.raises(SimplydataError, match='Did you mean "marks"'):
+        sdata.chart(marks).dots(x="name", y="marks").error_bars(column="mraks")
     t = pd.DataFrame({"x": [1, 2], "y": [1.0, 2.0], "e": [1.0, -1.0]})
-    with pytest.raises(PlotsimpleError, match="below 0"):
-        ps.chart(t).dots(x="x", y="y").error_bars(column="e")._render()
+    with pytest.raises(SimplydataError, match="below 0"):
+        sdata.chart(t).dots(x="x", y="y").error_bars(column="e")._render()
 
 
 def test_error_bars_need_two_values():
     t = pd.DataFrame({"x": [1, 2, 3], "y": [1.0, 2.0, 3.0]})
-    with pytest.raises(PlotsimpleError, match="only one"):
-        ps.chart(t).dots(x="x", y="y").error_bars()._render()
+    with pytest.raises(SimplydataError, match="only one"):
+        sdata.chart(t).dots(x="x", y="y").error_bars()._render()
 
 
 def test_error_bars_bad_kind_and_layer(marks):
-    with pytest.raises(PlotsimpleError, match='Did you mean kind="standard deviation"'):
-        ps.chart(marks).error_bars("standard devation")
-    with pytest.raises(PlotsimpleError, match="last chart type is bars"):
-        ps.chart(marks).bars(x="name", y="marks").error_bars()
-    with pytest.raises(PlotsimpleError, match="median"):
-        ps.chart(marks).lines(x="test", y="marks", show="median").error_bars()
-    with pytest.raises(PlotsimpleError, match="none yet"):
-        ps.chart(marks).error_bars()._render()
+    with pytest.raises(SimplydataError, match='Did you mean kind="standard deviation"'):
+        sdata.chart(marks).error_bars("standard devation")
+    with pytest.raises(SimplydataError, match="last chart type is bars"):
+        sdata.chart(marks).bars(x="name", y="marks").error_bars()
+    with pytest.raises(SimplydataError, match="median"):
+        sdata.chart(marks).lines(x="test", y="marks", show="median").error_bars()
+    with pytest.raises(SimplydataError, match="none yet"):
+        sdata.chart(marks).error_bars()._render()
 
 
 # ------------------------------------------------------------------ fit_line
@@ -136,7 +136,7 @@ def test_band_matches_matrix_formula(xy):
 
 
 def test_fit_line_drawn(xy):
-    fig = ps.chart(xy).dots(x="x", y="y").fit_line(confidence_band=True, show_equation=True)._render()
+    fig = sdata.chart(xy).dots(x="x", y="y").fit_line(confidence_band=True, show_equation=True)._render()
     ax = fig.axes[0]
     line = ax.lines[-1]
     ref = stats.linregress(xy.x, xy.y)
@@ -148,7 +148,7 @@ def test_fit_line_drawn(xy):
 
 
 def test_fit_line_per_group(xy):
-    fig = ps.chart(xy).dots(x="x", y="y", colour="g").fit_line(show_equation=True)._render()
+    fig = sdata.chart(xy).dots(x="x", y="y", colour="g").fit_line(show_equation=True)._render()
     ax = fig.axes[0]
     assert len(_fit_lines(ax)) == 2
     assert [t.get_text().split(":")[0] for t in ax.texts] == ["b", "a"]  # seaborn's order
@@ -159,27 +159,27 @@ def test_fit_line_per_group(xy):
 
 
 def test_fit_line_order_does_not_matter_and_color_spelling(xy):
-    chart = ps.chart(xy).fit_line(color="red").dots(x="x", y="y")
+    chart = sdata.chart(xy).fit_line(color="red").dots(x="x", y="y")
     line = chart._render().axes[0].lines[-1]
     assert line.get_color() == "red"
 
 
 def test_fit_line_errors(marks, xy):
-    with pytest.raises(PlotsimpleError, match="needs numbers on x"):
-        ps.chart(marks).dots(x="name", y="marks").fit_line()
-    with pytest.raises(PlotsimpleError, match="works on dots"):
-        ps.chart(marks).bars(x="name", y="marks").fit_line()
-    with pytest.raises(PlotsimpleError, match="none yet"):
-        ps.chart(xy).fit_line()._render()
-    with pytest.raises(PlotsimpleError, match="colour"):
-        ps.chart(xy).fit_line(colour="notacolour")
-    with pytest.raises(PlotsimpleError, match="2 or more different x"):
-        ps.chart().dots(x=[1, 1, 1], y=[1, 2, 3]).fit_line()._render()
+    with pytest.raises(SimplydataError, match="needs numbers on x"):
+        sdata.chart(marks).dots(x="name", y="marks").fit_line()
+    with pytest.raises(SimplydataError, match="works on dots"):
+        sdata.chart(marks).bars(x="name", y="marks").fit_line()
+    with pytest.raises(SimplydataError, match="none yet"):
+        sdata.chart(xy).fit_line()._render()
+    with pytest.raises(SimplydataError, match="colour"):
+        sdata.chart(xy).fit_line(colour="notacolour")
+    with pytest.raises(SimplydataError, match="2 or more different x"):
+        sdata.chart().dots(x=[1, 1, 1], y=[1, 2, 3]).fit_line()._render()
 
 
 def test_fit_line_skips_empty_cells():
     t = pd.DataFrame({"x": [1, 2, 3, 4, np.nan], "y": [2.0, 4.1, np.nan, 8.2, 9.0]})
-    line = ps.chart(t).dots(x="x", y="y").fit_line()._render().axes[0].lines[-1]
+    line = sdata.chart(t).dots(x="x", y="y").fit_line()._render().axes[0].lines[-1]
     ref = stats.linregress([1, 2, 4], [2.0, 4.1, 8.2])
     assert np.allclose(line.get_ydata(), ref.intercept + ref.slope * line.get_xdata())
 
@@ -202,7 +202,7 @@ def test_poly_fit_matches_least_squares(xy, degree):
 def test_fit_curve_drawn():
     x = np.linspace(-3, 3, 25)
     y = 1.5 * x ** 2 - 2 * x + 0.25
-    fig = ps.chart().dots(x=list(x), y=list(y)).fit_curve(degree=2, show_equation=True)._render()
+    fig = sdata.chart().dots(x=list(x), y=list(y)).fit_curve(degree=2, show_equation=True)._render()
     ax = fig.axes[0]
     line = ax.lines[-1]
     assert np.allclose(line.get_ydata(), 1.5 * line.get_xdata() ** 2 - 2 * line.get_xdata() + 0.25)
@@ -210,12 +210,12 @@ def test_fit_curve_drawn():
 
 
 def test_fit_curve_checks():
-    with pytest.raises(PlotsimpleError, match="whole number"):
-        ps.chart().fit_curve(degree=2.5)
-    with pytest.raises(PlotsimpleError, match="whole number"):
-        ps.chart().fit_curve(degree=0)
-    with pytest.raises(PlotsimpleError, match="4 or more"):
-        ps.chart().dots(x=[1, 2, 3], y=[1, 2, 3]).fit_curve(degree=3)._render()
+    with pytest.raises(SimplydataError, match="whole number"):
+        sdata.chart().fit_curve(degree=2.5)
+    with pytest.raises(SimplydataError, match="whole number"):
+        sdata.chart().fit_curve(degree=0)
+    with pytest.raises(SimplydataError, match="4 or more"):
+        sdata.chart().dots(x=[1, 2, 3], y=[1, 2, 3]).fit_curve(degree=3)._render()
 
 
 # ------------------------------------------------------------------ LOWESS
@@ -283,7 +283,7 @@ def test_lowess_straight_line_is_exact():
 
 
 def test_smooth_line_drawn(xy):
-    fig = ps.chart(xy).dots(x="x", y="y", colour="g").smooth_line()._render()
+    fig = sdata.chart(xy).dots(x="x", y="y", colour="g").smooth_line()._render()
     ax = fig.axes[0]
     assert len(_fit_lines(ax)) == 2
     part = xy[xy.g == "b"]
@@ -293,7 +293,7 @@ def test_smooth_line_drawn(xy):
 
 # ------------------------------------------------------------------ side histograms
 def test_side_histograms(xy):
-    fig = ps.chart(xy).dots(x="x", y="y").side_histograms()._render()
+    fig = sdata.chart(xy).dots(x="x", y="y").side_histograms()._render()
     ax = fig.axes[0]
     assert len(ax.child_axes) == 2
     top, right = ax.child_axes
@@ -305,13 +305,13 @@ def test_side_histograms(xy):
 
 
 def test_side_histograms_needs_numbers(marks):
-    with pytest.raises(PlotsimpleError, match="needs numbers"):
-        ps.chart(marks).dots(x="name", y="marks").side_histograms()
+    with pytest.raises(SimplydataError, match="needs numbers"):
+        sdata.chart(marks).dots(x="name", y="marks").side_histograms()
 
 
 # ------------------------------------------------------------------ reference lines and shading
 def test_reference_lines(marks):
-    chart = ps.chart(marks).bars(x="name", y="marks")
+    chart = sdata.chart(marks).bars(x="name", y="marks")
     chart.line_at_y(50, label="pass mark").line_at_x(1.5, dashed=False, colour="red")
     ax = chart._render().axes[0]
     hline = [ln for ln in ax.lines if list(ln.get_ydata()) == [50, 50]][0]
@@ -322,7 +322,7 @@ def test_reference_lines(marks):
 
 
 def test_shading(marks):
-    chart = ps.chart(marks).bars(x="name", y="marks").shade_between_y(60, 40).shade_between_x(0.5, 1.5)
+    chart = sdata.chart(marks).bars(x="name", y="marks").shade_between_y(60, 40).shade_between_x(0.5, 1.5)
     ax = chart._render().axes[0]
     spans = [p for p in ax.patches if p.get_zorder() == 0]
     assert len(spans) == 2
@@ -330,20 +330,20 @@ def test_shading(marks):
 
 
 def test_reference_line_checks():
-    with pytest.raises(PlotsimpleError, match="needs a number"):
-        ps.chart().line_at_y("fifty")
-    with pytest.raises(PlotsimpleError, match="needs a number"):
-        ps.chart().line_at_x(True)
-    with pytest.raises(PlotsimpleError, match="two different values"):
-        ps.chart().shade_between_x(3, 3)
-    with pytest.raises(PlotsimpleError, match="colour"):
-        ps.chart().shade_between_y(1, 2, colour="blu")
-    with pytest.raises(PlotsimpleError, match="dashd"):
-        ps.chart().line_at_y(1, dashd=True)
+    with pytest.raises(SimplydataError, match="needs a number"):
+        sdata.chart().line_at_y("fifty")
+    with pytest.raises(SimplydataError, match="needs a number"):
+        sdata.chart().line_at_x(True)
+    with pytest.raises(SimplydataError, match="two different values"):
+        sdata.chart().shade_between_x(3, 3)
+    with pytest.raises(SimplydataError, match="colour"):
+        sdata.chart().shade_between_y(1, 2, colour="blu")
+    with pytest.raises(SimplydataError, match="dashd"):
+        sdata.chart().line_at_y(1, dashd=True)
 
 
 def test_lines_work_on_each_panel_and_save(marks, tmp_path):
-    chart = ps.chart(marks).dots(x="height", y="marks").fit_line(confidence_band=True).line_at_y(50)
+    chart = sdata.chart(marks).dots(x="height", y="marks").fit_line(confidence_band=True).line_at_y(50)
     chart.save(tmp_path / "fit.png")
     assert (tmp_path / "fit.png").stat().st_size > 1000
 
@@ -358,11 +358,11 @@ def test_number_and_equation_text():
     assert equation_text([-1, -3], 0.5) == "y = −x − 3, R² = 0.50"
 
 
-# ------------------------------------------------------------------ ps.pairs
+# ------------------------------------------------------------------ sdata.pairs
 def test_pairs_grid(marks):
-    chart = ps.pairs(marks)
+    chart = sdata.pairs(marks)
     numbers = ["test", "marks", "height"]
-    assert repr(chart) == "<plotsimple pairs chart: test, marks, height>"
+    assert repr(chart) == "<simplydata pairs chart: test, marks, height>"
     fig = chart.title_top("Pairs")._render()
     assert isinstance(fig, Figure)
     assert len(fig.axes) == 9 + 3  # 3 x 3 cells and a twin for each histogram
@@ -376,7 +376,7 @@ def test_pairs_grid(marks):
 
 
 def test_pairs_colour_and_save(marks, tmp_path):
-    chart = ps.pairs(marks, colour="class").size(width=7, height=7)
+    chart = sdata.pairs(marks, colour="class").size(width=7, height=7)
     chart.save(tmp_path / "pairs.png")
     fig = chart._render()
     assert fig.legends and fig.legends[0].get_title().get_text() == "class"
@@ -386,24 +386,24 @@ def test_pairs_colour_and_save(marks, tmp_path):
 def test_pairs_from_file_and_polars(marks, tmp_path):
     path = tmp_path / "marks.csv"
     marks.to_csv(path, index=False)
-    assert ps.pairs(str(path), columns=["marks", "height"])._columns == ["marks", "height"]
+    assert sdata.pairs(str(path), columns=["marks", "height"])._columns == ["marks", "height"]
     pl = pytest.importorskip("polars")
-    assert ps.pairs(pl.from_pandas(marks))._columns == ["test", "marks", "height"]
+    assert sdata.pairs(pl.from_pandas(marks))._columns == ["test", "marks", "height"]
 
 
 def test_pairs_errors(marks):
-    with pytest.raises(PlotsimpleError, match="at least 2 columns"):
-        ps.pairs(marks[["name", "marks"]])
-    with pytest.raises(PlotsimpleError, match='Did you mean "class"'):
-        ps.pairs(marks, colour="clas")
-    with pytest.raises(PlotsimpleError, match="Not numbers: name"):
-        ps.pairs(marks, columns=["name", "marks"])
-    with pytest.raises(PlotsimpleError, match="already names"):
-        ps.pairs(marks).label_x("x")
+    with pytest.raises(SimplydataError, match="at least 2 columns"):
+        sdata.pairs(marks[["name", "marks"]])
+    with pytest.raises(SimplydataError, match='Did you mean "class"'):
+        sdata.pairs(marks, colour="clas")
+    with pytest.raises(SimplydataError, match="Not numbers: name"):
+        sdata.pairs(marks, columns=["name", "marks"])
+    with pytest.raises(SimplydataError, match="already names"):
+        sdata.pairs(marks).label_x("x")
 
 
 # ------------------------------------------------------------------ dodged error bars
-from plotsimple.words.stats import dodge_offsets  # noqa: E402
+from simplydata.words.stats import dodge_offsets  # noqa: E402
 
 
 def _grouped(n_groups, x_values=("A", "B", "C")):
@@ -427,7 +427,7 @@ def _bar_x(container):
 @pytest.mark.parametrize("n_groups", [2, 3])
 def test_dodge_lines_moves_bars_and_lines_together(n_groups):
     data = _grouped(n_groups)
-    ax = ps.chart(data).lines(x="x", y="y", colour="g").error_bars("se")._render().axes[0]
+    ax = sdata.chart(data).lines(x="x", y="y", colour="g").error_bars("se")._render().axes[0]
     lines = [ln for ln in ax.lines if len(ln.get_xdata()) == 3]
     offsets = dodge_offsets(n_groups, 1.0)  # categories sit 1 apart
     for cont, line, off in zip(ax.containers, lines, offsets):
@@ -438,7 +438,7 @@ def test_dodge_lines_moves_bars_and_lines_together(n_groups):
 
 def test_dodge_dots_numeric_x_moves_points_and_mean_ticks():
     data = _grouped(2, x_values=(1.0, 3.0, 4.0))  # smallest gap 1 -> spread 0.15
-    ax = ps.chart(data).dots(x="x", y="y", colour="g").error_bars("sd")._render().axes[0]
+    ax = sdata.chart(data).dots(x="x", y="y", colour="g").error_bars("sd")._render().axes[0]
     offs = ax.collections[0].get_offsets()
     first = data["g"].to_numpy() == "g1"
     assert np.allclose(offs[first, 0], data.loc[first, "x"] - 0.075)
@@ -451,21 +451,21 @@ def test_dodge_dots_numeric_x_moves_points_and_mean_ticks():
 def test_dodge_dates_uses_date_units():
     data = _grouped(2)
     data["x"] = pd.to_datetime("2026-01-01") + pd.to_timedelta(data["x"].map({"A": 0, "B": 7, "C": 14}), unit="D")
-    ax = ps.chart(data).lines(x="x", y="y", colour="g").error_bars("ci")._render().axes[0]
+    ax = sdata.chart(data).lines(x="x", y="y", colour="g").error_bars("ci")._render().axes[0]
     xs = [_bar_x(c) for c in ax.containers]
     assert np.allclose(xs[1] - xs[0], 0.15 * 7)  # days
 
 
 def test_no_dodge_when_off_single_group_or_no_shared_x():
     data = _grouped(2)
-    ax = ps.chart(data).lines(x="x", y="y", colour="g").error_bars(dodge=False)._render().axes[0]
+    ax = sdata.chart(data).lines(x="x", y="y", colour="g").error_bars(dodge=False)._render().axes[0]
     for cont in ax.containers:
         assert np.allclose(_bar_x(cont), [0, 1, 2])
     lines = [ln for ln in ax.lines if len(ln.get_xdata()) == 3]
     assert all(np.allclose(np.asarray(ln.convert_xunits(ln.get_xdata()), dtype=float), [0, 1, 2]) for ln in lines)
     one = _grouped(1)
-    ax = ps.chart(one).lines(x="x", y="y", colour="g").error_bars()._render().axes[0]
+    ax = sdata.chart(one).lines(x="x", y="y", colour="g").error_bars()._render().axes[0]
     assert np.allclose(_bar_x(ax.containers[0]), [0, 1, 2])
     apart = pd.DataFrame({"x": [1, 1, 2, 2], "y": [1.0, 2.0, 3.0, 4.0], "g": ["a", "a", "b", "b"]})
-    ax = ps.chart(apart).dots(x="x", y="y", colour="g").error_bars()._render().axes[0]
+    ax = sdata.chart(apart).dots(x="x", y="y", colour="g").error_bars()._render().axes[0]
     assert np.allclose(np.concatenate([_bar_x(c) for c in ax.containers]), [1, 2])

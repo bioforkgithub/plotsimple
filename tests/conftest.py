@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from plotsimple import _errors
+from simplydata import _errors
 
 
 @pytest.fixture(autouse=True)
