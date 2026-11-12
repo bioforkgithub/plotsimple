@@ -205,13 +205,9 @@ class _FormulaReader:
             digits = 0 if second is None else second.value
             if not isinstance(digits, int) or digits < 0:
                 raise _formula_error("round(x, 1) needs a whole number of decimal places, like 0, 1 or 2.")
-            # School rounding: a half goes away from zero (2.5 -> 3, -2.5 -> -3), the way
-            # children learn it. Computers normally round halves to the even number (2.5 -> 2).
-            # round(..., 9) first removes tiny computer errors such as 2.675 * 100 = 267.4999...
-            scale = 10 ** digits
-            scaled = (inner.cast(nw.Float64) * scale).round(9)
-            up = (scaled.abs() + 0.5) // 1
-            return (nw.when(scaled < 0).then(-up).otherwise(up) / scale).round(digits)
+            # Halves go to the even number (2.5 -> 2, 3.5 -> 4), like R, NumPy and the
+            # IEEE standard. This avoids a small upward bias when many values are rounded.
+            return inner.round(digits)
         if second is None:  # log
             return inner.cast(nw.Float64).log()
         if second.value <= 0 or second.value == 1:

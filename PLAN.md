@@ -20,7 +20,8 @@ grammar.
 
 ## 2. Goals
 
-1. **Simple enough for school children.** Reads like talking to the program.
+1. **Simple words, full power.** Every word is simple enough for a child to read, yet together
+   they unlock the full power of the libraries underneath, for beginners and researchers alike.
 2. **Learn everything in one day**, write programs the next day.
 3. **The hardest plots are as easy as the simplest** (multi-panel figures, second
    y-axis, zoom inset, notes with arrows, small multiples, animation, polar, 3D).
@@ -34,7 +35,7 @@ grammar.
 | Name | `plotsimple`, used as `import plotsimple as ps` (name free on PyPI on 2026-11-12) |
 | Licence | MIT, open on GitHub, contributions welcome |
 | Python | 3.10 and newer |
-| Audience | School children and complete beginners |
+| Audience | Everyone: beginners, students, teachers and researchers. "Simple enough for a school child to read" is the test for every word, not a limit on what it can do |
 | Data | Plain lists, Excel/CSV files, pandas tables, Polars tables; results stay plain pandas/NumPy (or Polars, if Polars went in) |
 | Speed | Automatic: Polars tables stay Polars, files over 100 MB use Polars, everything else pandas. Override in plain words: `big_data=True`. A one-line message says when fast mode is used. |
 | Style | One step per line on a chart; chaining also allowed |
@@ -201,4 +202,8 @@ statistics are checked against SciPy, seaborn and R on reference data.
 | v0.1 (also) | Accept Polars tables as chart input |
 | v0.2 | Tables: plain-word layer over pandas and Polars (read, clean, keep, group, summarise), with automatic engine choice and `big_data=True` |
 | v0.3 | Arrays: plain-word layer over NumPy; statistical tests in plain words (comparing averages, comparing counts, fitting formulas) over SciPy |
+| v0.4 | More statistics: regression with several predictors, mixed models, survival curves, multiple-testing correction, power analysis, PCA and ordination |
+| v0.5 | Curve fitting and optimisation: fit any formula, find minima and maxima, solve equations |
+| v0.6 | Signals and time series: smoothing, filtering, peaks, Fourier transforms, rolling averages, resampling dates |
+| v0.7 | Maths: areas under curves, differential equations, matrices and linear algebra |
 

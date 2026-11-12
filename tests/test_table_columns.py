@@ -494,7 +494,7 @@ def test_docstring_examples_run():
 
 
 @pytest.mark.parametrize("engine", ["pandas", "polars"])
-def test_round_uses_school_rounding(engine):
+def test_round_uses_half_to_even_like_r(engine):
     import pandas as pd
     data = {"x": [0.5, 1.5, 2.5, -2.5, 2.675, 1.24, None]}
     if engine == "polars":
@@ -507,6 +507,6 @@ def test_round_uses_school_rounding(engine):
     t.add_column("r1", "round(x, 1)")
     out = t.done()
     r = [None if v is None or v != v else v for v in list(out["r"])]
-    assert r == [1.0, 2.0, 3.0, -3.0, 3.0, 1.0, None]
+    assert r == [0.0, 2.0, 2.0, -2.0, 3.0, 1.0, None]  # same as R round() and numpy.round
     assert list(out["r2"])[:6] == [0.5, 1.5, 2.5, -2.5, 2.68, 1.24]
     assert list(out["r1"])[:6] == [0.5, 1.5, 2.5, -2.5, 2.7, 1.2]
