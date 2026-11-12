@@ -96,3 +96,10 @@ def rc_for(settings: dict) -> dict:
 def context(settings: dict):
     with matplotlib.rc_context(rc_for(settings)):
         yield
+
+
+def palette(settings: dict | None = None) -> list:
+    """The colour set for the chart's style ("dark" has its own brighter set)."""
+    style = STYLES.get((settings or {}).get("style", "paper"), {})
+    cycle = style.get("axes.prop_cycle", _BASE["axes.prop_cycle"])
+    return list(cycle.by_key()["color"])

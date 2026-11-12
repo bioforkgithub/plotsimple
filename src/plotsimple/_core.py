@@ -169,7 +169,7 @@ class BaseChart:
             grid = fig.subplots(nrows, ncols, squeeze=False, subplot_kw={"projection": self._settings["projection"]}, **share)
             flat = list(grid.flat)
             for ax, g in zip(flat, groups):
-                ctx = self._draw_panel(fig, ax, data[data[by] == g], panel_title=g, axes=flat)
+                ctx = self._draw_panel(fig, ax, data[data[by] == g], panel_title=f"{by} = {g}", axes=flat)
             for ax in flat[len(groups):]:
                 ax.set_visible(False)
             return flat[: len(groups)], ctx

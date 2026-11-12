@@ -7,7 +7,7 @@ from matplotlib.colors import is_color_like
 
 from .._data import frame_for, is_listlike
 from .._errors import column_error
-from .._style import COLOURS
+from .._style import palette
 
 
 def colour_role(data: pd.DataFrame, colour):
@@ -31,7 +31,7 @@ def palette_for(table: pd.DataFrame, group: str | None, settings: dict | None = 
     """Colours for each group: chart.colours(...) if the user set them, else the default set."""
     if group is None:
         return None
-    base = list((settings or {}).get("colours") or COLOURS)
+    base = list((settings or {}).get("colours") or palette(settings))
     n = table[group].nunique(dropna=True)
     return (base * (n // len(base) + 1))[:n]
 
@@ -45,7 +45,7 @@ def default_colour(settings: dict | None = None, fixed=None):
         return settings["colour"]
     if settings.get("colours"):
         return settings["colours"][0]
-    return COLOURS[0]
+    return palette(settings)[0]
 
 
 def single_list(x, y):
