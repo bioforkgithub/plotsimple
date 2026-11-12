@@ -8,7 +8,8 @@ built on matplotlib, seaborn, pandas, Polars and NumPy, so you don't have to lea
 ```python
 import plotsimple as ps
 
-chart = ps.chart("marks.xlsx")
+marks = ps.example("marks")        # a made-up table to practise with
+chart = ps.chart(marks)            # your own file works too: ps.chart("marks.xlsx")
 chart.bars(x="name", y="marks")
 chart.title_top("My class marks")
 chart.label_y("Marks")
@@ -21,6 +22,23 @@ chart.save("marks.png")
 pip install plotsimple            # coming soon
 pip install plotsimple[fast]      # adds the fast engine for big data
 ```
+
+## Learn it in a day
+
+plotsimple teaches itself. Open Python and type:
+
+```python
+import plotsimple as ps
+ps.lesson(1)
+```
+
+There are eight short lessons, from your first chart to animations. Each one has an example
+you can run, says what every line does, and ends with a small task to try yourself.
+
+- `ps.lesson()` lists the lessons
+- `ps.words()` lists every word, with an example (also in [docs/cheatsheet.md](docs/cheatsheet.md))
+- `ps.help("bars")` explains one word: what it does, its options and an example
+- `ps.example()` lists the made-up tables to practise with (marks, weather, fruit, growth, island)
 
 ## Ideas behind it
 
