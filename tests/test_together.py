@@ -1,5 +1,7 @@
 """Words built separately must work together."""
 
+import pytest
+
 import plotsimple as ps
 
 
@@ -39,3 +41,33 @@ def test_page_of_different_charts(marks, tmp_path):
     d = ps.chart(marks).heatmap(x="name", y="test", value="marks", numbers=True)
     ps.grid(a, b, c, d, per_row=2).title_top("Everything").save(tmp_path / "page.png")
     assert (tmp_path / "page.png").stat().st_size > 0
+
+
+def test_grid_with_letters_labels_each_chart(tmp_path):
+    marks, weather = ps.example("marks"), ps.example("weather")
+    a = ps.chart(marks).bars(x="class", y="marks")
+    b = ps.chart(weather).lines(x="month", y="rain")
+    c = ps.chart(marks).histogram(x="marks")
+    page = ps.grid(a, b, c, per_row=2, letters=True)
+    fig = page._render()
+    assert [ax.get_title(loc="left") for ax in fig.axes if ax.get_title(loc="left")] == ["A", "B", "C"]
+    page.save(tmp_path / "grid.png")
+    assert (tmp_path / "grid.png").stat().st_size > 0
+    fig = ps.side_by_side(a, b)._render()
+    assert not [ax for ax in fig.axes if ax.get_title(loc="left")]  # no letters unless asked
+
+
+def test_one_above_other_with_letters(tmp_path):
+    marks = ps.example("marks")
+    a = ps.chart(marks).boxes(x="class", y="marks")
+    b = ps.chart(marks).dots(x="hours", y="marks")
+    fig = ps.one_above_other(a, b, letters=True)._render()
+    assert [ax.get_title(loc="left") for ax in fig.axes if ax.get_title(loc="left")] == ["A", "B"]
+
+
+def test_page_letters_must_be_true_or_false():
+    a = ps.chart(ps.example("marks")).bars(x="class", y="marks")
+    with pytest.raises(ps.PlotsimpleError, match="letters=True or letters=False"):
+        ps.side_by_side(a, a, letters="yes")
+    with pytest.raises(ps.PlotsimpleError, match="letters=True or letters=False"):
+        ps.grid(a, a, letters=1)

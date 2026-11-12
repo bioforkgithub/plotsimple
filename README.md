@@ -9,20 +9,21 @@ Polars), so you don't have to learn them first.
 ```python
 import plotsimple as ps
 
-story = ps.start(example="marks")       # a made-up table; your own: ps.start(file="marks.xlsx")
-story.keep_rows("marks", above=50)
-story.average_of("marks", for_each="class")   # says the answer in a sentence
-story.draw_bars(x="class", y="marks")
-story.title_top("Good marks in each class")
-story.label_y("Marks")
-story.save_chart("marks.png")
-story.save_table("good_marks.xlsx")
+table = ps.table(ps.example("marks"))   # a made-up table; your own: ps.table("marks.xlsx")
+table.keep_rows("marks", above=50)
+table.average_of("marks", for_each="class")   # says the answer in a sentence
+table.save("good_marks.xlsx")
+
+chart = table.chart()                   # or ps.chart(table)
+chart.bars(x="class", y="marks", error="standard error")
+chart.title_top("Good marks in each class")
+chart.label_y("Marks")
+chart.save("marks.png")
 ```
 
-A **story** is one object for the whole analysis: every table word and every chart word works
-on it, chart types start with `draw_`, and `story.undo()` and `story.steps()` cover table and
-chart steps together. A chart uses the table as it was when it was first drawn.
-`ps.table(...)` and `ps.chart(...)` are still there underneath, for programmers.
+Tables, charts and numbers are separate objects, as in pandas, Polars, NumPy and matplotlib:
+one cleaned table can feed many charts, and charts go side by side with
+`ps.grid(a, b, letters=True)` (panels A, B, C ... as in papers).
 
 ## Install
 
@@ -40,15 +41,14 @@ import plotsimple as ps
 ps.lesson(1)
 ```
 
-There are sixteen short lessons, and each one is a little story of an analysis. Lessons 1 to 8
-teach charts, from your first chart to animations. Lessons 9 to 12 teach tables: looking at your
-data, choosing rows and columns, cleaning it, and summing it up. Lesson 13 teaches numbers
-(lists and grids of numbers), and lesson 14 the statistical tests: is a difference real, or
-could it be chance? Lesson 15 puts it all together, from opening a file to a figure with panels
-A and B and a saved table. Lesson 16 shows the tables and charts underneath a story, for Python
-users. Each lesson has an example you can run, says what every line does, explains the idea
-behind it (average or median, standard deviation or standard error, p-values) and ends with a
-small task to try yourself.
+There are fifteen short lessons. Lessons 1 to 8 teach charts, from your first chart to
+animations. Lessons 9 to 12 teach tables: looking at your data, choosing rows and columns,
+cleaning it, and summing it up. Lesson 13 teaches numbers (lists and grids of numbers), and
+lesson 14 the statistical tests: is a difference real, or could it be chance? Lesson 15 puts it
+all together, from a question and a file to a figure with panels A and B and a saved table. Each
+lesson has an example you can run, says what every line does, explains the idea behind it
+(average or median, standard deviation or standard error, p-values) and ends with a small task
+to try yourself.
 
 - `ps.lesson()` lists the lessons
 - `ps.words()` lists every word, with an example (also in [docs/cheatsheet.md](docs/cheatsheet.md))

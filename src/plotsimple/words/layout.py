@@ -379,9 +379,6 @@ def _page_charts(step, charts):
         charts = tuple(charts[0])
     if not charts:
         raise PlotsimpleError(f"ps.{step}() needs some charts, for example ps.{step}(chart_a, chart_b).")
-    # a story gives its current chart (the one it drew last)
-    charts = tuple(c._chart_for_page(step, i) if getattr(c, "_is_plotsimple_story", False) else c
-                   for i, c in enumerate(charts, start=1))
     for i, c in enumerate(charts, start=1):
         if isinstance(c, Page):
             raise PlotsimpleError(
@@ -406,7 +403,6 @@ def side_by_side(*charts, same_x=False, same_y=False, letters=False):
 
     same_y=True gives them all the same y range, so heights can be compared.
     letters=True writes A, B, C ... at the top left of each chart, as in papers.
-    Stories work too: each one gives the chart it drew last.
     """
     charts = _page_charts("side_by_side", charts)
     _check_page_options("side_by_side", same_x, same_y, letters)
@@ -418,7 +414,6 @@ def one_above_other(*charts, same_x=False, same_y=False, letters=False):
 
     same_x=True gives them all the same x range, which suits time series.
     letters=True writes A, B, C ... at the top left of each chart, as in papers.
-    Stories work too: each one gives the chart it drew last.
     """
     charts = _page_charts("one_above_other", charts)
     _check_page_options("one_above_other", same_x, same_y, letters)
@@ -431,7 +426,6 @@ def grid(*charts, per_row=2, same_x=False, same_y=False, letters=False):
 
     per_row=2 puts 2 charts in each row.
     letters=True writes A, B, C ... at the top left of each chart, as figures in papers do.
-    Stories work too: ps.grid(story_a, story_b, letters=True) uses the chart each story drew last.
     """
     charts = _page_charts("grid", charts)
     if isinstance(per_row, bool) or not isinstance(per_row, int) or per_row < 1:

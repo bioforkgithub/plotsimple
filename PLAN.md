@@ -64,11 +64,11 @@ A user who knows one word of a pattern should be able to guess the others.
 | # | Pattern | Examples |
 |---|---|---|
 | 1 | **verb + thing** changes a table or numbers: `keep_`, `remove_`, `add_`, `make_`, `fill_`, `turn_`, `rename_`, `sort_` + rows / columns / cells / numbers | `keep_rows`, `remove_columns`, `fill_empty_cells`, `remove_rows_with_empty_cells`, `fill_empty_numbers` |
-| 2 | **`draw_` + chart type** draws on a story (a plain noun on a `chart`) | `draw_bars`, `draw_histogram`, `draw_all_dots` (`bars`, `histogram` on a chart) |
+| 2 | **chart types are nouns on a chart**: `chart.bars(...)` | `bars`, `histogram`, `dots`, `all_dots` |
 | 3 | **thing + where** places something on a chart; where = `top`/`bottom`/`left`/`right`/`x`/`y`/`at`/`between` | `title_top`, `label_y`, `label_colour_bar`, `line_at_y`, `legend_bottom`, `zoom_box(where="top right")` |
 | 4 | **measure + `_of`(column, `for_each=`)** for one column; **relation + `_between`(a, b)** for two; **`compare_` + measure** for tests | `median_of`, `correlation_between`, `compare_averages` |
 | 5 | **`show_` / `hide_` + thing** to look at something without changing it | `show_first_rows`, `show_grid`/`hide_grid`, `show_legend`/`hide_legend` |
-| 6 | **`as_` + library** hands the data to another Python tool; **`save_` + thing** writes a file | `as_pandas`, `as_polars`, `as_numpy`; `save_table`, `save_chart` |
+| 6 | **`as_` + library** hands the data to another Python tool; **`save`** writes a file, its type from the file name | `as_pandas`, `as_polars`, `as_numpy`; `table.save("clean.xlsx")`, `chart.save("marks.png")` |
 
 **One option name, one meaning, everywhere:** `for_each=` (groups), `colour=` (one colour, or a
 colour per group), `between=[low, high]` and `x_between=`/`y_between=` (every span),
@@ -76,7 +76,7 @@ colour per group), `between=[low, high]` and `x_between=`/`y_between=` (every sp
 columns only), `label=` (text on a line or band), `fast=`, `drawn_as=`. Measure names are the same
 wherever they appear: `"average"`, `"median"`, `"total"`, `"count"`, `"smallest"`, `"biggest"`,
 `"standard deviation"`, `"standard error"`, `"confidence interval"` (in `show=`, `error=`,
-`error_bars` and the `_of` words). Summary words print their answer as one sentence, so a story
+`error_bars` and the `_of` words). Summary words print their answer as one sentence, so a program
 needs no `print()`.
 
 **The word names the idea.** The word says the question in plain words; help and the printed
@@ -85,42 +85,6 @@ a paper's Methods section.
 
 **Checklist for a new word:** can a user who has never seen it guess it from one sibling? If
 not, rename it before it is released.
-
-### The Story: one object for a whole analysis
-
-`ps.start(...)` opens a table and returns a **Story**: the table (with its history) and the
-charts drawn from it. It is the front door that the lessons and the README teach; `ps.table`
-and `ps.chart` stay underneath as the layer for programmers.
-
-```python
-story = ps.start(file="results.xlsx")   # or example="marks", table=df, sheet=, fast=
-story.remove_rows_with_empty_cells()
-story.keep_rows("score", above=50)
-story.draw_bars(x="class", y="score")
-story.title_top("Good scores")
-story.save_chart("results.png")
-story.save_table("clean.xlsx")
-```
-
-- **Every table word works on a story** and changes its table. A summary or test that gives
-  back a table gives back a **new story**, so `totals.draw_bars(...)` works; plain numbers stay
-  numbers.
-- **Chart types get `draw_`** (pattern 2), so every line starts with a verb. Every other chart
-  word (`title_top`, `label_y`, `fit_line`, `style`, `size` …) changes the **current chart**:
-  the one drawn last. A chart word before any `draw_` says "Draw a chart first".
-- **Snapshot rule:** a chart uses the table as it was when its first `draw_` step was written.
-  Later table steps do not change it, so the program reads top to bottom. `new_chart()` starts
-  another chart, which uses the table as it is when it is drawn.
-- **One history:** `undo()` takes back the last step, table or chart; `steps()` lists both as
-  sentences ("3. draw bars of score for each class"); `start_again()` goes back to the opened
-  table with no charts (and can be undone).
-- **Several charts:** `put_charts_together(per_row=2, letters=True)` puts the story's charts on
-  one page with panel letters A, B, C …; then `save_chart` saves the page, and `title_top`,
-  `style` and `size` change the page. Charts from different tables: `ps.grid(story_a, story_b,
-  letters=True)`, which takes each story's current chart.
-- **One meaning per word:** `save_table` / `save_chart` (plain `save` picks by file type, since
-  table and picture types never overlap); `show_chart` (a bare `show` would be ambiguous next to
-  `show_first_rows`); `table.chart()` is not needed on a story.
 
 ```python
 import plotsimple as ps
@@ -216,7 +180,7 @@ chart.save("marks.png")
 |---|---|
 | `ps.side_by_side` | `ps.side_by_side(a, b).save("both.png")` |
 | `ps.one_above_other` | `ps.one_above_other(a, b)` |
-| `ps.grid` | `ps.grid(a, b, c, d, per_row=2, same_y=True)` |
+| `ps.grid` | `ps.grid(a, b, c, d, per_row=2, same_y=True, letters=True)` (`letters=True` writes A, B, C … on the panels; all three page words take it) |
 | `one_chart_per` | `chart.one_chart_per("site", per_row=3)` · `one_chart_per(down="site", across="year")` |
 | `zoom_box` | `chart.zoom_box(x_between=[2, 4], y_between=[10, 20], where="top right")` |
 | `animate` | `chart.animate(over="year")` then `chart.save("growth.gif")` |
@@ -224,7 +188,7 @@ chart.save("marks.png")
 ### 5.8 Help and learning
 | Word | Example |
 |---|---|
-| `ps.lesson` | `ps.lesson(1)` … `ps.lesson(14)` |
+| `ps.lesson` | `ps.lesson(1)` … `ps.lesson(15)` |
 | `ps.help` | `ps.help("bars")` |
 | `ps.words` | `ps.words()` prints the whole list |
 
