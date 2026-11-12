@@ -54,7 +54,8 @@ def _missing_file_error(path: Path) -> PlotsimpleError:
     return PlotsimpleError("\n".join(lines))
 
 
-def read_file(path, sheet=None, big_data: bool = False) -> pd.DataFrame:
+def read_file(path, sheet=None, big_data: bool = False, keep_fast: bool = False):
+    """Read a file. Big files use the fast engine; keep_fast=True keeps its Polars table."""
     path = Path(path)
     if not path.exists():
         raise _missing_file_error(path)
@@ -79,9 +80,11 @@ def read_file(path, sheet=None, big_data: bool = False) -> pd.DataFrame:
             if not big_data:
                 print("This file is large, so plotsimple is using its fast mode.")
             if kind == "parquet":
-                return pl.read_parquet(path).to_pandas()
-            sep = "\t" if kind == "tsv" else ","
-            return pl.read_csv(path, separator=sep, infer_schema_length=10000).to_pandas()
+                fast_table = pl.read_parquet(path)
+            else:
+                sep = "\t" if kind == "tsv" else ","
+                fast_table = pl.read_csv(path, separator=sep, infer_schema_length=10000)
+            return fast_table if keep_fast else fast_table.to_pandas()
 
     if kind == "csv":
         return pd.read_csv(path, sep=None, engine="python")
@@ -109,6 +112,8 @@ def load(source=None, sheet=None, big_data: bool = False) -> pd.DataFrame:
     """Turn anything a beginner might give us into a pandas table."""
     if source is None:
         return pd.DataFrame()
+    if getattr(source, "_is_plotsimple_table", False):
+        return load(source.done())
     if isinstance(source, (str, os.PathLike)):
         return read_file(source, sheet=sheet, big_data=big_data)
     if isinstance(source, pd.DataFrame):
@@ -197,3 +202,18 @@ def frame_for(data: pd.DataFrame, **roles):
                 f"{role}= should be a column name or a list of values, not {value!r}."
             )
     return table, names
+
+
+def load_native(source=None, sheet=None, big_data: bool = False):
+    """Like load(), but Polars tables (and big files) stay in Polars. Used by tables."""
+    if getattr(source, "_is_plotsimple_table", False):
+        return source.done()
+    if _is_polars(source):
+        if hasattr(source, "collect"):  # LazyFrame
+            source = source.collect()
+        if not hasattr(source, "columns"):  # Series
+            source = source.to_frame()
+        return source
+    if isinstance(source, (str, os.PathLike)):
+        return read_file(source, sheet=sheet, big_data=big_data, keep_fast=True)
+    return load(source, sheet=sheet, big_data=big_data)
