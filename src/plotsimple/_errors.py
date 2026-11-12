@@ -45,7 +45,8 @@ def column_error(name, columns) -> PlotsimpleError:
     if cols:
         lines.append("Columns you have: " + ", ".join(cols))
     else:
-        lines.append("Your chart has no table yet. Start with ps.chart(\"your_file.xlsx\").")
+        lines.append("There are no columns yet. Start from a table with data, for example "
+                     'ps.table("your_file.xlsx") or ps.chart("your_file.xlsx").')
     return PlotsimpleError("\n".join(lines))
 
 

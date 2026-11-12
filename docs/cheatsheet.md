@@ -1,6 +1,6 @@
 # plotsimple cheat sheet
 
-Every word on one page. Most words are steps on a chart:
+Every word on one page. Chart words are steps on a chart:
 
 ```python
 import plotsimple as ps
@@ -11,11 +11,22 @@ chart.title_top("My class marks")
 chart.save("marks.png")
 ```
 
+Table words are steps on a table, for looking at data, cleaning it and summing it up:
+
+```python
+table = ps.table(ps.example("marks"))   # or ps.table("my_file.xlsx")
+table.keep_rows("marks", above=50)
+print(table.average_of("marks", for_each="class"))
+table.save("good_marks.xlsx")
+chart = table.chart()                   # a chart of the table
+```
+
 In Python, `ps.help("bars")` explains any word, `ps.words()` prints this list and
-`ps.lesson(1)` starts the one-day course.
+`ps.lesson(1)` starts the one-day course (lessons 9 to 12 are about tables).
 
 Every example runs as written on the practice table in the *Table* column:
-for example `weather = ps.example("weather")` then `chart = ps.chart(weather)`.
+for example `weather = ps.example("weather")` then `chart = ps.chart(weather)`,
+or `table = ps.table(ps.example("weather"))` for table words.
 Steps such as `fit_line` or `title_top` go after a chart step such as `chart.dots(...)`,
 and `a`, `b` in `ps.side_by_side(a, b)` are charts you made first.
 
@@ -128,6 +139,98 @@ and `a`, `b` in `ps.side_by_side(a, b)` are charts you made first.
 | `ps.grid` | `ps.grid(a, b, c, d, columns=2)` | marks | Charts in rows and columns. |
 | `zoom_box` | `chart.zoom_box(x_from=2, x_to=4, y_from=40, y_to=60)` | marks | A small box showing part of the chart close up. |
 | `animate` | `chart.animate(over="year")` | growth | A moving chart with one picture for each value of a column. |
+
+## Tables: start and look
+
+| Word | Example | Table | What it does |
+|---|---|---|---|
+| `ps.table` | `ps.table(ps.example("marks"))` | marks | Start a table. |
+| `show_first` | `table.show_first(5)` | marks | Show the first rows. |
+| `show_last` | `table.show_last(5)` | marks | Show the last rows. |
+| `column_names` | `table.column_names()` | marks | The names of all columns. |
+| `describe_columns` | `table.describe_columns()` | marks | Describe every column: its kind, empty cells, smallest, biggest and average. |
+
+## Choose columns
+
+| Word | Example | Table | What it does |
+|---|---|---|---|
+| `keep_columns` | `table.keep_columns("name", "marks")` | marks | Keep only these columns, in the order you list them. |
+| `remove_columns` | `table.remove_columns("height")` | marks | Remove these columns. |
+| `rename_column` | `table.rename_column("marks", to="score")` | marks | Give a column a new name. |
+
+## Choose rows
+
+| Word | Example | Table | What it does |
+|---|---|---|---|
+| `keep_rows` | `table.keep_rows("marks", above=50)` | marks | Keep only the rows that match one condition. |
+| `remove_rows` | `table.remove_rows("subject", equal_to="English")` | marks | Remove the rows that match one condition (the opposite of keep_rows). |
+| `keep_first_rows` | `table.keep_first_rows(10)` | marks | Keep only the first rows. |
+| `keep_last_rows` | `table.keep_last_rows(10)` | marks | Keep only the last rows. |
+| `keep_random_rows` | `table.keep_random_rows(10, seed=1)` | marks | Keep some rows picked at random; give a seed to get the same rows every time. |
+| `remove_duplicate_rows` | `table.remove_duplicate_rows(columns=["name"])` | marks | Remove rows that repeat an earlier row, or that repeat it in the columns you name. |
+
+## Empty cells
+
+| Word | Example | Table | What it does |
+|---|---|---|---|
+| `count_empty` | `table.count_empty()` | marks | Show how many empty cells each column has. |
+| `remove_empty_rows` | `table.remove_empty_rows("marks")` | marks | Remove rows with an empty cell (in any column, or only in the column you name). |
+| `fill_empty` | `table.fill_empty("marks", with_the="average")` | marks | Fill the empty cells of a column with a value, or with the average, median, value above or value below. |
+
+## Fix columns
+
+| Word | Example | Table | What it does |
+|---|---|---|---|
+| `make_numbers` | `table.make_numbers("marks")` | marks | Turn a column into numbers; cells that are not numbers become empty. |
+| `make_text` | `table.make_text("month_number")` | weather | Turn a column into text. |
+| `make_dates` | `table.make_dates("year")` | growth | Turn a column into dates; cells that are not dates become empty. |
+| `make_lowercase` | `table.make_lowercase("name")` | marks | Write all the text in a column in small letters. |
+| `make_uppercase` | `table.make_uppercase("name")` | marks | Write all the text in a column in capital letters. |
+| `remove_extra_spaces` | `table.remove_extra_spaces("name")` | marks | Remove spaces at the start and end of the text, and double spaces inside it. |
+| `replace_values` | `table.replace_values("subject", "Maths", with_value="Math")` | marks | Replace a value (or a list of values) in a column; with_value=None makes those cells empty. |
+
+## Sort and new columns
+
+| Word | Example | Table | What it does |
+|---|---|---|---|
+| `sort_by` | `table.sort_by("marks", biggest_first=True)` | marks | Put the rows in order of one or more columns; empty cells go last. |
+| `add_column` | `table.add_column("study_and_marks", by_adding=["hours", "marks"])` | marks | Add a new column, worked out from other columns in plain words or with a formula. |
+| `add_group_column` | `table.add_group_column("grade", from_column="marks", cut_at=[40, 60, 80], names=["D", "C", "B", "A"])` | marks | Add a column that puts each number into a group, like turning marks into grades. |
+| `add_rank_column` | `table.add_rank_column("place", from_column="marks")` | marks | Add a column with each row's place, where 1 is the best. |
+
+## Summaries
+
+| Word | Example | Table | What it does |
+|---|---|---|---|
+| `count_rows` | `table.count_rows(for_each="class")` | marks | How many rows the table has, or how many in each group. |
+| `count_each` | `table.count_each("fruit")` | fruit | Each different value in a column, how many times it appears, and its percent. |
+| `average_of` | `table.average_of("marks", for_each="class")` | marks | The average (mean) of a column; empty cells are skipped. |
+| `median_of` | `table.median_of("marks", for_each="class")` | marks | The middle number of a column once it is sorted; empty cells are skipped. |
+| `total_of` | `table.total_of("count", for_each="shop")` | fruit | All the numbers in a column added up; empty cells are skipped. |
+| `smallest_of` | `table.smallest_of("temperature", for_each="city")` | weather | The smallest number in a column; empty cells are skipped. |
+| `biggest_of` | `table.biggest_of("temperature", for_each="city")` | weather | The biggest number in a column; empty cells are skipped. |
+| `standard_deviation_of` | `table.standard_deviation_of("marks", for_each="class")` | marks | How spread out the numbers are: the sample standard deviation (divide by n - 1). |
+| `correlation_between` | `table.correlation_between("hours", "marks")` | marks | How strongly two columns of numbers go up or down together, from -1 to 1. |
+
+## Combine and reshape
+
+| Word | Example | Table | What it does |
+|---|---|---|---|
+| `join_with` | `table.join_with({"name": ["Asha", "Ben"], "age": [12, 13]}, using="name")` | marks | Bring in the columns of another table, matching rows on a column such as a name. |
+| `add_rows_from` | `table.add_rows_from(ps.example("marks"))` | marks | Put the rows of another table under this one; columns are matched by their names. |
+| `turn_columns_into_rows` | `table.turn_columns_into_rows(["temperature", "rain"])` | weather | Turn some columns into rows: each value gets its own row, with its old column name beside it. |
+| `turn_rows_into_columns` | `table.turn_rows_into_columns(names_from="city", values_from="temperature")` | weather | Turn rows into columns: each different value in names_from= becomes a new column, filled from values_from=. |
+
+## Undo and finish
+
+| Word | Example | Table | What it does |
+|---|---|---|---|
+| `undo` | `table.undo()` | marks | Take the last step back. |
+| `steps` | `table.steps()` | marks | List every step you did to this table, in order. |
+| `start_again` | `table.start_again()` | marks | Go back to the table as it was at the start. |
+| `save` | `table.save("clean.xlsx")` | marks | Save the table; the end of the file name decides the type. |
+| `chart` | `table.chart()` | marks | Start a chart from this table. |
+| `done` | `table.done()` | marks | Give back the plain table (pandas, or Polars for big data). |
 
 ## Help
 

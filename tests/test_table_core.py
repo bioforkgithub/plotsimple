@@ -2,8 +2,6 @@ import pandas as pd
 import pytest
 
 import plotsimple as ps
-from plotsimple.table import table as _table
-ps.table = _table  # not exported until lessons cover tables
 from plotsimple import PlotsimpleError
 
 
@@ -78,3 +76,21 @@ def test_friendly_errors(table):
 def test_column_names_and_repr(table, marks):
     assert table.column_names() == list(marks.columns)
     assert "rows" in repr(table)
+
+
+def test_rows_are_numbered_again_after_every_step(marks, capsys):
+    t = ps.table(marks)
+    t.keep_rows("marks", above=60)
+    assert list(t.done().index) == list(range(len(t)))
+    t.sort_by("marks", biggest_first=True)
+    assert list(t.done().index) == list(range(len(t)))
+    t.undo()
+    t.undo()
+    pd.testing.assert_frame_equal(t.done(), marks)
+
+
+def test_column_error_without_columns_suits_charts_and_tables():
+    from plotsimple._errors import column_error
+    message = str(column_error("marks", []))
+    assert "chart has no table" not in message
+    assert "ps.table(" in message and "ps.chart(" in message

@@ -74,7 +74,13 @@ class BaseTable:
             raise choice_error(step, option, value, list(choices))
 
     def _change(self, what: str, frame):
-        """Replace the table with a changed one and remember the old one for undo()."""
+        """Replace the table with a changed one and remember the old one for undo().
+
+        pandas tables are numbered again 0, 1, 2 ... after every step, so a filtered table
+        never shows gaps such as 0, 3, 5. (Polars tables have no row numbers.) This is the
+        only place that does it, and undo() gives back a table that was numbered the same way.
+        """
+        frame = nw.maybe_reset_index(frame)
         self._history.append((what, self._frame))
         if len(self._history) > HISTORY_LIMIT:
             self._history.pop(0)
@@ -131,7 +137,10 @@ class BaseTable:
 
     @friendly
     def save(self, file_name):
-        """Save the table. The file name decides the type: "clean.xlsx", "clean.csv"."""
+        """Save the table; the end of the file name decides the type. table.save("clean.xlsx")
+
+        File types: .xlsx (Excel), .csv, .tsv, .parquet and .json.
+        """
         path = Path(file_name)
         kind = path.suffix.lower().lstrip(".")
         if not kind:

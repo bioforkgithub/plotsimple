@@ -26,7 +26,7 @@ def make() -> str:
     lines = [
         "# plotsimple cheat sheet",
         "",
-        "Every word on one page. Most words are steps on a chart:",
+        "Every word on one page. Chart words are steps on a chart:",
         "",
         "```python",
         "import plotsimple as ps",
@@ -37,11 +37,22 @@ def make() -> str:
         'chart.save("marks.png")',
         "```",
         "",
+        "Table words are steps on a table, for looking at data, cleaning it and summing it up:",
+        "",
+        "```python",
+        'table = ps.table(ps.example("marks"))   # or ps.table("my_file.xlsx")',
+        'table.keep_rows("marks", above=50)',
+        'print(table.average_of("marks", for_each="class"))',
+        'table.save("good_marks.xlsx")',
+        "chart = table.chart()                   # a chart of the table",
+        "```",
+        "",
         'In Python, `ps.help("bars")` explains any word, `ps.words()` prints this list and',
-        "`ps.lesson(1)` starts the one-day course.",
+        "`ps.lesson(1)` starts the one-day course (lessons 9 to 12 are about tables).",
         "",
         "Every example runs as written on the practice table in the *Table* column:",
-        'for example `weather = ps.example("weather")` then `chart = ps.chart(weather)`.',
+        'for example `weather = ps.example("weather")` then `chart = ps.chart(weather)`,',
+        'or `table = ps.table(ps.example("weather"))` for table words.',
         "Steps such as `fit_line` or `title_top` go after a chart step such as `chart.dots(...)`,",
         "and `a`, `b` in `ps.side_by_side(a, b)` are charts you made first.",
         "",
@@ -51,7 +62,7 @@ def make() -> str:
         lines += ["", f"## {group}", "", "| Word | Example | Table | What it does |",
                   "|---|---|---|---|"]
         for key in keys:
-            word = f"`{key}`"
+            word = f"`{learn._display(key)}`"
             if key in aliases:
                 word += " (also " + ", ".join(f"`{a}`" for a in aliases[key]) + ")"
             example = f"`{_cell(learn._short_example(key))}`"

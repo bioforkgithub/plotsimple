@@ -200,5 +200,5 @@ statistics are checked against SciPy, seaborn and R on reference data.
 | v0.1 | Charts (sections 5.1–5.8), lessons 1–8, friendly errors |
 | v0.1 (also) | Accept Polars tables as chart input |
 | v0.2 | Tables: plain-word layer over pandas and Polars (read, clean, keep, group, summarise), with automatic engine choice and `big_data=True` |
-| v0.3 | Arrays: plain-word layer over NumPy |
+| v0.3 | Arrays: plain-word layer over NumPy; statistical tests in plain words (comparing averages, comparing counts, fitting formulas) over SciPy |
 

@@ -64,7 +64,7 @@ def test_example_files_are_inside_the_package():
 
 # ---------------------------------------------------------------- the grouping
 def _public_ps_functions():
-    skip = {"Chart", "PlotsimpleError", "__version__"}
+    skip = {"Chart", "PlotsimpleError", "Table", "__version__"}
     return [n for n in ps.__all__ if n not in skip]
 
 
@@ -72,6 +72,12 @@ def test_every_chart_word_is_in_a_group():
     aliases = {a for names in learn._aliases().values() for a in names}
     missing = [w for w in ps.Chart._word_names() if w not in KEYS and w not in aliases]
     assert not missing, f"Add these words to a group in learn.GROUPS: {missing}"
+
+
+def test_every_table_word_is_in_a_group():
+    aliases = {a for key, names in learn._aliases().items() if key.startswith("table.") for a in names}
+    missing = [w for w in ps.Table._word_names() if f"table.{w}" not in KEYS and w not in aliases]
+    assert not missing, f"Add these table words to a group in learn.GROUPS: {missing}"
 
 
 def test_every_ps_function_is_in_a_group():
@@ -112,8 +118,9 @@ def test_words_prints_every_word_in_its_group(capsys):
     for group, keys in learn.GROUPS:
         assert group in out
         for key in keys:
-            assert f"  {key} " in out
+            assert f"  {learn._display(key)} " in out
     assert 'chart.bars(x="name", y="marks")' in out
+    assert 'table.keep_rows("marks", above=50)' in out
     assert "(also: bar)" in out
 
 
@@ -145,6 +152,36 @@ def test_help_finds_ps_words_options_and_spellings(typed, expected, capsys):
 def test_help_accepts_the_step_itself(capsys):
     ps.help(ps.Chart.histogram)
     assert capsys.readouterr().out.startswith("chart.histogram()")
+    ps.help(ps.Table.keep_rows)
+    assert capsys.readouterr().out.startswith("table.keep_rows()")
+    ps.help(ps.Table.save)
+    out = capsys.readouterr().out
+    assert out.startswith("table.save()") and "chart.save()" not in out
+
+
+@pytest.mark.parametrize("typed", ["keep_rows", "table.keep_rows", "keep_rows()", "table.keep_rows()"])
+def test_help_finds_table_words(typed, capsys):
+    ps.help(typed)
+    assert capsys.readouterr().out.startswith("table.keep_rows()")
+
+
+def test_help_for_a_word_on_charts_and_tables_explains_both(capsys):
+    ps.help("save")
+    out = capsys.readouterr().out
+    assert out.startswith("chart.save()") and "\ntable.save()\n" in out
+    assert 'ps.help("table.save")' in out
+    ps.help("table.save")
+    out = capsys.readouterr().out
+    assert out.startswith("table.save()") and "chart.save()" not in out
+    ps.help("chart.save")
+    out = capsys.readouterr().out
+    assert out.startswith("chart.save()") and "table.save()" not in out
+
+
+def test_help_table_word_options_hide_internal_details(capsys):
+    ps.help("keep_rows")
+    out = capsys.readouterr().out
+    assert "  above=\n" in out and "not given" not in out and "extra" not in out
 
 
 def test_help_unknown_word_says_did_you_mean(capsys):
@@ -180,19 +217,19 @@ def _doc_example_code(key):
     """The word's own short example (from its docstring, as ps.words() and the cheat sheet show
     it), after the lines of its help example that come before it: the example table and, for
     steps such as fit_line, the chart step they go on."""
-    word = key[3:] if key.startswith("ps.") else key
+    word = learn._word(key)
     lines = learn.HELP_EXAMPLES[key].splitlines()
     if key in learn.OPTIONS:
         at = next(i for i, line in enumerate(lines) if key in line)
     else:
-        at = next(i for i, line in enumerate(lines) if learn._find_call(line, word))
+        at = next(i for i, line in enumerate(lines) if learn._find_call(line, word, learn._prefixes(key)))
     return "\n".join(lines[:at] + [f"_result = {learn._short_example(key)}"])
 
 
 @pytest.mark.parametrize("key", [k for k in KEYS if k not in learn.OPTIONS])
 def test_every_word_has_an_example_in_its_docstring(key):
-    word = key[3:] if key.startswith("ps.") else key
-    assert learn._find_call(inspect.getdoc(learn._function(key)), word), f"Add an example to {key}'s docstring"
+    doc = inspect.getdoc(learn._function(key))
+    assert learn._find_call(doc, learn._word(key), learn._prefixes(key)), f"Add an example to {key}'s docstring"
 
 
 @pytest.mark.parametrize("key", KEYS)
@@ -218,22 +255,29 @@ def test_every_docstring_example_runs_and_draws(key, tmp_path, monkeypatch, caps
         target = result if hasattr(result, "save") else space.get("chart", space.get("page"))
         if target is not None:
             saved = _saved_files(learn.HELP_EXAMPLES[key])
-            ending = Path(saved[-1]).suffix if saved else ".png"
+            if getattr(target, "_is_plotsimple_table", False):
+                ending = ".csv"  # a table (a step or a summary) saves as a table file
+            else:
+                ending = Path(saved[-1]).suffix if saved else ".png"
             target.save(f"doc_example{ending}")
             assert (tmp_path / f"doc_example{ending}").stat().st_size > 0
     plt.close("all")
 
 
 # ---------------------------------------------------------------- ps.lesson()
-def test_there_are_eight_lessons(capsys):
-    assert len(learn.LESSONS) == 8
+LESSON_NUMBERS = range(1, 13)
+
+
+def test_there_are_twelve_lessons(capsys):
+    assert len(learn.LESSONS) == 12
     ps.lesson()
     out = capsys.readouterr().out
-    for i in range(1, 9):
+    assert "12 lessons" in out
+    for i in LESSON_NUMBERS:
         assert f"ps.lesson({i})" in out
 
 
-@pytest.mark.parametrize("number", range(1, 9))
+@pytest.mark.parametrize("number", LESSON_NUMBERS)
 def test_lesson_prints_all_its_parts(number, capsys):
     ps.lesson(number)
     out = capsys.readouterr().out
@@ -246,7 +290,7 @@ def test_lesson_prints_all_its_parts(number, capsys):
             assert f"    {code}" in out
 
 
-@pytest.mark.parametrize("number", range(1, 9))
+@pytest.mark.parametrize("number", LESSON_NUMBERS)
 def test_every_lesson_example_runs(number, tmp_path, monkeypatch, capsys):
     for code in learn.lesson_code(number):
         _run(code, tmp_path, monkeypatch)
@@ -254,7 +298,7 @@ def test_every_lesson_example_runs(number, tmp_path, monkeypatch, capsys):
             assert (tmp_path / name).stat().st_size > 0, name
 
 
-@pytest.mark.parametrize("number", range(1, 9))
+@pytest.mark.parametrize("number", LESSON_NUMBERS)
 def test_lesson_words_are_real_words(number):
     for word in learn.LESSONS[number - 1]["words"]:
         assert learn._lookup(word) is not None, word
@@ -267,9 +311,9 @@ def test_every_group_comes_up_in_a_lesson():
         assert taught & set(keys), f"No lesson teaches anything from {group}"
 
 
-@pytest.mark.parametrize("bad", [0, 9, "1", 1.0, True])
+@pytest.mark.parametrize("bad", [0, 13, "1", 1.0, True])
 def test_wrong_lesson_number_is_explained(bad):
-    with pytest.raises(ps.PlotsimpleError, match="lessons 1 to 8"):
+    with pytest.raises(ps.PlotsimpleError, match="lessons 1 to 12"):
         ps.lesson(bad)
 
 

@@ -1,4 +1,4 @@
-"""Learning plotsimple: ps.words(), ps.help("bars") and ps.lesson(1) ... ps.lesson(8).
+"""Learning plotsimple: ps.words(), ps.help("bars") and ps.lesson(1) ... ps.lesson(12).
 
 The word list is built from the real words and their docstrings, so it cannot go out of
 date. Only the grouping (GROUPS) and the runnable examples (HELP_EXAMPLES, LESSONS) are
@@ -19,8 +19,9 @@ WIDTH = 78
 
 # ---------------------------------------------------------------- the grouping
 # "ps.name" is a function you call on ps; "name=" is an option used inside chart steps;
-# a plain name is a step on a chart (chart.name(...)). Other spellings of a word
-# (bar, scatter, color ...) are found by themselves and shown next to it.
+# a plain name is a step on a chart (chart.name(...)); "table.name" is a step on a table
+# (table.name(...)). Other spellings of a word (bar, scatter, color ...) are found by
+# themselves and shown next to it.
 GROUPS = [
     ("Start, show and save", ["ps.chart", "ps.example", "show", "save"]),
     ("Chart types", ["bars", "lines", "dots", "area", "histogram", "boxes", "violins",
@@ -37,6 +38,25 @@ GROUPS = [
                           "hide_legend", "colour_bar_label"]),
     ("Several charts", ["one_per", "ps.side_by_side", "ps.one_above_other", "ps.grid",
                         "zoom_box", "animate"]),
+    # Table words: "table.name" is a step on a table (table.name(...)).
+    ("Tables: start and look", ["ps.table", "table.show_first", "table.show_last",
+                                "table.column_names", "table.describe_columns"]),
+    ("Choose columns", ["table.keep_columns", "table.remove_columns", "table.rename_column"]),
+    ("Choose rows", ["table.keep_rows", "table.remove_rows", "table.keep_first_rows",
+                     "table.keep_last_rows", "table.keep_random_rows", "table.remove_duplicate_rows"]),
+    ("Empty cells", ["table.count_empty", "table.remove_empty_rows", "table.fill_empty"]),
+    ("Fix columns", ["table.make_numbers", "table.make_text", "table.make_dates",
+                     "table.make_lowercase", "table.make_uppercase", "table.remove_extra_spaces",
+                     "table.replace_values"]),
+    ("Sort and new columns", ["table.sort_by", "table.add_column", "table.add_group_column",
+                              "table.add_rank_column"]),
+    ("Summaries", ["table.count_rows", "table.count_each", "table.average_of", "table.median_of",
+                   "table.total_of", "table.smallest_of", "table.biggest_of",
+                   "table.standard_deviation_of", "table.correlation_between"]),
+    ("Combine and reshape", ["table.join_with", "table.add_rows_from", "table.turn_columns_into_rows",
+                             "table.turn_rows_into_columns"]),
+    ("Undo and finish", ["table.undo", "table.steps", "table.start_again", "table.save",
+                         "table.chart", "table.done"]),
     ("Help", ["ps.words", "ps.help", "ps.lesson"]),
 ]
 
@@ -89,6 +109,13 @@ def _ex(table: str, body: str, file: str) -> str:
              f"chart = ps.chart({table})"]
     lines += textwrap.dedent(body).strip().splitlines()
     lines.append(f'chart.save("{file}.png")')
+    return "\n".join(lines)
+
+
+def _tx(name: str, body: str) -> str:
+    """A runnable table example: start a table from a practice table, then the steps."""
+    lines = ["import plotsimple as ps", f'table = ps.table(ps.example("{name}"))']
+    lines += textwrap.dedent(body).strip().splitlines()
     return "\n".join(lines)
 
 
@@ -214,9 +241,84 @@ HELP_EXAMPLES = {
         chart.range_y(0, 50)
         chart.animate(over="year")
         chart.save("growth.gif")"""),
+    # tables: start and look
+    "ps.table": _tx("marks", "table.show_first()"),
+    "table.show_first": _tx("marks", "table.show_first(10)"),
+    "table.show_last": _tx("marks", "table.show_last(3)"),
+    "table.column_names": _tx("marks", "print(table.column_names())"),
+    "table.describe_columns": _tx("marks", "table.describe_columns()"),
+    # choose columns
+    "table.keep_columns": _tx("marks", 'table.keep_columns("name", "marks")\ntable.show_first()'),
+    "table.remove_columns": _tx("marks", 'table.remove_columns("height")\nprint(table.column_names())'),
+    "table.rename_column": _tx("marks", 'table.rename_column("marks", to="score")\ntable.show_first()'),
+    # choose rows
+    "table.keep_rows": _tx("marks", 'table.keep_rows("marks", above=50)\n'
+                                    'table.keep_rows("subject", one_of=["Maths", "Science"])\ntable.show_first()'),
+    "table.remove_rows": _tx("marks", 'table.remove_rows("subject", equal_to="English")\ntable.show_first()'),
+    "table.keep_first_rows": _tx("marks", "table.keep_first_rows(10)\nprint(table)"),
+    "table.keep_last_rows": _tx("marks", "table.keep_last_rows(10)\nprint(table)"),
+    "table.keep_random_rows": _tx("marks", "table.keep_random_rows(10, seed=1)\nprint(table)"),
+    "table.remove_duplicate_rows": _tx("marks", 'table.remove_duplicate_rows(columns=["name"])\nprint(table)'),
+    # empty cells (the practice tables have none, so the examples make some first)
+    "table.count_empty": _tx("marks", 'table.replace_values("marks", [61, 73], with_value=None)\n'
+                                      "table.count_empty()"),
+    "table.remove_empty_rows": _tx("marks", 'table.replace_values("marks", [61, 73], with_value=None)\n'
+                                            'table.remove_empty_rows("marks")\nprint(table)'),
+    "table.fill_empty": _tx("marks", 'table.replace_values("marks", [61, 73], with_value=None)\n'
+                                     'table.fill_empty("marks", with_the="average")\ntable.show_first()'),
+    # fix columns
+    "table.make_numbers": _tx("marks", 'table.make_numbers("marks")\ntable.describe_columns()'),
+    "table.make_text": _tx("weather", 'table.make_text("month_number")\ntable.describe_columns()'),
+    "table.make_dates": _tx("growth", 'table.make_dates("year")\ntable.show_first()'),
+    "table.make_lowercase": _tx("marks", 'table.make_lowercase("name")\ntable.show_first()'),
+    "table.make_uppercase": _tx("marks", 'table.make_uppercase("name")\ntable.show_first()'),
+    "table.remove_extra_spaces": _tx("marks", 'table.remove_extra_spaces("name")\ntable.show_first()'),
+    "table.replace_values": _tx("marks", 'table.replace_values("subject", "Maths", with_value="Math")\n'
+                                         'print(table.count_each("subject"))'),
+    # sort and new columns
+    "table.sort_by": _tx("marks", 'table.sort_by("marks", biggest_first=True)\ntable.show_first()'),
+    "table.add_column": _tx("marks", 'table.add_column("study_and_marks", by_adding=["hours", "marks"])\n'
+                                     'table.add_column("marks_per_hour", "marks / hours")\ntable.show_first()'),
+    "table.add_group_column": _tx("marks", 'table.add_group_column("grade", from_column="marks", '
+                                           'cut_at=[40, 60, 80], names=["D", "C", "B", "A"])\n'
+                                           'print(table.count_each("grade"))'),
+    "table.add_rank_column": _tx("marks", 'table.add_rank_column("place", from_column="marks")\n'
+                                          'table.sort_by("place")\ntable.show_first()'),
+    # summaries
+    "table.count_rows": _tx("marks", 'print(table.count_rows())\nprint(table.count_rows(for_each="class"))'),
+    "table.count_each": _tx("fruit", 'print(table.count_each("fruit"))'),
+    "table.average_of": _tx("marks", 'print(table.average_of("marks"))\n'
+                                     'print(table.average_of("marks", for_each="class"))'),
+    "table.median_of": _tx("marks", 'print(table.median_of("marks", for_each="class"))'),
+    "table.total_of": _tx("fruit", 'print(table.total_of("count", for_each="shop"))'),
+    "table.smallest_of": _tx("weather", 'print(table.smallest_of("temperature", for_each="city"))'),
+    "table.biggest_of": _tx("weather", 'print(table.biggest_of("temperature", for_each="city"))'),
+    "table.standard_deviation_of": _tx("marks", 'print(table.standard_deviation_of("marks", for_each="class"))'),
+    "table.correlation_between": _tx("marks", 'table.correlation_between("hours", "marks")'),
+    # combine and reshape
+    "table.join_with": _tx("marks", 'ages = {"name": ["Asha", "Ben"], "age": [12, 13]}\n'
+                                    'table.join_with(ages, using="name", keep="all rows from this table")\n'
+                                    "table.show_first()"),
+    "table.add_rows_from": _tx("marks", 'table.add_rows_from(ps.example("marks"))\nprint(table)'),
+    "table.turn_columns_into_rows": _tx("weather", 'table.keep_columns("month", "city", "temperature", "rain")\n'
+                                                   'table.turn_columns_into_rows(["temperature", "rain"])\n'
+                                                   "table.show_first()"),
+    "table.turn_rows_into_columns": _tx("weather", 'table.turn_rows_into_columns(names_from="city", '
+                                                   'values_from="temperature")\ntable.show_first()'),
+    # undo and finish
+    "table.undo": _tx("marks", 'table.keep_rows("marks", above=50)\ntable.undo()\nprint(table)'),
+    "table.steps": _tx("marks", 'table.keep_rows("marks", above=50)\ntable.sort_by("marks")\ntable.steps()'),
+    "table.start_again": _tx("marks", 'table.keep_rows("marks", above=50)\ntable.remove_columns("height")\n'
+                                      "table.start_again()\nprint(table)"),
+    "table.save": _tx("marks", 'table.keep_rows("marks", above=50)\ntable.save("good_marks.xlsx")\n'
+                               'table.save("good_marks.csv")'),
+    "table.chart": _tx("marks", 'table.keep_rows("subject", equal_to="Maths")\nchart = table.chart()\n'
+                                'chart.bars(x="name", y="marks")\nchart.rotate_labels_x()\n'
+                                'chart.save("maths_marks.png")'),
+    "table.done": _tx("marks", 'table.keep_rows("marks", above=50)\nplain = table.done()\nprint(type(plain))'),
     # help
     "ps.words": "import plotsimple as ps\nps.words()",
-    "ps.help": 'import plotsimple as ps\nps.help("bars")\nps.help("show=")',
+    "ps.help": 'import plotsimple as ps\nps.help("bars")\nps.help("show=")\nps.help("keep_rows")',
     "ps.lesson": "import plotsimple as ps\nps.lesson()\nps.lesson(1)",
 }
 
@@ -234,12 +336,47 @@ def _chart_class():
     return Chart
 
 
+def _table_class():
+    from .table import Table
+
+    return Table
+
+
+def _kind(key: str) -> str:
+    """What a key in GROUPS is: "option", "ps", "table" or "chart"."""
+    if key.endswith("="):
+        return "option"
+    if key.startswith("ps."):
+        return "ps"
+    if key.startswith("table."):
+        return "table"
+    return "chart"
+
+
+def _word(key: str) -> str:
+    """The word itself, without "ps." or "table." in front: "ps.chart" -> "chart"."""
+    kind = _kind(key)
+    if kind == "ps":
+        return key[3:]
+    if kind == "table":
+        return key[6:]
+    return key
+
+
+def _display(key: str) -> str:
+    """How a key is shown in ps.words() and the cheat sheet: table words without "table."."""
+    return _word(key) if _kind(key) == "table" else key
+
+
 def _function(key: str):
     """The real function behind a word in GROUPS (None for options such as "show=")."""
-    if key.endswith("="):
+    kind = _kind(key)
+    if kind == "option":
         return None
-    if key.startswith("ps."):
-        return getattr(_ps(), key[3:])
+    if kind == "ps":
+        return getattr(_ps(), _word(key))
+    if kind == "table":
+        return getattr(_table_class(), _word(key))
     return getattr(_chart_class(), key)
 
 
@@ -253,30 +390,37 @@ def _group_of(key: str) -> str:
 
 def _aliases() -> dict[str, list[str]]:
     """Other names for the same step: {"bars": ["bar"], "dots": ["scatter"], ...}"""
-    chart_cls = _chart_class()
     found: dict[str, list[str]] = {}
-    keys = [k for k in _all_keys() if not k.endswith("=") and not k.startswith("ps.")]
-    for name in chart_cls._word_names():
-        if name in keys:
-            continue
-        func = getattr(chart_cls, name)
-        for key in keys:
-            if getattr(chart_cls, key) is func:
-                found.setdefault(key, []).append(name)
+    for cls, kind in ((_chart_class(), "chart"), (_table_class(), "table")):
+        keys = [k for k in _all_keys() if _kind(k) == kind]
+        words = {_word(k) for k in keys}
+        for name in cls._word_names():
+            if name in words:
+                continue
+            func = getattr(cls, name)
+            for key in keys:
+                if getattr(cls, _word(key)) is func:
+                    found.setdefault(key, []).append(name)
     return found
 
 
 def _call_form(key: str) -> str:
-    if key.endswith("="):
+    kind = _kind(key)
+    if kind == "option":
         return key
-    if key.startswith("ps."):
-        return f"{key}()"
-    return f"chart.{key}()"
+    if kind == "chart":
+        return f"chart.{key}()"
+    return f"{key}()"
 
 
-def _find_call(text: str, prefix_word: str) -> str | None:
+def _prefixes(key: str) -> str:
+    """What may come before the word in an example: table.keep_rows(...), chart.bars(...)."""
+    return "table" if _kind(key) == "table" else "chart|ps|page"
+
+
+def _find_call(text: str, prefix_word: str, prefixes: str = "chart|ps|page|table") -> str | None:
     """Find the first call like chart.bars(...) in text, brackets and quotes included."""
-    m = re.search(rf"(?:chart|ps|page)\.{re.escape(prefix_word)}\(", text)
+    m = re.search(rf"(?:{prefixes})\.{re.escape(prefix_word)}\(", text)
     if not m:
         return None
     depth, quote = 0, None
@@ -300,9 +444,9 @@ def _short_example(key: str) -> str:
     """One short example for the word list: from the docstring, else from the help example."""
     if key in OPTIONS:
         return OPTIONS[key]["example"]
-    word = key[3:] if key.startswith("ps.") else key
+    word, prefixes = _word(key), _prefixes(key)
     doc = inspect.getdoc(_function(key)) or ""
-    call = _find_call(doc, word) or _find_call(HELP_EXAMPLES.get(key, ""), word)
+    call = _find_call(doc, word, prefixes) or _find_call(HELP_EXAMPLES.get(key, ""), word, prefixes)
     return call or _call_form(key)
 
 
@@ -325,10 +469,10 @@ def _summary(key: str) -> str:
         return OPTIONS[key]["about"]
     doc = inspect.getdoc(_function(key)) or ""
     first = doc.split("\n\n")[0].replace("\n", " ")
-    word = key[3:] if key.startswith("ps.") else key
-    call = _find_call(first, word)
+    call = _find_call(first, _word(key), _prefixes(key))
     if call:
         first = first.split(call)[0]
+        first = re.sub(r"\s*\w+\s*=\s*$", "", first)  # "... chart = table.chart()": drop "chart ="
     first = first.strip().rstrip(":").strip()
     if first and first[-1] not in ".!?)":
         first += "."
@@ -342,16 +486,17 @@ def words() -> None:
     For more about one word, type ps.help("bars").
     """
     aliases = _aliases()
-    pad = max(len(k) for k in _all_keys()) + 2
+    pad = max(len(_display(k)) for k in _all_keys()) + 2
     print("plotsimple words. Type ps.help(\"bars\") to learn more about any of them.")
-    print('Most words are steps on a chart: chart = ps.chart(table), then chart.bars(...).')
+    print("Chart words are steps on a chart: chart = ps.chart(table), then chart.bars(...).")
+    print("Table words are steps on a table: table = ps.table(...), then table.keep_rows(...).")
     print('The examples use the practice tables; ps.help("word") shows which one, ready to run.')
     for group, keys in GROUPS:
         print()
         print(group)
         print("-" * len(group))
         for key in keys:
-            line = f"  {key:<{pad}}{_short_example(key)}"
+            line = f"  {_display(key):<{pad}}{_short_example(key)}"
             if key in aliases:
                 line += "   (also: " + ", ".join(aliases[key]) + ")"
             print(line)
@@ -362,7 +507,7 @@ def words() -> None:
 # ---------------------------------------------------------------- ps.help()
 def _normalise(word: str) -> str:
     w = str(word).strip()
-    for start in ("ps.", "chart.", "page.", "."):
+    for start in ("ps.", "chart.", "table.", "page.", "."):
         if w.startswith(start):
             w = w[len(start):]
     if w.endswith("()"):
@@ -370,9 +515,8 @@ def _normalise(word: str) -> str:
     return w.strip()
 
 
-def _lookup(word) -> str | None:
-    """Turn what the user typed into a key of GROUPS, or None."""
-    w = _normalise(word)
+def _chart_or_ps_key(w: str) -> str | None:
+    """A chart word, ps word or option called w (already normalised), or None."""
     keys = _all_keys()
     if w in keys:
         return w
@@ -383,18 +527,54 @@ def _lookup(word) -> str | None:
     if w.endswith("=") and w[:-1] in keys:
         return w[:-1]
     for key, names in _aliases().items():
-        if w in names:
+        if _kind(key) != "table" and w in names:
             return key
-    if w in ("chart", "Chart"):
+    if w == "Chart":
         return "ps.chart"
+    if w == "Table":
+        return "ps.table"
     return None
+
+
+def _table_key(w: str) -> str | None:
+    """A table word called w (already normalised), or None."""
+    if f"table.{w}" in _all_keys():
+        return f"table.{w}"
+    for key, names in _aliases().items():
+        if _kind(key) == "table" and w in names:
+            return key
+    return None
+
+
+def _lookup_all(word) -> list[str]:
+    """Every key of GROUPS that what the user typed can mean.
+
+    "save" is a word for charts and for tables, so it gives both; "chart.save" and
+    "table.save" give one each.
+    """
+    typed = str(word).strip()
+    w = _normalise(typed)
+    if typed.startswith("table."):
+        found = [_table_key(w)]
+    elif typed.startswith(("chart.", "page.", "ps.")):
+        found = [_chart_or_ps_key(w)]
+    else:
+        found = [_chart_or_ps_key(w), _table_key(w)]
+    return [k for k in dict.fromkeys(found) if k is not None]
+
+
+def _lookup(word) -> str | None:
+    """Turn what the user typed into a key of GROUPS (the first, if it has two), or None."""
+    found = _lookup_all(word)
+    return found[0] if found else None
 
 
 def _options_text(key: str) -> list[str]:
     func = _function(key)
     if func is None:
         return []
-    params = [p for p in inspect.signature(func).parameters.values() if p.name != "self"]
+    params = [p for p in inspect.signature(func).parameters.values()
+              if p.name != "self" and not (p.kind is p.VAR_POSITIONAL and p.name == "extra")]
     if not params:
         return ["  (nothing: just write the empty brackets)"]
     width = max(len(p.name) for p in params) + 4
@@ -406,7 +586,7 @@ def _options_text(key: str) -> list[str]:
             continue
         elif p.default is p.empty:
             lines.append(f"  {p.name:<{width}}needed")
-        elif p.default is None:
+        elif p.default is None or type(p.default).__name__ == "_NotGiven":
             lines.append(f"  {p.name}=")
         else:
             normal = f'"{p.default}"' if isinstance(p.default, str) else repr(p.default)
@@ -418,49 +598,29 @@ def _print_help_overview() -> None:
     print(textwrap.dedent("""\
         How to get help in plotsimple
 
-          ps.help("bars")     explains one word: what it does, its options and an example
-          ps.help("show=")    explains an option you use inside a step
-          ps.words()          lists every word, with a short example of each
-          ps.lesson()         lists the lessons: learn the whole of plotsimple in a day
-          ps.example()        lists the made-up tables you can practise with
+          ps.help("bars")       explains one word: what it does, its options and an example
+          ps.help("keep_rows")  works for table words too
+          ps.help("show=")      explains an option you use inside a step
+          ps.words()            lists every word, with a short example of each
+          ps.lesson()           lists the lessons: learn the whole of plotsimple in a day
+          ps.example()          lists the made-up tables you can practise with
 
-        You can type the word with or without "chart." in front and with or without
-        brackets: ps.help("bars"), ps.help("chart.bars") and ps.help("bars()") all work.
+        You can type the word with or without "chart." or "table." in front and with or
+        without brackets: ps.help("bars"), ps.help("chart.bars") and ps.help("bars()") all
+        work. A word that charts and tables both have, such as save, explains both;
+        ps.help("table.save") explains only the table one.
         """))
 
 
-def help(word=None) -> None:  # noqa: A001 - meant to be ps.help
-    """Explain one word: what it does, its options and an example you can run. ps.help("bars")
-
-    ps.help() on its own explains how to get help.
-    """
-    if word is None:
-        _print_help_overview()
-        return None
-    if not isinstance(word, str):
-        name = getattr(word, "__name__", None)
-        if name is None or _lookup(name) is None:
-            return builtins.help(word)  # not a plotsimple word: Python's own help
-        word = name
-    key = _lookup(word)
-    if key is None:
-        known = sorted({_normalise(k) for k in _all_keys()} | {a for v in _aliases().values() for a in v})
-        lines = [f'plotsimple has no word called "{word}".']
-        guesses = suggest(_normalise(word), known)
-        if guesses:
-            lines.append("Did you mean " + " or ".join(f'ps.help("{g}")' for g in guesses) + "?")
-        lines.append("Type ps.words() to see every word.")
-        lines.append(f"Missing something? Ask for it at {ISSUES_URL}")
-        print("\n".join(lines))
-        return None
-
+def _print_one(key: str) -> None:
     title = _call_form(key)
     print(title)
     print("=" * len(title))
     print(f"Group: {_group_of(key)}")
     aliases = _aliases().get(key)
     if aliases:
-        print("Same word, other spelling: " + ", ".join(f"chart.{a}()" for a in aliases))
+        start = "table" if _kind(key) == "table" else "chart"
+        print("Same word, other spelling: " + ", ".join(f"{start}.{a}()" for a in aliases))
     print()
     if key in OPTIONS:
         opt = OPTIONS[key]
@@ -480,6 +640,48 @@ def help(word=None) -> None:  # noqa: A001 - meant to be ps.help
     print()
     print("Example you can run:")
     print(textwrap.indent(HELP_EXAMPLES[key], "    "))
+
+
+def help(word=None) -> None:  # noqa: A001 - meant to be ps.help
+    """Explain one word: what it does, its options and an example you can run. ps.help("bars")
+
+    ps.help() on its own explains how to get help. Table words work too: ps.help("keep_rows").
+    """
+    if word is None:
+        _print_help_overview()
+        return None
+    if isinstance(word, str):
+        keys = _lookup_all(word)
+    else:
+        keys = [k for k in _all_keys() if k not in OPTIONS and _function(k) is word][:1]
+        name = getattr(word, "__name__", None)
+        if not keys and name is not None:
+            keys = _lookup_all(name)
+        if not keys:
+            return builtins.help(word)  # not a plotsimple word: Python's own help
+        word = name
+    if not keys:
+        known = sorted({_normalise(k) for k in _all_keys()} | {a for v in _aliases().values() for a in v})
+        lines = [f'plotsimple has no word called "{word}".']
+        guesses = suggest(_normalise(word), known)
+        if guesses:
+            lines.append("Did you mean " + " or ".join(f'ps.help("{g}")' for g in guesses) + "?")
+        lines.append("Type ps.words() to see every word.")
+        lines.append(f"Missing something? Ask for it at {ISSUES_URL}")
+        print("\n".join(lines))
+        return None
+
+    for i, key in enumerate(keys):
+        if i:
+            print()
+            print("-" * WIDTH)
+            print()
+        _print_one(key)
+    if len(keys) > 1:
+        forms = " or ".join(f'ps.help("{_call_form(k)[:-2]}")' for k in keys)
+        print()
+        print(_wrap(f'"{_normalise(word)}" can mean more than one word, so each one is explained '
+                    f"above. For only one, type {forms}."))
     return None
 
 
@@ -901,8 +1103,9 @@ LESSONS = [
             ]),
         ],
         notes=[
-            "That is the whole of plotsimple! ps.words() lists every word and ps.help(\"word\") "
-            "explains any of them.",
+            "Those are all the charts! ps.words() lists every word and ps.help(\"word\") "
+            "explains any of them. Lessons 9 to 12 teach tables: how to look at your data, "
+            "clean it and sum it up before you draw it.",
             'Your own data: save it from Excel as .xlsx or .csv, then chart = ps.chart("my_file.xlsx"). '
             "If a column name is spelt wrong, plotsimple tells you the right one.",
         ],
@@ -913,6 +1116,265 @@ LESSONS = [
         ],
         words=["second_y", "zoom_box", "heatmap", "colour_bar_label", "size", "animate",
                "contour", "note", "style", "ps.words", "ps.help"],
+    ),
+    dict(
+        title="Tables: open one and look at it",
+        learn=[
+            "how to turn data into a plotsimple table",
+            "how to look at the first and last rows, and the names of the columns",
+            "how to describe every column and count what is in it",
+        ],
+        parts=[
+            ("Before you draw, look at your data. ps.table gives you plain words for that.", [
+                ("import plotsimple as ps", "Load plotsimple."),
+                ('table = ps.table(ps.example("marks"))', "Make a table from the practice marks. For "
+                                                          'your own file, write ps.table("my_file.xlsx").'),
+                ("print(table)", "Print the table. The first line says how many rows and columns it "
+                                 "has. Then come the first 10 rows."),
+                ("table.show_first(5)", "Show only the first 5 rows."),
+                ("table.show_last(3)", "Show the last 3 rows."),
+                ("print(table.column_names())", "Print the names of the columns."),
+                ("table.describe_columns()", "Describe every column: is it numbers or text, how many "
+                                             "cells are empty, and the smallest, biggest and average "
+                                             "number."),
+                ("print(table.count_rows())", "Count the rows. One row is one child in one test."),
+            ]),
+            ("count_each counts how often each different value comes up.", [
+                ("import plotsimple as ps", "Load plotsimple."),
+                ('table = ps.table(ps.example("fruit"))', "Make a table of fruit sold by two shops."),
+                ("table.show_first()", "Show the first rows. With nothing in the brackets you get 5."),
+                ('print(table.count_each("fruit"))', "For each fruit: in how many rows it comes up, "
+                                                     "and what percent of all the rows that is."),
+                ('print(table.count_each("shop"))', "The same for each shop."),
+            ]),
+        ],
+        notes=[
+            "In Jupyter, VS Code or Spyder, write table on the last line of a cell to see it as a "
+            "nice table.",
+            "ps.table reads the same files as ps.chart: .xlsx, .csv, .tsv, .parquet and .json.",
+            "The row numbers on the left start at 0, as everywhere in Python.",
+        ],
+        task=[
+            'Make a table of ps.example("weather"). How many rows does it have?',
+            "Describe its columns. Which column has the biggest numbers?",
+            'Count each "city". Does every city have the same number of rows?',
+        ],
+        words=["ps.table", "table.show_first", "table.show_last", "table.column_names",
+               "table.describe_columns", "table.count_rows", "table.count_each"],
+    ),
+    dict(
+        title="Tables: choose rows and columns, and undo",
+        learn=[
+            "how to keep only the columns and rows you want",
+            "how to sort the rows",
+            "how to take a step back, and start again",
+            "how to save your table",
+        ],
+        parts=[
+            ("A table is changed in small steps, like a chart. Each step says what it did.", [
+                ("import plotsimple as ps", "Load plotsimple."),
+                ('table = ps.table(ps.example("marks"))', "Make a table of the marks."),
+                ('table.keep_columns("name", "subject", "marks")', "Keep only these three columns, "
+                                                                   "in this order."),
+                ('table.keep_rows("subject", equal_to="Maths")', "Keep only the rows where the subject "
+                                                                 "is Maths. plotsimple says how many "
+                                                                 "rows it kept."),
+                ('table.keep_rows("marks", above=60)', "Of those, keep only marks above 60."),
+                ('table.sort_by("marks", biggest_first=True)', "Put the rows in order, the biggest "
+                                                               "mark first."),
+                ("table.show_first(10)", "Show the first 10 rows: the best Maths marks."),
+                ("table.steps()", "List every step you did, in order."),
+                ("table.undo()", "Take back the last step (the sorting)."),
+                ("table.start_again()", "Go back to the whole table, as it was at the start."),
+                ("print(table)", "All 54 rows and 6 columns are back."),
+            ]),
+            ("keep_rows and remove_rows know many conditions. Then save what you made.", [
+                ("import plotsimple as ps", "Load plotsimple."),
+                ('table = ps.table(ps.example("weather"))', "Make a table of the weather."),
+                ('table.keep_rows("month_number", between=[6, 8])', "Keep the summer months: 6, 7 and "
+                                                                     "8. between= keeps both ends."),
+                ('table.remove_rows("city", equal_to="Frostby")', "Remove the rows of the city "
+                                                                  "Frostby."),
+                ('table.remove_columns("wind_direction", "wind_speed")', "Remove two columns we do "
+                                                                         "not need."),
+                ('table.rename_column("temperature", to="temp")', 'Give the column "temperature" '
+                                                                  'the shorter name "temp".'),
+                ("print(table)", "Look at what is left: 6 rows and 5 columns."),
+                ('table.save("lesson10_summer.xlsx")', "Save the table as an Excel file. A name "
+                                                       "ending in .csv saves a CSV file."),
+            ]),
+        ],
+        notes=[
+            "Conditions for keep_rows and remove_rows: above, below, at_least, at_most, equal_to, "
+            "not_equal_to, between, one_of, contains, starts_with, ends_with and is_empty.",
+            'one_of= takes a list: table.keep_rows("subject", one_of=["Maths", "Science"]).',
+            "undo() can take back many steps, one at a time. Your file is never changed: only "
+            "table.save(...) writes a file.",
+        ],
+        task=[
+            'In the marks table, keep only class "B" and sort by "hours". Who studied the longest?',
+            "Undo the sorting, then sort by name instead.",
+            'Keep 5 random rows with table.keep_random_rows(5, seed=1) and save them as "five.csv".',
+        ],
+        words=["table.keep_columns", "table.keep_rows", "table.sort_by", "table.steps", "table.undo",
+               "table.start_again", "table.remove_rows", "table.remove_columns", "table.rename_column",
+               "table.save"],
+    ),
+    dict(
+        title="Tables: clean the data and add new columns",
+        learn=[
+            "how to find and fill empty cells",
+            "how to fix columns: numbers written as text, extra spaces, wrong values",
+            "how to add new columns, in plain words or like a sum in maths",
+        ],
+        parts=[
+            ("Real data often has empty cells. The practice tables have none, so we make some first.", [
+                ("import plotsimple as ps", "Load plotsimple."),
+                ('table = ps.table(ps.example("marks"))', "Make a table of the marks."),
+                ('table.replace_values("marks", [61, 73], with_value=None)', "Make every mark of 61 "
+                                                                             "or 73 empty. "
+                                                                             "with_value=None means "
+                                                                             "an empty cell."),
+                ("table.count_empty()", "Show how many empty cells each column has."),
+                ('table.fill_empty("marks", with_the="average")', "Fill the empty marks with the "
+                                                                  "average of the other marks."),
+                ("table.undo()", "Changed your mind? Take it back: the cells are empty again."),
+                ('table.remove_empty_rows("marks")', "This time remove the rows with an empty mark."),
+                ("print(table)", "Some rows fewer than at the start."),
+            ]),
+            ("Data typed by people is often untidy. These words fix whole columns at once.", [
+                ("import plotsimple as ps", "Load plotsimple."),
+                ('table = ps.table({"name": ["  Asha", "ben ", "Chen"], "height": ["144", "152", "unknown"]})',
+                 "Make a small table by hand: each column name, then its values in a list."),
+                ('table.remove_extra_spaces("name")', "Take away the spaces before and after the names."),
+                ('table.replace_values("name", "ben", with_value="Ben")', 'Write "ben" with a capital '
+                                                                          "letter."),
+                ('table.make_numbers("height")', "Turn the heights from text into numbers. "
+                                                 '"unknown" is not a number, so that cell becomes '
+                                                 "empty, and plotsimple tells you."),
+                ("table.describe_columns()", "Now height is a column of numbers."),
+            ]),
+            ("A new column can be worked out from other columns, in plain words.", [
+                ("import plotsimple as ps", "Load plotsimple."),
+                ('table = ps.table(ps.example("marks"))', "Make a table of the marks."),
+                ('table.add_column("marks_per_hour", by_dividing=["marks", "hours"])',
+                 'A new column called "marks_per_hour": the marks divided by the hours.'),
+                ('table.add_group_column("grade", from_column="marks", cut_at=[40, 60, 80], '
+                 'names=["D", "C", "B", "A"])',
+                 "A grade for each mark: below 40 is D, 40 to 59 is C, 60 to 79 is B, 80 and more is A."),
+                ("table.show_first()", "Look at the two new columns on the right."),
+                ('print(table.count_each("grade"))', "How many of each grade?"),
+            ]),
+            ("Or write the new column like a sum in maths. Here each subject first gets its own "
+             "column.", [
+                ("import plotsimple as ps", "Load plotsimple."),
+                ('table = ps.table(ps.example("marks"))', "Make a table of the marks."),
+                ('table.keep_columns("name", "class", "subject", "marks")', "Keep the columns we need."),
+                ('table.turn_rows_into_columns(names_from="subject", values_from="marks")',
+                 "Make one column for each subject: Maths, Science and English. Each child now has "
+                 "one row."),
+                ('table.add_column("total", "Maths + Science + English")', 'A new column "total": '
+                                                                           "the three marks added up."),
+                ('table.add_column("average", "total / 3")', "The average of the three marks."),
+                ('table.add_rank_column("place", from_column="total")', "Each child's place: 1 for "
+                                                                        "the biggest total."),
+                ('table.sort_by("place")', "Put the rows in order of place."),
+                ("table.show_first()", "Who came first?"),
+            ]),
+        ],
+        notes=[
+            'fill_empty can also use with_the="median", "value above" or "value below", or '
+            "with_value=0 for a number you choose.",
+            "More fixing words: make_text, make_dates, make_lowercase and make_uppercase.",
+            "Plain words for new columns: by_adding=, by_subtracting=, by_multiplying= and "
+            "by_dividing=, or from_column= with plus=, minus=, times= or divide_by=.",
+            'In a maths-style column, a column name with spaces goes in backticks: "`max temp` - 2".',
+        ],
+        task=[
+            "In the first example, fill the empty marks with the median instead of the average.",
+            'Add a column "height_m" with the height in metres: from_column="height", divide_by=100.',
+            'In the last example, add a column "best_two" with the formula "total - English".',
+        ],
+        words=["table.replace_values", "table.count_empty", "table.fill_empty", "table.remove_empty_rows",
+               "table.remove_extra_spaces", "table.make_numbers", "table.add_column",
+               "table.add_group_column", "table.add_rank_column", "table.turn_rows_into_columns"],
+    ),
+    dict(
+        title="Tables: summaries, and from a table to a chart",
+        learn=[
+            "how to work out averages, totals and counts, for each group",
+            "how to tell if two columns go together",
+            "how to draw a chart of a summary",
+            "how to join two tables and turn columns into rows",
+        ],
+        parts=[
+            ("A summary turns many rows into a few numbers. It never changes your table.", [
+                ("import plotsimple as ps", "Load plotsimple."),
+                ('table = ps.table(ps.example("marks"))', "Make a table of the marks."),
+                ('print(table.average_of("marks"))', "The average of all the marks: just one number."),
+                ('print(table.average_of("marks", for_each="class"))', "One average for each class. "
+                                                                       "for_each= gives back a new, "
+                                                                       "small table."),
+                ('print(table.biggest_of("marks", for_each="subject"))', "The best mark in each subject."),
+                ('table.correlation_between("hours", "marks")', "Do more hours go with more marks? "
+                                                                "The answer is a number r from -1 "
+                                                                "to 1, explained in words."),
+            ]),
+            ("A summary is a table too, so you can sort it and draw it.", [
+                ("import plotsimple as ps", "Load plotsimple."),
+                ('table = ps.table(ps.example("fruit"))', "Make a table of fruit sales."),
+                ('totals = table.total_of("count", for_each="fruit")', "A new table: one row per fruit, "
+                                                                      'with a column "total of count".'),
+                ('totals.sort_by("total of count", biggest_first=True)', "Best seller first."),
+                ("chart = totals.chart()", "Start a chart from the summary table."),
+                ('chart.bars(x="fruit", y="total of count")', "One bar per fruit."),
+                ("chart.numbers_on_bars()", "Write the total on each bar."),
+                ('chart.save("lesson12_fruit.png")', "Save the chart."),
+            ]),
+            ("Two tables can be joined: their rows are matched on a column they share.", [
+                ("import plotsimple as ps", "Load plotsimple."),
+                ('table = ps.table(ps.example("marks"))', "Make a table of the marks."),
+                ('ages = {"name": ["Asha", "Ben", "Chen"], "age": [12, 13, 12]}', "A small table of "
+                                                                                  "ages, typed by hand: "
+                                                                                  "each column name, "
+                                                                                  "then its values."),
+                ('table.join_with(ages, using="name")', "Bring in the age, matching the rows on the "
+                                                        "name. Only children found in both tables stay."),
+                ("table.show_first()", "Look: there is a new column, age."),
+                ('print(table.average_of("marks", for_each="age"))', "The average mark at each age."),
+            ]),
+            ("Turning columns into rows gives the long shape that many charts like.", [
+                ("import plotsimple as ps", "Load plotsimple."),
+                ('table = ps.table({"name": ["Asha", "Ben", "Chen"], "test_1": [61, 73, 81], '
+                 '"test_2": [70, 68, 90]})', "A small table: two tests, one column for each."),
+                ('table.turn_columns_into_rows(["test_1", "test_2"], names_to="test", values_to="mark")',
+                 'Put the two tests under each other. The new column "test" says which test, and '
+                 '"mark" holds the mark. Each child now has two rows.'),
+                ("table.show_first(6)", "Look at the new shape."),
+                ("chart = table.chart()", "Start a chart from it."),
+                ('chart.bars(x="name", y="mark", colour="test")', "Both tests side by side for each "
+                                                                  "child."),
+                ('chart.save("lesson12_tests.png")', "Save it."),
+            ]),
+        ],
+        notes=[
+            "More summaries: median_of, total_of, smallest_of, biggest_of, standard_deviation_of "
+            "and count_rows. Each one can take for_each=.",
+            "A correlation does not show that one thing causes the other.",
+            "table.add_rows_from(other) puts the rows of another table under this one. "
+            "turn_rows_into_columns does the opposite of turn_columns_into_rows.",
+            "table.done() gives back the plain pandas (or Polars) table, if you need it.",
+            'That is the whole of plotsimple! ps.words() lists every word and ps.help("word") '
+            "explains any of them.",
+        ],
+        task=[
+            'Make the fruit totals for_each="shop" instead. Which shop sold more?',
+            'Work out the average temperature for_each="city" in the weather table and draw it as bars.',
+            "Is there a link between height and marks? Use correlation_between to find out.",
+        ],
+        words=["table.average_of", "table.biggest_of", "table.correlation_between", "table.total_of",
+               "table.chart", "table.join_with", "table.turn_columns_into_rows", "table.add_rows_from",
+               "table.done"],
     ),
 ]
 
@@ -927,16 +1389,17 @@ def lesson_code(number: int) -> list[str]:
 
 
 def _list_lessons() -> None:
-    print("Learn plotsimple in one day: 8 lessons of about 30 to 45 minutes.\n")
+    print(f"Learn plotsimple in one day: {len(LESSONS)} lessons of about 30 minutes.")
+    print("Lessons 1 to 8 teach charts, lessons 9 to 12 teach tables.\n")
     for i, les in enumerate(LESSONS, start=1):
-        print(f"  ps.lesson({i})   {les['title']}")
+        print(f"  ps.lesson({i}){' ' * (5 - len(str(i)))}{les['title']}")
     print("\nStart with ps.lesson(1). Each lesson ends with a small task to try yourself.")
 
 
 def lesson(number=None) -> None:
     """A lesson: an example to run, what each line does, and a task. ps.lesson(1)
 
-    ps.lesson() on its own lists all 8 lessons.
+    ps.lesson() on its own lists all the lessons.
     """
     if number is None:
         _list_lessons()
