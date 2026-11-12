@@ -109,24 +109,24 @@ class LayoutWords:
         """
         if by is None and row is None and column is None:
             raise PlotsimpleError(
-                '.one_per() needs a column to split by, for example chart.one_per("site")\n'
-                'or chart.one_per(row="site", column="year").'
+                '.one_per() needs a column to split by, for example chart.one_per("class")\n'
+                'or chart.one_per(row="class", column="subject").'
             )
         if by is not None and (row is not None or column is not None):
             raise PlotsimpleError(
-                '.one_per() takes either one column (chart.one_per("site"))\n'
-                'or row= and column= (chart.one_per(row="site", column="year")), not both.'
+                '.one_per() takes either one column (chart.one_per("class"))\n'
+                'or row= and column= (chart.one_per(row="class", column="subject")), not both.'
             )
         if columns is not None:
             if by is None:
-                raise PlotsimpleError('columns= only works with one column, for example chart.one_per("site", columns=3).')
+                raise PlotsimpleError('columns= only works with one column, for example chart.one_per("class", columns=3).')
             if isinstance(columns, bool) or not isinstance(columns, int) or columns < 1:
                 raise PlotsimpleError(f"columns= should be a whole number such as 2 or 3, not {columns!r}.")
         _check_bool("one_per", "same_x", same_x)
         _check_bool("one_per", "same_y", same_y)
         data = self._data
         if data is None or len(data.columns) == 0:
-            raise PlotsimpleError('.one_per() needs a table, for example ps.chart("marks.xlsx").one_per("class").')
+            raise PlotsimpleError('.one_per() needs a table, for example ps.chart(ps.example("marks")).one_per("class").')
         for name in (by, row, column):
             if name is not None and name not in data.columns:
                 raise column_error(name, data.columns)
@@ -173,7 +173,7 @@ class LayoutWords:
         """
         data = self._data
         if data is None or len(data.columns) == 0:
-            raise PlotsimpleError('.animate() needs a table, for example ps.chart("growth.xlsx").animate(over="year").')
+            raise PlotsimpleError('.animate() needs a table, for example ps.chart(ps.example("growth")).animate(over="year").')
         if is_listlike(over) or over not in data.columns:
             raise column_error(over, data.columns)
         if isinstance(seconds_per_frame, bool) or not isinstance(seconds_per_frame, numbers.Real) \

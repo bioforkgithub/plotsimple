@@ -59,8 +59,8 @@ _CHART_KINDS = {
     "polar", "contour", "surface", "dots_3d", "density", "count_bars", "all_points",
 }
 _EXAMPLE = {
-    "dots": 'chart.dots(x="height", y="weight")',
-    "lines": 'chart.lines(x="day", y="temperature")',
+    "dots": 'chart.dots(x="hours", y="marks")',
+    "lines": 'chart.lines(x="month", y="temperature")',
 }
 
 
@@ -741,13 +741,13 @@ class PairsChart(TextWords, LookWords, BaseChart):
         super().__init__(data)
         table = self._data
         if not len(table.columns):
-            raise PlotsimpleError('ps.pairs() needs a table, for example ps.pairs("measurements.xlsx").')
+            raise PlotsimpleError('ps.pairs() needs a table, for example ps.pairs(ps.example("marks")).')
         group, fixed = colour_role(table, colour)
         if is_listlike(group):
-            raise PlotsimpleError('In ps.pairs(), colour= should be a column name, for example colour="species".')
+            raise PlotsimpleError('In ps.pairs(), colour= should be a column name, for example colour="class".')
         if columns is not None:
             if isinstance(columns, str) or not is_listlike(columns):
-                raise PlotsimpleError('columns= should be a list of column names, for example columns=["a", "b"].')
+                raise PlotsimpleError('columns= should be a list of column names, for example columns=["hours", "marks"].')
             for c in columns:
                 if c not in table.columns:
                     raise column_error(c, table.columns)
@@ -766,7 +766,7 @@ class PairsChart(TextWords, LookWords, BaseChart):
         if len(numbers) > 10:
             raise PlotsimpleError(
                 f"Your table has {len(numbers)} columns with numbers, too many for one pairs chart.\n"
-                'Choose up to 10 with columns=, for example ps.pairs(table, columns=["a", "b", "c"]).'
+                'Choose up to 10 with columns=, for example ps.pairs(table, columns=["hours", "marks", "height"]).'
             )
         self._columns = numbers
         self._group, self._fixed = group, fixed

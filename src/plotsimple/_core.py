@@ -226,7 +226,7 @@ class BaseChart:
         return self
 
     def _save_animation(self, path):
-        raise PlotsimpleError('To save a .gif, first make an animation with chart.animate(over="column").')
+        raise PlotsimpleError('To save a .gif, first make an animation with chart.animate(over="year").')
 
     def show(self):
         """Show the chart in a window. chart.show()

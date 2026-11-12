@@ -542,7 +542,7 @@ class ChartWords:
         check_error("lines", error, show)
         x, y = single_list(x, y)
         if x is None or y is None:
-            raise PlotsimpleError('.lines() needs x= and y=, for example chart.lines(x="day", y="temperature").')
+            raise PlotsimpleError('.lines() needs x= and y=, for example chart.lines(x="month", y="temperature").')
         group, _ = colour_role(self._data, colour)
         check(self._data, x=x, y=y, colour=group)
         self._need_axes("lines")
@@ -558,7 +558,7 @@ class ChartWords:
         """
         x, y = single_list(x, y)
         if x is None or y is None:
-            raise PlotsimpleError('.dots() needs x= and y=, for example chart.dots(x="height", y="weight").')
+            raise PlotsimpleError('.dots() needs x= and y=, for example chart.dots(x="hours", y="marks").')
         group, _ = colour_role(self._data, colour)
         size_col = size if not isinstance(size, (int, float)) else None
         check(self._data, x=x, y=y, colour=group, size=size_col, shape=shape)
@@ -584,7 +584,7 @@ class ChartWords:
         self._yes_no("area", stacked=stacked)
         x, y = single_list(x, y)
         if x is None or y is None:
-            raise PlotsimpleError('.area() needs x= and y=, for example chart.area(x="year", y="sales").')
+            raise PlotsimpleError('.area() needs x= and y=, for example chart.area(x="year", y="population").')
         group, _ = colour_role(self._data, colour)
         if stacked and group is None:
             raise PlotsimpleError('stacked=True needs groups to stack: add colour="a column".')
@@ -752,7 +752,7 @@ class ChartWords:
         self._yes_no("polar", degrees=degrees)
         if angle is None or distance is None:
             raise PlotsimpleError(
-                '.polar() needs angle= and distance=, for example chart.polar(angle="direction", distance="speed").'
+                '.polar() needs angle= and distance=, for example chart.polar(angle="wind_direction", distance="wind_speed").'
             )
         group, _ = colour_role(self._data, colour)
         check(self._data, angle=angle, distance=distance, colour=group)
@@ -764,7 +764,7 @@ class ChartWords:
     def _xyz(self, word, x, y, z, **more):
         if x is None or y is None or z is None:
             raise PlotsimpleError(
-                f'.{word}() needs x=, y= and z=, for example chart.{word}(x="lon", y="lat", z="depth").'
+                f'.{word}() needs x=, y= and z=, for example chart.{word}(x="east", y="north", z="height").'
             )
         check(self._data, x=x, y=y, z=z, **more)
         _check_numbers(self._data, word, x=x, y=y, z=z)

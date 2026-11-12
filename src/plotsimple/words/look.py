@@ -142,7 +142,7 @@ def _colour_bar_label(ctx, text):
     if bar is None:
         raise PlotsimpleError(
             ".colour_bar_label() needs a chart with a colour bar,\n"
-            'for example chart.heatmap() or chart.contour(x="lon", y="lat", z="depth").'
+            'for example chart.heatmap() or chart.contour(x="east", y="north", z="height").'
         )
     for one in bar if isinstance(bar, (list, tuple)) else [bar]:
         one.set_label(text)
