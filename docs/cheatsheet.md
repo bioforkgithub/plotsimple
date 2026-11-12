@@ -82,6 +82,8 @@ and `a`, `b` in `sdata.side_by_side(a, b)` are charts you made first.
 | `count_bars` | `chart.count_bars(x="fruit", colour="shop")` | fruit | Bars that count how many rows each group has. |
 | `all_dots` | `chart.all_dots(x="class", y="marks")` | marks | Every value as a dot, spread out so no dot hides another. |
 | `side_histograms` | `chart.side_histograms()` | marks | Small histograms along the top and right edges of a dots chart. |
+| `qq_dots` | `chart.qq_dots("marks")` | marks | Dots that lie on a straight line when the values follow a normal (bell) curve. |
+| `cumulative_share` | `chart.cumulative_share(x="marks", colour="class")` | marks | A line that climbs from 0 to 1: the share of values at or below each x. |
 | `sdata.pairs` | `sdata.pairs(sdata.example("marks"), colour="class")` | marks | Every number column against every other. |
 
 ## Lines and shading
@@ -90,6 +92,7 @@ and `a`, `b` in `sdata.side_by_side(a, b)` are charts you made first.
 |---|---|---|---|
 | `line_at_x` | `chart.line_at_x(2010, label="2010")` | growth | A straight up-and-down line at one x value. |
 | `line_at_y` | `chart.line_at_y(50, label="pass mark")` | marks | A straight side-to-side line at one y value. |
+| `line_with_slope` | `chart.line_with_slope(1, through=(0, 0))` | marks | A straight line with a given slope, right across the chart. |
 | `shade_between_x` | `chart.shade_between_x(6, 8)` | weather | Shade the band between two x values, behind the data. |
 | `shade_between_y` | `chart.shade_between_y(40, 60)` | marks | Shade the band between two y values, behind the data. |
 
@@ -105,6 +108,7 @@ and `a`, `b` in `sdata.side_by_side(a, b)` are charts you made first.
 | `numbers_on_bars` | `chart.numbers_on_bars()` | fruit | Write the value of each bar on it. |
 | `names_on_dots` | `chart.names_on_dots("name")` | marks | Write a name next to each dot. |
 | `font_size` | `chart.font_size(14)` | marks | Make all the text bigger or smaller. |
+| `font_name` | `chart.font_name("DejaVu Serif")` | marks | The font for all the text on the chart. |
 
 ## Axes
 
@@ -118,6 +122,8 @@ and `a`, `b` in `sdata.side_by_side(a, b)` are charts you made first.
 | `ticks_y` | `chart.ticks_y(0, 50, 100)` | marks | Where the marks on the y-axis go. |
 | `rotate_labels_x` | `chart.rotate_labels_x()` | marks | Turn the names under the x-axis so long ones do not bump into each other. |
 | `rotate_labels_y` | `chart.rotate_labels_y(30)` | fruit | Turn the names beside the y-axis. |
+| `tick_format_x` | `chart.tick_format_x("thousands")` | growth | How the numbers or dates under the x-axis are written. |
+| `tick_format_y` | `chart.tick_format_y("percent")` | growth | How the numbers beside the y-axis are written. |
 | `second_y` | `chart.second_y("rain", drawn_as="bars", label="Rain (mm)")` | weather | A second y-axis on the right, for a column measured in other units. |
 | `flip_x` | `chart.flip_x()` | marks | Turn the x-axis around, so numbers grow from right to left. |
 | `flip_y` | `chart.flip_y()` | island | Turn the y-axis upside down, for example for depth going down. |
@@ -128,6 +134,7 @@ and `a`, `b` in `sdata.side_by_side(a, b)` are charts you made first.
 |---|---|---|---|
 | `colour` (also `color`) | `chart.colour("blue")` | marks | One colour for the whole chart. |
 | `colours` (also `colors`) | `chart.colours("blue", "orange", "green")` | marks | Your own colours for the groups, in order. |
+| `colour_scale` (also `color_scale`) | `chart.colour_scale("magma")` | weather | The colours for numbers on a heatmap, contour map, surface or dots coloured by a number column. |
 | `style` | `chart.style("school")` | marks | The overall look. |
 | `size` | `chart.size(width=17, height=12, unit="cm")` | weather | The size of the chart. |
 | `show_grid` | `chart.show_grid()` | marks | Grid lines across the chart in both directions. |
@@ -262,6 +269,8 @@ and `a`, `b` in `sdata.side_by_side(a, b)` are charts you made first.
 | `summary_of` | `table.summary_of("marks", for_each="class", show=["average", "standard deviation", "count"])` | marks | Several measures of one or more columns at once, in one tidy table. |
 | `percent_of` | `table.percent_of("marks", above=60, for_each="class")` | marks | What percent of the rows meet a condition, or each group's share. |
 | `count_different_values` | `table.count_different_values("name", for_each="class")` | marks | How many different values a column has, or how many in each group. |
+| `percentile_of` | `table.percentile_of("marks", 90, for_each="class")` | marks | The value below which a given percent of the numbers lie; empty cells are skipped. |
+| `most_common_of` | `table.most_common_of("days_absent", for_each="school")` | school | The value that turns up most often (the mode), for numbers or text; empty cells are skipped. |
 | `correlation_between` | `table.correlation_between("hours", "marks")` | marks | How strongly columns of numbers go up or down together, from -1 to 1. |
 
 ## Statistical tests
@@ -277,6 +286,9 @@ and `a`, `b` in `sdata.side_by_side(a, b)` are charts you made first.
 | `fit_formula` | `table.fit_formula("population = a * exp(b * (year - 2000))")` | growth | Find the values in a formula that make it follow the data best. |
 | `compare_shape_to` | `table.compare_shape_to("marks", "normal", for_each="class")` | marks | Do the values look bell-shaped (normal), or are they too far from it to be chance? |
 | `add_adjusted_p_value_column` | `table.add_adjusted_p_value_column("q", method="benjamini-hochberg")` | marks | Adjust p-values for testing many things at once, in a new column. |
+| `compare_spreads` | `table.compare_spreads("marks", for_each="class")` | marks | Do the groups differ in how spread out their values are, more than chance? |
+| `compare_counts_to` | `table.compare_counts_to("breakfast", expected={"yes": 0.6, "no": 0.4})` | school | Does how often each value turns up match the shares you expect, more than chance? |
+| `compare_percent_to` | `table.compare_percent_to("passed", value="yes", percent=50)` | school | Is the percent of rows with one value different from a percent you choose, or could it be chance? |
 
 ## Models
 

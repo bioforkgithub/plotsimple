@@ -1,0 +1,10 @@
+The standard deviation of "marks" is 13.7 in A, 14.9 in B and 14.2 in C. Differences in spread this big between the groups could easily be chance (p = 0.911); this does not show that there is no difference.
+Test: Levene's test centred on the medians, the Brown-Forsythe form (F = 0.0937, df = 2 and 51), as R car::leveneTest() and SciPy levene(center="median"); it copes well with values that are not bell-shaped.
+Each pair of "class" groups compared on "marks" with Tukey's honest significant difference, as R TukeyHSD(aov(marks ~ class)): the p-values and 95 % confidence intervals hold for all 3 pairs at once, so the chance of any false alarm stays at 5 %. It assumes the groups have the same spread.
+  A vs B: the average of A is 7.56 higher (95 % CI -3.93 to 19.0); could easily be chance (Tukey-adjusted p = 0.260).
+  A vs C: the average of A is 13.2 higher (95 % CI 1.74 to 24.7); unlikely to be chance (Tukey-adjusted p = 0.020).
+  B vs C: the average of B is 5.67 higher (95 % CI -5.82 to 17.1); could easily be chance (Tukey-adjusted p = 0.464).
+Counts of "breakfast" (180 rows): yes 115 (expected 108), no 65 (expected 72.0). Differences this big from the expected counts could easily be chance (p = 0.287); this does not show that there is no difference. Cohen's w = 0.0794.
+Test: chi-square goodness-of-fit test (chi-square = 1.13, df = 1), as R chisq.test(x, p = ...); the usual test of counts against expected shares.
+"passed" is "yes" in 43.3 % of the rows (78 of 180; 95 % CI 36.0 % to 50.9 %), against 50 %. A difference this big could easily be chance (p = 0.086); this does not show that there is no difference. Cohen's h = -0.134.
+Test: exact binomial test, as R binom.test(78, 180, p = 0.5); the 95 % CI is the exact Clopper-Pearson interval.

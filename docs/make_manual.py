@@ -104,6 +104,8 @@ UNDERNEATH = {
     "fit_curve": "NumPy (polyfit), drawn with matplotlib",
     "smooth_line": "NumPy (LOWESS, written out in simplydata as in R's lowess()), drawn with matplotlib",
     "density": "seaborn (kdeplot)",
+    "qq_dots": "SciPy (stats.probplot) for the points and the line; matplotlib draws them",
+    "cumulative_share": "seaborn (ecdfplot)",
     "count_bars": "seaborn (countplot)",
     "all_dots": "seaborn (swarmplot; stripplot for groups of more than 100 dots)",
     "side_histograms": "matplotlib (hist), with NumPy choosing the bins",
@@ -127,6 +129,11 @@ UNDERNEATH = {
     "table.summary_of": "narwhals (group summaries); SciPy (the t distribution) for the confidence interval",
     "table.percent_of": "narwhals; SciPy (stats.binomtest, the Clopper-Pearson exact interval)",
     "table.compare_shape_to": "SciPy (stats.shapiro)",
+    "table.compare_spreads": "SciPy (stats.levene with center=\"median\", stats.bartlett, stats.fligner)",
+    "table.compare_counts_to": "SciPy (stats.chisquare)",
+    "table.compare_percent_to": "SciPy (stats.binomtest, the Clopper-Pearson exact interval)",
+    "table.percentile_of": "narwhals (quantile with linear interpolation, as R quantile type 7)",
+    "table.most_common_of": "narwhals (value counts per group)",
     "table.add_adjusted_p_value_column": "NumPy (Holm, Bonferroni, Benjamini-Hochberg and Benjamini-Yekutieli, "
                                          "written out as in R p.adjust())",
     "table.add_rows_from": "pandas (concat) or Polars (concat), whichever holds the table",
@@ -323,7 +330,7 @@ FAMILY_TITLES = {
 
 # ---------------------------------------------------------------- LaTeX text
 _UNICODE = {
-    "°": r"\textdegree{}", "²": r"\textsuperscript{2}", "³": r"\textsuperscript{3}", "·": r"\textperiodcentered{}",
+    "°": r"\textdegree{}", "²": r"\textsuperscript{2}", "³": r"\textsuperscript{3}", "⁴": r"\textsuperscript{4}", "·": r"\textperiodcentered{}",
     "×": r"\texttimes{}", "−": r"\textminus{}", "±": r"\textpm{}", "–": "--", "—": "---", "…": r"\dots{}",
     "≈": r"$\approx$", "µ": r"\textmu{}", "é": r"\'e", "’": "'", "‘": "`", "“": "``", "”": "''",
 }

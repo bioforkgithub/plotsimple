@@ -1,0 +1,6 @@
+The 90th percentile of "marks" for each "class": A 86.3, B 78.2, C 73.2.
+Summary of "marks" for each "class":
+  A: median 74, skewness -0.33, coefficient of variation 0.19
+  B: median 68.5, skewness -0.59, coefficient of variation 0.23
+  C: median 57, skewness 0.06, coefficient of variation 0.24
+The most common value of "days_absent" is "2": 44 of 180 filled cells (24.4 %).

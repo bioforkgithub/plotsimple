@@ -35,9 +35,34 @@ More statistics, each checked against R.
 - `sdata.how_many_needed` and `sdata.chance_to_find`: power analysis for the averages, counts and
   correlation tests.
 
+### More tests and summaries
+
+- `compare_spreads` (Levene's test centred on medians, Bartlett or Fligner-Killeen),
+  `compare_each_pair(..., test="tukey")` (Tukey's honest significant difference),
+  `compare_counts_to` (chi-square goodness of fit) and `compare_percent_to` (exact binomial test).
+- `percentile_of`, `most_common_of`, and new `summary_of(show=...)` measures: geometric mean,
+  skewness, kurtosis, coefficient of variation, median absolute deviation, trimmed average, most
+  common value and any percentile.
+- Formulas know `exp`, `sin`, `cos`, `tan`, `pi` and special functions: `erf`, `erfc`, `gamma`,
+  `lgamma`, `digamma`, `beta` and `besselJ`.
+
+### Charts
+
+- `colour_scale` chooses the colours for numbers (heatmaps, contour maps, dots coloured by a
+  number): named colour-blind-safe scales, your own colours, `middle=`, `log=True`, `steps=` and
+  `between=`.
+- `transparency=` on every chart type (also survival curves) and `thickness=` on lines.
+- `tick_format_x` / `tick_format_y` (percent, thousands, decimals, scientific, dates), and
+  `ticks_x(every=...)` / `ticks_y(how_many=...)` for tick spacing, also by year, month or week.
+- Histogram options: `show="percent"` or `"density"`, `stacked=`, `steps=`, `cumulative=` and
+  `bin_width=`.
+- `line_with_slope` (for 1:1 lines), `qq_dots` (Q-Q plots), `cumulative_share` (ECDF) and
+  `font_name`.
+
 ### Also
 
-- Example tables `school`, `meadow` and `trial`; lessons 16 to 18.
+- Example tables `school`, `meadow` and `trial`; lessons 16 to 18; the new words are also taught
+  in lessons 3, 5, 6, 11, 12 and 14.
 - The optional extra `stats` (statsmodels), needed only for mixed models and multiple
   imputation.
 - Panel letters on a page no longer cover the panel titles of a chart made with
