@@ -297,14 +297,14 @@ def test_every_docstring_example_runs_and_draws(key, tmp_path, monkeypatch, caps
 
 
 # ---------------------------------------------------------------- ps.lesson()
-LESSON_NUMBERS = range(1, 16)
+LESSON_NUMBERS = range(1, 17)
 
 
-def test_there_are_fifteen_lessons(capsys):
-    assert len(learn.LESSONS) == 15
+def test_there_are_sixteen_lessons(capsys):
+    assert len(learn.LESSONS) == 16
     ps.lesson()
     out = capsys.readouterr().out
-    assert "15 lessons" in out
+    assert "16 lessons" in out
     for i in LESSON_NUMBERS:
         assert f"ps.lesson({i})" in out
 
@@ -343,9 +343,19 @@ def test_every_group_comes_up_in_a_lesson():
         assert taught & set(keys), f"No lesson teaches anything from {group}"
 
 
-@pytest.mark.parametrize("bad", [0, 16, "1", 1.0, True])
+@pytest.mark.parametrize("number", [n for n in LESSON_NUMBERS if n not in (13, 16)])
+def test_lessons_teach_through_a_story(number):
+    """The story is the main way in: only lesson 13 (numbers) and lesson 16 (the layers
+    underneath) make tables and charts as objects of their own."""
+    code = "\n".join(learn.lesson_code(number))
+    assert "ps.start(" in code
+    for layer in ("ps.chart(", "ps.table(", ".chart()", "chart = "):
+        assert layer not in code, f"lesson {number} uses {layer}"
+
+
+@pytest.mark.parametrize("bad", [0, 17,"1", 1.0, True])
 def test_wrong_lesson_number_is_explained(bad):
-    with pytest.raises(ps.PlotsimpleError, match="lessons 1 to 15"):
+    with pytest.raises(ps.PlotsimpleError, match="lessons 1 to 16"):
         ps.lesson(bad)
 
 

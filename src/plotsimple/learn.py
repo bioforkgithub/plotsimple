@@ -1,4 +1,4 @@
-"""Learning plotsimple: ps.words(), ps.help("bars") and ps.lesson(1) ... ps.lesson(15).
+"""Learning plotsimple: ps.words(), ps.help("bars") and ps.lesson(1) ... ps.lesson(16).
 
 The word list is built from the real words and their docstrings, so it cannot go out of
 date. Only the grouping (GROUPS) and the runnable examples (HELP_EXAMPLES, LESSONS) are
@@ -975,38 +975,46 @@ LESSONS = [
     dict(
         title="Your first chart",
         learn=[
-            "how to get a table to practise with",
+            "how to start a story with a table to practise with",
             "how to draw bars",
             "how to save your chart as a picture",
         ],
         parts=[
-            ("A chart is made in small steps, one step on each line.", [
+            ("A plotsimple program reads like a short story: one step on each line, and each line "
+             "starts with what it does.", [
                 ("import plotsimple as ps", 'Load plotsimple. From now on we call it by its short name, "ps".'),
-                ('marks = ps.example("marks")', "Get a made-up table of test marks and call it marks."),
-                ("print(marks)", "Look at the table. Each row is one child in one test. "
-                                 "The names at the top (name, class, subject ...) are the columns."),
-                ("chart = ps.chart(marks)", "Start a new, empty chart that uses the marks table."),
-                ('chart.bars(x="name", y="marks")', "Draw bars: one bar for each name (along x, the "
-                                                    "bottom), as tall as the marks (up y, the side). Each "
-                                                    "child did three tests, so the bar shows the average: "
-                                                    "add the three marks up and divide by 3."),
-                ('chart.save("lesson1.png")', "Save the chart as a picture called lesson1.png, in the "
-                                              "folder you are working in. Open it to see your chart!"),
+                ("ps.example()", "List the made-up tables you can practise with, and their columns."),
+                ('story = ps.start(example="marks")', "Start a story with the marks table: test marks of "
+                                                      "made-up children. We call the story story, and "
+                                                      "every next line starts with that name."),
+                ("print(story)", "Look at the table. The first line says how many rows and columns it "
+                                 "has. Each row is one child in one test. The names at the top (name, "
+                                 "class, subject ...) are the columns."),
+                ('story.draw_bars(x="name", y="marks")', "Draw bars: one bar for each name (along x, the "
+                                                         "bottom), as tall as the marks (up y, the side). "
+                                                         "Each child did three tests, so the bar shows the "
+                                                         "average: add the three marks up and divide by 3."),
+                ('story.save_chart("lesson1.png")', "Save the chart as a picture called lesson1.png, in "
+                                                    "the folder you are working in. Open it to see your "
+                                                    "chart!"),
             ]),
         ],
         notes=[
-            "In Jupyter, VS Code or Spyder, write chart on the last line of a cell and the chart "
-            "appears by itself. In a script, chart.show() opens it in a window.",
-            'chart.save("lesson1.pdf") saves a PDF instead: the end of the name decides the type.',
-            "ps.example() on its own shows every practice table and its columns.",
+            "Every chart type starts with draw_: draw_bars, draw_lines, draw_dots ... So every line "
+            "starts with a verb, and you can see where the chart begins.",
+            "For your own data, write ps.start(file=\"my_marks.xlsx\"). Excel, CSV, TSV, Parquet and "
+            "JSON files all work.",
+            'story.save_chart("lesson1.pdf") saves a PDF instead: the end of the name decides the type.',
+            "In Jupyter, VS Code or Spyder, write story on the last line of a cell and the chart "
+            "appears by itself. In a script, story.show_chart() opens it in a window.",
             "Are the names under the bars bumping into each other? Lesson 2 shows how to turn them.",
         ],
         task=[
             'Change x="name" to x="subject". What does each bar show now?',
             'Save the chart as "my_first_chart.png" and also as "my_first_chart.pdf".',
-            'Make a chart of the "fruit" table: bars with x="fruit" and y="count".',
+            'Start a story with the "fruit" table and draw bars with x="fruit" and y="count".',
         ],
-        words=["ps.example", "ps.chart", "bars", "save", "show"],
+        words=["ps.example", "ps.start", "story.draw_bars", "story.save_chart", "story.show_chart"],
     ),
     dict(
         title="Titles and labels",
@@ -1016,31 +1024,30 @@ LESSONS = [
             "how to add a small caption and change the size of the text",
         ],
         parts=[
-            ("A chart is easier to read when it says what it shows.", [
+            ("A chart is easier to read when it says what it shows. First draw, then add the words.", [
                 ("import plotsimple as ps", "Load plotsimple."),
-                ('marks = ps.example("marks")', "Get the marks table."),
-                ("chart = ps.chart(marks)", "Start a chart."),
-                ('chart.bars(x="name", y="marks")', "Draw one bar for each child."),
-                ('chart.title_top("Our class marks")', "Write a title on top of the chart."),
-                ('chart.label_x("Student")', "Write a name under the x-axis (the bottom)."),
-                ('chart.label_y("Average mark")', "Write a name beside the y-axis (the side)."),
-                ('chart.rotate_labels_x(45)', "Turn the names under the bars by 45 degrees, so "
+                ('story = ps.start(example="marks")', "Start a story with the marks table."),
+                ('story.draw_bars(x="name", y="marks")', "Draw one bar for each child."),
+                ('story.title_top("Our class marks")', "Write a title on top of the chart."),
+                ('story.label_x("Student")', "Write a name under the x-axis (the bottom)."),
+                ('story.label_y("Average mark")', "Write a name beside the y-axis (the side)."),
+                ("story.rotate_labels_x(45)", "Turn the names under the bars by 45 degrees, so "
                                               "long names do not bump into each other."),
-                ('chart.caption_bottom("Made-up data from ps.example")', "Write a small line under "
+                ('story.caption_bottom("Made-up data from ps.example")', "Write a small line under "
                                                                          "the whole chart."),
-                ("chart.font_size(14)", "Make all the text a bit bigger (normal is 12)."),
-                ('chart.save("lesson2.png")', "Save it."),
+                ("story.font_size(14)", "Make all the text a bit bigger (normal is 12)."),
+                ('story.save_chart("lesson2.png")', "Save it."),
             ]),
         ],
         notes=[
-            "The order of the steps does not matter: you can write the title first and the bars "
-            "last. plotsimple puts everything in the right place.",
+            "Words such as title_top and label_y change the chart you drew last. So draw the chart "
+            "first; after that, the order of these words does not matter.",
             "Words that belong to one axis end in _x or _y: label_x, label_y, rotate_labels_x.",
         ],
         task=[
             'Give the chart your own title, and label the y-axis "Marks out of 100".',
-            "Try chart.font_size(20). Then try 9. Which is easier to read?",
-            "Take away the line chart.rotate_labels_x(45). What happens to the names?",
+            "Try story.font_size(20). Then try 9. Which is easier to read?",
+            "Take away the line story.rotate_labels_x(45). What happens to the names?",
         ],
         words=["title_top", "label_x", "label_y", "rotate_labels_x", "caption_bottom", "font_size"],
     ),
@@ -1053,30 +1060,29 @@ LESSONS = [
             "how to change the whole look with a style",
         ],
         parts=[
-            ('colour= inside a step splits the data into groups.', [
+            ('colour= inside a draw_ step splits the data into groups.', [
                 ("import plotsimple as ps", "Load plotsimple."),
-                ('marks = ps.example("marks")', "Get the marks table."),
-                ("chart = ps.chart(marks)", "Start a chart."),
-                ('chart.bars(x="subject", y="marks", colour="class")', "For each subject, draw one "
-                                                                       "bar per class, each class in "
-                                                                       "its own colour."),
-                ('chart.colours("orange", "teal", "purple")', "Choose the colours yourself, in order: "
+                ('story = ps.start(example="marks")', "Start a story with the marks table."),
+                ('story.draw_bars(x="subject", y="marks", colour="class")', "For each subject, draw one "
+                                                                            "bar per class, each class "
+                                                                            "in its own colour."),
+                ('story.colours("orange", "teal", "purple")', "Choose the colours yourself, in order: "
                                                               "class A orange, B teal, C purple."),
-                ("chart.legend_bottom()", "Put the legend under the chart."),
-                ('chart.title_top("Marks in each subject")', "Add a title."),
-                ('chart.save("lesson3_groups.png")', "Save it."),
+                ("story.legend_bottom()", "Put the legend under the chart."),
+                ('story.title_top("Marks in each subject")', "Add a title."),
+                ('story.save_chart("lesson3_groups.png")', "Save it."),
             ]),
             ("Without groups, one colour is used for everything. You can choose it.", [
                 ("import plotsimple as ps", "Load plotsimple."),
-                ('weather = ps.example("weather")', "Get the weather table: three made-up cities."),
-                ("chart = ps.chart(weather)", "Start a chart."),
-                ('chart.lines(x="month", y="rain")', "Draw a line of rain through the months. With "
-                                                     "three cities in each month, the line shows "
-                                                     "their average."),
-                ('chart.colour("blue")', "Make the line blue."),
-                ('chart.style("school")', 'Change the whole look. Try "paper", "school", '
+                ('story = ps.start(example="weather")', "Start a story with the weather table: three "
+                                                        "made-up cities."),
+                ('story.draw_lines(x="month", y="rain")', "Draw a line of rain through the months. With "
+                                                          "three cities in each month, the line shows "
+                                                          "their average."),
+                ('story.colour("blue")', "Make the line blue."),
+                ('story.style("school")', 'Change the whole look. Try "paper", "school", '
                                           '"presentation" and "dark".'),
-                ('chart.save("lesson3_look.png")', "Save it."),
+                ('story.save_chart("lesson3_look.png")', "Save it."),
             ]),
         ],
         notes=[
@@ -1086,11 +1092,11 @@ LESSONS = [
             "hide_legend takes it away and show_legend brings it back.",
         ],
         task=[
-            'In the weather chart, add colour="city" to chart.lines(...). How many lines do you get?',
-            "Move the legend to the top with chart.legend_top().",
-            'Try chart.style("dark") and choose three colours that look good on it.',
+            'In the weather story, add colour="city" to story.draw_lines(...). How many lines do you get?',
+            "Move the legend to the top with story.legend_top().",
+            'Try story.style("dark") and choose three colours that look good on it.',
         ],
-        words=["colours", "colour", "legend_bottom", "legend_top", "hide_legend", "style", "lines"],
+        words=["colours", "colour", "legend_bottom", "legend_top", "hide_legend", "style", "story.draw_lines"],
     ),
     dict(
         title="Different chart types",
@@ -1102,117 +1108,125 @@ LESSONS = [
         parts=[
             ("Lines show how something changes, for example over time.", [
                 ("import plotsimple as ps", "Load plotsimple."),
-                ('weather = ps.example("weather")', "Get the weather table."),
-                ("chart = ps.chart(weather)", "Start a chart."),
-                ('chart.lines(x="month", y="temperature", colour="city", dots=True)',
+                ('story = ps.start(example="weather")', "Start a story with the weather table."),
+                ('story.draw_lines(x="month", y="temperature", colour="city", dots=True)',
                  "One line per city. dots=True also marks each month with a dot."),
-                ('chart.save("lesson4_lines.png")', "Save it."),
+                ('story.save_chart("lesson4_lines.png")', "Save it."),
             ]),
             ("Dots show if two things go together. This is also called a scatter chart.", [
                 ("import plotsimple as ps", "Load plotsimple."),
-                ('marks = ps.example("marks")', "Get the marks table."),
-                ("chart = ps.chart(marks)", "Start a chart."),
-                ('chart.dots(x="hours", y="marks", colour="class")', "One dot for each test: how "
-                                                                     "long the child studied, and "
-                                                                     "the mark they got."),
-                ('chart.save("lesson4_dots.png")', "Save it. Do more hours give more marks?"),
+                ('story = ps.start(example="marks")', "Start a story with the marks table."),
+                ('story.draw_dots(x="hours", y="marks", colour="class")', "One dot for each test: how "
+                                                                          "long the child studied, "
+                                                                          "and the mark they got."),
+                ('story.save_chart("lesson4_dots.png")', "Save it. Do more hours give more marks?"),
             ]),
-            ("A histogram counts how many values fall in each range, like 40 to 50, 50 to 60 ...", [
+            ("A histogram counts how many values fall in each range, like 40 to 50, 50 to 60 ... "
+             "Its shape is called the distribution of the values.", [
                 ("import plotsimple as ps", "Load plotsimple."),
-                ('marks = ps.example("marks")', "Get the marks table."),
-                ("chart = ps.chart(marks)", "Start a chart."),
-                ('chart.histogram(x="marks", bins=8)', "Cut the marks into 8 ranges (bins) and "
-                                                       "draw a bar for how many marks are in each."),
-                ('chart.save("lesson4_histogram.png")', "Save it."),
+                ('story = ps.start(example="marks")', "Start a story with the marks table."),
+                ('story.draw_histogram(x="marks", bins=8)', "Cut the marks into 8 ranges (bins) and "
+                                                            "draw a bar for how many marks are in each."),
+                ('story.save_chart("lesson4_histogram.png")', "Save it."),
             ]),
-            ("Boxes show how spread out the values are. Two chart types on one chart sit on top of "
-             "each other.", [
+            ("Boxes show how spread out the values are. Two draw_ steps in a row go on the same "
+             "chart, one on top of the other.", [
                 ("import plotsimple as ps", "Load plotsimple."),
-                ('marks = ps.example("marks")', "Get the marks table."),
-                ("chart = ps.chart(marks)", "Start a chart."),
-                ('chart.boxes(x="class", y="marks")', "One box per class. The line in the box is the "
-                                                      "median (the middle mark). The box holds the "
-                                                      "middle half of the marks."),
-                ('chart.all_dots(x="class", y="marks")', "Also show every single mark as a dot, "
-                                                         "on top of the boxes."),
-                ('chart.save("lesson4_boxes.png")', "Save it."),
+                ('story = ps.start(example="marks")', "Start a story with the marks table."),
+                ('story.draw_boxes(x="class", y="marks")', "One box per class. The line in the box is "
+                                                           "the median: the middle mark when they are "
+                                                           "put in order. The box holds the middle half "
+                                                           "of the marks (the interquartile range)."),
+                ('story.draw_all_dots(x="class", y="marks")', "Also show every single mark as a dot, "
+                                                              "on top of the boxes."),
+                ('story.save_chart("lesson4_boxes.png")', "Save it."),
             ]),
             ("A pie shows how a whole is shared out.", [
                 ("import plotsimple as ps", "Load plotsimple."),
-                ('fruit = ps.example("fruit")', "Get the fruit table: what two shops sold in a week."),
-                ("chart = ps.chart(fruit)", "Start a chart."),
-                ('chart.pie(labels="fruit", values="count")', "One slice per fruit, as big as the "
-                                                              "number sold."),
-                ('chart.save("lesson4_pie.png")', "Save it."),
+                ('story = ps.start(example="fruit")', "Start a story with the fruit table: what two "
+                                                      "shops sold in a week."),
+                ('story.draw_pie(labels="fruit", values="count")', "One slice per fruit, as big as the "
+                                                                   "number sold."),
+                ('story.save_chart("lesson4_pie.png")', "Save it."),
             ]),
         ],
         notes=[
-            "There are more chart types: area, violins, heatmap, polar, contour, surface and dots_3d. "
-            "Type ps.words() to see them all and ps.help(\"violins\") to learn one.",
+            "draw_ steps right after each other are layers of one chart. Lesson 7 shows how to "
+            "start a second chart instead.",
+            "There are more chart types: draw_area, draw_violins, draw_heatmap, draw_polar, "
+            "draw_contour, draw_surface and draw_dots_3d. Type ps.words() to see them all and "
+            "ps.help(\"violins\") to learn one.",
         ],
         task=[
-            'Draw chart.violins(x="class", y="marks") instead of boxes. What is different?',
+            'Draw story.draw_violins(x="class", y="marks") instead of boxes. What is different?',
             'Draw a histogram of the weather "temperature" column with bins=6.',
-            'Draw chart.area(x="year", y="population", colour="country") with ps.example("growth").',
+            'Start a story with example="growth" and draw story.draw_area(x="year", y="population", '
+            'colour="country").',
         ],
-        words=["lines", "dots", "histogram", "boxes", "all_dots", "pie", "violins", "area"],
+        words=["story.draw_lines", "story.draw_dots", "story.draw_histogram", "story.draw_boxes",
+               "story.draw_all_dots", "story.draw_pie", "story.draw_violins", "story.draw_area"],
     ),
     dict(
         title="Statistics: averages, error bars and fit lines",
         learn=[
-            "what a bar shows when a group has many values",
+            "what a bar shows when a group has many values: the average or the median",
             "how to add error bars, and the difference between standard deviation and standard error",
             "how to draw the straight line that fits some dots best",
         ],
         parts=[
-            ("An average is all the values added up, divided by how many there are. Error bars "
-             "show how far the values spread around it.", [
+            ("The average (also called the mean) is all the values added up, divided by how many "
+             "there are. Error bars show how far the values spread around it.", [
                 ("import plotsimple as ps", "Load plotsimple."),
-                ('marks = ps.example("marks")', "Get the marks table."),
-                ("chart = ps.chart(marks)", "Start a chart."),
-                ('chart.bars(x="class", y="marks", show="average", error="standard deviation")',
+                ('story = ps.start(example="marks")', "Start a story with the marks table."),
+                ('story.draw_bars(x="class", y="marks", show="average", error="standard deviation")',
                  "One bar per class, as tall as the average mark. The error bars show the standard "
                  "deviation: how far marks usually are from the average. A line is printed that "
                  "says which error bars were drawn."),
-                ("chart.numbers_on_bars()", "Write the average on each bar."),
-                ('chart.save("lesson5_average.png")', "Save it."),
+                ("story.numbers_on_bars()", "Write the average on each bar."),
+                ('story.save_chart("lesson5_average.png")', "Save it."),
             ]),
             ("A fit line is the straight line that goes as close as possible to all the dots.", [
                 ("import plotsimple as ps", "Load plotsimple."),
-                ('marks = ps.example("marks")', "Get the marks table."),
-                ("chart = ps.chart(marks)", "Start a chart."),
-                ('chart.dots(x="hours", y="marks")', "One dot per test: hours of study and the mark."),
-                ("chart.fit_line(confidence_band=True, show_equation=True)", "Add the best straight "
+                ('story = ps.start(example="marks")', "Start a story with the marks table."),
+                ('story.draw_dots(x="hours", y="marks")', "One dot per test: hours of study and the mark."),
+                ("story.fit_line(confidence_band=True, show_equation=True)", "Add the best straight "
                  "line (also called linear regression). confidence_band=True shades where the true "
-                 "line very likely is (95 % confidence). show_equation=True writes its equation and "
-                 "R² (1 means the dots sit right on the line, 0 means no pattern at all)."),
-                ('chart.save("lesson5_fit.png")', "Save it."),
+                 "line very likely is (the 95 % confidence interval). show_equation=True writes its "
+                 "equation and R² (1 means the dots sit right on the line, 0 means no pattern at all)."),
+                ('story.save_chart("lesson5_fit.png")', "Save it."),
             ]),
             ("A density curve is a smooth histogram: high where many values are.", [
                 ("import plotsimple as ps", "Load plotsimple."),
-                ('marks = ps.example("marks")', "Get the marks table."),
-                ("chart = ps.chart(marks)", "Start a chart."),
-                ('chart.density(x="marks", colour="class")', "One smooth curve for each class."),
-                ('chart.save("lesson5_density.png")', "Save it."),
+                ('story = ps.start(example="marks")', "Start a story with the marks table."),
+                ('story.draw_density(x="marks", colour="class")', "One smooth curve for each class "
+                                                                  "(a kernel density estimate)."),
+                ('story.save_chart("lesson5_density.png")', "Save it."),
             ]),
         ],
         notes=[
-            'show= can be "average", "median" (the middle value), "total" (all added up), '
-            '"count" (how many rows), "smallest", "biggest" or "standard deviation": the same '
-            "names as the table words average_of, median_of and so on.",
-            'error= can be "standard deviation" (how spread out the values are), "standard error" '
-            '(how sure we are of the average: it gets smaller with more values) or "confidence '
-            'interval" (the 95 % range the true average is very likely in). The short forms "sd", '
-            '"se" and "ci" work too. Always say in your caption which one you drew.',
+            "Average or median? The median is the middle value when the values are put in order. "
+            "One very big or very small value pulls the average towards it, but hardly moves the "
+            "median, so the median is safer when a few values are far from the rest (outliers).",
+            'show= can be "average", "median", "total" (all added up), "count" (how many rows), '
+            '"smallest", "biggest" or "standard deviation": the same names as the table words '
+            "average_of, median_of and so on.",
+            "Standard deviation or standard error? The standard deviation describes the values: how "
+            "spread out they are. The standard error describes the average: how sure we are of it. "
+            "It gets smaller as you collect more values, even when the values spread just as much.",
+            'error="confidence interval" draws the 95 % confidence interval: the range the true '
+            'average is very likely to be in. The short forms "sd", "se" and "ci" work too. Always '
+            "say in your caption which error bars you drew.",
             "fit_curve(degree=2) fits a curve with one bend; smooth_line() follows the dots freely.",
         ],
         task=[
             'Change show="average" to show="median". Do the bars change much?',
             'Change error="standard deviation" to error="standard error". Are the error bars '
             "bigger or smaller? Why?",
-            'Draw weather dots with x="month_number", y="temperature" and add chart.fit_curve(degree=2).',
+            'In a weather story, draw dots with x="month_number", y="temperature" and add '
+            "story.fit_curve(degree=2).",
         ],
-        words=["show=", "error=", "numbers_on_bars", "fit_line", "density", "fit_curve", "smooth_line"],
+        words=["show=", "error=", "numbers_on_bars", "fit_line", "story.draw_density", "fit_curve",
+               "smooth_line"],
     ),
     dict(
         title="Axes and reference lines",
@@ -1224,39 +1238,40 @@ LESSONS = [
         parts=[
             ("The axes are the two edges with numbers: x along the bottom, y up the side.", [
                 ("import plotsimple as ps", "Load plotsimple."),
-                ('marks = ps.example("marks")', "Get the marks table."),
-                ("chart = ps.chart(marks)", "Start a chart."),
-                ('chart.bars(x="name", y="marks")', "One bar for each child."),
-                ("chart.range_y(0, 100)", "Make the y-axis go from 0 to 100, the lowest and highest "
+                ('story = ps.start(example="marks")', "Start a story with the marks table."),
+                ('story.draw_bars(x="name", y="marks")', "One bar for each child."),
+                ("story.range_y(0, 100)", "Make the y-axis go from 0 to 100, the lowest and highest "
                                           "mark you can get."),
-                ("chart.ticks_y(0, 25, 50, 75, 100)", "Put the numbers on the y-axis at these places."),
-                ('chart.line_at_y(50, label="pass mark")', "Draw a dashed line across at 50, with a name."),
-                ("chart.shade_between_y(40, 60)", "Shade the band between 40 and 60."),
-                ("chart.rotate_labels_x()", "Turn the names so they fit."),
-                ('chart.save("lesson6_marks.png")', "Save it."),
+                ("story.ticks_y(0, 25, 50, 75, 100)", "Put the numbers on the y-axis at these places."),
+                ('story.line_at_y(50, label="pass mark")', "Draw a dashed line across at 50, with a name."),
+                ("story.shade_between_y(40, 60)", "Shade the band between 40 and 60."),
+                ("story.rotate_labels_x()", "Turn the names so they fit."),
+                ('story.save_chart("lesson6_marks.png")', "Save it."),
             ]),
             ("On a log scale 1, 10, 100 and 1000 are the same distance apart. It helps when some "
              "numbers are much bigger than others.", [
                 ("import plotsimple as ps", "Load plotsimple."),
-                ('growth = ps.example("growth")', "Get the growth table: people in four made-up countries."),
-                ("chart = ps.chart(growth)", "Start a chart."),
-                ('chart.lines(x="year", y="population", colour="country")', "One line per country."),
-                ("chart.log_scale_y()", "Use a log scale on the y-axis. A country that grows by the "
+                ('story = ps.start(example="growth")', "Start a story with the growth table: people in "
+                                                       "four made-up countries."),
+                ('story.draw_lines(x="year", y="population", colour="country")', "One line per country."),
+                ("story.log_scale_y()", "Use a log scale on the y-axis. A country that grows by the "
                                         "same share each year now gets a straight line."),
-                ('chart.line_at_x(2010, label="2010")', "Draw an up-and-down line at the year 2010."),
-                ('chart.label_y("People (millions)")', "Name the y-axis."),
-                ('chart.save("lesson6_log.png")', "Save it."),
+                ('story.line_at_x(2010, label="2010")', "Draw an up-and-down line at the year 2010."),
+                ('story.label_y("People (millions)")', "Name the y-axis."),
+                ('story.save_chart("lesson6_log.png")', "Save it."),
             ]),
         ],
         notes=[
             "Every axis word ends in _x or _y: range_x, ticks_x, log_scale_x, line_at_x, "
             "shade_between_x, flip_x ...",
             "range_y(0, None) fixes only the bottom and lets the top choose itself.",
+            "Bars should start at 0: a bar is read by its length, so a y-axis that starts at 40 "
+            "makes small differences look big.",
         ],
         task=[
             "Move the pass mark to 60 and shade between 0 and 40 instead.",
-            "Take away chart.log_scale_y(). Which countries look different?",
-            'Try chart.flip_y() on any chart. What happens?',
+            "Take away story.log_scale_y(). Which countries look different?",
+            "Try story.flip_y() on any chart. What happens?",
         ],
         words=["range_y", "ticks_y", "line_at_y", "shade_between_y", "log_scale_y", "line_at_x", "flip_y"],
     ),
@@ -1264,62 +1279,89 @@ LESSONS = [
         title="Several charts together",
         learn=[
             "how to make one small chart for each group",
-            "how to put different charts side by side or in a grid",
+            "how to draw several charts in one story and put them on one page",
+            "how to put charts from different tables side by side",
             "how to compare every number column with every other",
         ],
         parts=[
             ("one_chart_per draws the same chart once for each group.", [
                 ("import plotsimple as ps", "Load plotsimple."),
-                ('marks = ps.example("marks")', "Get the marks table."),
-                ("chart = ps.chart(marks)", "Start a chart."),
-                ('chart.dots(x="hours", y="marks")', "Dots of hours and marks."),
-                ("chart.fit_line()", "Add a fit line."),
-                ('chart.one_chart_per("class")', "Make one small chart for each class, with the same "
+                ('story = ps.start(example="marks")', "Start a story with the marks table."),
+                ('story.draw_dots(x="hours", y="marks")', "Dots of hours and marks."),
+                ("story.fit_line()", "Add a fit line."),
+                ('story.one_chart_per("class")', "Make one small chart for each class, with the same "
                                                  "axes so they are easy to compare."),
-                ('chart.save("lesson7_one_chart_per.png")', "Save it."),
+                ('story.save_chart("lesson7_one_chart_per.png")', "Save it."),
             ]),
-            ("Different charts can share one page.", [
+            ("One story can draw several charts. new_chart() starts the next one, and "
+             "put_charts_together() puts them all on one page.", [
                 ("import plotsimple as ps", "Load plotsimple."),
-                ('weather = ps.example("weather")', "Get the weather table."),
-                ('a = ps.chart(weather).lines(x="month", y="temperature", colour="city")',
-                 "Make a first chart, called a. Steps can also be joined with dots on one line."),
-                ('b = ps.chart(weather).bars(x="month", y="rain", colour="city")',
-                 "Make a second chart, called b."),
-                ('page = ps.one_above_other(a, b)', "Put a above b on one page."),
-                ('page.title_top("A year of weather")', "Give the whole page a title."),
-                ('page.save("lesson7_page.png")', "Save the page."),
+                ('story = ps.start(example="weather")', "Start a story with the weather table."),
+                ('story.draw_lines(x="month", y="temperature", colour="city")', "Chart 1: the "
+                                                                                "temperature of each city."),
+                ("story.new_chart()", "Start a new chart. The next draw_ step draws it."),
+                ('story.draw_bars(x="month", y="rain", colour="city")', "Chart 2: the rain of each city."),
+                ("story.put_charts_together(per_row=1)", "Put both charts on one page. per_row=1 puts "
+                                                         "one chart in each row, so they sit one above "
+                                                         "the other."),
+                ('story.title_top("A year of weather")', "Now title_top gives the whole page a title."),
+                ('story.save_chart("lesson7_page.png")', "Save the page."),
             ]),
-            ("A grid holds many charts in rows and columns.", [
+            ("Four charts make a grid. letters=True writes A, B, C and D on them, as figures in "
+             "papers have.", [
                 ("import plotsimple as ps", "Load plotsimple."),
-                ('marks = ps.example("marks")', "Get the marks table."),
-                ('a = ps.chart(marks).bars(x="class", y="marks").title_top("Average")', "Chart a."),
-                ('b = ps.chart(marks).histogram(x="marks").title_top("All marks")', "Chart b."),
-                ('c = ps.chart(marks).dots(x="height", y="marks").title_top("Height")', "Chart c."),
-                ('d = ps.chart(marks).boxes(x="subject", y="marks").title_top("Subjects")', "Chart d."),
-                ("page = ps.grid(a, b, c, d, per_row=2)", "Put all four in a grid, 2 charts per row."),
-                ('page.save("lesson7_grid.png")', "Save it."),
+                ('story = ps.start(example="marks")', "Start a story with the marks table."),
+                ('story.draw_bars(x="class", y="marks")', "Chart 1."),
+                ('story.title_top("Average")', "Its title. Chart words change the chart you drew last."),
+                ("story.new_chart()", "Chart 2 starts."),
+                ('story.draw_histogram(x="marks")', ""),
+                ('story.title_top("All marks")', ""),
+                ("story.new_chart()", "Chart 3 starts."),
+                ('story.draw_dots(x="height", y="marks")', ""),
+                ('story.title_top("Height")', ""),
+                ("story.new_chart()", "Chart 4 starts."),
+                ('story.draw_boxes(x="subject", y="marks")', ""),
+                ('story.title_top("Subjects")', ""),
+                ("story.put_charts_together(per_row=2, letters=True)", "All four in a grid, 2 charts "
+                                                                       "per row, with a letter on each."),
+                ('story.save_chart("lesson7_grid.png")', "Save it."),
+            ]),
+            ("Charts from different tables come from different stories. ps.side_by_side takes the "
+             "chart each story drew last.", [
+                ("import plotsimple as ps", "Load plotsimple."),
+                ('weather = ps.start(example="weather")', "A story about the weather, called weather."),
+                ('weather.draw_lines(x="month", y="rain", colour="city")', "Its chart: rain through the year."),
+                ('growth = ps.start(example="growth")', "A second story, about four countries, called growth."),
+                ('growth.draw_lines(x="year", y="forest", colour="country")', "Its chart: forest over the "
+                                                                              "years."),
+                ("page = ps.side_by_side(weather, growth, letters=True)", "Put the two charts next to "
+                                                                         "each other on one page."),
+                ('page.save("lesson7_two_tables.png")', "Save the page."),
             ]),
             ("ps.pairs draws every number column against every other, in one go.", [
                 ("import plotsimple as ps", "Load plotsimple."),
-                ('marks = ps.example("marks")', "Get the marks table."),
-                ('chart = ps.pairs(marks, colour="class")', "Hours, marks and height, each against each "
-                                                            "other. The middle line shows how each "
-                                                            "column is spread out."),
-                ('chart.save("lesson7_pairs.png")', "Save it. Which two columns go together?"),
+                ('pairs = ps.pairs(ps.example("marks"), colour="class")', "Hours, marks and height, "
+                                                                          "each against each other. "
+                                                                          "The middle line shows how "
+                                                                          "each column is spread out."),
+                ('pairs.save("lesson7_pairs.png")', "Save it. Which two columns go together?"),
             ]),
         ],
         notes=[
-            "ps.side_by_side(a, b) puts charts next to each other. same_y=True gives them the same "
-            "y-axis, so heights can be compared fairly.",
-            'chart.one_chart_per(down="class", across="subject") makes a table of small charts: '
+            "put_charts_together(same_y=True) gives all the charts the same y-axis, so heights can be "
+            "compared fairly.",
+            "ps.one_above_other(a, b) and ps.grid(a, b, c, per_row=2) work like ps.side_by_side, "
+            "for stories from different tables.",
+            'story.one_chart_per(down="class", across="subject") makes a table of small charts: '
             "the classes go down, the subjects go across. per_row=3 puts 3 small charts in a row.",
         ],
         task=[
-            'Change chart.one_chart_per("class") to chart.one_chart_per("subject").',
-            "Use ps.side_by_side(a, b) instead of ps.one_above_other(a, b).",
-            'Make ps.pairs of the weather table with colour="city".',
+            'Change story.one_chart_per("class") to story.one_chart_per("subject").',
+            "In the weather story, change per_row=1 to per_row=2. Where do the charts go now?",
+            'Make ps.pairs of ps.example("weather") with colour="city".',
         ],
-        words=["one_chart_per", "ps.one_above_other", "ps.grid", "ps.pairs", "ps.side_by_side", "fit_line"],
+        words=["one_chart_per", "story.new_chart", "story.put_charts_together", "ps.side_by_side",
+               "ps.pairs", "fit_line", "story.draw_histogram"],
     ),
     dict(
         title="Hard tricks, and your own program",
@@ -1331,127 +1373,128 @@ LESSONS = [
         parts=[
             ("A second y-axis shows a column measured in other units on the same chart.", [
                 ("import plotsimple as ps", "Load plotsimple."),
-                ('weather = ps.example("weather")', "Get the weather table."),
-                ("chart = ps.chart(weather)", "Start a chart."),
-                ('chart.lines(x="month", y="temperature")', "A line of temperature (average of the "
-                                                            "three cities)."),
-                ('chart.second_y("rain", drawn_as="bars", label="Rain (mm)")', "Add rain, drawn as "
+                ('story = ps.start(example="weather")', "Start a story with the weather table."),
+                ('story.draw_lines(x="month", y="temperature")', "A line of temperature (average of "
+                                                                 "the three cities)."),
+                ('story.second_y("rain", drawn_as="bars", label="Rain (mm)")', "Add rain, drawn as "
                                                                                "bars, with its own "
                                                                                "y-axis on the right."),
-                ('chart.label_y("Temperature (°C)")', "Name the left y-axis."),
-                ('chart.save("lesson8_second_y.png")', "Save it."),
+                ('story.label_y("Temperature (°C)")', "Name the left y-axis."),
+                ('story.save_chart("lesson8_second_y.png")', "Save it."),
             ]),
             ("A zoom box shows a small part of the chart close up.", [
                 ("import plotsimple as ps", "Load plotsimple."),
-                ('marks = ps.example("marks")', "Get the marks table."),
-                ("chart = ps.chart(marks)", "Start a chart."),
-                ('chart.dots(x="hours", y="marks")', "Dots of hours and marks."),
-                ("chart.zoom_box(x_between=[2, 4], y_between=[40, 60], where=\"top left\")",
+                ('story = ps.start(example="marks")', "Start a story with the marks table."),
+                ('story.draw_dots(x="hours", y="marks")', "Dots of hours and marks."),
+                ("story.zoom_box(x_between=[2, 4], y_between=[40, 60], where=\"top left\")",
                  "Show the part between 2 and 4 hours and between 40 and 60 marks, bigger, in a "
                  "box at the top left."),
-                ('chart.save("lesson8_zoom.png")', "Save it."),
+                ('story.save_chart("lesson8_zoom.png")', "Save it."),
             ]),
             ("A heatmap colours a grid of numbers. cluster=True puts rows that are alike next to "
              "each other.", [
                 ("import plotsimple as ps", "Load plotsimple."),
-                ('weather = ps.example("weather")', "Get the weather table."),
-                ("chart = ps.chart(weather)", "Start a chart."),
-                ('chart.heatmap(x="month", y="city", value="rain", numbers=True, cluster=True)',
+                ('story = ps.start(example="weather")', "Start a story with the weather table."),
+                ('story.draw_heatmap(x="month", y="city", value="rain", numbers=True, cluster=True)',
                  "One square per city and month, coloured by rain, with the number written in. "
-                 "cluster=True sorts the rows and columns and draws a tree of how alike they are."),
-                ('chart.label_colour_bar("Rain (mm)")', "Name the colour bar."),
-                ("chart.size(width=12, height=4)", "Make the chart wide and low."),
-                ('chart.save("lesson8_heatmap.png")', "Save it."),
+                 "cluster=True sorts the rows and columns and draws a tree of how alike they are "
+                 "(hierarchical clustering)."),
+                ('story.label_colour_bar("Rain (mm)")', "Name the colour bar."),
+                ("story.size(width=12, height=4)", "Make the chart wide and low."),
+                ('story.save_chart("lesson8_heatmap.png")', "Save it."),
             ]),
             ("An animation is a chart that moves: one picture for each value of a column.", [
                 ("import plotsimple as ps", "Load plotsimple."),
-                ('growth = ps.example("growth")', "Get the growth table."),
-                ("chart = ps.chart(growth)", "Start a chart."),
-                ('chart.bars(x="country", y="population")', "One bar per country."),
-                ("chart.range_y(0, 50)", "Keep the y-axis still, from 0 to 50."),
-                ('chart.animate(over="year")', "Make one picture for each year."),
-                ('chart.save("lesson8_growth.gif")', "Save it as a .gif, a moving picture. Open it "
-                                                     "in a web browser to watch."),
+                ('story = ps.start(example="growth")', "Start a story with the growth table."),
+                ('story.draw_bars(x="country", y="population")', "One bar per country."),
+                ("story.range_y(0, 50)", "Keep the y-axis still, from 0 to 50."),
+                ('story.animate(over="year")', "Make one picture for each year."),
+                ('story.save_chart("lesson8_growth.gif")', "Save it as a .gif, a moving picture. Open "
+                                                           "it in a web browser to watch."),
             ]),
-            ("Your own program. Every chart follows the same plan: get data, start, draw, words, "
-             "look, save.", [
+            ("Your own program. Every chart follows the same plan: start, look, draw, words, look, "
+             "save.", [
                 ("import plotsimple as ps", "1. Load plotsimple."),
-                ('island = ps.example("island")', '2. Get data. For your own file write '
-                                                  'ps.chart("my_file.xlsx") instead.'),
-                ("chart = ps.chart(island)", "3. Start a chart."),
-                ('chart.contour(x="east", y="north", z="height")', "4. Draw: a map where each colour "
-                                                                   "band is one height."),
-                ('chart.title_top("Treasure Island")', "5. Words: a title ..."),
-                ('chart.label_x("East (km)")', "... and the axis names ..."),
-                ('chart.label_y("North (km)")', ""),
-                ('chart.label_colour_bar("Height (m)")', "... and the name of the colour bar."),
-                ('chart.note("X marks the spot", x=10, y=4, arrow=True)', "A note with an arrow."),
-                ('chart.style("presentation")', "6. Look: big and clear for showing to others."),
-                ('chart.save("lesson8_my_program.png")', "7. Save."),
+                ('story = ps.start(example="island")', '2. Start. For your own file write '
+                                                       'ps.start(file="my_file.xlsx") instead.'),
+                ("story.show_first_rows()", "3. Look at the data before you draw it."),
+                ('story.draw_contour(x="east", y="north", z="height")', "4. Draw: a map where each "
+                                                                        "colour band is one height."),
+                ('story.title_top("Treasure Island")', "5. Words: a title ..."),
+                ('story.label_x("East (km)")', "... and the axis names ..."),
+                ('story.label_y("North (km)")', ""),
+                ('story.label_colour_bar("Height (m)")', "... and the name of the colour bar."),
+                ('story.note("X marks the spot", x=10, y=4, arrow=True)', "A note with an arrow."),
+                ('story.style("presentation")', "6. Look: big and clear for showing to others."),
+                ('story.save_chart("lesson8_my_program.png")', "7. Save."),
             ]),
         ],
         notes=[
             "Those are all the charts! ps.words() lists every word and ps.help(\"word\") "
-            "explains any of them. Lessons 9 to 12 teach tables: how to look at your data, "
-            "clean it and sum it up before you draw it. Lesson 13 teaches numbers and lesson 14 "
-            "statistical tests.",
-            'Your own data: save it from Excel as .xlsx or .csv, then chart = ps.chart("my_file.xlsx"). '
+            "explains any of them. Lessons 9 to 12 teach the table part of a story: how to look "
+            "at your data, clean it and sum it up before you draw it.",
+            'Your own data: save it from Excel as .xlsx or .csv, then story = ps.start(file="my_file.xlsx"). '
             "If a column name is spelt wrong, plotsimple tells you the right one.",
         ],
         task=[
             "Write your own program, from an empty file, for a question you care about.",
             "Use any example table, or your own. Give it a title, axis names and a note.",
-            "Put two of your charts side by side and save the page as a PDF.",
+            "Draw a second chart with story.new_chart(), put the two charts together and save the "
+            "page as a PDF.",
         ],
-        words=["second_y", "zoom_box", "heatmap", "label_colour_bar", "size", "animate",
-               "contour", "note", "style", "ps.words", "ps.help"],
+        words=["second_y", "zoom_box", "story.draw_heatmap", "label_colour_bar", "size", "animate",
+               "story.draw_contour", "note", "style", "ps.words", "ps.help"],
     ),
     dict(
         title="Tables: open one and look at it",
         learn=[
-            "how to turn data into a plotsimple table",
+            "that every story holds a table, and every table word works on it",
             "how to look at the first and last rows, and the names of the columns",
             "how to describe every column and count what is in it",
         ],
         parts=[
-            ("Before you draw, look at your data. ps.table gives you plain words for that.", [
+            ("Before you draw, look at your data. A story has plain words for that too.", [
                 ("import plotsimple as ps", "Load plotsimple."),
-                ('table = ps.table(ps.example("marks"))', "Make a table from the practice marks. For "
-                                                          'your own file, write ps.table("my_file.xlsx").'),
-                ("print(table)", "Print the table. The first line says how many rows and columns it "
+                ('story = ps.start(example="marks")', "Start a story with the marks table. For your "
+                                                      'own file, write ps.start(file="my_file.xlsx").'),
+                ("print(story)", "Print the table. The first line says how many rows and columns it "
                                  "has. Then come the first 10 rows."),
-                ("table.show_first_rows(5)", "Show only the first 5 rows."),
-                ("table.show_last_rows(3)", "Show the last 3 rows."),
-                ("print(table.column_names())", "Print the names of the columns."),
-                ("table.describe_columns()", "Describe every column: is it numbers or text, how many "
+                ("story.show_first_rows(5)", "Show only the first 5 rows."),
+                ("story.show_last_rows(3)", "Show the last 3 rows."),
+                ("print(story.column_names())", "Print the names of the columns."),
+                ("story.describe_columns()", "Describe every column: is it numbers or text, how many "
                                              "cells are empty, and the smallest, biggest and average "
                                              "number."),
-                ("table.count_rows()", "Count the rows, and say the answer in a sentence. One row is "
+                ("story.count_rows()", "Count the rows, and say the answer in a sentence. One row is "
                                        "one child in one test."),
             ]),
             ("count_each counts how often each different value comes up.", [
                 ("import plotsimple as ps", "Load plotsimple."),
-                ('table = ps.table(ps.example("fruit"))', "Make a table of fruit sold by two shops."),
-                ("table.show_first_rows()", "Show the first rows. With nothing in the brackets you "
+                ('story = ps.start(example="fruit")', "Start a story with the fruit sold by two shops."),
+                ("story.show_first_rows()", "Show the first rows. With nothing in the brackets you "
                                             "get 5."),
-                ('table.count_each("fruit")', "For each fruit: in how many rows it comes up. It says the "
-                                              "answer in a sentence, and gives back a small table that "
-                                              "also has the percent of all the rows."),
-                ('table.count_each("shop")', "The same for each shop."),
+                ('story.count_each("fruit")', "For each fruit: in how many rows it comes up. It says "
+                                              "the answer in a sentence, and gives back a small table "
+                                              "that also has the percent of all the rows."),
+                ('story.count_each("shop")', "The same for each shop."),
             ]),
         ],
         notes=[
-            "In Jupyter, VS Code or Spyder, write table on the last line of a cell to see it as a "
-            "nice table.",
-            "ps.table reads the same files as ps.chart: .xlsx, .csv, .tsv, .parquet and .json.",
+            "Looking never changes the table. Only steps that say what they change (keep_rows, "
+            "sort_by ...) do, and lesson 10 shows them.",
+            'ps.help("show_first_rows") explains any table word. Help writes it as '
+            "table.show_first_rows(...); on a story you write story.show_first_rows(...).",
+            "In Jupyter, VS Code or Spyder, write story on the last line of a cell to see the table "
+            "as a nice table (once you have drawn a chart, you see the chart instead).",
+            'For one sheet of an Excel file: ps.start(file="results.xlsx", sheet="2026").',
             "The row numbers on the left start at 0, as everywhere in Python.",
         ],
         task=[
-            'Make a table of ps.example("weather"). How many rows does it have?',
+            'Start a story with example="weather". How many rows does it have?',
             "Describe its columns. Which column has the biggest numbers?",
             'Count each "city". Does every city have the same number of rows?',
         ],
-        words=["ps.table", "table.show_first_rows", "table.show_last_rows", "table.column_names",
+        words=["table.show_first_rows", "table.show_last_rows", "table.column_names",
                "table.describe_columns", "table.count_rows", "table.count_each"],
     ),
     dict(
@@ -1463,54 +1506,55 @@ LESSONS = [
             "how to save your table",
         ],
         parts=[
-            ("A table is changed in small steps, like a chart. Each step says what it did.", [
+            ("A table is changed in small steps. Each step says what it did.", [
                 ("import plotsimple as ps", "Load plotsimple."),
-                ('table = ps.table(ps.example("marks"))', "Make a table of the marks."),
-                ('table.keep_columns("name", "subject", "marks")', "Keep only these three columns, "
+                ('story = ps.start(example="marks")', "Start a story with the marks table."),
+                ('story.keep_columns("name", "subject", "marks")', "Keep only these three columns, "
                                                                    "in this order."),
-                ('table.keep_rows("subject", equal_to="Maths")', "Keep only the rows where the subject "
+                ('story.keep_rows("subject", equal_to="Maths")', "Keep only the rows where the subject "
                                                                  "is Maths. plotsimple says how many "
                                                                  "rows it kept."),
-                ('table.keep_rows("marks", above=60)', "Of those, keep only marks above 60."),
-                ('table.sort_by("marks", biggest_first=True)', "Put the rows in order, the biggest "
+                ('story.keep_rows("marks", above=60)', "Of those, keep only marks above 60."),
+                ('story.sort_by("marks", biggest_first=True)', "Put the rows in order, the biggest "
                                                                "mark first."),
-                ("table.show_first_rows(10)", "Show the first 10 rows: the best Maths marks."),
-                ("table.steps()", "List every step you did, in order."),
-                ("table.undo()", "Take back the last step (the sorting)."),
-                ("table.start_again()", "Go back to the whole table, as it was at the start."),
-                ("print(table)", "All 54 rows and 6 columns are back."),
+                ("story.show_first_rows(10)", "Show the first 10 rows: the best Maths marks."),
+                ("story.steps()", "List every step you did, in order."),
+                ("story.undo()", "Take back the last step (the sorting)."),
+                ("story.start_again()", "Go back to the whole table, as it was at the start."),
+                ("print(story)", "All 54 rows and 6 columns are back."),
             ]),
             ("keep_rows and remove_rows know many conditions. Then save what you made.", [
                 ("import plotsimple as ps", "Load plotsimple."),
-                ('table = ps.table(ps.example("weather"))', "Make a table of the weather."),
-                ('table.keep_rows("month_number", between=[6, 8])', "Keep the summer months: 6, 7 and "
+                ('story = ps.start(example="weather")', "Start a story with the weather table."),
+                ('story.keep_rows("month_number", between=[6, 8])', "Keep the summer months: 6, 7 and "
                                                                      "8. between= keeps both ends."),
-                ('table.remove_rows("city", equal_to="Frostby")', "Remove the rows of the city "
+                ('story.remove_rows("city", equal_to="Frostby")', "Remove the rows of the city "
                                                                   "Frostby."),
-                ('table.remove_columns("wind_direction", "wind_speed")', "Remove two columns we do "
+                ('story.remove_columns("wind_direction", "wind_speed")', "Remove two columns we do "
                                                                          "not need."),
-                ('table.rename_column("temperature", to="temp")', 'Give the column "temperature" '
+                ('story.rename_column("temperature", to="temp")', 'Give the column "temperature" '
                                                                   'the shorter name "temp".'),
-                ("print(table)", "Look at what is left: 6 rows and 5 columns."),
-                ('table.save("lesson10_summer.xlsx")', "Save the table as an Excel file. A name "
-                                                       "ending in .csv saves a CSV file."),
+                ("print(story)", "Look at what is left: 6 rows and 5 columns."),
+                ('story.save_table("lesson10_summer.xlsx")', "Save the table as an Excel file. A name "
+                                                             "ending in .csv saves a CSV file."),
             ]),
         ],
         notes=[
             "Conditions for keep_rows and remove_rows: above, below, at_least, at_most, equal_to, "
             "not_equal_to, between, one_of, contains, starts_with, ends_with and is_empty.",
-            'one_of= takes a list: table.keep_rows("subject", one_of=["Maths", "Science"]).',
-            "undo() can take back many steps, one at a time. Your file is never changed: only "
-            "table.save(...) writes a file.",
+            'one_of= takes a list: story.keep_rows("subject", one_of=["Maths", "Science"]).',
+            "undo() takes back one step at a time, table steps and chart steps alike. steps() lists "
+            "both. start_again() is a step too, so undo() can take it back.",
+            "Your file is never changed: only save_table(...) writes a file.",
         ],
         task=[
-            'In the marks table, keep only class "B" and sort by "hours". Who studied the longest?',
+            'In the marks story, keep only class "B" and sort by "hours". Who studied the longest?',
             "Undo the sorting, then sort by name instead.",
-            'Keep 5 random rows with table.keep_random_rows(5, seed=1) and save them as "five.csv".',
+            'Keep 5 random rows with story.keep_random_rows(5, seed=1) and save them as "five.csv".',
         ],
-        words=["table.keep_columns", "table.keep_rows", "table.sort_by", "table.steps", "table.undo",
-               "table.start_again", "table.remove_rows", "table.remove_columns", "table.rename_column",
-               "table.save"],
+        words=["table.keep_columns", "table.keep_rows", "table.sort_by", "story.steps", "story.undo",
+               "story.start_again", "table.remove_rows", "table.remove_columns", "table.rename_column",
+               "story.save_table", "table.keep_random_rows"],
     ),
     dict(
         title="Tables: clean the data and add new columns",
@@ -1518,67 +1562,73 @@ LESSONS = [
             "how to find and fill empty cells",
             "how to fix columns: numbers written as text, extra spaces, wrong values",
             "how to add new columns, in plain words or like a sum in maths",
+            "what long and wide tables are",
         ],
         parts=[
             ("Real data often has empty cells. The practice tables have none, so we make some first.", [
                 ("import plotsimple as ps", "Load plotsimple."),
-                ('table = ps.table(ps.example("marks"))', "Make a table of the marks."),
-                ('table.replace_values("marks", [61, 73], with_value=None)', "Make every mark of 61 "
+                ('story = ps.start(example="marks")', "Start a story with the marks table."),
+                ('story.replace_values("marks", [61, 73], with_value=None)', "Make every mark of 61 "
                                                                              "or 73 empty. "
                                                                              "with_value=None means "
                                                                              "an empty cell."),
-                ("table.count_empty_cells()", "Show how many empty cells each column has."),
-                ('table.fill_empty_cells("marks", with_the="average")', "Fill the empty marks with the "
+                ("story.count_empty_cells()", "Show how many empty cells each column has."),
+                ('story.fill_empty_cells("marks", with_the="average")', "Fill the empty marks with the "
                                                                         "average of the other marks."),
-                ("table.undo()", "Changed your mind? Take it back: the cells are empty again."),
-                ('table.remove_rows_with_empty_cells("marks")', "This time remove the rows with an "
+                ("story.undo()", "Changed your mind? Take it back: the cells are empty again."),
+                ('story.remove_rows_with_empty_cells("marks")', "This time remove the rows with an "
                                                                 "empty cell in marks."),
-                ("print(table)", "Some rows fewer than at the start."),
+                ("print(story)", "Some rows fewer than at the start."),
             ]),
             ("Data typed by people is often untidy. These words fix whole columns at once.", [
                 ("import plotsimple as ps", "Load plotsimple."),
-                ('table = ps.table({"name": ["  Asha", "ben ", "Chen"], "height": ["144", "152", "unknown"]})',
-                 "Make a small table by hand: each column name, then its values in a list."),
-                ('table.remove_extra_spaces("name")', "Take away the spaces before and after the names."),
-                ('table.replace_values("name", "ben", with_value="Ben")', 'Write "ben" with a capital '
+                ('story = ps.start(table={"name": ["  Asha", "ben ", "Chen"], "height": ["144", "152", "unknown"]})',
+                 "Start a story with a small table typed by hand: each column name, then its values "
+                 "in a list."),
+                ('story.remove_extra_spaces("name")', "Take away the spaces before and after the names."),
+                ('story.replace_values("name", "ben", with_value="Ben")', 'Write "ben" with a capital '
                                                                           "letter."),
-                ('table.make_numbers("height")', "Turn the heights from text into numbers. "
+                ('story.make_numbers("height")', "Turn the heights from text into numbers. "
                                                  '"unknown" is not a number, so that cell becomes '
                                                  "empty, and plotsimple tells you."),
-                ("table.describe_columns()", "Now height is a column of numbers."),
+                ("story.describe_columns()", "Now height is a column of numbers."),
             ]),
             ("A new column can be worked out from other columns, in plain words.", [
                 ("import plotsimple as ps", "Load plotsimple."),
-                ('table = ps.table(ps.example("marks"))', "Make a table of the marks."),
-                ('table.add_column("marks_per_hour", by_dividing=["marks", "hours"])',
+                ('story = ps.start(example="marks")', "Start a story with the marks table."),
+                ('story.add_column("marks_per_hour", by_dividing=["marks", "hours"])',
                  'A new column called "marks_per_hour": the marks divided by the hours.'),
-                ('table.add_group_column("grade", from_column="marks", cut_at=[40, 60, 80], '
+                ('story.add_group_column("grade", from_column="marks", cut_at=[40, 60, 80], '
                  'names=["D", "C", "B", "A"])',
                  "A grade for each mark: below 40 is D, 40 to 59 is C, 60 to 79 is B, 80 and more is A."),
-                ("table.show_first_rows()", "Look at the two new columns on the right."),
-                ('table.count_each("grade")', "How many of each grade?"),
+                ("story.show_first_rows()", "Look at the two new columns on the right."),
+                ('story.count_each("grade")', "How many of each grade?"),
             ]),
             ("Or write the new column like a sum in maths. Here each subject first gets its own "
-             "column.", [
+             "column: the table goes from long to wide.", [
                 ("import plotsimple as ps", "Load plotsimple."),
-                ('table = ps.table(ps.example("marks"))', "Make a table of the marks."),
-                ('table.keep_columns("name", "class", "subject", "marks")', "Keep the columns we need."),
-                ('table.turn_rows_into_columns(names_from="subject", values_from="marks")',
+                ('story = ps.start(example="marks")', "Start a story with the marks table."),
+                ('story.keep_columns("name", "class", "subject", "marks")', "Keep the columns we need."),
+                ('story.turn_rows_into_columns(names_from="subject", values_from="marks")',
                  "Make one column for each subject: Maths, Science and English. Each child now has "
                  "one row."),
-                ('table.add_column("total", "Maths + Science + English")', 'A new column "total": '
+                ('story.add_column("total", "Maths + Science + English")', 'A new column "total": '
                                                                            "the three marks added up."),
-                ('table.add_column("average", "total / 3")', "The average of the three marks."),
-                ('table.add_rank_column("place", from_column="total")', "Each child's place: 1 for "
+                ('story.add_column("average", "total / 3")', "The average of the three marks."),
+                ('story.add_rank_column("place", from_column="total")', "Each child's place: 1 for "
                                                                         "the biggest total."),
-                ('table.sort_by("place")', "Put the rows in order of place."),
-                ("table.show_first_rows()", "Who came first?"),
+                ('story.sort_by("place")', "Put the rows in order of place."),
+                ("story.show_first_rows()", "Who came first?"),
             ]),
         ],
         notes=[
-            'fill_empty_cells can also use with_the="median", "value above" or "value below", or '
-            "with_value=0 for a number you choose. Filling with the average makes the values look "
-            "less spread out than they really are, so say in your report how you filled them.",
+            "Long or wide? A long table has one row for each measurement: the marks table has a row "
+            "for each child in each subject. A wide table puts the measurements of one child side "
+            "by side, one column per subject. Charts and tests like long tables (also called tidy "
+            "data); sums across columns, like the total above, need wide ones.",
+            "Filling empty cells is called imputation. Filling with the average makes the values "
+            "look less spread out than they really are, so say in your report how you filled them. "
+            'with_the="median", "value above" or "value below" and with_value=0 work too.',
             "remove_rows_with_empty_cells() with nothing in the brackets removes every row that has "
             "an empty cell in any column.",
             "More fixing words: make_text, make_dates, make_lowercase and make_uppercase.",
@@ -1600,80 +1650,97 @@ LESSONS = [
         title="Tables: summaries, and from a table to a chart",
         learn=[
             "how to work out averages, totals and counts, for each group",
-            "how to tell if two columns go together",
-            "how to draw a chart of a summary",
+            "how to tell if two columns go together, and why that is not the same as a cause",
+            "how to draw a summary, and which table a chart uses",
             "how to join two tables and turn columns into rows",
         ],
         parts=[
             ("A summary turns many rows into a few numbers. It never changes your table, and it "
              "says its answer in a sentence.", [
                 ("import plotsimple as ps", "Load plotsimple."),
-                ('table = ps.table(ps.example("marks"))', "Make a table of the marks."),
-                ('table.average_of("marks")', "The average of all the marks: just one number."),
-                ('table.average_of("marks", for_each="class")', "One average for each class. for_each= "
+                ('story = ps.start(example="marks")', "Start a story with the marks table."),
+                ('story.average_of("marks")', "The average of all the marks: just one number."),
+                ('story.average_of("marks", for_each="class")', "One average for each class. for_each= "
                                                                 "also gives back a new, small table."),
-                ('table.biggest_of("marks", for_each="subject")', "The best mark in each subject."),
-                ('table.correlation_between("hours", "marks")', "Do more hours go with more marks? "
+                ('story.biggest_of("marks", for_each="subject")', "The best mark in each subject."),
+                ('story.correlation_between("hours", "marks")', "Do more hours go with more marks? "
                                                                 "The answer is a number r from -1 "
-                                                                "to 1, explained in words."),
+                                                                "to 1 (Pearson's correlation), "
+                                                                "explained in words."),
             ]),
-            ("A summary is a table too, so you can sort it and draw it.", [
+            ("A summary for each group gives back a new story, so you can sort it and draw it.", [
                 ("import plotsimple as ps", "Load plotsimple."),
-                ('table = ps.table(ps.example("fruit"))', "Make a table of fruit sales."),
-                ('totals = table.total_of("count", for_each="fruit")', "A new table: one row per fruit, "
-                                                                      'with a column "total of count".'),
+                ('story = ps.start(example="fruit")', "Start a story with the fruit sales."),
+                ('totals = story.total_of("count", for_each="fruit")', "A new story called totals: one "
+                                                                       'row per fruit, with a column '
+                                                                       '"total of count". story itself '
+                                                                       "does not change."),
                 ('totals.sort_by("total of count", biggest_first=True)', "Best seller first."),
-                ("chart = totals.chart()", "Start a chart from the summary table."),
-                ('chart.bars(x="fruit", y="total of count")', "One bar per fruit."),
-                ("chart.numbers_on_bars()", "Write the total on each bar."),
-                ('chart.save("lesson12_fruit.png")', "Save the chart."),
+                ('totals.draw_bars(x="fruit", y="total of count")', "One bar per fruit."),
+                ("totals.numbers_on_bars()", "Write the total on each bar."),
+                ('totals.save_chart("lesson12_fruit.png")', "Save the chart."),
+            ]),
+            ("A chart uses the table as it was when you drew it. Table steps written after it are "
+             "for the next chart.", [
+                ("import plotsimple as ps", "Load plotsimple."),
+                ('story = ps.start(example="marks")', "Start a story with the marks table."),
+                ('story.keep_rows("class", equal_to="A")', "Keep class A."),
+                ('story.draw_dots(x="hours", y="marks")', "Chart 1: every test of class A."),
+                ('story.keep_rows("subject", equal_to="Maths")', "A table step after the chart. Chart 1 "
+                                                                 "does not change, so the story reads "
+                                                                 "from top to bottom."),
+                ("story.new_chart()", "Start chart 2. It uses the table as it is now."),
+                ('story.draw_dots(x="hours", y="marks")', "Chart 2: only the Maths tests of class A."),
+                ('story.save_chart("lesson12_maths.png")', "Save chart 2, the chart you drew last."),
+                ("story.steps()", "Table steps and chart steps in one list. When there is more than "
+                                  "one chart, each chart step says which chart it was."),
             ]),
             ("Two tables can be joined: their rows are matched on a column they share.", [
                 ("import plotsimple as ps", "Load plotsimple."),
-                ('table = ps.table(ps.example("marks"))', "Make a table of the marks."),
+                ('story = ps.start(example="marks")', "Start a story with the marks table."),
                 ('ages = {"name": ["Asha", "Ben", "Chen"], "age": [12, 13, 12]}', "A small table of "
                                                                                   "ages, typed by hand: "
                                                                                   "each column name, "
                                                                                   "then its values."),
-                ('table.join_with(ages, using="name")', "Bring in the age, matching the rows on the "
+                ('story.join_with(ages, using="name")', "Bring in the age, matching the rows on the "
                                                         "name. Only children found in both tables stay."),
-                ("table.show_first_rows()", "Look: there is a new column, age."),
-                ('table.average_of("marks", for_each="age")', "The average mark at each age."),
+                ("story.show_first_rows()", "Look: there is a new column, age."),
+                ('story.average_of("marks", for_each="age")', "The average mark at each age."),
             ]),
-            ("Turning columns into rows gives the long shape that many charts like.", [
+            ("Turning columns into rows makes a wide table long: the shape most charts like.", [
                 ("import plotsimple as ps", "Load plotsimple."),
-                ('table = ps.table({"name": ["Asha", "Ben", "Chen"], "test_1": [61, 73, 81], '
-                 '"test_2": [70, 68, 90]})', "A small table: two tests, one column for each."),
-                ('table.turn_columns_into_rows(["test_1", "test_2"], names_to="test", values_to="mark")',
+                ('story = ps.start(table={"name": ["Asha", "Ben", "Chen"], "test_1": [61, 73, 81], '
+                 '"test_2": [70, 68, 90]})', "A small, wide table: two tests, one column for each."),
+                ('story.turn_columns_into_rows(["test_1", "test_2"], names_to="test", values_to="mark")',
                  'Put the two tests under each other. The new column "test" says which test, and '
                  '"mark" holds the mark. Each child now has two rows.'),
-                ("table.show_first_rows(6)", "Look at the new shape."),
-                ("chart = table.chart()", "Start a chart from it."),
-                ('chart.bars(x="name", y="mark", colour="test")', "Both tests side by side for each "
-                                                                  "child."),
-                ('chart.save("lesson12_tests.png")', "Save it."),
+                ("story.show_first_rows(6)", "Look at the new, long shape."),
+                ('story.draw_bars(x="name", y="mark", colour="test")', "Both tests side by side for each "
+                                                                       "child."),
+                ('story.save_chart("lesson12_tests.png")', "Save it."),
             ]),
         ],
         notes=[
+            "Correlation is not cause. Children who study more might also sleep more, or like the "
+            "subject more; r only says that two columns go up and down together, not which one "
+            "makes the other change.",
             "More summaries: median_of, total_of, smallest_of, biggest_of, standard_deviation_of "
             "and count_rows. Each one can take for_each=.",
-            "A correlation does not show that one thing causes the other.",
-            "table.add_rows_from(other) puts the rows of another table under this one. "
+            "story.add_rows_from(other) puts the rows of another table under this one. "
             "turn_rows_into_columns does the opposite of turn_columns_into_rows.",
-            "table.as_pandas() (or table.as_polars()) gives back a plain pandas (or Polars) "
-            "table, if another Python tool needs one. plotsimple words never need it.",
             "Lesson 13 teaches numbers, and lesson 14 the statistical tests: is a difference "
             "real, or could it be chance?",
         ],
         task=[
             'Make the fruit totals for_each="shop" instead. Which shop sold more?',
-            'Work out the average temperature for_each="city" in the weather table and draw it as bars.',
+            'Work out the average temperature for_each="city" in a weather story and draw it as bars.',
             "Is there a link between height and marks? Use correlation_between to find out.",
         ],
         words=["table.average_of", "table.biggest_of", "table.correlation_between", "table.total_of",
-               "table.chart", "table.join_with", "table.turn_columns_into_rows", "table.add_rows_from",
-               "table.as_pandas"],
+               "story.draw_bars", "story.new_chart", "table.join_with", "table.turn_columns_into_rows",
+               "table.add_rows_from"],
     ),
+    # Lesson 13 is about numbers: their own object, so it does not use a story.
     dict(
         title="Numbers: lists and grids of numbers",
         learn=[
@@ -1690,9 +1757,9 @@ LESSONS = [
                                       "nums itself does not change."),
                 ("print(bigger)", "24, 30, 18, 40 and 28."),
                 ("nums.add(1)", "Maths with words CHANGES the numbers you have: add 1 to each one."),
-                ("nums.undo()", "Like tables, every word can be taken back."),
+                ("nums.undo()", "Like a story, every word can be taken back."),
                 ("nums.keep_numbers(above=10)", "Keep only the numbers above 10. The same conditions "
-                                                "as table.keep_rows: above, below, between ..."),
+                                                "as keep_rows: above, below, between ..."),
                 ("nums.average()", "The average of what is left, said in a sentence."),
                 ("nums.standard_deviation()", "How spread out they are (divide by n - 1, as in pandas "
                                               "and R)."),
@@ -1703,9 +1770,11 @@ LESSONS = [
                 ("months = ps.numbers(1, to=12)", "Count from 1 to 12. The end is included."),
                 ("temps = ps.numbers([4, 6, 9, 13, 17, 20, 22, 21, 17, 12, 8, 5])", "A temperature for "
                                                                                     "each month."),
-                ("chart = ps.chart()", "Start an empty chart."),
+                ("chart = ps.chart()", "Start an empty chart. Numbers are not a story, so here the chart "
+                                       "is an object of its own (lesson 16 tells more)."),
                 ("chart.lines(x=months, y=temps, dots=True)", "Draw the temperatures as a line, month by "
-                                                              "month."),
+                                                              "month. On a chart object the chart types "
+                                                              "have no draw_ in front."),
                 ('chart.save("lesson13_line.png")', "Save it."),
                 ("heights = ps.random_numbers(how_many=200, average=150, standard_deviation=8, seed=1)",
                  "200 made-up heights that bunch around 150 in a bell shape (a normal distribution). "
@@ -1736,11 +1805,11 @@ LESSONS = [
             "The words follow the table words, with numbers in place of rows: keep_first_numbers, "
             "remove_empty_numbers, fill_empty_numbers, show_first_numbers.",
             "Summaries have no _of, because there is no column to name: nums.average(), not "
-            'table.average_of("marks").',
+            'story.average_of("marks").',
             "A sum with no answer, such as dividing by 0 or the square root of a negative number, "
             "gives an empty value and a note, never a crash.",
-            "nums.table() turns numbers into a table, and nums.as_numpy() gives a plain NumPy array "
-            "if another Python tool needs one.",
+            "nums.table() turns numbers into a table, and ps.start(table=nums.table()) starts a "
+            "story with it. nums.as_numpy() gives a plain NumPy array if another Python tool needs one.",
         ],
         task=[
             "Make the numbers 1 to 10, then square them in two ways: with ** 2 and with power(2).",
@@ -1764,39 +1833,39 @@ LESSONS = [
             ("Groups almost never have exactly the same average. A test asks: is the difference "
              "bigger than chance alone would often give?", [
                 ("import plotsimple as ps", "Load plotsimple."),
-                ('table = ps.table(ps.example("marks"))', "Make a table of the marks."),
-                ('table.compare_averages("marks", between="class")',
+                ('story = ps.start(example="marks")', "Start a story with the marks table."),
+                ('story.compare_averages("marks", between="class")',
                  "Do the three classes really differ in their average mark? The answer comes in "
                  "words. The p-value is the chance of a difference this big if the classes were "
                  "really the same: below 0.05 we call it unlikely to be chance. With three or more "
                  "groups this test is also called Welch's ANOVA; with two groups, a t-test."),
-                ('table.compare_each_pair("marks", between="class")',
+                ('story.compare_each_pair("marks", between="class")',
                  "Which classes differ? Each pair gets its own t-test (Welch's). Testing many pairs makes a "
                  "false alarm more likely, so the p-values are adjusted (Holm's method)."),
-                ('table.compare_averages("marks", between="subject", based_on="ranks")',
+                ('story.compare_averages("marks", between="subject", based_on="ranks")',
                  "based_on=\"ranks\" puts the marks in order and compares the places instead "
                  "(a Kruskal-Wallis test, or Mann-Whitney for two groups). It is safer when groups "
                  "are small and the values are not bell-shaped."),
             ]),
             ("Counts can be compared too: does how often something happens differ between groups?", [
                 ("import plotsimple as ps", "Load plotsimple."),
-                ('table = ps.table(ps.example("marks"))', "Make a table of the marks."),
-                ('table.add_group_column("result", from_column="marks", cut_at=[60], '
+                ('story = ps.start(example="marks")', "Start a story with the marks table."),
+                ('story.add_group_column("result", from_column="marks", cut_at=[60], '
                  'names=["below 60", "60 or more"])', "A new column that says if each mark is below "
                                                       "60 or not."),
-                ('table.compare_counts("result", between="class")',
+                ('story.compare_counts("result", between="class")',
                  "Do the classes differ in how many marks are 60 or more? This counts the rows for "
                  "each class and result and uses the chi-square test. Cramer's V says how strong "
                  "the link is, from 0 (none) to 1."),
             ]),
             ("A fit finds the line or formula that follows the data best, and says how sure it is.", [
                 ("import plotsimple as ps", "Load plotsimple."),
-                ('table = ps.table(ps.example("marks"))', "Make a table of the marks."),
-                ('table.fit_straight_line(x="hours", y="marks")',
+                ('story = ps.start(example="marks")', "Start a story with the marks table."),
+                ('story.fit_straight_line(x="hours", y="marks")',
                  "How much do the marks go up for each extra hour of study? This is linear regression "
                  "by least squares. R squared says how much of the differences in marks the line "
                  "explains."),
-                ('growth = ps.table(ps.example("growth"))', "Make a table of the growth data."),
+                ('growth = ps.start(example="growth")', "A second story, with the growth data."),
                 ('growth.keep_rows("country", equal_to="Applia")', "Keep one country."),
                 ('growth.fit_formula("population = a * exp(b * (year - 2000))")',
                  "Fit a formula you write yourself. Names that are columns (population, year) are "
@@ -1805,106 +1874,166 @@ LESSONS = [
             ]),
         ],
         notes=[
-            "A p-value says how surprising the data would be if there were no real difference. "
-            "It does not say how big or important the difference is: the effect size does that.",
-            "A large p-value does not show that there is no difference. It only means these data "
-            "cannot tell.",
-            "Each test gives back a one-row table with all its numbers, so you can save it: "
-            'result = table.compare_averages(...), then result.save("test.csv").',
+            "The idea behind every test: imagine there is no real difference (this is called the "
+            "null hypothesis). The p-value says how surprising your data would be then. A small "
+            "p-value means: hard to explain by chance alone.",
+            "A p-value does not say how big or important the difference is: the effect size does "
+            "that (omega-squared, Cohen's d, Cramer's V ...). And a large p-value does not show that "
+            "there is no difference. It only means these data cannot tell.",
+            "A 95 % confidence interval is the range the true value is very likely in. A narrow one "
+            "means the data pin the value down well; a wide one means you need more data.",
+            "Each test gives back a new story of one row with all its numbers, so you can save it: "
+            'result = story.compare_averages(...), then result.save_table("test.csv").',
             "Also: compare_before_after for two measurements of the same thing (a paired t-test), "
             "and compare_average_to for one average against a number you choose.",
         ],
         task=[
             'Compare the average marks between="subject". Could the differences be chance?',
-            'Is the average temperature different between the cities of ps.example("weather")?',
-            'Fit a straight line of "forest" against "year" in ps.example("growth") for one country.',
+            'Is the average temperature different between the cities of a weather story?',
+            'Fit a straight line of "forest" against "year" in a growth story, for one country.',
         ],
         words=["table.compare_averages", "table.compare_each_pair", "table.compare_counts",
                "table.fit_straight_line", "table.fit_formula", "table.add_group_column"],
     ),
     dict(
-        title="Tell a whole story",
+        title="Tell a whole story: from a file to a figure",
         learn=[
-            "how to do a whole analysis with one object, a story: open, clean, sum up, draw and save",
-            "why chart types start with draw_ in a story, and which chart the other chart words change",
-            "how undo() and steps() cover table steps and chart steps together",
-            "how to put several charts on one page with letters, for a paper",
+            "how to put all the lessons together: start, look, clean, sum up, test, draw and save",
+            "how to make a figure with panels A and B, ready for a report or a paper",
+            "how steps() writes down what you did, in plain words",
         ],
         parts=[
-            ("A story is one object for the whole analysis. Every table word and every chart word "
-             "works on it, so the program reads from top to bottom like a short story.", [
+            ("A whole analysis with one question: do children who study longer get better marks, "
+             "and do the classes differ? Each block of lines is one part of the story.", [
                 ("import plotsimple as ps", "Load plotsimple."),
-                ('story = ps.start(example="marks")', "Open a table and start a story with it. For your own "
-                                                      'file, write ps.start(file="results.xlsx").'),
-                ("story.show_first_rows(5)", "Look at the first 5 rows before you change anything."),
+                ('story = ps.start(example="marks")', "Start. For your own data: "
+                                                      'ps.start(file="results.xlsx").'),
+                ("story.describe_columns()", "Look: what is in each column, and are any cells empty?"),
                 ("story.remove_rows_with_empty_cells()", "Clean: remove the rows with an empty cell. The "
                                                          "practice table has none, so nothing is removed."),
-                ('story.keep_rows("subject", equal_to="Maths")', "Keep only the Maths marks."),
-                ('story.average_of("marks", for_each="class")', "Sum up: the average Maths mark of each "
-                                                                 "class, said in a sentence."),
-                ('story.draw_boxes(x="class", y="marks")', "Now the chart part of the story begins. Chart "
-                                                           "types start with draw_, so every line starts with "
-                                                           "a verb. This is chart 1."),
-                ('story.draw_all_dots(x="class", y="marks")', "Draw every mark as a dot on top of the boxes: "
-                                                              "a second layer of the same chart."),
-                ('story.title_top("Maths marks in each class")', "Words such as title_top change the chart you "
-                                                                 "drew last."),
-                ('story.line_at_y(50, label="pass mark")', "A line at the pass mark."),
-                ("story.new_chart()", "Start another chart. The next draw_ step draws it."),
-                ('story.draw_dots(x="hours", y="marks", colour="class")', "Chart 2: hours of study against "
-                                                                          "marks, one colour per class."),
-                ("story.fit_line(confidence_band=True)", "A straight line for each class (linear regression), "
-                                                         "with a band for how sure the line is."),
-                ('story.label_x("Hours of study")', "The name under the x-axis of chart 2."),
-                ("story.put_charts_together(per_row=2, letters=True)", "Both charts on one page, 2 in a row, "
-                                                                       "with A and B at the top left, as "
-                                                                       "figures in papers have."),
-                ('story.save_chart("lesson15_figure.png")', "Save the page. save_chart saves the chart, or the "
-                                                            "page once the charts are put together."),
-                ('story.save_table("lesson15_maths.xlsx")', "Save the cleaned table too: only the Maths rows."),
-                ("story.steps()", "The whole story, table steps and chart steps in one list."),
+                ('story.average_of("marks", for_each="class")', "Sum up: the average mark of each class."),
+                ('story.compare_averages("marks", between="class")', "Test: could the differences "
+                                                                     "between the classes be chance?"),
+                ('story.draw_boxes(x="class", y="marks")', "Draw chart A: the marks of each class."),
+                ('story.draw_all_dots(x="class", y="marks")', "Every mark as a dot, on top of the boxes."),
+                ('story.label_y("Mark (out of 100)")', "Name its y-axis."),
+                ("story.new_chart()", "Start chart B."),
+                ('story.draw_dots(x="hours", y="marks", colour="class")', "Hours of study against marks, "
+                                                                          "one colour per class."),
+                ("story.fit_line(confidence_band=True)", "A straight line for each class, with its 95 % "
+                                                         "confidence band."),
+                ('story.label_x("Hours of study")', "Name its x-axis."),
+                ("story.put_charts_together(per_row=2, letters=True)", "Both charts on one page, with A "
+                                                                       "and B at the top left."),
+                ('story.title_top("Marks, classes and hours of study")', "A title for the whole page."),
+                ('story.style("paper")', "A quiet look that suits a paper."),
+                ('story.save_chart("lesson15_figure.pdf")', "Save the figure as a PDF: sharp at any size."),
+                ('story.save_table("lesson15_clean.xlsx")', "Save the cleaned table that the figure was "
+                                                            "drawn from."),
+                ("story.steps()", "Every step of the story in plain words, in order: a good start for "
+                                  "the methods part of your report."),
             ]),
-            ("Summaries give back a new story, so you can draw them. undo() takes back any step.", [
+            ("Two questions about two tables make two stories. ps.grid puts the chart each story drew "
+             "last on one page.", [
                 ("import plotsimple as ps", "Load plotsimple."),
-                ('story = ps.start(example="fruit")', "A story about fruit sold in two shops."),
-                ('totals = story.total_of("count", for_each="fruit")', "The total count of each fruit. It "
-                                                                       "says the answer, and gives back a new "
-                                                                       "story called totals."),
-                ('totals.sort_by("total of count", biggest_first=True)', "Sort the totals, biggest first."),
-                ('totals.draw_bars(x="fruit", y="total of count")', "Draw the totals as bars."),
-                ("totals.numbers_on_bars()", "Write the number on each bar."),
-                ('totals.save_chart("lesson15_totals.png")', "Save the chart."),
-                ('story.keep_rows("shop", equal_to="Corner shop")', "Back to the first story: keep one shop. "
-                                                                    "totals does not change."),
-                ('story.draw_dots(x="price", y="count")', "Draw price against how many were sold."),
-                ("story.undo()", "Undo takes back the last step, whether it changed the table or the chart: "
-                                 "here the dots."),
-                ("story.undo()", "And again: the shop rows come back."),
-                ("story.steps()", "Nothing is left in the list: both steps were taken back."),
+                ('weather = ps.start(example="weather")', "Story 1: the weather."),
+                ('weather.keep_rows("city", equal_to="Rainbridge")', "Keep one city."),
+                ('weather.draw_bars(x="month", y="rain")', "Its rain through the year."),
+                ('weather.line_at_y(100, label="100 mm")', "A line at 100 mm."),
+                ('growth = ps.start(example="growth")', "Story 2: four countries."),
+                ('growth.draw_lines(x="year", y="forest", colour="country")', "Their forest over the years."),
+                ('growth.label_y("Forest (% of the land)")', "Name the y-axis."),
+                ("page = ps.grid(weather, growth, per_row=2, letters=True)", "Both charts on one page, "
+                                                                             "with letters."),
+                ('page.save("lesson15_two_stories.png")', "Save the page."),
             ]),
         ],
         notes=[
-            "A chart uses the table as it was when its first draw_ step was written. Table steps "
-            "written after it do not change it, so the story reads from top to bottom. For the "
-            "table as it is now, start a new chart with story.new_chart().",
+            "Every analysis follows the same plan: start, look, clean, sum up, test, draw, words, "
+            "save. Lessons 1 to 14 taught each part; a story puts them in one place.",
+            "A chart uses the table as it was when its first draw_ step was written, so the figure "
+            "always matches the steps above it. For the table as it is now, start a new chart with "
+            "story.new_chart().",
             "save_table saves the table and save_chart the chart. Plain save works too, because the "
             "file type says which: .xlsx or .csv is a table, .png or .pdf is a picture.",
-            "Charts from different tables go on one page with ps.grid(story_a, story_b, letters=True): "
-            "each story gives the chart it drew last.",
-            "ps.table(...) and ps.chart(...) are still there underneath, for programmers who want a "
-            "table and a chart as two separate objects.",
+            "Underneath a story are a table and charts. Lesson 16 shows them on their own, for "
+            "when you want to use them from other Python code.",
         ],
         task=[
-            'Tell a story about ps.start(example="weather"): keep one city, draw the temperature as '
-            "lines, give it a title and save the chart and the table.",
+            'Tell a story about ps.start(example="weather"): look at it, compare the average rain '
+            'between="city", draw the rain of each city as boxes, and save the chart and the table.',
             "Add a second chart of the rain with new_chart(), then put the two charts together with "
             "letters=True.",
-            "Write a table step after your first chart, then undo() twice. Look at steps() after "
-            "each undo.",
+            "Read the steps() of your story out loud. Would someone else understand what you did?",
         ],
-        words=["ps.start", "story.draw_boxes", "story.draw_all_dots", "story.draw_dots", "story.draw_bars",
+        words=["ps.start", "table.describe_columns", "table.remove_rows_with_empty_cells",
+               "table.compare_averages", "story.draw_boxes", "story.draw_all_dots", "story.draw_dots",
                "story.new_chart", "story.put_charts_together", "story.save_chart", "story.save_table",
-               "story.steps", "story.undo"],
+               "story.steps", "ps.grid", "style"],
+    ),
+    dict(
+        title="Tables and charts on their own",
+        learn=[
+            "what is underneath a story: a table and charts",
+            "when to use ps.table and ps.chart: one table for many charts, or plain Python objects",
+            "how to hand your table to pandas or Polars, and back",
+        ],
+        parts=[
+            ("This lesson is for Python users. A story holds a table and its charts; ps.table and "
+             "ps.chart give you each one as an object of its own.", [
+                ("import plotsimple as ps", "Load plotsimple."),
+                ('table = ps.table(ps.example("marks"))', "A table on its own: every table word, but no "
+                                                          'charts. For your own file: ps.table("my_file.xlsx").'),
+                ('table.keep_rows("marks", above=40)', "A table step, the same as on a story."),
+                ("chart = table.chart()", "A chart of the table as it is now. The same as "
+                                          "ps.chart(table)."),
+                ('chart.bars(x="class", y="marks")', "On a chart object, chart types have no draw_ in "
+                                                     "front: the object is already a chart, so "
+                                                     "chart.bars reads well."),
+                ('chart.title_top("Marks above 40")', "Chart words are the same as on a story."),
+                ('chart.save("lesson16_bars.png")', "chart.save saves the chart, table.save the table."),
+                ("chart.show()", "Open the chart in a window."),
+            ]),
+            ("One table, many charts, each a separate object you can pass around.", [
+                ("import plotsimple as ps", "Load plotsimple."),
+                ('marks = ps.example("marks")', "ps.example gives a plain pandas table."),
+                ('a = ps.chart(marks).boxes(x="class", y="marks")', "Chart a. Steps can be joined with "
+                                                                     "dots on one line."),
+                ('b = ps.chart(marks).histogram(x="marks", bins=8)', "Chart b, from the same table."),
+                ("page = ps.one_above_other(a, b, letters=True)", "Put a above b on one page."),
+                ('page.save("lesson16_page.png")', "Save the page."),
+            ]),
+            ("A table goes to pandas or Polars and back whenever another tool needs it.", [
+                ("import plotsimple as ps", "Load plotsimple."),
+                ('table = ps.table(ps.example("weather"))', "A table of the weather."),
+                ('table.keep_rows("city", equal_to="Rainbridge")', "Keep one city."),
+                ("df = table.as_pandas()", "A plain pandas DataFrame (table.as_polars() gives a "
+                                           "Polars one)."),
+                ('print(df["rain"].max())', "Any pandas code works on it."),
+                ('table.save("lesson16_rainbridge.csv")', "Save the table."),
+                ("story = ps.start(table=df)", "And back: ps.start(table=...) starts a story with a "
+                                               "pandas or Polars table you already have."),
+                ('story.draw_bars(x="month", y="rain")', "Draw it the story way."),
+                ('story.save_chart("lesson16_rain.png")', "Save the chart."),
+            ]),
+        ],
+        notes=[
+            "Use a story for an analysis: it reads from top to bottom, and undo() and steps() cover "
+            "everything. Use ps.table and ps.chart when your own Python code passes tables and "
+            "charts around, or when one cleaned table feeds many charts in a loop.",
+            "A table has its own undo(), steps() and start_again(), for its table steps only. A chart "
+            "never changes its table.",
+            "ps.side_by_side, ps.one_above_other and ps.grid take charts and stories alike.",
+            "plotsimple words never need as_pandas(); it is only for other tools.",
+        ],
+        task=[
+            'Make a table of ps.example("fruit"), keep one shop, and draw two charts from it: '
+            "bars of the count for each fruit, and dots of price against count.",
+            "Put the two charts side by side with ps.side_by_side(a, b) and save the page.",
+            "Turn the table into pandas with as_pandas() and print the mean of the count column.",
+        ],
+        words=["ps.table", "table.chart", "ps.chart", "bars", "boxes", "histogram", "save", "show",
+               "ps.one_above_other", "table.as_pandas", "table.save", "ps.example"],
     ),
 ]
 
@@ -1920,8 +2049,10 @@ def lesson_code(number: int) -> list[str]:
 
 def _list_lessons() -> None:
     print(f"Learn plotsimple in one day: {len(LESSONS)} lessons of about 30 minutes.")
+    print("Every lesson tells a short story: start a table, change it, draw it, save it.")
     print("Lessons 1 to 8 teach charts, lessons 9 to 12 teach tables, lesson 13 teaches numbers,")
-    print("lesson 14 teaches statistical tests and lesson 15 tells a whole story with all of them.\n")
+    print("lesson 14 teaches statistical tests and lesson 15 puts it all together, from a file")
+    print("to a figure. Lesson 16 shows the tables and charts underneath, for Python users.\n")
     for i, les in enumerate(LESSONS, start=1):
         print(f"  ps.lesson({i}){' ' * (5 - len(str(i)))}{les['title']}")
     print("\nStart with ps.lesson(1). Each lesson ends with a small task to try yourself.")

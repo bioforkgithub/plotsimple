@@ -46,7 +46,8 @@ grid = ps.number_grid([[3, 5, 2], [8, 6, 4]])
 
 In Python, `ps.help("bars")` explains any word, `ps.words()` prints this list and
 `ps.lesson(1)` starts the one-day course (lessons 9 to 12 are about tables, lesson 13
-about numbers, lesson 14 about statistical tests and lesson 15 tells a whole story).
+about numbers, lesson 14 about statistical tests, lesson 15 puts it all together and
+lesson 16 shows the tables and charts underneath a story).
 
 Every example runs as written on the practice table in the *Table* column:
 for example `weather = ps.example("weather")` then `chart = ps.chart(weather)`,

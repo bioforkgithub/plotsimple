@@ -40,12 +40,15 @@ import plotsimple as ps
 ps.lesson(1)
 ```
 
-There are fifteen short lessons. Lessons 1 to 8 teach charts, from your first chart to
-animations. Lessons 9 to 12 teach tables: looking at your data, choosing rows and columns,
-cleaning it, and summing it up. Lesson 13 teaches numbers (lists and grids of numbers), and
-lesson 14 the statistical tests: is a difference real, or could it be chance? Lesson 15 tells a
-whole story, from opening a file to a saved figure and table. Each lesson has an
-example you can run, says what every line does, and ends with a small task to try yourself.
+There are sixteen short lessons, and each one is a little story of an analysis. Lessons 1 to 8
+teach charts, from your first chart to animations. Lessons 9 to 12 teach tables: looking at your
+data, choosing rows and columns, cleaning it, and summing it up. Lesson 13 teaches numbers
+(lists and grids of numbers), and lesson 14 the statistical tests: is a difference real, or
+could it be chance? Lesson 15 puts it all together, from opening a file to a figure with panels
+A and B and a saved table. Lesson 16 shows the tables and charts underneath a story, for Python
+users. Each lesson has an example you can run, says what every line does, explains the idea
+behind it (average or median, standard deviation or standard error, p-values) and ends with a
+small task to try yourself.
 
 - `ps.lesson()` lists the lessons
 - `ps.words()` lists every word, with an example (also in [docs/cheatsheet.md](docs/cheatsheet.md))
