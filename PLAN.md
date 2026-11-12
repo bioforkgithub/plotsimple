@@ -1,6 +1,6 @@
 # simplydata — design plan
 
-*Status: design stage, no code yet. Last updated 2026-11-12.*
+*Status: version 0.1.0 (charts, tables, numbers and statistical tests). Last updated 2026-11-12.*
 
 ## 1. The idea
 

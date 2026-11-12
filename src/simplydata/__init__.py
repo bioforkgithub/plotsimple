@@ -26,7 +26,7 @@ from .words.stats import pairs
 # (sdata.table and sdata.numbers win over their subpackages the same way, by being imported after them).
 from .learn import help, lesson, words  # noqa: E402
 
-__version__ = "0.1.0.dev0"
+__version__ = "0.1.0"
 
 __all__ = [
     "Chart", "NumberGrid", "Numbers", "SimplydataError", "Table", "chart", "example", "grid", "help",

@@ -5,18 +5,27 @@ build-backend = "hatchling.build"
 [project]
 name = "simplydata"
 dynamic = ["version"]
-description = "Plain-English plotting and data for everyone: one easy vocabulary over matplotlib, seaborn, pandas, Polars and NumPy."
+description = "Simple words for data science in Python: data cleaning, tables, charts and statistics, built on pandas, Polars, NumPy, SciPy, matplotlib and seaborn."
 readme = "README.md"
 license = "MIT"
 license-files = ["LICENSE"]
 requires-python = ">=3.10"
 authors = [{ name = "Manish Prakash Victor" }]
-keywords = ["plotting", "visualisation", "education", "matplotlib", "seaborn", "pandas", "beginners"]
+keywords = ["data science", "statistics", "plotting", "visualisation", "data cleaning", "education", "pandas", "polars", "numpy", "matplotlib", "seaborn"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Education",
     "Intended Audience :: Science/Research",
+    "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Education",
+    "Topic :: Scientific/Engineering",
+    "Topic :: Scientific/Engineering :: Information Analysis",
     "Topic :: Scientific/Engineering :: Visualization",
     "Framework :: Matplotlib",
 ]
@@ -38,9 +47,14 @@ test = ["pytest>=7", "polars>=0.20", "pyarrow>=14"]
 [project.urls]
 Homepage = "https://github.com/bioforkgithub/simplydata"
 Issues = "https://github.com/bioforkgithub/simplydata/issues"
+Changelog = "https://github.com/bioforkgithub/simplydata/blob/main/CHANGELOG.md"
+Manual = "https://github.com/bioforkgithub/simplydata/blob/main/docs/manual/simplydata_manual.pdf"
 
 [tool.hatch.version]
 path = "src/simplydata/__init__.py"
+
+[tool.hatch.build.targets.sdist]
+include = ["src/simplydata", "tests", "README.md", "LICENSE", "CHANGELOG.md", "pyproject.toml"]
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/simplydata"]

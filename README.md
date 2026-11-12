@@ -1,6 +1,6 @@
 # simplydata
 
-**Plain-English plotting and data for everyone.** One small vocabulary you can learn in a day,
+**Simple words for data science in Python.** One small vocabulary you can learn in a day,
 built on matplotlib, seaborn, pandas, Polars, NumPy and SciPy (with narwhals linking pandas and
 Polars), so you don't have to learn them first.
 
@@ -28,8 +28,9 @@ one cleaned table can feed many charts, and charts go side by side with
 ## Install
 
 ```
-pip install simplydata            # coming soon
-pip install simplydata[fast]      # adds the fast engine for big data
+pip install simplydata            # needs Python 3.10 or newer
+pip install "simplydata[fast]"    # adds Polars, the fast engine for big data
+pip install "simplydata[files]"   # adds reading Word, SPSS and Stata files
 ```
 
 ## Learn it in a day
@@ -51,7 +52,7 @@ lesson has an example you can run, says what every line does, explains the idea 
 to try yourself.
 
 - `sdata.lesson()` lists the lessons
-- `sdata.words()` lists every word, with an example (also in [docs/cheatsheet.md](docs/cheatsheet.md))
+- `sdata.words()` lists every word, with an example (also in [docs/cheatsheet.md](https://github.com/bioforkgithub/simplydata/blob/main/docs/cheatsheet.md))
 - `sdata.help("bars")` explains one word: what it does, its options and an example
   (table and number words too: `sdata.help("keep_rows")`, `sdata.help("average")`)
 - `sdata.example()` lists the made-up tables to practise with (marks, weather, fruit, growth, shop, island; shop has dates and empty cells)
@@ -59,7 +60,7 @@ to try yourself.
 
 ## Manual
 
-**[The simplydata manual (PDF)](docs/manual/simplydata_manual.pdf)** has everything in one book:
+**[The simplydata manual (PDF)](https://github.com/bioforkgithub/simplydata/blob/main/docs/manual/simplydata_manual.pdf)** has everything in one book:
 all fifteen lessons with the real charts and output they make, every word explained (its options,
 an example you can run and the library that does the work underneath), the data science ideas
 behind the numbers (average or median, standard deviation or standard error, confidence intervals,
@@ -68,7 +69,7 @@ task.
 
 The manual is made from the code by `python docs/make_manual.py` (it needs a LaTeX system with
 `pdflatex`), so it never goes out of date: a test fails if
-[docs/manual/simplydata_manual.tex](docs/manual/simplydata_manual.tex) no longer matches the code.
+[docs/manual/simplydata_manual.tex](https://github.com/bioforkgithub/simplydata/blob/main/docs/manual/simplydata_manual.tex) no longer matches the code.
 
 ## Tables
 
@@ -111,8 +112,13 @@ grid.total(for_each="row")
 - **Order doesn't matter.** Write the steps in any order; simplydata draws them correctly.
 - **Friendly errors.** Misspell a column and simplydata tells you what you probably meant.
 
-The full design is in [PLAN.md](PLAN.md).
+The full design is in [PLAN.md](https://github.com/bioforkgithub/simplydata/blob/main/PLAN.md).
+
+## Changes and contributing
+
+What changed in each release is in [CHANGELOG.md](https://github.com/bioforkgithub/simplydata/blob/main/CHANGELOG.md). Contributions are welcome:
+[CONTRIBUTING.md](https://github.com/bioforkgithub/simplydata/blob/main/CONTRIBUTING.md) explains how to suggest a word, report a problem or add code.
 
 ## Licence
 
-MIT. Contributions are welcome: open an issue to suggest a word or report a problem.
+MIT.
