@@ -246,3 +246,10 @@ def test_size_and_resolution_mistakes_are_explained(marks, tmp_path):
         chart.save(tmp_path / "a.png", resolution=20000)
     chart.size(10, 5, unit="centimetres")  # long names work too
     assert abs(chart._settings["width"] - 10 / 2.54) < 1e-9
+
+
+def test_page_saves_with_a_resolution_without_a_size(marks, tmp_path):
+    a = sdata.chart(marks).bars(x="name", y="marks")
+    b = sdata.chart(marks).dots(x="height", y="marks")
+    sdata.side_by_side(a, b, letters=True).save(tmp_path / "page.png", resolution=150)
+    assert round(_pixels(tmp_path / "page.png")[1][0]) == 150
