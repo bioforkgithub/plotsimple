@@ -1,0 +1,204 @@
+# plotsimple — design plan
+
+*Status: design stage, no code yet. Last updated 2026-11-12.*
+
+## 1. The idea
+
+plotsimple is **a dictionary, not a new engine**. One small, plain-English vocabulary
+that translates into the right calls in **matplotlib, seaborn, plotnine, pandas and NumPy**
+(plus SciPy for statistics). Learn plotsimple, and you never have to learn the five
+libraries underneath.
+
+Like a phrasebook that lets you speak Spanish, Italian and French without learning each
+grammar.
+
+- The libraries underneath do all drawing and calculation.
+- plotsimple's job is the **translation**: each word must map to the right call with the
+  right settings. That is what we test.
+- Users never see the libraries underneath. There is **no bridge** to raw matplotlib
+  (no `show_code()`, no `.matplotlib()`).
+
+## 2. Goals
+
+1. **Simple enough for school children.** Reads like talking to the program.
+2. **Learn everything in one day**, write programs the next day.
+3. **The hardest plots are as easy as the simplest** (multi-panel figures, second
+   y-axis, zoom inset, notes with arrows, small multiples, animation, polar, 3D).
+4. **Better than seaborn and plotnine** for learners, while covering what they do.
+5. Later: replace everyday use of pandas and NumPy as well (tables first, then arrays).
+
+## 3. Basics
+
+| Topic | Decision |
+|---|---|
+| Name | `plotsimple`, used as `import plotsimple as ps` (name free on PyPI on 2026-11-12) |
+| Licence | MIT, open on GitHub, contributions welcome |
+| Python | 3.10 and newer |
+| Audience | School children and complete beginners |
+| Data | Plain lists, Excel/CSV files, pandas tables, Polars tables; results stay plain pandas/NumPy (or Polars, if Polars went in) |
+| Speed | Automatic: Polars tables stay Polars, files over 100 MB use Polars, everything else pandas. Override in plain words: `big_data=True`. A one-line message says when fast mode is used. |
+| Style | One step per line on a chart; chaining also allowed |
+| Look | Clean paper style by default (white, large text, colour-blind-safe colours) |
+| Showing | Charts appear automatically in Jupyter/VS Code/Spyder; `chart.show()` in scripts |
+| Saving | `chart.save("x.png")` or `chart.save("x.pdf")`, format from the file name |
+| Spelling | Both `colour` and `color`, `grey` and `gray` |
+| Errors | Friendly message, "did you mean …?", list of columns, link to request a missing word on GitHub |
+| Learning | Built-in lessons `ps.lesson(1)` … `ps.lesson(8)`, `ps.help("bars")`, `ps.words()` |
+
+## 4. Grammar rules
+
+1. **What + where**: `title_top`, `caption_bottom`, `legend_bottom`, `line_at_y`.
+2. **Axes are `x` and `y`** (the words children learn in school maths).
+3. Anything that belongs to one axis **ends in `_x` or `_y`**: `label_y`, `range_y`,
+   `log_scale_y`, `ticks_x`.
+4. **Mathematical terms keep their names**: log, histogram, density, polar.
+5. Other jargon becomes plain words: `dots` (scatter), `sideways=True` (horizontal bars).
+6. Calling two chart types on the same chart puts them on top of each other.
+
+```python
+import plotsimple as ps
+
+chart = ps.chart("marks.xlsx")
+chart.bars(x="name", y="marks")
+chart.title_top("My class marks")
+chart.label_x("Student")
+chart.label_y("Marks")
+chart.line_at_y(50)                  # pass mark
+chart.shade_between_y(40, 60)
+chart.legend_bottom()
+chart.save("marks.png")
+```
+
+## 5. Word list (draft v0.1)
+
+### 5.1 Start, show, save
+| Word | Example |
+|---|---|
+| `ps.chart` | `chart = ps.chart("marks.xlsx")` · `ps.chart(table)` · `ps.chart()` for lists |
+| `show` | `chart.show()` |
+| `save` | `chart.save("marks.png")` · `chart.save("marks.pdf")` |
+
+### 5.2 Chart types
+| Word | Example |
+|---|---|
+| `bars` | `chart.bars(x="name", y="marks")` · `stacked=True` · `sideways=True` |
+| `lines` | `chart.lines(x="day", y="temp", colour="city")` |
+| `dots` | `chart.dots(x="height", y="weight", size="age", shape="type")` |
+| `area` | `chart.area(x="year", y="sales")` |
+| `histogram` | `chart.histogram(x="marks", bins=10)` |
+| `boxes` | `chart.boxes(x="class", y="marks")` |
+| `violins` | `chart.violins(x="class", y="marks")` |
+| `heatmap` | `chart.heatmap(numbers=True)` · `cluster=True` |
+| `pie` | `chart.pie(labels="fruit", values="count")` |
+| `polar` | `chart.polar(angle="direction", distance="speed")` |
+| `contour` | `chart.contour(x="lon", y="lat", z="depth")` |
+| `surface` | `chart.surface(x="lon", y="lat", z="depth")` |
+| `dots_3d` | `chart.dots_3d(x="a", y="b", z="c")` |
+
+### 5.3 Statistics
+| Word | Example |
+|---|---|
+| `show=` | `chart.bars(x="class", y="marks", show="average")` · `"median"` · `"total"` · `"count"` |
+| `error=` | `error="sd"` · `"se"` · `"ci"` |
+| `error_bars` | `chart.error_bars("sd")` · `chart.error_bars(column="error")` |
+| `fit_line` | `chart.fit_line()` · `band=True` · `show_equation=True` |
+| `fit_curve` | `chart.fit_curve(degree=2)` |
+| `smooth_line` | `chart.smooth_line()` |
+| `density` | `chart.density(x="marks", colour="class")` |
+| `count_bars` | `chart.count_bars(x="fruit")` |
+| `all_points` | `chart.all_points(x="class", y="marks")` |
+| `side_histograms` | `chart.side_histograms()` |
+| `ps.pairs` | `ps.pairs(table)` |
+
+### 5.4 Lines, shading, words
+| Word | Example |
+|---|---|
+| `line_at_x` / `line_at_y` | `chart.line_at_y(50)` |
+| `shade_between_x` / `shade_between_y` | `chart.shade_between_y(40, 60)` |
+| `title_top` | `chart.title_top("My class marks")` |
+| `caption_bottom` | `chart.caption_bottom("Data from 2026")` |
+| `label_x` / `label_y` | `chart.label_y("Marks")` |
+| `note` | `chart.note("Highest!", x=5, y=98, arrow=True)` |
+| `numbers_on_bars` | `chart.numbers_on_bars()` |
+| `font_size` | `chart.font_size(14)` |
+
+### 5.5 Axes
+| Word | Example |
+|---|---|
+| `range_x` / `range_y` | `chart.range_y(0, 100)` |
+| `log_scale_x` / `log_scale_y` | `chart.log_scale_y()` |
+| `ticks_x` / `ticks_y` | `chart.ticks_x(0, 10, 20, 30)` |
+| `rotate_labels_x` | `chart.rotate_labels_x(45)` |
+| `second_y` | `chart.second_y("rain", chart="lines", label="Rain (mm)")` |
+| `flip_y` | `chart.flip_y()` |
+
+### 5.6 Colours and look
+| Word | Example |
+|---|---|
+| `colour` / `color` | `chart.colour("blue")` · inside a chart: `colour="site"` |
+| `colours` | `chart.colours("blue", "orange", "green")` |
+| `style` | `chart.style("paper")` · `"school"` · `"dark"` · `"presentation"` |
+| `size` | `chart.size(width=8, height=6)` |
+| `show_grid` / `hide_grid` | `chart.hide_grid()` |
+| `legend_top` / `_bottom` / `_left` / `_right` | `chart.legend_bottom()` |
+| `hide_legend` | `chart.hide_legend()` |
+| `colour_bar_label` | `chart.colour_bar_label("Depth (m)")` |
+
+### 5.7 Several charts and hard tricks
+| Word | Example |
+|---|---|
+| `ps.side_by_side` | `ps.side_by_side(a, b).save("both.png")` |
+| `ps.one_above_other` | `ps.one_above_other(a, b)` |
+| `ps.grid` | `ps.grid(a, b, c, d, columns=2, same_y=True)` |
+| `one_per` | `chart.one_per("site", columns=3)` · `one_per(row="site", column="year")` |
+| `zoom_box` | `chart.zoom_box(x_from=2, x_to=4, y_from=10, y_to=20)` |
+| `animate` | `chart.animate(over="year")` then `chart.save("growth.gif")` |
+
+### 5.8 Help and learning
+| Word | Example |
+|---|---|
+| `ps.lesson` | `ps.lesson(1)` … `ps.lesson(8)` |
+| `ps.help` | `ps.help("bars")` |
+| `ps.words` | `ps.words()` prints the whole list |
+
+## 6. Libraries underneath
+
+| Library | Used for |
+|---|---|
+| matplotlib | Drawing, axes, layout, saving, animation |
+| seaborn | Statistical charts (averages with error bars, density, violins, pairs, clustered heatmap) |
+| plotnine | Grammar-style layered charts and two-way panels where it is the best fit |
+| pandas | Reading files, tables, grouping (default for normal-sized data) |
+| Polars | Fast engine for large data and Polars input; charts convert it to pandas before drawing |
+| narwhals | Candidate helper so the same table code runs on both pandas and Polars |
+| NumPy | Arrays and arithmetic |
+| SciPy | t-based confidence intervals, curve fitting, KDE, clustering |
+
+Design rule: each plotsimple word translates to **one** library. seaborn draws on matplotlib
+charts, so those two mix freely; plotnine builds its own charts, so words that use it must
+not be mixed with matplotlib/seaborn words on the same chart. Which library each word uses
+is decided per word.
+
+## 7. Our responsibility
+
+The libraries do the calculations. **We are responsible for correct translation**: choosing
+the right function and settings for each word. Known traps:
+
+- Standard deviation: NumPy defaults to population SD (n), pandas to sample SD (n−1).
+  plotsimple default: sample SD (n−1).
+- Missing values: NumPy returns `nan`, pandas skips them. plotsimple must choose and say so.
+- Confidence intervals: seaborn bootstraps, a t-interval differs slightly. Default to be
+  decided; the method is always stated.
+
+Testing: every word gets a test that its output matches the library underneath, and
+statistics are checked against SciPy, seaborn and R on reference data.
+
+## 8. Releases
+
+| Version | Content |
+|---|---|
+| v0.1 | Charts (sections 5.1–5.8), lessons 1–8, friendly errors |
+| v0.1 (also) | Accept Polars tables as chart input |
+| v0.2 | Tables: plain-word layer over pandas and Polars (read, clean, keep, group, summarise), with automatic engine choice and `big_data=True` |
+| v0.3 | Arrays: plain-word layer over NumPy |
+

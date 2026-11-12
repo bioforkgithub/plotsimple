@@ -1,0 +1,47 @@
+[build-system]
+requires = ["hatchling>=1.26"]
+build-backend = "hatchling.build"
+
+[project]
+name = "plotsimple"
+dynamic = ["version"]
+description = "Plain-English plotting and data for everyone: one easy vocabulary over matplotlib, seaborn, pandas, Polars and NumPy."
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+requires-python = ">=3.10"
+authors = [{ name = "Manish Prakash Victor" }]
+keywords = ["plotting", "visualisation", "education", "matplotlib", "seaborn", "pandas", "beginners"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Education",
+    "Intended Audience :: Science/Research",
+    "Programming Language :: Python :: 3",
+    "Topic :: Scientific/Engineering :: Visualization",
+    "Framework :: Matplotlib",
+]
+dependencies = [
+    "matplotlib>=3.7",
+    "seaborn>=0.13",
+    "pandas>=2.0",
+    "numpy>=1.24",
+    "scipy>=1.10",
+    "openpyxl>=3.1",
+]
+
+[project.optional-dependencies]
+fast = ["polars>=0.20", "pyarrow>=14"]
+test = ["pytest>=7", "polars>=0.20", "pyarrow>=14"]
+
+[project.urls]
+Homepage = "https://github.com/bioforkgithub/plotsimple"
+Issues = "https://github.com/bioforkgithub/plotsimple/issues"
+
+[tool.hatch.version]
+path = "src/plotsimple/__init__.py"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/plotsimple"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

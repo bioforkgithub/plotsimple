@@ -1,0 +1,27 @@
+"""The Chart: one class that brings all the word groups together."""
+
+from __future__ import annotations
+
+from ._core import BaseChart
+from ._errors import PlotsimpleError
+from .words.charts import ChartWords
+from .words.look import LookWords
+from .words.text import TextWords
+
+
+class Chart(ChartWords, TextWords, LookWords, BaseChart):
+    """A chart. Make one with ps.chart(...), then add steps: chart.bars(...), chart.title_top(...)."""
+
+
+def chart(data=None, sheet=None, big_data: bool = False) -> Chart:
+    """Start a chart.
+
+    ps.chart("marks.xlsx")              a file (Excel, CSV, TSV, Parquet, JSON)
+    ps.chart("marks.xlsx", sheet="2026") one sheet of an Excel file
+    ps.chart(table)                     a pandas or Polars table
+    ps.chart()                          no table: give lists to each step instead
+    big_data=True                       always use the fast engine for big files
+    """
+    if not isinstance(big_data, bool):
+        raise PlotsimpleError("big_data= should be True or False.")
+    return Chart(data, sheet=sheet, big_data=big_data)
