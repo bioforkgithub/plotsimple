@@ -76,6 +76,7 @@ class BaseChart:
             "font_size": None,
             "grid": None,
             "split": None,  # set by one_per(): dict(by=, row=, column=, columns=)
+            "projection": None,  # "polar" or "3d" for charts that need special axes
         }
         self._cache: Figure | None = None
 
@@ -147,7 +148,7 @@ class BaseChart:
             fig = Figure(figsize=(s["width"], s["height"]), layout="constrained")
             split = s["split"]
             if not split:
-                ax = fig.add_subplot()
+                ax = fig.add_subplot(projection=s["projection"])
                 ctx = self._draw_panel(fig, ax)
                 self._draw_figure_steps(fig, [ax], ctx)
             else:
@@ -165,7 +166,7 @@ class BaseChart:
             groups = list(pd.unique(data[by].dropna()))
             ncols = split.get("columns") or min(len(groups), 3)
             nrows = math.ceil(len(groups) / ncols)
-            grid = fig.subplots(nrows, ncols, squeeze=False, **share)
+            grid = fig.subplots(nrows, ncols, squeeze=False, subplot_kw={"projection": self._settings["projection"]}, **share)
             flat = list(grid.flat)
             for ax, g in zip(flat, groups):
                 ctx = self._draw_panel(fig, ax, data[data[by] == g], panel_title=g, axes=flat)
@@ -174,7 +175,7 @@ class BaseChart:
             return flat[: len(groups)], ctx
         rows = list(pd.unique(data[row].dropna())) if row else [None]
         cols = list(pd.unique(data[column].dropna())) if column else [None]
-        grid = fig.subplots(len(rows), len(cols), squeeze=False, **share)
+        grid = fig.subplots(len(rows), len(cols), squeeze=False, subplot_kw={"projection": self._settings["projection"]}, **share)
         for i, r in enumerate(rows):
             for j, c in enumerate(cols):
                 mask = pd.Series(True, index=data.index)

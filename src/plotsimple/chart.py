@@ -4,12 +4,15 @@ from __future__ import annotations
 
 from ._core import BaseChart
 from ._errors import PlotsimpleError
+from .words.axes import AxesWords
 from .words.charts import ChartWords
+from .words.layout import LayoutWords
 from .words.look import LookWords
+from .words.stats import StatsWords
 from .words.text import TextWords
 
 
-class Chart(ChartWords, TextWords, LookWords, BaseChart):
+class Chart(ChartWords, StatsWords, TextWords, AxesWords, LookWords, LayoutWords, BaseChart):
     """A chart. Make one with ps.chart(...), then add steps: chart.bars(...), chart.title_top(...)."""
 
 
