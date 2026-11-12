@@ -40,6 +40,8 @@ def test_example_tables_load_with_the_columns_described(name):
     assert list(table.columns) == list(EXAMPLES[name][1])
     if name == "shop":  # the one table made for practising empty cells and dates
         assert table.isna().any().any() and pd.api.types.is_datetime64_any_dtype(table["date"])
+    elif name == "school":  # empty sleep cells, for multiple imputation
+        assert table["sleep"].isna().any() and not table.drop(columns="sleep").isna().any().any()
     else:
         assert not table.isna().any().any()
 
