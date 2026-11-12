@@ -3,6 +3,46 @@
 Each release lists what was added, changed or fixed. When a word is renamed, the old word keeps
 working for one release and prints a one-line note with its new name.
 
+## Unreleased
+
+More statistics, each checked against R.
+
+### Models
+
+- `table.explain(column, using=[...])` explains one column from several others: a linear model
+  by least squares (multiple regression), with `"a * b"` for an interaction and text columns as
+  groups. `outcome="yes or no"` is logistic regression, `outcome="counts"` Poisson regression
+  (`"counts (overdispersed)"` quasi-Poisson), `grouped_by=` a mixed model with a random intercept
+  per group, and `empty_cells="multiple imputation"` fills empty cells 20 times and pools the
+  answers with Rubin's rules.
+- `table.add_predicted_column` adds what the model expects for each row.
+
+### Patterns across columns
+
+- `add_principal_components` and `principal_components_of` (PCA), `add_clusters` (k-means or
+  hierarchical), `distances_between_rows` (Bray-Curtis, Euclidean, Jaccard, Manhattan),
+  `add_nmds` (non-metric multidimensional scaling) and `compare_profiles` (PERMANOVA, with a
+  check of the spread of each group).
+
+### Survival
+
+- `survival_over_time` (Kaplan-Meier), `compare_survival` (log-rank test), `explain_survival`
+  (Cox model, with a proportional-hazards check) and `chart.survival_curves` (with confidence
+  bands, censoring ticks and a number-at-risk table).
+
+### Planning a study
+
+- `sdata.how_many_needed` and `sdata.chance_to_find`: power analysis for the averages, counts and
+  correlation tests.
+
+### Also
+
+- Example tables `school`, `meadow` and `trial`; lessons 16 to 18.
+- The optional extra `stats` (statsmodels), needed only for mixed models and multiple
+  imputation.
+- Panel letters on a page no longer cover the panel titles of a chart made with
+  `one_chart_per`.
+
 ## 0.1.0 (2026-11-12)
 
 The first release: charts, tables, numbers and statistical tests in one small vocabulary.
