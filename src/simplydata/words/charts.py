@@ -18,7 +18,9 @@ from .._core import PHASES
 from .._data import frame_for, is_listlike
 from .._errors import SimplydataError, column_error, friendly, suggest
 from .._stats import SHOW, check_error, check_show, error_code, say_error
-from ._helpers import check, colour_role, default_colour, palette_for, single_list
+from . import _colour_scale as scales
+from ._helpers import (check, check_thickness, check_transparency, colour_role, default_colour,
+                       faces_see_through, opacity, palette_for, single_list)
 
 # all_dots: up to this many points in one group, dots are packed side by side (a swarm);
 # above it they are spread at random (a strip), because a swarm would not fit.
@@ -336,7 +338,7 @@ def _draw_empty_cells(ctx, columns):
 
 
 # ---------------------------------------------------------------- bars
-def _draw_bars(ctx, x, y, colour, show, error, stacked, sideways):
+def _draw_bars(ctx, x, y, colour, show, error, stacked, sideways, transparency=None):
     group, fixed = colour_role(ctx.data, colour)
     how = SHOW[show]
     table, n = _frame(ctx, on_x="y" if sideways else "x", on_y="x" if sideways else "y",
@@ -355,7 +357,7 @@ def _draw_bars(ctx, x, y, colour, show, error, stacked, sideways):
         if sideways:
             wide = wide.iloc[::-1]  # barh draws the first row at the bottom; put it at the top
         wide.plot(kind="barh" if sideways else "bar", stacked=True, ax=ax, rot=0, width=0.8,
-                  color=palette_for(table, n["colour"], ctx.settings))
+                  color=palette_for(table, n["colour"], ctx.settings), alpha=opacity(transparency))
         ax.legend(title=n["colour"])
         if sideways:
             ax.set_xlabel(n["y"] or "count")
@@ -363,6 +365,8 @@ def _draw_bars(ctx, x, y, colour, show, error, stacked, sideways):
             ax.set_ylabel(n["y"] or "count")
     else:
         kw = dict(data=table, **_hue(table, n), ax=ax, saturation=1)  # exact colours, as asked
+        if transparency is not None:
+            kw["alpha"] = opacity(transparency)
         if n["colour"]:
             kw["palette"] = palette_for(table, n["colour"], ctx.settings)
         else:
@@ -385,7 +389,7 @@ def _draw_bars(ctx, x, y, colour, show, error, stacked, sideways):
 
 
 # ---------------------------------------------------------------- lines
-def _draw_lines(ctx, x, y, colour, show, error, dots, dashed):
+def _draw_lines(ctx, x, y, colour, show, error, dots, dashed, transparency=None, thickness=None):
     group, fixed = colour_role(ctx.data, colour)
     table, n = _frame(ctx, measure=SHOW[show], size_role="y", x=x, y=y, colour=group)
     kw = dict(data=table, x=n["x"], y=n["y"], **_hue(table, n), ax=ctx.ax,
@@ -398,23 +402,42 @@ def _draw_lines(ctx, x, y, colour, show, error, dots, dashed):
         kw["marker"] = "o"
     if dashed:
         kw["linestyle"] = "--"
+    if transparency is not None:
+        kw["alpha"] = opacity(transparency)
+    if thickness is not None:
+        kw["linewidth"] = thickness
     sns.lineplot(**kw)
     _remember(ctx, "lines", table, n, show=show)
 
 
 # ---------------------------------------------------------------- dots
-def _draw_dots(ctx, x, y, colour, size, shape):
+def _draw_dots(ctx, x, y, colour, size, shape, transparency=None):
     group, fixed = colour_role(ctx.data, colour)
     size_col = size if not isinstance(size, (int, float)) else None
     table, n = _frame(ctx, x=x, y=y, colour=group, size=size_col, shape=shape)
     kw = dict(data=table, x=n["x"], y=n["y"], **_hue(table, n), size=n["size"], style=n["shape"], ax=ctx.ax)
-    if n["colour"]:
+    by_number = (n["colour"] is not None and scales.wanted(ctx.settings)
+                 and _is_number_column(table[n["colour"]]))
+    if by_number:
+        # chart.colour_scale(...): a smooth colour scale with a colour bar, not one colour per value
+        cmap, norm, extend, _ = scales.scale_for(ctx, table[n["colour"]], "dots")
+        kw.update(palette=cmap, hue_norm=norm)
+        kw.pop("hue_order", None)
+        if n["size"] is None and n["shape"] is None:
+            kw["legend"] = False
+    elif n["colour"]:
         kw["palette"] = palette_for(table, n["colour"], ctx.settings)
     else:
         kw["color"] = default_colour(ctx.settings, fixed)
     if isinstance(size, (int, float)):
         kw["s"] = size ** 2
+    if transparency is not None:
+        kw["alpha"] = opacity(transparency)
     sns.scatterplot(**kw)
+    if by_number:
+        from matplotlib.cm import ScalarMappable
+
+        _colour_bar(ctx, ScalarMappable(norm=norm, cmap=cmap), n["colour"], extend=extend)
     _remember(ctx, "dots", table, n)
 
 
@@ -520,7 +543,7 @@ def _to_grid(table, x, y, z, word):
 
 
 # ---------------------------------------------------------------- area
-def _draw_area(ctx, x, y, colour, stacked):
+def _draw_area(ctx, x, y, colour, stacked, transparency=None, thickness=None):
     group, fixed = colour_role(ctx.data, colour)
     table, n = _frame(ctx, measure="mean", size_role="y", x=x, y=y, colour=group)
     ax = ctx.ax
@@ -538,12 +561,13 @@ def _draw_area(ctx, x, y, colour, stacked):
     xs = list(wide.index)
     if stacked:
         ax.stackplot(xs, *[wide[c].fillna(0).to_numpy(dtype=float) for c in wide.columns],
-                     labels=[str(c) for c in wide.columns], colors=colours, alpha=0.85)
+                     labels=[str(c) for c in wide.columns], colors=colours,
+                     alpha=opacity(transparency, 0.85), linewidth=thickness)
     else:
         for c, col in zip(colours, wide.columns):
             ys = wide[col].to_numpy(dtype=float)
-            ax.fill_between(xs, ys, alpha=0.35, color=c, linewidth=0)
-            ax.plot(xs, ys, color=c, label=str(col) if n["colour"] else None)
+            ax.fill_between(xs, ys, alpha=opacity(transparency, 0.35), color=c, linewidth=0)
+            ax.plot(xs, ys, color=c, label=str(col) if n["colour"] else None, linewidth=thickness)
     if n["colour"]:
         ax.legend(title=n["colour"])
     ax.set_xlabel(n["x"])
@@ -553,23 +577,53 @@ def _draw_area(ctx, x, y, colour, stacked):
 
 
 # ---------------------------------------------------------------- histogram
-def _draw_histogram(ctx, x, bins, colour):
+HISTOGRAM_SHOW = ("count", "percent", "density")
+
+
+def _draw_histogram(ctx, x, bins, colour, show="count", stacked=False, steps=False, cumulative=False,
+                    bin_width=None, transparency=None, thickness=None):
     group, fixed = colour_role(ctx.data, colour)
     table, n = _frame(ctx, x=x, colour=group)
-    kw = dict(data=table, x=n["x"], **_hue(table, n), bins=bins, ax=ctx.ax)
+    kw = dict(data=table, x=n["x"], **_hue(table, n), ax=ctx.ax, stat=show, cumulative=cumulative)
+    if bin_width is not None:
+        # seaborn's binwidth= rounds to a whole number of bins over the data range, so the
+        # bars are not exactly that wide: give the edges instead, from the smallest value up
+        values = pd.to_numeric(table[n["x"]], errors="coerce").dropna()
+        start = float(values.min()) if len(values) else 0.0
+        stop = float(values.max()) if len(values) else 1.0
+        count = max(1, math.ceil((stop - start) / bin_width - 1e-9))
+        edges = start + bin_width * np.arange(count + 1)
+        kw["bins"] = edges if edges[-1] >= stop else np.append(edges, edges[-1] + bin_width)
+    else:
+        kw["bins"] = 10 if bins is None else bins
+    if n["colour"]:
+        # stacked: the stack adds up to all rows (100 % for percent); side by side, each
+        # group's bars add up to 100 % (or have an area of 1), so groups of different size compare
+        kw["multiple"] = "stack" if stacked else "layer"
+        kw["common_norm"] = bool(stacked)
+    if steps:
+        kw.update(element="step", fill=False)
+    if transparency is not None:
+        kw["alpha"] = opacity(transparency)
+    if thickness is not None:
+        kw["linewidth"] = thickness
     sns.histplot(**_seaborn_colours(kw, table, n, ctx, fixed))
-    ctx.ax.set_ylabel("count")
+    ctx.ax.set_ylabel(("cumulative " if cumulative else "") + show)
     _remember(ctx, "histogram", table, n)
 
 
 # ---------------------------------------------------------------- boxes and violins
-def _draw_boxes(ctx, x, y, colour, violins):
+def _draw_boxes(ctx, x, y, colour, violins, transparency=None, thickness=None):
     group, fixed = colour_role(ctx.data, colour)
     table, n = _frame(ctx, measure="median", size_role=_number_role(ctx.data, x, y), x=x, y=y, colour=group)
     kw = dict(data=table, x=n["x"], y=n["y"], **_hue(table, n), ax=ctx.ax, saturation=1)
     _seaborn_colours(kw, table, n, ctx, fixed)
     if n["colour"] and n["colour"] not in (n["x"], n["y"]):
         kw["gap"] = 0.1  # a little space between the boxes of one group
+    if thickness is not None:
+        kw["linewidth"] = thickness
+    ax = ctx.ax
+    before = set(ax.patches) | set(ax.collections)
     if violins:
         # cut=0: a violin stops at the smallest and largest value, so it never shows
         # values that are impossible (such as marks below 0)
@@ -577,11 +631,12 @@ def _draw_boxes(ctx, x, y, colour, violins):
     else:
         with _quiet():
             sns.boxplot(**kw)
+    faces_see_through([a for a in list(ax.patches) + list(ax.collections) if a not in before], transparency)
     _remember(ctx, "violins" if violins else "boxes", table, n)
 
 
 # ---------------------------------------------------------------- all dots
-def _draw_all_dots(ctx, x, y, colour):
+def _draw_all_dots(ctx, x, y, colour, transparency=None):
     group, fixed = colour_role(ctx.data, colour)
     table, n = _frame(ctx, measure="median", size_role=_number_role(ctx.data, x, y), x=x, y=y, colour=group)
     dodge = bool(n["colour"]) and n["colour"] not in (n["x"], n["y"])
@@ -591,6 +646,8 @@ def _draw_all_dots(ctx, x, y, colour):
     if dodge:
         keys.append(n["colour"])
     biggest = table.groupby(keys).size().max() if keys else len(table)
+    if transparency is not None:
+        kw["alpha"] = opacity(transparency)
     if biggest <= SWARM_LIMIT:
         sns.swarmplot(**kw)
     else:
@@ -599,18 +656,22 @@ def _draw_all_dots(ctx, x, y, colour):
         state = np.random.get_state()
         np.random.seed(JITTER_SEED)
         try:
-            sns.stripplot(alpha=0.6, **kw)
+            sns.stripplot(**{"alpha": 0.6, **kw})
         finally:
             np.random.set_state(state)
     _remember(ctx, "all_dots", table, n)
 
 
 # ---------------------------------------------------------------- density
-def _draw_density(ctx, x, colour):
+def _draw_density(ctx, x, colour, transparency=None, thickness=None):
     group, fixed = colour_role(ctx.data, colour)
     table, n = _frame(ctx, x=x, colour=group)
     # common_norm=False: each group's curve has area 1, so small groups are not squashed
     kw = dict(data=table, x=n["x"], **_hue(table, n), ax=ctx.ax, common_norm=False)
+    if transparency is not None:
+        kw["alpha"] = opacity(transparency)
+    if thickness is not None:
+        kw["linewidth"] = thickness
     sns.kdeplot(**_seaborn_colours(kw, table, n, ctx, fixed))
     _remember(ctx, "density", table, n)
 
@@ -658,7 +719,7 @@ def _draw_tree(ax, tree, orientation, n_leaves):
     ax.set_axis_off()
 
 
-def _draw_heatmap(ctx, x, y, value, numbers, cluster):
+def _draw_heatmap(ctx, x, y, value, numbers, cluster, transparency=None):
     wide, label = _heatmap_table(ctx, x, y, value)
     if wide.empty:
         raise SimplydataError(".heatmap() found no numbers to draw.")
@@ -679,8 +740,15 @@ def _draw_heatmap(ctx, x, y, value, numbers, cluster):
         trees = (row_tree, col_tree)
     lo, hi = np.nanmin(wide.to_numpy(dtype=float)), np.nanmax(wide.to_numpy(dtype=float))
     kw = dict(ax=ax, cbar=False, cmap="viridis")
-    if lo < 0 < hi:  # values on both sides of 0: 0 is white, below is blue, above is red
+    extend = "neither"
+    if scales.wanted(ctx.settings):  # chart.colour_scale(...)
+        cmap, norm, extend, _ = scales.scale_for(ctx, wide.to_numpy(dtype=float), "heatmap",
+                                                 diverge_at_zero=True)
+        kw.update(cmap=cmap, norm=norm)
+    elif lo < 0 < hi:  # values on both sides of 0: 0 is white, below is blue, above is red
         kw.update(cmap="RdBu_r", center=0)
+    if transparency is not None:
+        kw["alpha"] = opacity(transparency)
     if numbers:
         kw.update(annot=wide.map(_nice_number).to_numpy(), fmt="")
     with _quiet():
@@ -693,13 +761,13 @@ def _draw_heatmap(ctx, x, y, value, numbers, cluster):
         ax.yaxis.set_label_position("right")
         _draw_tree(ax.inset_axes([-0.22, 0, 0.2, 1]), trees[0], "left", n_rows)
         _draw_tree(ax.inset_axes([0, 1.02, 1, 0.2]), trees[1], "top", n_cols)
-    _colour_bar(ctx, ax.collections[0], label)
+    _colour_bar(ctx, ax.collections[0], label, **({"extend": extend} if extend != "neither" else {}))
     ctx.store["heatmap_table"] = wide  # the numbers drawn, in the order drawn
     ctx.last = dict(kind="heatmap", table=wide, x=None, y=None, colour=None)
 
 
 # ---------------------------------------------------------------- pie
-def _draw_pie(ctx, labels, values):
+def _draw_pie(ctx, labels, values, transparency=None):
     table, n = _frame(ctx, on_x=None, on_y=None, colour=labels, labels=labels, values=values)
     if n["values"] is None:
         sizes = table[n["labels"]].value_counts(sort=False, dropna=True)
@@ -711,9 +779,11 @@ def _draw_pie(ctx, labels, values):
     if sizes.sum() == 0:
         raise SimplydataError(".pie() needs at least one value bigger than 0.")
     ax = ctx.ax
+    before = set(ax.patches)
     ax.pie(sizes.to_numpy(dtype=float), labels=[str(i) for i in sizes.index],
            colors=palette_for(table, n["labels"], ctx.settings), autopct="%1.0f%%",
            startangle=90, counterclock=False, wedgeprops=dict(edgecolor="white", linewidth=1.5))
+    faces_see_through([p for p in ax.patches if p not in before], transparency)
     ax.grid(False)
     ctx.store["pie_sizes"] = sizes
     ctx.last = dict(kind="pie", table=table, x=n["labels"], y=n["values"], colour=None)
@@ -740,7 +810,7 @@ def _band_swapped_error(count, low, high):
     )
 
 
-def _draw_band(ctx, x, low, high, colour, label):
+def _draw_band(ctx, x, low, high, colour, label, transparency=None):
     group, fixed = colour_role(ctx.data, colour)
     table, n = _frame(ctx, on_y=None, x=x, low=low, high=high, colour=group)
     swapped = _rows_low_above_high(table[n["low"]], table[n["high"]])
@@ -764,7 +834,7 @@ def _draw_band(ctx, x, low, high, colour, label):
         shape = ax.fill_between(rows[n["x"]].to_numpy(),
                                 rows[n["low"]].to_numpy(dtype=float),
                                 rows[n["high"]].to_numpy(dtype=float),
-                                color=c, alpha=BAND_SHADE, linewidth=0)
+                                color=c, alpha=opacity(transparency, BAND_SHADE), linewidth=0)
         text = label if name is None else str(name)
         if text:
             entries.append((shape, text))
@@ -799,7 +869,7 @@ def _band_legend(ctx):
 
 
 # ---------------------------------------------------------------- polar
-def _draw_polar(ctx, angle, distance, colour, degrees):
+def _draw_polar(ctx, angle, distance, colour, degrees, transparency=None):
     group, fixed = colour_role(ctx.data, colour)
     table, n = _frame(ctx, on_x=None, on_y=None, angle=angle, distance=distance, colour=group)
     ax = ctx.ax
@@ -808,22 +878,29 @@ def _draw_polar(ctx, angle, distance, colour, degrees):
         if degrees:
             theta = np.deg2rad(theta)
         ax.scatter(theta, rows[n["distance"]].to_numpy(dtype=float), color=c,
-                   label=None if name is None else str(name), zorder=3)
+                   label=None if name is None else str(name), zorder=3, alpha=opacity(transparency))
     if n["colour"]:
         ax.legend(title=n["colour"], loc="upper left", bbox_to_anchor=(1.05, 1))
     _remember(ctx, "polar", table, {"x": n["angle"], "y": n["distance"], "colour": n["colour"]})
 
 
 # ---------------------------------------------------------------- contour and surface
-def _draw_contour(ctx, x, y, z, filled):
+def _draw_contour(ctx, x, y, z, filled, transparency=None, thickness=None):
     table, n = frame_for(ctx.data, x=x, y=y, z=z)
     gx, gy, gz = _to_grid(table, n["x"], n["y"], n["z"], "contour")
     ax = ctx.ax
+    kw = dict(levels=10, cmap="viridis")
+    if scales.wanted(ctx.settings):  # chart.colour_scale(...)
+        cmap, norm, extend, levels = scales.scale_for(ctx, gz, "contour")
+        kw = dict(cmap=cmap, norm=norm, levels=10 if levels is None else levels)
+        if levels is not None and filled:
+            kw["extend"] = extend  # values beyond the steps get the end colours
     if filled:
-        shapes = ax.contourf(gx, gy, gz, levels=10, cmap="viridis")
-        ax.contour(shapes, colors="white", linewidths=0.5, alpha=0.6, linestyles="solid")
+        shapes = ax.contourf(gx, gy, gz, alpha=opacity(transparency), **kw)
+        ax.contour(shapes, colors="white", linewidths=0.5 if thickness is None else thickness,
+                   alpha=0.6, linestyles="solid")
     else:
-        shapes = ax.contour(gx, gy, gz, levels=10, cmap="viridis")
+        shapes = ax.contour(gx, gy, gz, alpha=opacity(transparency), linewidths=thickness, **kw)
         ax.clabel(shapes, fontsize="small")
     ax.grid(False)
     ax.set_xlabel(n["x"])
@@ -833,40 +910,112 @@ def _draw_contour(ctx, x, y, z, filled):
     _remember(ctx, "contour", table, n, z=n["z"])
 
 
-def _draw_surface(ctx, x, y, z):
+def _draw_surface(ctx, x, y, z, transparency=None):
     table, n = frame_for(ctx.data, x=x, y=y, z=z)
     gx, gy, gz = _to_grid(table, n["x"], n["y"], n["z"], "surface")
     ax = ctx.ax
-    surf = ax.plot_surface(gx, gy, np.ma.masked_invalid(gz), cmap="viridis", linewidth=0,
-                           antialiased=True, vmin=np.nanmin(gz), vmax=np.nanmax(gz))
+    kw = dict(cmap="viridis", vmin=np.nanmin(gz), vmax=np.nanmax(gz))
+    extend = "neither"
+    if scales.wanted(ctx.settings):  # chart.colour_scale(...)
+        cmap, norm, extend, _ = scales.scale_for(ctx, gz, "surface")
+        kw = dict(cmap=cmap, norm=norm)
+    surf = ax.plot_surface(gx, gy, np.ma.masked_invalid(gz), linewidth=0, antialiased=True,
+                           alpha=opacity(transparency), **kw)
     ax.set_xlabel(n["x"])
     ax.set_ylabel(n["y"])
     ax.set_zlabel(n["z"])
-    _colour_bar(ctx, surf, n["z"], shrink=0.6, pad=0.1)
+    _colour_bar(ctx, surf, n["z"], shrink=0.6, pad=0.1, **({"extend": extend} if extend != "neither" else {}))
     ctx.store["grid"] = (gx, gy, gz)
     _remember(ctx, "surface", table, n, z=n["z"])
 
 
-def _draw_dots_3d(ctx, x, y, z, colour):
+def _draw_dots_3d(ctx, x, y, z, colour, transparency=None):
     group, fixed = colour_role(ctx.data, colour)
     table, n = _frame(ctx, on_x=None, on_y=None, x=x, y=y, z=z, colour=group)
     ax = ctx.ax
     g = n["colour"]
-    if g is not None and _is_number_column(table[g]) and table[g].nunique() > 8:
-        # a number column with many values: a colour scale, not separate groups
+    alpha = opacity(transparency)
+    if g is not None and _is_number_column(table[g]) and (
+            table[g].nunique() > 8 or scales.wanted(ctx.settings)):
+        # a number column with many values (or a colour_scale): a colour scale, not separate groups
+        kw = dict(cmap="viridis")
+        extend = "neither"
+        if scales.wanted(ctx.settings):
+            cmap, norm, extend, _ = scales.scale_for(ctx, table[g], "dots_3d")
+            kw = dict(cmap=cmap, norm=norm)
         pts = ax.scatter(table[n["x"]], table[n["y"]], table[n["z"]], c=table[g],
-                         cmap="viridis", depthshade=False)
-        _colour_bar(ctx, pts, g, shrink=0.6, pad=0.1)
+                         depthshade=False, alpha=alpha, **kw)
+        _colour_bar(ctx, pts, g, shrink=0.6, pad=0.1, **({"extend": extend} if extend != "neither" else {}))
     else:
         for (name, rows), c in zip(_groups(table, g), _group_colours(table, g, ctx, fixed)):
             ax.scatter(rows[n["x"]], rows[n["y"]], rows[n["z"]], color=c, depthshade=False,
-                       label=None if name is None else str(name))
+                       label=None if name is None else str(name), alpha=alpha)
         if g:
             ax.legend(title=g)
     ax.set_xlabel(n["x"])
     ax.set_ylabel(n["y"])
     ax.set_zlabel(n["z"])
     _remember(ctx, "dots_3d", table, n, z=n["z"])
+
+
+# ---------------------------------------------------------------- normal Q-Q dots
+QQ_SMALLEST = 3  # fewer values than this cannot show a shape
+
+
+def _draw_qq_dots(ctx, x, colour, transparency=None, thickness=None):
+    """scipy.stats.probplot: sorted values against normal quantiles at Filliben's positions,
+    and the least-squares line through the dots."""
+    from matplotlib import rcParams
+    from scipy import stats
+
+    table, n = _frame(ctx, on_x=None, on_y=None, x=x, colour=colour)
+    ax = ctx.ax
+    found, too_few = {}, []
+    groups = _groups(table, n["colour"])
+    colours = _group_colours(table, n["colour"], ctx, None)
+    for (name, rows), c in zip(groups, colours):
+        values = pd.to_numeric(rows[n["x"]], errors="coerce").dropna().to_numpy(dtype=float)
+        if len(values) < QQ_SMALLEST:
+            too_few.append(name)
+            continue
+        (theory, ordered), (slope, intercept, r) = stats.probplot(values, dist="norm")
+        ax.scatter(theory, ordered, color=c, alpha=opacity(transparency), zorder=3,
+                   label=None if name is None else str(name))
+        ends = np.array([theory[0], theory[-1]])
+        line_colour = rcParams["text.color"] if name is None else c
+        ax.plot(ends, intercept + slope * ends, color=line_colour, zorder=2.5,
+                linewidth=1.5 if thickness is None else thickness)
+        found[name] = dict(theory=theory, ordered=ordered, slope=slope, intercept=intercept, r=r)
+    if not found:
+        where = f' in any group of "{n["colour"]}"' if n["colour"] else ""
+        raise SimplydataError(f".qq_dots() needs at least {QQ_SMALLEST} numbers{where} to draw.")
+    if too_few and n["colour"]:
+        names = ", ".join(f'"{g}"' for g in too_few)
+        from .._core import chart_note
+
+        line = f"Note: .qq_dots() left out {names}: fewer than {QQ_SMALLEST} values."
+        chart_note(line, lambda _count, line=line: line)
+    if n["colour"]:
+        ax.legend(title=n["colour"])
+    ax.set_xlabel("normal quantiles")
+    ax.set_ylabel(n["x"])
+    ctx.store["qq"] = found
+    _remember(ctx, "qq_dots", table, {"x": None, "y": n["x"], "colour": n["colour"]})
+
+
+# ---------------------------------------------------------------- cumulative share
+def _draw_cumulative_share(ctx, x, colour, transparency=None, thickness=None):
+    group, fixed = colour_role(ctx.data, colour)
+    table, n = _frame(ctx, x=x, colour=group)
+    kw = dict(data=table, x=n["x"], **_hue(table, n), ax=ctx.ax, stat="proportion")
+    if transparency is not None:
+        kw["alpha"] = opacity(transparency)
+    if thickness is not None:
+        kw["linewidth"] = thickness
+    sns.ecdfplot(**_seaborn_colours(kw, table, n, ctx, fixed))
+    ctx.ax.set_ylabel("share at or below")
+    ctx.ax.set_xlabel(n["x"])
+    _remember(ctx, "cumulative_share", table, n)
 
 
 _KINDS = {"polar": "a round (polar) chart", "3d": "a 3D chart", None: "a flat chart"}
@@ -892,7 +1041,7 @@ class ChartWords:
 
     @friendly
     def bars(self, x=None, y=None, colour=None, show="average", error=None,
-             stacked=False, sideways=False):
+             stacked=False, sideways=False, transparency=None):
         """Bars. chart.bars(x="name", y="marks") (with sdata.example("marks"))
 
         colour="class" gives each group its own colour, or colour="blue" one colour.
@@ -901,7 +1050,9 @@ class ChartWords:
         error="standard deviation", "standard error" or "confidence interval" adds error
         bars (with show="average"); a line says which one was drawn.
         stacked=True puts groups on top of each other; sideways=True lays bars down.
+        transparency=0.5 makes them half see-through (0 is solid).
         """
+        transparency = check_transparency("bars", transparency)
         show = check_show("bars", show)
         check_error("bars", error, show)
         error = error_code("bars", error)
@@ -923,17 +1074,22 @@ class ChartWords:
         if error:
             say_error(error)
         return self._add("bars", "draw", _draw_bars, x=x, y=y, colour=colour, show=show,
-                         error=error, stacked=stacked, sideways=sideways)
+                         error=error, stacked=stacked, sideways=sideways, transparency=transparency)
 
     @friendly
-    def lines(self, x=None, y=None, colour=None, show="average", error=None, dots=False, dashed=False):
+    def lines(self, x=None, y=None, colour=None, show="average", error=None, dots=False, dashed=False,
+              thickness=None, transparency=None):
         """Lines. chart.lines(x="month", y="temperature", colour="city") (with sdata.example("weather"))
 
         colour="city" draws one line per group. dots=True marks each point.
         dashed=True draws a dashed line. show= works as in bars (not "count").
         error="standard deviation", "standard error" or "confidence interval" adds a shaded
         band; a line says which one was drawn.
+        thickness=3 draws thicker lines (normal is 2, in points); transparency=0.5 makes
+        them half see-through (0 is solid).
         """
+        thickness = check_thickness("lines", thickness)
+        transparency = check_transparency("lines", transparency)
         show = check_show("lines", show)
         if SHOW[show] == "count":
             raise SimplydataError('.lines() cannot use show="count". Use "average", "median" or "total".')
@@ -948,15 +1104,20 @@ class ChartWords:
         if error:
             say_error(error, "Shaded band")
         return self._add("lines", "draw", _draw_lines, x=x, y=y, colour=colour, show=show,
-                         error=error, dots=dots, dashed=dashed)
+                         error=error, dots=dots, dashed=dashed, transparency=transparency,
+                         thickness=thickness)
 
     @friendly
-    def dots(self, x=None, y=None, colour=None, size=None, shape=None):
+    def dots(self, x=None, y=None, colour=None, size=None, shape=None, transparency=None):
         """Dots (a scatter chart). chart.dots(x="hours", y="marks") (with sdata.example("marks"))
 
         colour="class" colours dots by group. size="height" makes dots bigger for bigger
         values, or size=10 makes all dots that big. shape="subject" gives each group a shape.
+        transparency=0.5 makes dots half see-through, so dots on top of each other show.
+        With colour= a number column and chart.colour_scale(...), dots get a smooth colour
+        scale and a colour bar.
         """
+        transparency = check_transparency("dots", transparency)
         x, y = single_list(x, y)
         if x is None or y is None:
             raise SimplydataError('.dots() needs x= and y=, for example chart.dots(x="hours", y="marks").')
@@ -964,7 +1125,8 @@ class ChartWords:
         size_col = size if not isinstance(size, (int, float)) else None
         check(self._data, x=x, y=y, colour=group, size=size_col, shape=shape)
         self._need_axes("dots")
-        return self._add("dots", "draw", _draw_dots, x=x, y=y, colour=colour, size=size, shape=shape)
+        return self._add("dots", "draw", _draw_dots, x=x, y=y, colour=colour, size=size, shape=shape,
+                         transparency=transparency)
 
     scatter = dots  # standard name, same word
 
@@ -975,13 +1137,17 @@ class ChartWords:
                 raise SimplydataError(f"{option}= in .{word}() should be True or False, not {value!r}.")
 
     @friendly
-    def area(self, x=None, y=None, colour=None, stacked=False):
+    def area(self, x=None, y=None, colour=None, stacked=False, transparency=None, thickness=None):
         """A line with the space under it coloured in.
         chart.area(x="year", y="population", colour="country") (with sdata.example("growth"))
 
         colour="country" gives each group its own area; stacked=True piles the groups on top
         of each other, so the top edge shows the total.
+        transparency=0.3 sets how see-through the coloured space is (0 is solid);
+        thickness=3 makes its top line thicker.
         """
+        transparency = check_transparency("area", transparency)
+        thickness = check_thickness("area", thickness)
         self._yes_no("area", stacked=stacked)
         x, y = single_list(x, y)
         if x is None or y is None:
@@ -992,36 +1158,71 @@ class ChartWords:
         check(self._data, x=x, y=y, colour=group)
         _check_numbers(self._data, "area", y=y)
         self._need_axes("area")
-        return self._add("area", "draw", _draw_area, x=x, y=y, colour=colour, stacked=stacked)
+        return self._add("area", "draw", _draw_area, x=x, y=y, colour=colour, stacked=stacked,
+                         transparency=transparency, thickness=thickness)
 
     @friendly
-    def histogram(self, x=None, bins=10, colour=None):
+    def histogram(self, x=None, bins=None, colour=None, show="count", stacked=False, steps=False,
+                  cumulative=False, bin_width=None, transparency=None, thickness=None):
         """Bars that count how many values fall in each range. chart.histogram(x="marks", bins=10)
         (with sdata.example("marks"))
 
-        bins= is how many bars (or a list of where each bar starts and ends).
-        colour="class" draws one see-through histogram per group.
+        bins= is how many bars (normally 10), or a list of where each bar starts and ends;
+        bin_width=5 makes every bar 5 wide instead.
+        show= is what the height of a bar means: "count" (normal), "percent" (of the values)
+        or "density" (the bars have an area of 1, to compare with a density curve).
+        colour="class" draws one see-through histogram per group; with show="percent" or
+        "density" each group is worked out on its own. stacked=True piles the groups on top
+        of each other instead (then the whole stack makes 100 %).
+        steps=True draws only the outline, as steps; cumulative=True adds up from the left,
+        so each bar counts the values up to its right edge.
+        transparency=0.5 makes the bars half see-through; thickness= sets the outline width.
         """
+        transparency = check_transparency("histogram", transparency)
+        thickness = check_thickness("histogram", thickness)
+        self._check_choice("histogram", "show", show, HISTOGRAM_SHOW)
+        self._yes_no("histogram", stacked=stacked, steps=steps, cumulative=cumulative)
         if x is None:
             raise SimplydataError('.histogram() needs x=, for example chart.histogram(x="marks").')
-        if isinstance(bins, bool) or not (
+        if bins is not None and bin_width is not None:
+            raise SimplydataError(
+                ".histogram() takes bins= or bin_width=, not both: bin_width= already says where the bars go.")
+        if bin_width is not None and (isinstance(bin_width, bool) or not isinstance(bin_width, (int, float, np.number))
+                                      or not np.isfinite(bin_width) or bin_width <= 0):
+            raise SimplydataError(
+                f"bin_width= should be a number bigger than 0, such as bin_width=5, not {bin_width!r}.")
+        if bins is not None and (isinstance(bins, bool) or not (
             (isinstance(bins, (int, np.integer)) and bins >= 1)
             or (isinstance(bins, (list, tuple, np.ndarray)) and len(bins) >= 2
                 and all(isinstance(b, (int, float, np.number)) for b in bins)
                 and all(a < b for a, b in zip(bins[:-1], bins[1:])))
-        ):
+        )):
             raise SimplydataError(
                 f"bins= should be a whole number of bars (such as bins=10) or a list of edges\n"
                 f"going up (such as bins=[0, 50, 70, 100]), not {bins!r}."
             )
-        bins = bins if isinstance(bins, (int, np.integer)) else [float(b) for b in bins]
+        if bins is not None and not isinstance(bins, (int, np.integer)):
+            bins = [float(b) for b in bins]
         group, _ = colour_role(self._data, colour)
+        if stacked and group is None:
+            raise SimplydataError('stacked=True needs groups to stack: add colour="a column".')
         check(self._data, x=x, colour=group)
         _check_numbers(self._data, "histogram", x=x)
+        if bin_width is not None and isinstance(x, str) and x in self._data.columns:
+            spread = pd.to_numeric(self._data[x], errors="coerce").agg(["min", "max"])
+            if spread.notna().all() and (spread["max"] - spread["min"]) / bin_width > 1000:
+                raise SimplydataError(
+                    f".histogram(bin_width={bin_width:g}) would make more than 1000 bars for \"{x}\".\n"
+                    "Choose a wider bin_width=.")
         self._need_axes("histogram")
-        return self._add("histogram", "draw", _draw_histogram, x=x, bins=bins, colour=colour)
+        return self._add("histogram", "draw", _draw_histogram, x=x, bins=bins, colour=colour, show=show,
+                         stacked=stacked, steps=steps, cumulative=cumulative,
+                         bin_width=None if bin_width is None else float(bin_width),
+                         transparency=transparency, thickness=thickness)
 
-    def _boxes_or_violins(self, word, x, y, colour):
+    def _boxes_or_violins(self, word, x, y, colour, transparency=None, thickness=None):
+        transparency = check_transparency(word, transparency)
+        thickness = check_thickness(word, thickness)
         if x is None and y is None:
             raise SimplydataError(
                 f'.{word}() needs y= (and usually x=), for example chart.{word}(x="class", y="marks").'
@@ -1029,35 +1230,40 @@ class ChartWords:
         group, _ = colour_role(self._data, colour)
         check(self._data, x=x, y=y, colour=group)
         self._need_axes(word)
-        return self._add(word, "draw", _draw_boxes, x=x, y=y, colour=colour, violins=word == "violins")
+        return self._add(word, "draw", _draw_boxes, x=x, y=y, colour=colour, violins=word == "violins",
+                         transparency=transparency, thickness=thickness)
 
     @friendly
-    def boxes(self, x=None, y=None, colour=None):
+    def boxes(self, x=None, y=None, colour=None, transparency=None, thickness=None):
         """Boxes that show the middle half of the values and the median.
         chart.boxes(x="class", y="marks") (with sdata.example("marks"))
 
         The line in the box is the median, the box holds the middle half of the values,
         the whiskers reach the rest, and lone dots are values far away from the others.
+        transparency=0.5 makes the boxes half see-through; thickness= sets the width of their lines.
         """
-        return self._boxes_or_violins("boxes", x, y, colour)
+        return self._boxes_or_violins("boxes", x, y, colour, transparency, thickness)
 
     @friendly
-    def violins(self, x=None, y=None, colour=None):
+    def violins(self, x=None, y=None, colour=None, transparency=None, thickness=None):
         """Shapes that are wide where many values are. chart.violins(x="class", y="marks")
         (with sdata.example("marks"))
 
         Each violin stops at the smallest and the largest value; the small box inside
         shows the middle half of the values.
+        transparency=0.5 makes the violins half see-through; thickness= sets the width of their lines.
         """
-        return self._boxes_or_violins("violins", x, y, colour)
+        return self._boxes_or_violins("violins", x, y, colour, transparency, thickness)
 
     @friendly
-    def count_bars(self, x=None, colour=None, sideways=False):
+    def count_bars(self, x=None, colour=None, sideways=False, transparency=None):
         """Bars that count how many rows each group has. chart.count_bars(x="fruit", colour="shop")
         (with sdata.example("fruit"))
 
         colour="shop" splits each bar by group; sideways=True lays the bars down.
+        transparency=0.5 makes them half see-through (0 is solid).
         """
+        transparency = check_transparency("count_bars", transparency)
         self._yes_no("count_bars", sideways=sideways)
         if x is None:
             raise SimplydataError('.count_bars() needs x=, for example chart.count_bars(x="fruit").')
@@ -1065,15 +1271,17 @@ class ChartWords:
         check(self._data, x=x, colour=group)
         self._need_axes("count_bars")
         return self._add("count_bars", "draw", _draw_bars, x=x, y=None, colour=colour, show="count",
-                         error=None, stacked=False, sideways=sideways)
+                         error=None, stacked=False, sideways=sideways, transparency=transparency)
 
     @friendly
-    def all_dots(self, x=None, y=None, colour=None):
+    def all_dots(self, x=None, y=None, colour=None, transparency=None):
         """Every value as a dot, spread out so no dot hides another.
         chart.all_dots(x="class", y="marks") (with sdata.example("marks"))
 
         Good on top of .boxes() or .violins(), to show each value as well.
+        transparency=0.5 makes them half see-through (0 is solid).
         """
+        transparency = check_transparency("all_dots", transparency)
         if x is None and y is None:
             raise SimplydataError(
                 '.all_dots() needs y= (and usually x=), for example chart.all_dots(x="class", y="marks").'
@@ -1081,25 +1289,29 @@ class ChartWords:
         group, _ = colour_role(self._data, colour)
         check(self._data, x=x, y=y, colour=group)
         self._need_axes("all_dots")
-        return self._add("all_dots", "draw", _draw_all_dots, x=x, y=y, colour=colour)
+        return self._add("all_dots", "draw", _draw_all_dots, x=x, y=y, colour=colour, transparency=transparency)
 
     @friendly
-    def density(self, x=None, colour=None):
+    def density(self, x=None, colour=None, transparency=None, thickness=None):
         """A smooth curve that is high where many values are. chart.density(x="marks", colour="class")
         (with sdata.example("marks"))
 
         colour="class" draws one curve per group; each curve has an area of 1.
+        thickness=3 draws thicker curves; transparency=0.5 makes them half see-through.
         """
+        transparency = check_transparency("density", transparency)
+        thickness = check_thickness("density", thickness)
         if x is None:
             raise SimplydataError('.density() needs x=, for example chart.density(x="marks").')
         group, _ = colour_role(self._data, colour)
         check(self._data, x=x, colour=group)
         _check_numbers(self._data, "density", x=x)
         self._need_axes("density")
-        return self._add("density", "draw", _draw_density, x=x, colour=colour)
+        return self._add("density", "draw", _draw_density, x=x, colour=colour, transparency=transparency,
+                         thickness=thickness)
 
     @friendly
-    def heatmap(self, x=None, y=None, value=None, numbers=False, cluster=False):
+    def heatmap(self, x=None, y=None, value=None, numbers=False, cluster=False, transparency=None):
         """A grid of coloured squares, one colour for each number.
         chart.heatmap(x="month", y="city", value="rain", numbers=True) (with sdata.example("weather"))
 
@@ -1107,7 +1319,9 @@ class ChartWords:
         table's rows): chart.heatmap(numbers=True).
         numbers=True writes the number in each square. cluster=True puts similar rows
         and columns next to each other and draws a tree of how alike they are.
+        chart.colour_scale(...) chooses the colours. transparency=0.3 lets grid lines show through.
         """
+        transparency = check_transparency("heatmap", transparency)
         self._yes_no("heatmap", numbers=numbers, cluster=cluster)
         named = [r for r, v in (("x", x), ("y", y), ("value", value)) if v is not None]
         if named and len(named) < 3:
@@ -1126,7 +1340,7 @@ class ChartWords:
             )
         self._need_axes("heatmap")
         return self._add("heatmap", "draw", _draw_heatmap, x=x, y=y, value=value,
-                         numbers=numbers, cluster=cluster)
+                         numbers=numbers, cluster=cluster, transparency=transparency)
 
     @friendly
     def empty_cells(self, columns=None):
@@ -1153,27 +1367,31 @@ class ChartWords:
         return self._add("empty_cells", "draw", _draw_empty_cells, columns=columns)
 
     @friendly
-    def pie(self, labels=None, values=None):
+    def pie(self, labels=None, values=None, transparency=None):
         """A circle cut into slices, one slice per group. chart.pie(labels="fruit", values="count")
         (with sdata.example("fruit"))
 
         Without values= each slice shows how many rows have that label.
+        transparency=0.3 makes the slices a little see-through (0 is solid).
         """
+        transparency = check_transparency("pie", transparency)
         if labels is None:
             raise SimplydataError('.pie() needs labels=, for example chart.pie(labels="fruit", values="count").')
         check(self._data, labels=labels, values=values)
         _check_numbers(self._data, "pie", values=values)
         self._need_axes("pie")
-        return self._add("pie", "draw", _draw_pie, labels=labels, values=values)
+        return self._add("pie", "draw", _draw_pie, labels=labels, values=values, transparency=transparency)
 
     @friendly
-    def polar(self, angle=None, distance=None, colour=None, degrees=True):
+    def polar(self, angle=None, distance=None, colour=None, degrees=True, transparency=None):
         """Dots on a round chart: how far round, and how far out.
         chart.polar(angle="wind_direction", distance="wind_speed", colour="city") (with sdata.example("weather"))
 
         Angles are in degrees (a full turn is 360), going round from the right, the way
         maths measures angles. Use degrees=False if your angles are in radians.
+        transparency=0.5 makes them half see-through (0 is solid).
         """
+        transparency = check_transparency("polar", transparency)
         self._yes_no("polar", degrees=degrees)
         if angle is None or distance is None:
             raise SimplydataError(
@@ -1184,7 +1402,7 @@ class ChartWords:
         _check_numbers(self._data, "polar", angle=angle, distance=distance)
         self._need_axes("polar", "polar")
         return self._add("polar", "draw", _draw_polar, angle=angle, distance=distance,
-                         colour=colour, degrees=degrees)
+                         colour=colour, degrees=degrees, transparency=transparency)
 
     def _xyz(self, word, x, y, z, **more):
         if x is None or y is None or z is None:
@@ -1195,44 +1413,55 @@ class ChartWords:
         _check_numbers(self._data, word, x=x, y=y, z=z)
 
     @friendly
-    def contour(self, x=None, y=None, z=None, filled=True):
+    def contour(self, x=None, y=None, z=None, filled=True, transparency=None, thickness=None):
         """A map where each colour band joins places with the same height.
         chart.contour(x="east", y="north", z="height") (with sdata.example("island"))
 
         z= is the height (or depth, or temperature). The points can be a full grid or
         scattered; scattered points are joined up with straight lines in between.
         filled=False draws only the lines, with their numbers written on them.
+        chart.colour_scale(...) chooses the colours (and steps= the bands).
+        transparency=0.3 lets what is under it show through; thickness= sets the width of the lines.
         """
+        transparency = check_transparency("contour", transparency)
+        thickness = check_thickness("contour", thickness)
         self._yes_no("contour", filled=filled)
         self._xyz("contour", x, y, z)
         self._need_axes("contour")
-        return self._add("contour", "draw", _draw_contour, x=x, y=y, z=z, filled=filled)
+        return self._add("contour", "draw", _draw_contour, x=x, y=y, z=z, filled=filled,
+                         transparency=transparency, thickness=thickness)
 
     @friendly
-    def surface(self, x=None, y=None, z=None):
+    def surface(self, x=None, y=None, z=None, transparency=None):
         """A 3D landscape: z= is how high the ground is.
         chart.surface(x="east", y="north", z="height") (with sdata.example("island"))
 
         The points can be a full grid or scattered; scattered points are joined up.
+        chart.colour_scale(...) chooses the colours. transparency=0.3 makes it a little see-through.
         """
+        transparency = check_transparency("surface", transparency)
         self._xyz("surface", x, y, z)
         self._need_axes("surface", "3d")
-        return self._add("surface", "draw", _draw_surface, x=x, y=y, z=z)
+        return self._add("surface", "draw", _draw_surface, x=x, y=y, z=z, transparency=transparency)
 
     @friendly
-    def dots_3d(self, x=None, y=None, z=None, colour=None):
+    def dots_3d(self, x=None, y=None, z=None, colour=None, transparency=None):
         """Dots floating in a 3D box. chart.dots_3d(x="hours", y="height", z="marks", colour="class")
         (with sdata.example("marks"))
 
-        colour="class" gives each group its own colour.
+        colour="class" gives each group its own colour; a number column with many values
+        gets a colour scale (chart.colour_scale(...) chooses it).
+        transparency=0.5 makes dots half see-through (0 is solid).
         """
+        transparency = check_transparency("dots_3d", transparency)
         group, _ = colour_role(self._data, colour)
         self._xyz("dots_3d", x, y, z, colour=group)
         self._need_axes("dots_3d", "3d")
-        return self._add("dots_3d", "draw", _draw_dots_3d, x=x, y=y, z=z, colour=colour)
+        return self._add("dots_3d", "draw", _draw_dots_3d, x=x, y=y, z=z, colour=colour,
+                         transparency=transparency)
 
     @friendly
-    def band(self, x=None, between=None, colour=None, label=None):
+    def band(self, x=None, between=None, colour=None, label=None, transparency=None):
         """A shaded band between a low and a high column, along x.
         chart.band(x="month", between=["lowest", "highest"]) (with a table that has those columns)
 
@@ -1241,7 +1470,9 @@ class ChartWords:
         band around a line. Draw .lines() as well to show the middle.
         colour="city" draws one band per group (in the group's colour), or colour="blue" one
         colour. label="Range" names the band in the legend. Empty cells leave a gap.
+        transparency= is how see-through the band is (normally 0.75; 0 is solid).
         """
+        transparency = check_transparency("band", transparency)
         example = 'chart.band(x="month", between=["lowest", "highest"])'
         if x is None or between is None:
             raise SimplydataError(f".band() needs x= and between=, for example {example}.")
@@ -1265,8 +1496,55 @@ class ChartWords:
             if swapped:
                 raise _band_swapped_error(swapped, low, high)
         self._need_axes("band")
-        self._add("band", "draw", _draw_band, x=x, low=low, high=high, colour=colour, label=label)
+        self._add("band", "draw", _draw_band, x=x, low=low, high=high, colour=colour, label=label,
+                  transparency=transparency)
         return self._replace("band_legend", "extra", _band_legend)
+
+    @friendly
+    def qq_dots(self, column=None, for_each=None, transparency=None, thickness=None):
+        """Dots that lie on a straight line when the values follow a normal (bell) curve.
+        chart.qq_dots("marks") (with sdata.example("marks"))
+
+        Each value, smallest to biggest, is drawn against where it would be if the values
+        were normal (a normal Q-Q plot, scipy.stats.probplot), with the straight line that
+        fits the dots best. Dots that bend away from the line at the ends mean long or short
+        tails; a curve means the values lean to one side. Good for checking residuals.
+        for_each="class" draws each group in its own colour, with its own line.
+        SciPy places the dots at Filliben's positions; R's qqnorm() uses slightly different
+        ones, and R's qqline() draws its line through the quartiles instead.
+        """
+        transparency = check_transparency("qq_dots", transparency)
+        thickness = check_thickness("qq_dots", thickness)
+        if column is None:
+            raise SimplydataError('.qq_dots() needs a column of numbers, for example chart.qq_dots("marks").')
+        if for_each is not None and not (isinstance(for_each, str) or is_listlike(for_each)):
+            raise SimplydataError(f'for_each= should be a column name, such as for_each="class", not {for_each!r}.')
+        check(self._data, x=column, colour=for_each)
+        _check_numbers(self._data, "qq_dots", column=column)
+        self._need_axes("qq_dots")
+        return self._add("qq_dots", "draw", _draw_qq_dots, x=column, colour=for_each,
+                         transparency=transparency, thickness=thickness)
+
+    @friendly
+    def cumulative_share(self, x=None, colour=None, transparency=None, thickness=None):
+        """A line that climbs from 0 to 1: the share of values at or below each x.
+        chart.cumulative_share(x="marks", colour="class") (with sdata.example("marks"))
+
+        Also called the empirical cumulative distribution (ECDF; seaborn's ecdfplot). It shows
+        every value, needs no bins, and groups of any size compare directly: at marks = 50 a
+        line at 0.3 means 30 % of that group scored 50 or less.
+        colour="class" draws one line per group. thickness=3 draws thicker lines.
+        """
+        transparency = check_transparency("cumulative_share", transparency)
+        thickness = check_thickness("cumulative_share", thickness)
+        if x is None:
+            raise SimplydataError('.cumulative_share() needs x=, for example chart.cumulative_share(x="marks").')
+        group, _ = colour_role(self._data, colour)
+        check(self._data, x=x, colour=group)
+        _check_numbers(self._data, "cumulative_share", x=x)
+        self._need_axes("cumulative_share")
+        return self._add("cumulative_share", "draw", _draw_cumulative_share, x=x, colour=colour,
+                         transparency=transparency, thickness=thickness)
 
     # standard names, same words
     bar = bars

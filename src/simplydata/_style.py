@@ -84,6 +84,8 @@ def rc_for(settings: dict) -> dict:
         scale = size / rc["font.size"]
         for key in _FONT_KEYS:
             rc[key] = rc[key] * scale
+    if settings.get("font_name"):
+        rc["font.family"] = settings["font_name"]
     if settings.get("grid") is False:
         rc["axes.grid"] = False
     elif settings.get("grid") is True:

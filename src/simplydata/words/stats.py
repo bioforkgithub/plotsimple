@@ -45,7 +45,7 @@ from .._core import PHASES, BaseChart
 from .._data import is_listlike
 from .._errors import SimplydataError, column_error, friendly
 from .._stats import ERROR_LONG, error_code, say_error, t_interval
-from ._helpers import colour_role, default_colour, palette_for
+from ._helpers import check_thickness, colour_role, default_colour, palette_for
 from .look import LookWords
 from .text import TextWords
 
@@ -58,6 +58,7 @@ except ImportError:  # pragma: no cover
 _CHART_KINDS = {
     "bars", "lines", "dots", "area", "histogram", "boxes", "violins", "heatmap", "pie",
     "polar", "contour", "surface", "dots_3d", "density", "count_bars", "all_dots",
+    "qq_dots", "cumulative_share",
 }
 _EXAMPLE = {
     "dots": 'chart.dots(x="hours", y="marks")',
@@ -492,7 +493,7 @@ def _dodge(ax, last, bars):
     return [xs + off for xs, off in zip(numbers, offsets)]
 
 
-def _draw_fit(ctx, word, how, colour, show_equation, band=False, degree=1):
+def _draw_fit(ctx, word, how, colour, show_equation, band=False, degree=1, thickness=None):
     last = _layer(ctx, word, {"dots"})
     table, x, y, group = last["table"], last["x"], last["y"], last["colour"]
     _numeric_xy(word, table, x, y)
@@ -506,19 +507,19 @@ def _draw_fit(ctx, word, how, colour, show_equation, band=False, degree=1):
         xs = np.linspace(xv.min(), xv.max(), 200)  # only over the x range of the data
         if how == "line":
             fit = linear_fit(xv, yv)
-            ax.plot(xs, fit["intercept"] + fit["slope"] * xs, color=col, zorder=3)
+            ax.plot(xs, fit["intercept"] + fit["slope"] * xs, color=col, zorder=3, linewidth=thickness)
             if band and "s" in fit:
                 low, high = line_band(fit, xs)
                 ax.fill_between(xs, low, high, color=col, alpha=0.2, linewidth=0, zorder=2.5)
             coefs, r2 = [fit["slope"], fit["intercept"]], fit["r2"]
         elif how == "curve":
             fit = poly_fit(xv, yv, degree)
-            ax.plot(xs, np.polyval(fit["coefs"], xs), color=col, zorder=3)
+            ax.plot(xs, np.polyval(fit["coefs"], xs), color=col, zorder=3, linewidth=thickness)
             coefs, r2 = fit["coefs"], fit["r2"]
         else:
             delta = 0.01 * np.ptp(xv) if len(xv) > 1000 else 0.0
             xs, ys = lowess(xv, yv, delta=delta)
-            ax.plot(xs, ys, color=col, zorder=3)
+            ax.plot(xs, ys, color=col, zorder=3, linewidth=thickness)
         drawn += 1
         if show_equation and how != "smooth":
             text = equation_text(coefs, r2)
@@ -530,16 +531,16 @@ def _draw_fit(ctx, word, how, colour, show_equation, band=False, degree=1):
         )
 
 
-def _draw_fit_line(ctx, band, show_equation, colour):
-    _draw_fit(ctx, "fit_line", "line", colour, show_equation, band=band)
+def _draw_fit_line(ctx, band, show_equation, colour, thickness=None):
+    _draw_fit(ctx, "fit_line", "line", colour, show_equation, band=band, thickness=thickness)
 
 
-def _draw_fit_curve(ctx, degree, show_equation, colour):
-    _draw_fit(ctx, "fit_curve", "curve", colour, show_equation, degree=degree)
+def _draw_fit_curve(ctx, degree, show_equation, colour, thickness=None):
+    _draw_fit(ctx, "fit_curve", "curve", colour, show_equation, degree=degree, thickness=thickness)
 
 
-def _draw_smooth_line(ctx, colour):
-    _draw_fit(ctx, "smooth_line", "smooth", colour, False)
+def _draw_smooth_line(ctx, colour, thickness=None):
+    _draw_fit(ctx, "smooth_line", "smooth", colour, False, thickness=thickness)
 
 
 def _draw_side_histograms(ctx):
@@ -571,9 +572,10 @@ def _draw_side_histograms(ctx):
     right.tick_params(labelleft=False, left=False, bottom=False, labelbottom=False)
 
 
-def _draw_line_at(ctx, axis, value, dashed, colour, label):
+def _draw_line_at(ctx, axis, value, dashed, colour, label, thickness=None):
     ax = ctx.ax
-    style = dict(color=colour, linestyle="--" if dashed else "-", linewidth=1.5, zorder=2.5)
+    style = dict(color=colour, linestyle="--" if dashed else "-",
+                 linewidth=1.5 if thickness is None else thickness, zorder=2.5)
     size = rcParams["legend.fontsize"]
     back = dict(boxstyle="round,pad=0.15", fc=rcParams["axes.facecolor"], ec="none", alpha=0.85)
     if axis == "x":
@@ -587,6 +589,38 @@ def _draw_line_at(ctx, axis, value, dashed, colour, label):
             # just outside the right edge, so it never sits on top of bars or dots
             ax.text(1.01, value, label, transform=ax.get_yaxis_transform(),
                     ha="left", va="center", color=colour, fontsize=size, clip_on=False)
+
+
+def _draw_line_with_slope(ctx, slope, through, dashed, colour, label, thickness=None):
+    ax = ctx.ax
+    if ax.get_xscale() != "linear" or ax.get_yscale() != "linear":
+        raise SimplydataError(
+            ".line_with_slope() draws a straight line, which is only straight on ordinary axes, "
+            "not on a log scale.\nLeave out .log_scale_x() / .log_scale_y(), or draw the line on a chart without them.")
+    line = ax.axline(through, slope=slope, color=colour, linestyle="--" if dashed else "-",
+                     linewidth=1.5 if thickness is None else thickness, zorder=2.5)
+    if label:
+        entries = ctx.store.setdefault("slope_lines", [])
+        entries.append((line, label))
+
+
+def _slope_legend(ctx):
+    """Put labelled slope lines in the legend (after every chart type, so lines cannot replace it)."""
+    entries = ctx.store.pop("slope_lines", [])
+    if not entries:
+        return
+    ax = ctx.ax
+    old = ax.get_legend()
+    handles, labels, title = [], [], None
+    if old is not None:
+        handles = list(old.legend_handles)
+        labels = [t.get_text() for t in old.get_texts()]
+        title = old.get_title().get_text() or None
+        old.remove()
+    for handle, text in entries:
+        handles.append(handle)
+        labels.append(text)
+    ax.legend(handles, labels, title=title)
 
 
 def _draw_shade(ctx, axis, low, high, colour):
@@ -655,7 +689,7 @@ class StatsWords:
                          dodge=bool(dodge))
 
     @friendly(renamed={"band": "confidence_band"})
-    def fit_line(self, confidence_band=False, show_equation=False, colour=None):
+    def fit_line(self, confidence_band=False, show_equation=False, colour=None, thickness=None):
         """A straight line that fits the dots best (linear regression). chart.fit_line()
 
         The line is found by least squares: it makes the squared distances from the dots
@@ -664,19 +698,23 @@ class StatsWords:
         likely is.
         show_equation=True writes the equation and R² on the chart.
         Each colour group gets its own line. colour="red" makes every line red.
+        thickness=3 draws a thicker line (normal is 2).
         """
         _fixed_colour("fit_line", colour)
+        thickness = check_thickness("fit_line", thickness)
         self._check_layer_now("fit_line", {"dots"})
         return self._add("fit_line", "extra", _draw_fit_line, band=bool(confidence_band),
-                         show_equation=bool(show_equation), colour=colour)
+                         show_equation=bool(show_equation), colour=colour, thickness=thickness)
 
     @friendly
-    def fit_curve(self, degree=2, show_equation=False, colour=None):
+    def fit_curve(self, degree=2, show_equation=False, colour=None, thickness=None):
         """A curve that fits the dots best. chart.fit_curve(degree=2)
 
         degree=2 is a curve with one bend (x²), degree=3 can bend twice (x³), and so on.
         show_equation=True writes the equation and R² on the chart.
+        thickness=3 draws a thicker curve (normal is 2).
         """
+        thickness = check_thickness("fit_curve", thickness)
         if isinstance(degree, bool) or not isinstance(degree, (int, np.integer)) or not 1 <= degree <= 10:
             raise SimplydataError(
                 f"degree= should be a whole number from 1 to 10, not {degree!r}.\n"
@@ -685,17 +723,19 @@ class StatsWords:
         _fixed_colour("fit_curve", colour)
         self._check_layer_now("fit_curve", {"dots"})
         return self._add("fit_curve", "extra", _draw_fit_curve, degree=int(degree),
-                         show_equation=bool(show_equation), colour=colour)
+                         show_equation=bool(show_equation), colour=colour, thickness=thickness)
 
     @friendly
-    def smooth_line(self, colour=None):
+    def smooth_line(self, colour=None, thickness=None):
         """A smooth line that follows the dots (LOWESS). chart.smooth_line()
 
         Good for seeing a trend that is not straight. Each colour group gets its own line.
+        thickness=3 draws a thicker line (normal is 2).
         """
         _fixed_colour("smooth_line", colour)
+        thickness = check_thickness("smooth_line", thickness)
         self._check_layer_now("smooth_line", {"dots"})
-        return self._add("smooth_line", "extra", _draw_smooth_line, colour=colour)
+        return self._add("smooth_line", "extra", _draw_smooth_line, colour=colour, thickness=thickness)
 
     @friendly
     def side_histograms(self):
@@ -704,20 +744,67 @@ class StatsWords:
         return self._add("side_histograms", "extra", _draw_side_histograms)
 
     @friendly
-    def line_at_x(self, value, dashed=True, colour="grey", label=None):
-        """A straight up-and-down line at one x value. chart.line_at_x(2010, label="2010")"""
+    def line_at_x(self, value, dashed=True, colour="grey", label=None, thickness=None):
+        """A straight up-and-down line at one x value. chart.line_at_x(2010, label="2010")
+
+        thickness=3 draws a thicker line (normal is 1.5).
+        """
         _check_position("line_at_x", "value", value, "line_at_x(10)")
         _fixed_colour("line_at_x", colour)
+        thickness = check_thickness("line_at_x", thickness)
         return self._add("line_at_x", "extra", _draw_line_at, axis="x", value=value, dashed=bool(dashed),
-                         colour=colour, label=None if label is None else str(label))
+                         colour=colour, label=None if label is None else str(label), thickness=thickness)
 
     @friendly
-    def line_at_y(self, value, dashed=True, colour="grey", label=None):
-        """A straight side-to-side line at one y value. chart.line_at_y(50, label="pass mark")"""
+    def line_at_y(self, value, dashed=True, colour="grey", label=None, thickness=None):
+        """A straight side-to-side line at one y value. chart.line_at_y(50, label="pass mark")
+
+        thickness=3 draws a thicker line (normal is 1.5).
+        """
         _check_position("line_at_y", "value", value, "line_at_y(50)")
         _fixed_colour("line_at_y", colour)
+        thickness = check_thickness("line_at_y", thickness)
         return self._add("line_at_y", "extra", _draw_line_at, axis="y", value=value, dashed=bool(dashed),
-                         colour=colour, label=None if label is None else str(label))
+                         colour=colour, label=None if label is None else str(label), thickness=thickness)
+
+    @friendly
+    def line_with_slope(self, slope, through=None, intercept=None, dashed=True, colour="grey", label=None,
+                        thickness=None):
+        """A straight line with a given slope, right across the chart. chart.line_with_slope(1, through=(0, 0))
+
+        chart.line_with_slope(1, label="1:1") draws the 1:1 line (y = x) on a chart of
+        observed against predicted values. through=(2, 10) makes the line pass through
+        x = 2, y = 10 (normally through 0, 0); intercept=5 instead sets where it crosses
+        x = 0, so y = intercept + slope * x. label= names it in the legend.
+        thickness=3 draws a thicker line (normal is 1.5). Ordinary (not log) axes only.
+        """
+        if isinstance(slope, bool) or not isinstance(slope, (int, float, np.integer, np.floating)) \
+                or not np.isfinite(slope):
+            raise SimplydataError(
+                f".line_with_slope() needs a number for the slope, not {slope!r}.\n"
+                "For example chart.line_with_slope(1) for the 1:1 line (y = x).")
+        if through is not None and intercept is not None:
+            raise SimplydataError(
+                ".line_with_slope() takes through= or intercept=, not both: both say where the line goes.\n"
+                "For example chart.line_with_slope(2, intercept=5) or chart.line_with_slope(2, through=(1, 7)).")
+        if intercept is not None:
+            _check_position("line_with_slope", "intercept", intercept, "line_with_slope(2, intercept=5)")
+            through = (0, intercept)
+        elif through is None:
+            through = (0.0, 0.0)
+        else:
+            if isinstance(through, str) or not is_listlike(through) or len(through) != 2:
+                raise SimplydataError(
+                    f".line_with_slope() needs through= as a point (x, y), such as through=(0, 0), not {through!r}.")
+            for v in through:
+                _check_position("line_with_slope", "through", v, "line_with_slope(1, through=(0, 0))")
+            through = (through[0], through[1])
+        _fixed_colour("line_with_slope", colour)
+        thickness = check_thickness("line_with_slope", thickness)
+        self._add("line_with_slope", "extra", _draw_line_with_slope, slope=slope, through=through,
+                  dashed=bool(dashed), colour=colour, label=None if label is None else str(label),
+                  thickness=thickness)
+        return self._replace("slope_legend", "extra", _slope_legend)
 
     def _shade(self, axis, low, high, colour):
         word = f"shade_between_{axis}"

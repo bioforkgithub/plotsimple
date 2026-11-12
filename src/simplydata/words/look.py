@@ -9,6 +9,7 @@ from .._data import is_listlike
 from .._errors import SimplydataError, friendly, suggest
 from .._style import STYLES
 from .._units import PER_INCH, SCREEN_RESOLUTION, check_number, check_unit
+from ._colour_scale import check_options, check_used, resolve_map
 from .charts import set_order
 
 # Colour names we suggest from when a name is misspelt ("bleu" -> "blue").
@@ -217,6 +218,30 @@ class LookWords:
         return self._set(colours=[check_colour(n, "colours") for n in names])
 
     colors = colours  # American spelling, same word
+
+    @friendly
+    def colour_scale(self, *names, middle=None, log=False, steps=None, between=None):
+        """The colours for numbers on a heatmap, contour map, surface or dots coloured by a number column.
+        chart.colour_scale("magma") (with chart.heatmap(x="month", y="city", value="rain") on sdata.example("weather"))
+
+        A name: "viridis" (normal), "cividis", "magma", "blues", "greens" ..., "blue to red"
+        or "purple to orange" for numbers on both sides of a middle; these are all safe
+        for colour-blind readers. Any matplotlib colour map name works too ("Blues", "turbo",
+        "rocket"), and two or more colours make your own: chart.colour_scale("white", "navy").
+        middle=0 puts the middle colour of a two-sided scale at 0 (or middle=1 for ratios);
+        the scale goes equally far on both sides, so a step of 1 is the same change of colour.
+        log=True spreads the colours on a log scale (1, 10, 100 ... evenly), for counts
+        that span many sizes. steps=5 cuts the scale into 5 colours, or steps=[0, 5, 10, 20]
+        sets where each colour starts. between=[0, 30] fixes the ends of the scale, so
+        several charts can share it; values beyond them get the end colour (the colour bar
+        shows an arrow).
+        """
+        cmap, shown = resolve_map(names)
+        middle, log, steps, between = check_options(middle, log, steps, between)
+        self._set(colour_scale=dict(map=cmap, name=shown, middle=middle, log=log, steps=steps, between=between))
+        return self._replace("colour_scale_check", "finish", check_used)
+
+    color_scale = colour_scale  # American spelling, same word
 
     # ------------------------------------------------------------ grid
     @friendly
