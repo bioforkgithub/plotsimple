@@ -212,6 +212,18 @@ and `a`, `b` in `ps.side_by_side(a, b)` are charts you made first.
 | `standard_deviation_of` | `table.standard_deviation_of("marks", for_each="class")` | marks | How spread out the numbers are: the sample standard deviation (divide by n - 1). |
 | `correlation_between` | `table.correlation_between("hours", "marks")` | marks | How strongly two columns of numbers go up or down together, from -1 to 1. |
 
+## Statistical tests
+
+| Word | Example | Table | What it does |
+|---|---|---|---|
+| `compare_averages` | `table.compare_averages("marks", between="class")` | marks | Are the averages of the groups really different, or could it be chance? |
+| `compare_each_pair` | `table.compare_each_pair("marks", between="class")` | marks | Which pairs of groups differ? Every pair is compared, with Holm's correction. |
+| `compare_before_after` | `table.compare_before_after("Maths", "Science")` | marks | Did the values change from one column to the other, row by row, more than chance? |
+| `compare_average_to` | `table.compare_average_to("marks", 60)` | marks | Is the average of a column different from a number you choose, or could it be chance? |
+| `compare_counts` | `table.compare_counts("result", between="class")` | marks | Does how often each value turns up differ between groups, more than chance? |
+| `fit_straight_line` | `table.fit_straight_line(x="hours", y="marks")` | marks | Fit the straight line y = slope * x + intercept that best follows the points. |
+| `fit_formula` | `table.fit_formula("population = a * exp(b * (year - 2000))")` | growth | Find the values in a formula that make it follow the data best. |
+
 ## Combine and reshape
 
 | Word | Example | Table | What it does |

@@ -53,6 +53,9 @@ GROUPS = [
     ("Summaries", ["table.count_rows", "table.count_each", "table.average_of", "table.median_of",
                    "table.total_of", "table.smallest_of", "table.biggest_of",
                    "table.standard_deviation_of", "table.correlation_between"]),
+    ("Statistical tests", ["table.compare_averages", "table.compare_each_pair", "table.compare_before_after",
+                           "table.compare_average_to", "table.compare_counts", "table.fit_straight_line",
+                           "table.fit_formula"]),
     ("Combine and reshape", ["table.join_with", "table.add_rows_from", "table.turn_columns_into_rows",
                              "table.turn_rows_into_columns"]),
     ("Undo and finish", ["table.undo", "table.steps", "table.start_again", "table.save",
@@ -295,6 +298,21 @@ HELP_EXAMPLES = {
     "table.biggest_of": _tx("weather", 'print(table.biggest_of("temperature", for_each="city"))'),
     "table.standard_deviation_of": _tx("marks", 'print(table.standard_deviation_of("marks", for_each="class"))'),
     "table.correlation_between": _tx("marks", 'table.correlation_between("hours", "marks")'),
+    # statistical tests
+    "table.compare_averages": _tx("marks", 'result = table.compare_averages("marks", between="class")\n'
+                                           'table.compare_averages("marks", between="class", based_on="ranks")\n'
+                                           'result.save("marks_test.csv")'),
+    "table.compare_each_pair": _tx("marks", 'table.compare_each_pair("marks", between="class")'),
+    "table.compare_before_after": _tx("marks", 'table.keep_columns("name", "subject", "marks")\n'
+                                               'table.turn_rows_into_columns(names_from="subject", values_from="marks")\n'
+                                               'table.compare_before_after("Maths", "Science")'),
+    "table.compare_average_to": _tx("marks", 'table.compare_average_to("marks", 60)'),
+    "table.compare_counts": _tx("marks", 'table.add_group_column("result", from_column="marks", cut_at=[60], '
+                                         'names=["below 60", "60 or more"])\n'
+                                         'table.compare_counts("result", between="class")'),
+    "table.fit_straight_line": _tx("marks", 'table.fit_straight_line(x="hours", y="marks")'),
+    "table.fit_formula": _tx("growth", 'table.keep_rows("country", equal_to="Applia")\n'
+                                       'table.fit_formula("population = a * exp(b * (year - 2000))")'),
     # combine and reshape
     "table.join_with": _tx("marks", 'ages = {"name": ["Asha", "Ben"], "age": [12, 13]}\n'
                                     'table.join_with(ages, using="name", keep="all rows from this table")\n'
@@ -1319,6 +1337,10 @@ LESSONS = [
                 ('table.correlation_between("hours", "marks")', "Do more hours go with more marks? "
                                                                 "The answer is a number r from -1 "
                                                                 "to 1, explained in words."),
+                ('table.compare_averages("marks", between="class")', "Are the classes really different, "
+                                                                     "or could it be chance? plotsimple "
+                                                                     "picks the test and explains the "
+                                                                     "answer in words."),
             ]),
             ("A summary is a table too, so you can sort it and draw it.", [
                 ("import plotsimple as ps", "Load plotsimple."),
@@ -1372,7 +1394,8 @@ LESSONS = [
             'Work out the average temperature for_each="city" in the weather table and draw it as bars.',
             "Is there a link between height and marks? Use correlation_between to find out.",
         ],
-        words=["table.average_of", "table.biggest_of", "table.correlation_between", "table.total_of",
+        words=["table.average_of", "table.biggest_of", "table.correlation_between", "table.compare_averages",
+               "table.total_of",
                "table.chart", "table.join_with", "table.turn_columns_into_rows", "table.add_rows_from",
                "table.done"],
     ),

@@ -6,10 +6,11 @@ from .._errors import PlotsimpleError
 from ._base import BaseTable
 from .columns import ColumnWords
 from .rows import RowWords
+from .stat_tests import StatTestWords
 from .summaries import SummaryWords
 
 
-class Table(RowWords, ColumnWords, SummaryWords, BaseTable):
+class Table(RowWords, ColumnWords, SummaryWords, StatTestWords, BaseTable):
     """A table. Make one with ps.table(...), then add steps: table.keep_rows(...), table.sort_by(...)."""
 
 
