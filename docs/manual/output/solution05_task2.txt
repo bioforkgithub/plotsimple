@@ -1,0 +1,1 @@
+Error bars: the standard error of the average (how sure we are about the average itself).

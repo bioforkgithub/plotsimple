@@ -55,6 +55,20 @@ to try yourself.
 - `sdata.help("bars")` explains one word: what it does, its options and an example
   (table and number words too: `sdata.help("keep_rows")`, `sdata.help("average")`)
 - `sdata.example()` lists the made-up tables to practise with (marks, weather, fruit, growth, island)
+- `sdata.lesson(3, solutions=True)` adds a worked solution to each "Try it yourself" task
+
+## Manual
+
+**[The simplydata manual (PDF)](docs/manual/simplydata_manual.pdf)** has everything in one book:
+all fifteen lessons with the real charts and output they make, every word explained (its options,
+an example you can run and the library that does the work underneath), the data science ideas
+behind the numbers (average or median, standard deviation or standard error, confidence intervals,
+p-values, effect sizes, and which statistical test to use when), and a worked solution for every
+task.
+
+The manual is made from the code by `python docs/make_manual.py` (it needs a LaTeX system with
+`pdflatex`), so it never goes out of date: a test fails if
+[docs/manual/simplydata_manual.tex](docs/manual/simplydata_manual.tex) no longer matches the code.
 
 ## Tables
 

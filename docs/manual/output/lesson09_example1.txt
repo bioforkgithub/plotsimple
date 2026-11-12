@@ -1,0 +1,33 @@
+simplydata table: 54 rows, 6 columns
+   name class  subject  hours  marks  height
+0  Asha     A    Maths    6.3     61     144
+1  Asha     A  Science    3.8     66     144
+2  Asha     A  English    7.6     77     144
+3   Ben     A    Maths    6.4     73     152
+4   Ben     A  Science    9.2     98     152
+5   Ben     A  English    6.2     71     152
+6  Chen     A    Maths    7.9     81     151
+7  Chen     A  Science    3.5     59     151
+8  Chen     A  English    2.5     46     151
+9  Dina     A    Maths    6.5     74     155
+   name class  subject  hours  marks  height
+0  Asha     A    Maths    6.3     61     144
+1  Asha     A  Science    3.8     66     144
+2  Asha     A  English    7.6     77     144
+3   Ben     A    Maths    6.4     73     152
+4   Ben     A  Science    9.2     98     152
+    name class  subject  hours  marks  height
+51  Rosa     C    Maths    3.4     55     162
+52  Rosa     C  Science    1.6     45     162
+53  Rosa     C  English    7.9     71     162
+['name', 'class', 'subject', 'hours', 'marks', 'height']
+The table has 54 rows and 6 columns.
+
+ column   kind  empty cells smallest biggest average different values
+   name   text            0                                        18
+  class   text            0                                         3
+subject   text            0                                         3
+  hours number            0      0.5     9.4    5.33
+  marks number            0       31      98   64.91
+ height number            0      141     162  150.39
+The table has 54 rows.

@@ -1,0 +1,5 @@
+Kept 18 of 54 rows.
+   name class  subject  hours  marks  height
+0  Jade     B    Maths    9.4     81     146
+1  Kofi     B  Science    8.5     74     146
+2  Kofi     B    Maths    7.5     68     146

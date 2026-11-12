@@ -1,0 +1,8 @@
+Kept 18 of 54 rows.
+Undone: sort by hours (biggest first)
+   name class  subject  hours  marks  height
+0   Gus     B    Maths    6.8     67     151
+1   Gus     B  Science    4.9     69     151
+2   Gus     B  English    2.2     58     151
+3  Hana     B    Maths    6.1     91     144
+4  Hana     B  Science    5.0     71     144

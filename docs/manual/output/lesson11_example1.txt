@@ -1,0 +1,24 @@
+Replaced 2 cells in marks.
+Empty cells in each column:
+  name     0
+  class    0
+  subject  0
+  hours    0
+  marks    2
+  height   0
+Total: 2 cells empty.
+Filled 2 cells in marks.
+Undone: fill empty cells in marks with the average
+Removed 2 of 54 rows. 52 rows left.
+simplydata table: 52 rows, 6 columns
+   name class  subject  hours  marks  height
+0  Asha     A  Science    3.8   66.0     144
+1  Asha     A  English    7.6   77.0     144
+2   Ben     A  Science    9.2   98.0     152
+3   Ben     A  English    6.2   71.0     152
+4  Chen     A    Maths    7.9   81.0     151
+5  Chen     A  Science    3.5   59.0     151
+6  Chen     A  English    2.5   46.0     151
+7  Dina     A    Maths    6.5   74.0     155
+8  Dina     A  Science    4.5   79.0     155
+9  Dina     A  English    2.3   57.0     155

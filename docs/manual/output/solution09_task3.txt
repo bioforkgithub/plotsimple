@@ -1,0 +1,1 @@
+How many rows have each "city" (3 different values): Frostby 12, Rainbridge 12, Sunnyvale 12.

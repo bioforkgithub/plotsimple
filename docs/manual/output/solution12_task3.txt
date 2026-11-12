@@ -1,0 +1,1 @@
+The correlation between "height" and "marks" is r = 0.03 (Pearson, 54 rows): very weak, going up, and could easily be chance (p = 0.826).

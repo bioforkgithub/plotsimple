@@ -1,0 +1,2 @@
+The average "marks" is 62.3 in English, 62.8 in Maths and 69.7 in Science. Differences this big between the groups could easily be chance (p = 0.264); this does not show that there is no difference. Omega-squared = 0.0138: the groups explain about 1 % of the differences in "marks".
+Test: Welch's one-way ANOVA (F = 1.39, df = 2 and 33.8), the usual test for three or more averages; it does not assume the groups have the same spread. To see which groups differ: table.compare_each_pair("marks", between="subject").

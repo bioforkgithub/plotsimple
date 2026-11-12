@@ -356,6 +356,72 @@ def test_cheatsheet_is_up_to_date():
     assert written == module.make(), "Run: python docs/make_cheatsheet.py"
 
 
+# ---------------------------------------------------------------- solutions and the manual
+SOLUTIONS = [(n, t) for n in LESSON_NUMBERS for t in range(1, len(learn.LESSONS[n - 1]["task"]) + 1)]
+
+
+@pytest.mark.parametrize("number", LESSON_NUMBERS)
+def test_every_task_has_a_worked_solution(number):
+    les = learn.LESSONS[number - 1]
+    solutions = learn.lesson_solutions(number)
+    assert len(solutions) == len(les["task"]), f"lesson {number}: one solution for each task"
+    for source, explain in solutions:
+        assert source.startswith("import simplydata as sdata\n"), "a solution runs on its own"
+        assert explain.strip() and "\n" not in explain
+
+
+@pytest.mark.parametrize("number, task", SOLUTIONS)
+def test_every_solution_runs(number, task, tmp_path, monkeypatch, capsys):
+    source, _ = learn.lesson_solutions(number)[task - 1]
+    _run(source, tmp_path, monkeypatch)
+    for name in _saved_files(source):
+        assert (tmp_path / name).stat().st_size > 0, name
+
+
+def test_lesson_shows_solutions_only_when_asked(capsys):
+    sdata.lesson(3)
+    out = capsys.readouterr().out
+    assert "Solutions" not in out and "sdata.lesson(3, solutions=True)" in out
+    sdata.lesson(3, solutions=True)
+    out = capsys.readouterr().out
+    assert "\nSolutions\n" in out
+    for source, _ in learn.lesson_solutions(3):
+        for line in source.splitlines():
+            assert f"        {line}" in out
+
+
+def _make_manual():
+    spec = importlib.util.spec_from_file_location("make_manual", ROOT / "docs" / "make_manual.py")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def test_manual_is_up_to_date():
+    """The manual's LaTeX is made from the code; it must match what the code makes now."""
+    written = (ROOT / "docs" / "manual" / "simplydata_manual.tex").read_text(encoding="utf-8")
+    assert written == _make_manual().make(), "Run: python docs/make_manual.py"
+
+
+def test_manual_has_every_figure_and_word():
+    manual = _make_manual()
+    tex = (ROOT / "docs" / "manual" / "simplydata_manual.tex").read_text(encoding="utf-8")
+    for figure in re.findall(r"\\includegraphics\[[^\]]*\]\{([^}]+)\}", tex):
+        assert (ROOT / "docs" / "manual" / figure).is_file(), f"{figure} is missing: run python docs/make_manual.py"
+    entries = set(re.findall(r"^\\wordentry\{.*\}\{(word:[^}]+)\}$", tex, flags=re.M))
+    assert entries == {manual.label(key) for key in KEYS}, "every word has one dictionary entry"
+    for number in LESSON_NUMBERS:
+        assert re.search(rf"^\\unsection\{{Lesson {number}: .*\}}\{{solutions:{number}\}}$", tex, flags=re.M), number
+
+
+@pytest.mark.parametrize("text, expected", [
+    ("50 % & $5 #1 {a} ~ ^ \\ _", r"50 \% \& \$5 \#1 \{a\} \textasciitilde{} \textasciicircum{} \textbackslash{} \_"),
+    ("20 °C, R²", r"20 \textdegree{}C, R\textsuperscript{2}"),
+])
+def test_manual_escapes_latex_special_characters(text, expected):
+    assert _make_manual().esc(text) == expected
+
+
 def test_readme_example_runs(tmp_path, monkeypatch):
     text = (ROOT / "README.md").read_text(encoding="utf-8")
     code = text.split("```python", 1)[1].split("```", 1)[0]

@@ -1,0 +1,9 @@
+simplydata numbers: 5 numbers
+[12, 15,  9, 20, 14]
+simplydata numbers: 5 numbers
+[24, 30, 18, 40, 28]
+Undone: add 1
+Kept 4 of 5 numbers.
+The average of the numbers is 15.25 (4 numbers).
+The standard deviation of the numbers is 3.4 (4 numbers).
+1. keep numbers above 10

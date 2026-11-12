@@ -1,0 +1,4 @@
+Kept 9 of 36 rows.
+1. remove columns wind_direction, wind_speed
+2. keep rows where month_number is between 6 and 8
+3. sort by rain (biggest first)

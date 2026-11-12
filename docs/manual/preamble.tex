@@ -1,0 +1,175 @@
+% The look of the simplydata manual: fonts, colours, code, boxes and headings.
+% Written by hand; docs/make_manual.py copies it to the top of simplydata_manual.tex.
+\documentclass[11pt,a4paper,openany]{book}
+
+% no dates or random IDs in the PDF, so it only changes when the manual changes
+\pdfinfoomitdate=1
+\pdftrailerid{}
+\pdfsuppressptexinfo=-1
+
+\usepackage[T1]{fontenc}
+\usepackage{XCharter}
+\usepackage[xcharter,vvarbb]{newtxmath}
+\usepackage[lining,scale=0.88]{FiraSans}
+\usepackage[varqu,varl,scaled=0.92]{zi4}
+\usepackage{microtype}
+\usepackage[a4paper,top=2.6cm,bottom=2.6cm,inner=2.6cm,outer=2.4cm,headheight=14pt]{geometry}
+\usepackage[dvipsnames,table]{xcolor}
+\usepackage{graphicx}
+\usepackage{caption}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{array}
+\usepackage{multicol}
+\usepackage{enumitem}
+\usepackage{needspace}
+\usepackage{titlesec}
+\usepackage{fancyhdr}
+\usepackage{listings}
+\usepackage{tikz}
+\usepackage[most]{tcolorbox}
+\usepackage[hidelinks]{hyperref}
+\usepackage{bookmark}
+\usepackage[titles]{tocloft}
+\setlength{\cftchapnumwidth}{2em}
+
+\setcounter{tocdepth}{1}
+\makeatletter\renewcommand{\@pnumwidth}{2.2em}\makeatother
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0.55em plus 0.2em}
+\setlength{\emergencystretch}{3em}
+\tolerance=2000
+\raggedbottom
+
+% ------------------------------------------------------------------ colours
+\definecolor{brand}{HTML}{1F5F99}
+\definecolor{brandlight}{HTML}{E8F0F8}
+\definecolor{codebg}{HTML}{F5F7FA}
+\definecolor{coderule}{HTML}{D5DCE4}
+\definecolor{codefg}{HTML}{24292F}
+\definecolor{codekw}{HTML}{1F5F99}
+\definecolor{codestr}{HTML}{A33B00}
+\definecolor{codecom}{HTML}{6A737D}
+\definecolor{outbg}{HTML}{FBFAF3}
+\definecolor{outrule}{HTML}{C9B458}
+\definecolor{goodbg}{HTML}{EEF7EE}
+\definecolor{goodframe}{HTML}{2E7D32}
+\definecolor{trybg}{HTML}{FFF4E5}
+\definecolor{tryframe}{HTML}{C25E00}
+\definecolor{inkgrey}{HTML}{5A6570}
+
+\hypersetup{colorlinks=true,linkcolor=brand,urlcolor=brand,citecolor=brand,
+  pdftitle={simplydata: simple words for data science},pdfauthor={The simplydata project},
+  pdfsubject={The simplydata manual},bookmarksnumbered=true}
+
+% ------------------------------------------------------------------ code
+\newcommand{\code}[1]{\texttt{\color{codefg}#1}}
+\newcommand{\codeline}[1]{\hspace*{1.2em}\texttt{\small\color{codefg}#1}}
+
+\lstset{
+  basicstyle=\ttfamily\small\color{codefg},
+  columns=fullflexible, keepspaces=true, upquote=true, showstringspaces=false,
+  breaklines=true, breakatwhitespace=false,
+  postbreak=\mbox{\textcolor{codecom}{$\hookrightarrow$}\space},
+  extendedchars=true, inputencoding=utf8,
+  literate={°}{{\textdegree}}1 {²}{{\textsuperscript{2}}}1 {³}{{\textsuperscript{3}}}1
+           {·}{{\textperiodcentered}}1 {×}{{\texttimes}}1 {–}{{--}}1 {—}{{---}}1 {…}{{\dots}}1
+           {±}{{\textpm}}1 {µ}{{\textmu}}1 {é}{{\'e}}1,
+}
+\lstdefinestyle{py}{
+  language=Python,
+  keywordstyle=\color{codekw}\bfseries, stringstyle=\color{codestr}, commentstyle=\color{codecom},
+  emph={sdata}, emphstyle=\color{codekw},
+  backgroundcolor=\color{codebg}, frame=single, rulecolor=\color{coderule}, framerule=0.4pt,
+  framesep=5pt, xleftmargin=2.2em, xrightmargin=5pt,
+  numbers=left, numberstyle=\tiny\sffamily\color{codecom}, numbersep=12pt, stepnumber=1,
+  aboveskip=0.7em, belowskip=0.5em,
+}
+\lstdefinestyle{plain}{
+  backgroundcolor=\color{codebg}, frame=single, rulecolor=\color{coderule}, framerule=0.4pt,
+  framesep=5pt, xleftmargin=5pt, xrightmargin=5pt, aboveskip=0.7em, belowskip=0.5em,
+}
+\lstdefinestyle{output}{
+  basicstyle=\ttfamily\footnotesize\color{codefg}, columns=fixed, basewidth=0.5em,
+  backgroundcolor=\color{outbg}, frame=leftline, rulecolor=\color{outrule}, framerule=2pt,
+  framesep=6pt, xleftmargin=8pt, xrightmargin=0pt, aboveskip=0.2em, belowskip=0.6em,
+}
+\lstdefinestyle{title}{
+  language=Python, basicstyle=\ttfamily\large\color{codefg},
+  keywordstyle=\color{codekw}\bfseries, stringstyle=\color{codestr}, emph={sdata}, emphstyle=\color{codekw},
+  backgroundcolor=\color{brandlight}, frame=none, framesep=10pt, xleftmargin=10pt, xrightmargin=10pt,
+}
+
+\newcommand{\printedoutput}[1]{%
+  \IfFileExists{#1}{%
+    \par\needspace{4\baselineskip}\noindent{\sffamily\small\bfseries\color{outrule!70!black}What it prints}\par\nopagebreak
+    \vspace{-0.4em}\lstinputlisting[style=output]{#1}}{}}
+
+\newcommand{\whateachline}{\par\needspace{3\baselineskip}\noindent{\sffamily\small\bfseries\color{brand}What each line does}\par\nopagebreak}
+\newlist{lineexplain}{description}{1}
+\setlist[lineexplain]{leftmargin=2.2em,labelwidth=1.6em,labelsep=0.6em,align=right,
+  font=\normalfont\sffamily\footnotesize\color{codecom},itemsep=0.15em,parsep=0pt,topsep=0.2em}
+
+% ------------------------------------------------------------------ boxes
+\tcbset{boxbase/.style={enhanced,breakable,boxrule=0pt,leftrule=3pt,arc=1pt,outer arc=1pt,
+  left=8pt,right=8pt,top=6pt,bottom=6pt,before skip=0.9em,after skip=0.9em,
+  fonttitle=\sffamily\bfseries,coltitle=black,attach title to upper,
+  title after break={},}}
+\newtcolorbox{learnbox}{boxbase,colback=brandlight,colframe=brand,
+  title={In this lesson you will learn\par}}
+\newtcolorbox{goodtoknow}{boxbase,colback=goodbg,colframe=goodframe,
+  title={\color{goodframe}Good to know\par}}
+\newtcolorbox{tryit}{boxbase,colback=trybg,colframe=tryframe,
+  title={\color{tryframe}Try it yourself\par}}
+\setlist[itemize]{itemsep=0.2em,parsep=0pt,topsep=0.3em}
+\setlist[enumerate]{itemsep=0.2em,parsep=0pt,topsep=0.3em}
+
+% ------------------------------------------------------------------ dictionary
+\newcommand{\wordentry}[2]{%
+  \par\needspace{8\baselineskip}\vspace{1.0em}\phantomsection\label{#2}%
+  \noindent{\sffamily\large\bfseries\color{brand}\texttt{#1}}\par\nopagebreak
+  \vspace{-0.35em}\noindent{\color{coderule}\rule{\linewidth}{0.6pt}}\par\nopagebreak\vspace{-0.2em}}
+\newcommand{\wordfield}[2]{\par\noindent{\sffamily\small\bfseries\color{inkgrey}#1}\enspace #2\par}
+\newenvironment{optiontable}{\par\small\tabularx{\linewidth}{@{\hspace{1.2em}}>{\raggedright\arraybackslash}p{0.34\linewidth}>{\raggedright\arraybackslash}X@{}}}{\endtabularx\par}
+
+% ------------------------------------------------------------------ solutions and index
+\newcommand{\solutiontask}[2]{\par\needspace{6\baselineskip}\vspace{0.6em}\noindent
+  {\sffamily\bfseries\color{tryframe}Task #1.}\enspace #2\par\nopagebreak}
+\newcommand{\solutionanswer}[1]{\par\noindent\begin{tcolorbox}[boxbase,colback=goodbg,colframe=goodframe,
+  before skip=0.3em,after skip=0.8em,title={\color{goodframe}Answer\enspace}]#1\end{tcolorbox}}
+\newcommand{\indexline}[2]{\noindent\hyperref[#1]{\texttt{#2}}\dotfill\pageref{#1}\par}
+
+% ------------------------------------------------------------------ figures
+\captionsetup{font={small,sf},labelfont={bf,color=brand},justification=centering,skip=4pt,hypcap=false}
+\setkeys{Gin}{keepaspectratio}
+
+% ------------------------------------------------------------------ headings
+\titleformat{\part}[display]{\centering\sffamily\bfseries\color{brand}}
+  {\Large\MakeUppercase{\partname}~\thepart}{0.8em}{\Huge}
+\titleformat{\chapter}[display]{\sffamily\bfseries\color{brand}}
+  {\large\MakeUppercase{\chaptertitlename}~\thechapter}{0.3em}{\huge}
+  [\vspace{0.2em}{\color{coderule}\titlerule[1pt]}]
+\titleformat{name=\chapter,numberless}[display]{\sffamily\bfseries\color{brand}}
+  {}{0pt}{\huge}[\vspace{0.2em}{\color{coderule}\titlerule[1pt]}]
+\titlespacing*{\chapter}{0pt}{0pt}{1.4em}
+\titleformat{\section}{\sffamily\Large\bfseries\color{brand}}{\thesection}{0.6em}{}
+\titleformat{name=\section,numberless}{\sffamily\large\bfseries\color{brand}}{}{0pt}{}
+\titlespacing*{\section}{0pt}{1.3em}{0.4em}
+
+\newcommand{\unchapter}[2]{\chapter*{#1}\phantomsection\addcontentsline{toc}{chapter}{#1}\label{#2}\markboth{#1}{#1}}
+\newcommand{\ideachapter}[2]{\par\vspace{2.5em}\begingroup\let\clearpage\relax\let\cleardoublepage\relax
+  \unchapter{#1}{#2}\endgroup}
+\newcommand{\unsection}[2]{\needspace{8\baselineskip}\section*{#1}\phantomsection\addcontentsline{toc}{section}{#1}\label{#2}}
+\newcommand{\lessonchapters}{\renewcommand{\chaptername}{Lesson}\setcounter{chapter}{0}}
+\newcommand{\otherchapters}{\renewcommand{\chaptername}{Chapter}}
+\renewcommand{\theHchapter}{\thepart.\arabic{chapter}}
+
+% ------------------------------------------------------------------ page style
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[LE,RO]{\sffamily\small\thepage}
+\fancyhead[RE,LO]{\sffamily\small\color{inkgrey}\nouppercase{\leftmark}}
+\renewcommand{\headrulewidth}{0pt}
+\renewcommand{\chaptermark}[1]{\markboth{\chaptername~\thechapter: #1}{}}
+\renewcommand{\sectionmark}[1]{}
+\fancypagestyle{plain}{\fancyhf{}\fancyfoot[C]{\sffamily\small\thepage}\renewcommand{\headrulewidth}{0pt}}

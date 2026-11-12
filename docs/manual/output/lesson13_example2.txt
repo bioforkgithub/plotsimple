@@ -1,0 +1,2 @@
+The median of the numbers is 150.02 (200 numbers).
+The 90th percentile of the numbers is 157.2 (200 numbers).

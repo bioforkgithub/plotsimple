@@ -1,0 +1,8 @@
+Replaced 1 cell in name.
+1 cell could not become numbers and is now empty, for example: "unknown"
+height is now numbers.
+The table has 3 rows and 2 columns.
+
+column   kind  empty cells smallest biggest average different values
+  name   text            0                                         3
+height number            1      144     152     148

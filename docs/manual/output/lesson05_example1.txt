@@ -1,0 +1,1 @@
+Error bars: the standard deviation of the values (how spread out they are around the average).

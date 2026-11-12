@@ -1,0 +1,8 @@
+   day          shop   fruit  count  price
+0  Mon   Corner shop   apple     39   0.44
+1  Mon  Market stall  banana     22   0.23
+2  Mon  Market stall   grape     13   0.05
+3  Mon  Market stall    pear      6   0.41
+4  Tue   Corner shop   apple     39   0.44
+How many rows have each "fruit" (6 different values): apple 9, banana 8, grape 5, cherry 4, orange 4, pear 3.
+How many rows have each "shop" (2 different values): Market stall 19, Corner shop 14.

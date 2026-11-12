@@ -1,0 +1,5 @@
+The total of "count" for each "shop": Corner shop 354, Market stall 457.
+simplydata table: 2 rows, 2 columns
+           shop  total of count
+0   Corner shop             354
+1  Market stall             457

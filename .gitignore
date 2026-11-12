@@ -11,6 +11,9 @@ venv/
 *.pdf
 *.gif
 !docs/**/*.png
+# the manual: its PDF and the figures it is built from are kept on GitHub
+!docs/manual/**/*.pdf
+!docs/manual/**/*.png
 
 # Private notes, never pushed
 PLAN_PRIVATE.md

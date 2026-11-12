@@ -1,0 +1,7 @@
+5
+The total of each row: 10, 18.
+The average of each column: 5.5, 5.5, 3.
+simplydata number grid: 3 rows, 2 columns
+[[3, 8],
+ [5, 6],
+ [2, 4]]

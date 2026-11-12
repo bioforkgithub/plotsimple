@@ -1,0 +1,401 @@
+% Data science ideas: written by hand, read by docs/make_manual.py (\input{ideas}).
+% Plain words first, then the formal name, so a learner can follow a paper's Methods section.
+
+\unchapter{Describing numbers}{ideas:describe}
+
+Before any test or model, a few numbers describe a column well: where its middle is, and how
+spread out it is. simplydata's summary words say each one in a sentence.
+
+\unsection{Average or median?}{ideas:average-median}
+
+The \textbf{average} (formally the \textbf{arithmetic mean}, written $\bar{x}$) adds all the values
+and divides by how many there are:
+\[
+  \bar{x} = \frac{x_1 + x_2 + \dots + x_n}{n}.
+\]
+The \textbf{median} is the middle value when the values are put in order (with an even number of
+values, the average of the two in the middle). Half the values are below it and half above.
+
+Both describe the ``middle'', but they react differently to values far from the rest
+(\textbf{outliers}). Five children earn pocket money of 2, 3, 3, 4 and 50 a week: the average is
+12.4, though four of the five get 4 or less; the median is 3. One extreme value pulls the average
+towards it but hardly moves the median. So:
+
+\begin{itemize}
+  \item Use the \textbf{average} when the values are roughly symmetric (a bell shape), and when you
+    want to add things up (total = average $\times$ count).
+  \item Use the \textbf{median} when the values are lopsided (\textbf{skewed}), such as incomes,
+    house prices, waiting times or bacterial counts, or when there are outliers you cannot
+    remove.
+  \item When the two are far apart, say so: it tells the reader the values are skewed.
+\end{itemize}
+
+In simplydata: \code{table.average\_of("marks")}, \code{table.median\_of("marks")},
+\code{nums.average()}, \code{nums.median()}, and on charts \code{show="average"} or
+\code{show="median"}. Lesson~\ref{lesson:5} draws both.
+
+\unsection{Spread: range, percentiles and standard deviation}{ideas:spread}
+
+Two classes can have the same average mark, one with every child near 65 and the other with
+marks from 20 to 100. The \textbf{spread} tells them apart.
+
+\begin{itemize}
+  \item The \textbf{range} is the biggest value minus the smallest. It is easy to understand but
+    depends on just two values, often the strangest ones.
+  \item A \textbf{percentile} is the value that a given share of the values is below:
+    \code{nums.percentile(90)} is the value that 90\,\% are below. The median is the 50th
+    percentile. The middle half of the values lies between the 25th and 75th percentiles; that
+    distance is the \textbf{interquartile range (IQR)}, and it is the box in a box plot
+    (\code{chart.boxes}).
+  \item The \textbf{standard deviation} (SD, written $s$) is about how far a typical value is from
+    the average:
+    \[
+      s = \sqrt{\frac{\sum_{i=1}^{n} (x_i - \bar{x})^2}{n - 1}}.
+    \]
+    Its square, $s^2$, is the \textbf{variance}. Dividing by $n-1$ instead of $n$ (Bessel's
+    correction) makes the sample variance an unbiased estimate of the variance of everything the
+    sample came from; simplydata always divides by $n-1$, as pandas and R do (NumPy divides by $n$
+    unless told otherwise).
+\end{itemize}
+
+The SD goes with the average and the IQR with the median. For all the marks of the practice table:
+``average 64.9 (SD 15.0)'' or ``median 68.5 (IQR 54.3 to 74.8)''.
+
+\unsection{The shape of the values: distributions}{ideas:distribution}
+
+The way values are spread out is their \textbf{distribution}; a histogram
+(\code{chart.histogram}) or a density curve (\code{chart.density}) shows it. Many measurements,
+such as heights or measuring errors, follow a bell shape called the \textbf{normal} (or
+Gaussian) \textbf{distribution}. For a normal distribution about 68\,\% of the values lie within
+one SD of the average and about 95\,\% within two SD.
+
+Not everything is bell-shaped. Counts and concentrations are often skewed to the right (many
+small values, a few large ones); a log scale (\code{chart.log\_scale\_y()}) often makes them look
+more symmetric. Look at the distribution before choosing what to report and which test to use.
+
+\ideachapter{How sure are we?}{ideas:uncertainty}
+
+We almost never measure everything. We measure a \textbf{sample} (18 children, 40 water samples)
+and want to learn about the \textbf{population} it came from (all children of that age, the whole
+fjord). A number worked out from a sample, such as its average, is an \textbf{estimate}, and
+another sample would give a slightly different one. These ideas say how much.
+
+\unsection{Standard deviation or standard error?}{ideas:sd-se}
+
+They sound alike and are often mixed up, but they answer different questions.
+
+\begin{center}\small
+\begin{tabularx}{\textwidth}{@{}>{\raggedright\arraybackslash}p{0.19\textwidth}>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X@{}}
+\toprule
+ & \textbf{Standard deviation (SD)} & \textbf{Standard error of the mean (SE, SEM)}\\
+\midrule
+Describes & the \emph{values}: how spread out they are & the \emph{average}: how precisely the sample pins it down\\
+Formula & $s$ (above) & $\mathrm{SE} = s / \sqrt{n}$\\
+More data & stays about the same & gets smaller (4 times the data halves it)\\
+Use it to & show the spread of individuals & compare averages, build confidence intervals\\
+simplydata & \code{error="standard deviation"} & \code{error="standard error"}\\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+Error bars of the SE are always shorter than those of the SD, and can look reassuringly small. That
+is why a figure caption must say which one was drawn; simplydata prints a line saying it, ready
+for your caption.
+
+\unsection{Confidence intervals}{ideas:ci}
+
+A \textbf{95\,\% confidence interval} (CI) is a range of plausible values for the true number in
+the population, worked out from the sample. For an average it is
+\[
+  \bar{x} \pm t_{0.975,\,n-1} \times \mathrm{SE},
+\]
+where $t_{0.975,\,n-1}$ is a number from the $t$ distribution: about 2 for most samples, a bit
+more for small ones (2.26 for $n = 10$, 2.09 for $n = 20$).
+
+What ``95\,\%'' means, exactly: if you repeated the whole study many times and built an interval
+each time, about 95 out of 100 of those intervals would contain the true value. It does
+\emph{not} mean that the true value moves around, nor that 95\,\% of the individual values lie
+inside (that would be about $\bar{x} \pm 2\,\mathrm{SD}$ for a bell shape).
+
+\begin{itemize}
+  \item A \textbf{narrow} interval means the data pin the value down well; a \textbf{wide} one
+    means you need more data.
+  \item An interval says more than a p-value: it gives the size of the effect \emph{and} how sure
+    you are of it. \code{table.fit\_straight\_line} prints the slope with its 95\,\% CI.
+  \item On charts: \code{error="confidence interval"} on bars and lines, and
+    \code{fit\_line(confidence\_band=True)} for a fitted line.
+\end{itemize}
+
+\unsection{Why averages behave well: the central limit theorem}{ideas:clt}
+
+Even when the values themselves are skewed, the \emph{average} of many of them is close to
+bell-shaped; this is the \textbf{central limit theorem}. It is why tests on averages (t-tests,
+ANOVA) usually work well with 30 or more values per group, even for values that are not
+bell-shaped. With small groups of skewed values, rank-based tests are safer
+(\code{based\_on="ranks"}).
+
+\ideachapter{Testing: real difference, or chance?}{ideas:testing}
+
+\unsection{The null hypothesis and the p-value}{ideas:p-value}
+
+Two groups almost never have exactly the same average, even when nothing real separates them:
+samples differ by chance. A statistical test asks whether a difference is bigger than chance alone
+would often produce. It works like a court case, where the accused is innocent until proven
+guilty:
+
+\begin{enumerate}
+  \item Assume there is \textbf{no real difference}. This assumption is the \textbf{null
+    hypothesis} ($H_0$). The \textbf{alternative hypothesis} ($H_1$) is that there is one.
+  \item Work out how surprising your data would be if $H_0$ were true. The \textbf{p-value} is the
+    probability of a difference at least as big as the one you saw, if there were really no
+    difference.
+  \item A small p-value means the data are hard to explain by chance alone. By custom, below
+    $0.05$ is called \textbf{statistically significant}; that threshold is the
+    \textbf{significance level} $\alpha$.
+\end{enumerate}
+
+simplydata says the p-value in words: below 0.001 ``very unlikely to be chance'', below 0.05
+``unlikely to be chance'', otherwise ``could easily be chance''.
+
+\begin{goodtoknow}
+What a p-value is \textbf{not}:
+\begin{itemize}
+  \item It is \textbf{not} the probability that $H_0$ is true, nor the probability that the result
+    is a fluke.
+  \item A small p-value does \textbf{not} say the difference is big or important. With thousands
+    of values, tiny, meaningless differences become ``significant''. The \emph{effect size} says
+    how big it is.
+  \item A large p-value does \textbf{not} show that there is no difference. It only says these
+    data cannot tell. ``Absence of evidence is not evidence of absence.''
+  \item 0.049 and 0.051 are practically the same evidence. Report the exact p-value, not just
+    ``$p < 0.05$''.
+\end{itemize}
+\end{goodtoknow}
+
+\unsection{Two kinds of mistake, and power}{ideas:errors}
+
+\begin{itemize}
+  \item A \textbf{false alarm} (\textbf{type I error}, a false positive): the test says there is a
+    difference when there is none. With $\alpha = 0.05$ this happens in about 1 test in 20 when
+    $H_0$ is true.
+  \item A \textbf{missed difference} (\textbf{type II error}, a false negative): there is a real
+    difference, but the test does not find it. Small samples miss differences often.
+\end{itemize}
+
+The \textbf{power} of a study is the chance of finding a difference of a given size if it is
+really there. More data, less noisy measurements and bigger true differences all raise power. A
+study with low power can only find large effects; plan the sample size before collecting data.
+
+\unsection{Many tests at once}{ideas:multiple}
+
+Every test at $\alpha = 0.05$ carries a 5\,\% risk of a false alarm, and the risks add up: with 20
+tests on pure noise, you expect about one ``significant'' result. Correcting for
+\textbf{multiple comparisons} keeps the chance of \emph{any} false alarm at 5\,\%.
+\code{table.compare\_each\_pair} uses \textbf{Holm's method}, which is never less powerful than the
+simpler Bonferroni correction (multiply each p-value by the number of tests). Decide which
+comparisons you will make before you look at the data.
+
+\unsection{Effect sizes: how big is the difference?}{ideas:effect-size}
+
+The p-value answers ``could it be chance?''. The \textbf{effect size} answers ``how big is it?'',
+which is usually what matters. Report both, ideally with a confidence interval for the effect.
+
+\begin{center}\small
+\begin{tabularx}{\textwidth}{@{}>{\raggedright\arraybackslash}p{0.26\textwidth}>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}p{0.25\textwidth}@{}}
+\toprule
+\textbf{Effect size} & \textbf{What it says} & \textbf{Given by}\\
+\midrule
+Difference in averages & in the units of the data (``7.6 marks higher''): often the clearest & \code{compare\_averages}, \code{compare\_each\_pair}\\
+Cohen's $d$, Hedges' $g$ & the difference in standard deviations; $g$ corrects $d$ for small samples. Rough guide: 0.2 small, 0.5 medium, 0.8 large & \code{compare\_averages} (2 groups), \code{compare\_average\_to}, \code{compare\_before\_after} ($d_z$)\\
+Omega-squared $\omega^2$ & the share of all the differences that the groups explain (0 to 1) & \code{compare\_averages} (3+ groups)\\
+Cramér's $V$ & how strongly two categories are linked, 0 (none) to 1 & \code{compare\_counts}\\
+Correlation $r$ & how closely two columns go up and down together, $-1$ to $1$ & \code{correlation\_between}\\
+$R^2$ & the share of the differences in $y$ that a line or curve explains & \code{fit\_straight\_line}, \code{fit\_formula}\\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+The ``small, medium, large'' labels (from Jacob Cohen) are only a last resort: a ``small''
+difference in survival can be important, and a ``large'' one in a lab assay may not be.
+
+\ideachapter{Links between columns}{ideas:links}
+
+\unsection{Correlation}{ideas:correlation}
+
+A \textbf{correlation} measures how closely two columns of numbers go up and down together, from
+$-1$ (one always goes down when the other goes up) through $0$ (no straight-line link) to $1$.
+
+\begin{itemize}
+  \item \textbf{Pearson's $r$} (the usual one) measures a \emph{straight-line} link. It is
+    sensitive to outliers, and can be near 0 for a strong curved link (a U shape).
+  \item \textbf{Spearman's $\rho$} (rho) uses ranks: it measures any link that keeps going one way
+    (always up, or always down), and is robust to outliers.
+    \code{table.correlation\_between("hours", "marks", method="spearman")}.
+  \item $r^2$ is the share of the differences in one column that a straight line through the other
+    explains. $r = 0.5$ explains only a quarter.
+\end{itemize}
+
+Always draw the dots (\code{chart.dots}) before trusting a correlation: very different patterns
+can have the same $r$ (Anscombe's quartet is the famous example).
+
+\unsection{Correlation is not cause}{ideas:cause}
+
+Ice cream sales and drownings go up together, but ice cream does not cause drowning: hot weather
+drives both. When two things go together there are several possible reasons:
+
+\begin{enumerate}
+  \item A causes B.
+  \item B causes A (\textbf{reverse causation}): do people exercise because they are healthy, or
+    are they healthy because they exercise?
+  \item A third thing causes both (a \textbf{confounder}): hot weather, age, wealth, or the size of
+    a hospital.
+  \item Chance: test enough pairs of columns and some will line up by luck.
+\end{enumerate}
+
+Only an \textbf{experiment} where you change A yourself, ideally by random assignment (a
+randomised controlled trial), shows cause directly. With observational data, say ``is associated
+with'', not ``causes''. simplydata's link words remind you: ``A link does not show that one thing
+causes the other.''
+
+\unsection{Fitting a line or a formula}{ideas:regression}
+
+\textbf{Linear regression} finds the straight line $y = a + b\,x$ that goes as close as possible to
+the dots, by making the sum of the squared vertical distances from the dots to the line as small as
+possible (\textbf{least squares}). The \textbf{slope} $b$ says how much $y$ changes for each 1 more
+of $x$; its p-value tests whether the slope could be 0, and its confidence interval gives a range of
+plausible slopes. $R^2$ says how much of the differences in $y$ the line explains.
+\code{table.fit\_straight\_line(x="hours", y="marks")} prints all of these;
+\code{chart.fit\_line()} draws the line.
+
+When the relation is curved, such as growth that multiplies by the same share each year, write the
+formula yourself: \code{table.fit\_formula("population = a * exp(b * (year - 2000))")} finds $a$ and
+$b$ by \textbf{nonlinear least squares}. A fitted line or curve describes the data you have;
+predicting far outside their range (\textbf{extrapolation}) is risky.
+
+\ideachapter{The shape of a table}{ideas:tables}
+
+\unsection{Tidy data: long and wide tables}{ideas:tidy}
+
+The same marks can be stored in two shapes:
+
+\begin{center}\small
+\begin{tabular}{@{}lll@{\hspace{3em}}llll@{}}
+\multicolumn{3}{@{}l}{\textbf{Long (tidy)}} & \multicolumn{4}{l@{}}{\textbf{Wide}}\\
+\toprule
+name & subject & marks & name & Maths & Science & English\\
+\midrule
+Asha & Maths & 61 & Asha & 61 & 66 & 77\\
+Asha & Science & 66 & Ben & 73 & 98 & 71\\
+Asha & English & 77 & & & & \\
+Ben & Maths & 73 & & & & \\
+\multicolumn{3}{@{}l}{\dots} & & & & \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+A table is \textbf{tidy} (Hadley Wickham's term) when each \textbf{variable} is a column, each
+\textbf{observation} is a row, and each value has its own cell. The long table is tidy: it has one
+column for what was measured (\code{marks}) and columns that say which child and which subject.
+
+\begin{itemize}
+  \item \textbf{Long tables} suit charts, groups and tests: \code{chart.bars(x="subject", y="marks")}
+    and \code{compare\_averages("marks", between="subject")} need the subject as a column.
+  \item \textbf{Wide tables} suit sums across columns (a total per child) and paired tests
+    (\code{compare\_before\_after("Maths", "Science")}), and are how people often type data into
+    a spreadsheet.
+  \item \code{table.turn\_columns\_into\_rows} makes a wide table long (in pandas: \code{melt}; in R:
+    \code{pivot\_longer}); \code{table.turn\_rows\_into\_columns} makes a long table wide (\code{pivot}).
+\end{itemize}
+
+\unsection{Missing values and imputation}{ideas:missing}
+
+Real data has empty cells: a sample was lost, a question skipped. What to do depends on
+\emph{why} they are empty:
+
+\begin{itemize}
+  \item \textbf{Missing completely at random}: the reason has nothing to do with the data (a tube
+    dropped). Leaving those rows out loses some power but does not bias the result.
+  \item \textbf{Missing at random}: the reason depends on other columns you have (older people skip
+    a question more often). Leaving rows out can bias the result; taking that other column into
+    account helps.
+  \item \textbf{Missing not at random}: the reason depends on the missing value itself (very ill
+    patients drop out; concentrations below the detection limit). No simple fix removes the bias;
+    say so in your report.
+\end{itemize}
+
+\textbf{Removing} rows with empty cells (\code{table.remove\_rows\_with\_empty\_cells()}) is
+simple and honest when few rows are affected. \textbf{Filling} them in is called
+\textbf{imputation}: \code{table.fill\_empty\_cells("marks", with\_the="average")} (also
+\code{"median"}, \code{"value above"}, \code{"value below"}, or \code{with\_value=0}). Filling with
+the average keeps the average the same, but makes the values look \emph{less spread out} than they
+really are, so standard deviations, standard errors and p-values become too small. Filling with the
+value above or below suits a series in time order. Whatever you choose, count the empty cells first
+(\code{table.count\_empty\_cells()}) and say in your methods how you handled them.
+
+\ideachapter{Which test when?}{ideas:which-test}
+
+First draw the data: a chart shows outliers, skew and odd values that a single p-value hides. Then
+answer four questions:
+
+\begin{enumerate}
+  \item \textbf{What is the question?} A difference between groups, a change within the same
+    rows, a link between two columns, or the shape of a relation?
+  \item \textbf{What kind of data?} Numbers (marks, heights, concentrations) or categories (pass or
+    fail, species, site)?
+  \item \textbf{How many groups, and are they the same rows?} Two groups or more; independent
+    groups (different children) or paired measurements (the same children twice)?
+  \item \textbf{Are the groups small and the values far from bell-shaped?} Then use the rank-based
+    version: \code{based\_on="ranks"}. simplydata checks each group for a bell shape
+    (Shapiro--Wilk test) and adds a note when it matters.
+\end{enumerate}
+
+\begin{center}\footnotesize
+\renewcommand{\arraystretch}{1.25}
+\begin{tabularx}{\textwidth}{@{}>{\raggedright\arraybackslash}p{0.25\textwidth}>{\raggedright\arraybackslash}p{0.27\textwidth}>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X@{}}
+\toprule
+\textbf{Question} & \textbf{simplydata word} & \textbf{Test (the usual one)} & \textbf{With \code{based\_on="ranks"}}\\
+\midrule
+Is one average different from a number you choose? & \code{compare\_average\_to("marks", 60)} & one-sample $t$-test & Wilcoxon signed-rank test\\
+Do \textbf{two} groups differ in their average? & \code{compare\_averages("marks", between="group")} & Welch's $t$-test & Mann--Whitney $U$ test\\
+Do \textbf{three or more} groups differ? & \code{compare\_averages("marks", between="class")} & Welch's one-way ANOVA & Kruskal--Wallis test\\
+\emph{Which} groups differ? & \code{compare\_each\_pair("marks", between="class")} & pairwise Welch $t$-tests, Holm's correction & pairwise Mann--Whitney tests, Holm's correction\\
+Did the values change, in the \textbf{same} rows measured twice? & \code{compare\_before\_after("before", "after")} & paired $t$-test & Wilcoxon signed-rank test\\
+Do \textbf{counts} of categories differ between groups? & \code{compare\_counts("result", between="class")} & chi-square test of independence & --- (for a $2\times2$ table with small counts: \code{test="fisher"}, Fisher's exact test)\\
+Do two columns of numbers go up and down together? & \code{correlation\_between("hours", "marks")} & Pearson's $r$ & \code{method="spearman"}: Spearman's $\rho$\\
+How much does $y$ change with $x$? & \code{fit\_straight\_line(x="hours", y="marks")} & linear regression (least squares) & ---\\
+Does the data follow a formula (growth, decay, saturation)? & \code{fit\_formula("y = a * exp(b * x)")} & nonlinear least squares & ---\\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\begin{goodtoknow}
+\begin{itemize}
+  \item \textbf{Welch, not Student.} For averages simplydata uses Welch's versions, which do not
+    assume that the groups have the same spread. They are R's defaults and lose almost nothing when
+    the spreads are equal. An expert can still choose: \code{test="student"} or \code{test="anova"}.
+  \item \textbf{Paired or not?} If each row of one measurement belongs to a row of the other (the same
+    child, the same site), the test must be paired: \code{compare\_before\_after}. Treating paired
+    data as independent groups throws away information.
+  \item \textbf{Counts, not percentages.} \code{compare\_counts} needs the rows themselves (one row per
+    observation), not percentages worked out by hand.
+  \item \textbf{One test per question.} Decide the question and the test before looking at the
+    results; trying several tests and keeping the best p-value makes false alarms much more
+    likely.
+  \item Each test gives back a one-row table with every number in it:
+    \code{result = table.compare\_averages(...)}, then \code{result.save("test.csv")}.
+\end{itemize}
+\end{goodtoknow}
+
+\unsection{Writing it up}{ideas:report}
+
+A good results sentence lets a reader check your work. Give:
+\begin{enumerate}
+  \item the summary for each group (average and SD, or median and IQR) and the number of values $n$;
+  \item the effect size, ideally with its 95\,\% confidence interval;
+  \item the name of the test and the exact p-value;
+  \item in figure captions, what the bars or bands show (SD, SE or 95\,\% CI) and $n$.
+\end{enumerate}
+
+For example: ``Class~A scored on average 13.2 marks more than class~C (Welch's $t$-test with Holm's
+correction, $p = 0.023$; $n = 18$ per class).'' simplydata's printed answers name each test, and
+\code{table.steps()} lists every change you made to the table, in order, for your methods.

@@ -1,0 +1,18 @@
+Replaced 2 cells in marks.
+Empty cells in each column:
+  name     0
+  class    0
+  subject  0
+  hours    0
+  marks    2
+  height   0
+Total: 2 cells empty.
+Filled 2 cells in marks.
+Empty cells in each column:
+  name     0
+  class    0
+  subject  0
+  hours    0
+  marks    0
+  height   0
+No empty cells.

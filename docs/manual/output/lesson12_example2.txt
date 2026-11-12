@@ -1,0 +1,1 @@
+The total of "count" for each "fruit": apple 337, banana 205, cherry 59, grape 117, orange 73, pear 20.

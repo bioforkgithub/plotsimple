@@ -1,0 +1,2 @@
+Comparing how often each "result" turns up in each "class" (2 x 3 table, 54 rows): the differences could easily be chance (p = 0.122); this does not show that there is no difference. Cramer's V = 0.279 (0 means no link, 1 a complete link).
+Test: chi-square test of independence (chi-square = 4.21, df = 2), the usual test for counts.

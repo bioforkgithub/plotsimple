@@ -1,0 +1,13 @@
+The table has 36 rows and 7 columns.
+
+        column   kind  empty cells smallest biggest average different values
+         month   text            0                                        12
+  month_number number            0        1      12     6.5
+          city   text            0                                         3
+   temperature number            0    -11.6    26.5    9.35
+          rain number            0        9     155   59.03
+wind_direction number            0       16     354  244.42
+    wind_speed number            0      2.7    28.6    15.1
+The average of "rain" for each "city": Frostby 42.08, Rainbridge 109.42, Sunnyvale 25.58.
+The average "rain" is 42.1 in Frostby, 109 in Rainbridge and 25.6 in Sunnyvale. Differences this big between the groups are very unlikely to be chance (p < 0.0001). Omega-squared = 0.720: the groups explain about 72 % of the differences in "rain".
+Test: Welch's one-way ANOVA (F = 33.9, df = 2 and 20.2), the usual test for three or more averages; it does not assume the groups have the same spread. To see which groups differ: table.compare_each_pair("rain", between="city").

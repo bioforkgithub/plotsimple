@@ -902,9 +902,16 @@ def help(word=None) -> None:  # noqa: A001 - meant to be sdata.help
 
 
 # ---------------------------------------------------------------- sdata.lesson()
+def _sx(code: str) -> str:
+    """A worked solution's code, written indented in LESSONS and given back without the indent."""
+    return textwrap.dedent(code).strip()
+
+
 # Each lesson: title, what you will learn, one or more parts, and a task.
 # Each part: a sentence to start, then (line of code, what it does) pairs.
 # The code of each part runs on its own (the tests run every part).
+# solutions: one (code, one-line explanation) for each task, in the same order. Each runs on
+# its own (the tests run every one), and sdata.lesson(3, solutions=True) prints them.
 LESSONS = [
     dict(
         title="Your first chart",
@@ -947,6 +954,33 @@ LESSONS = [
             'Save the chart as "my_first_chart.png" and also as "my_first_chart.pdf".',
             'Make a chart of the "fruit" table: bars with x="fruit" and y="count".',
         ],
+        solutions=[
+            (_sx("""\
+                import simplydata as sdata
+                marks = sdata.example("marks")
+                chart = sdata.chart(marks)
+                chart.bars(x="subject", y="marks")
+                chart.save("lesson1_subjects.png")"""),
+             "Each bar is now one subject, as tall as the average mark of all 18 children in that "
+             "subject."),
+            (_sx("""\
+                import simplydata as sdata
+                marks = sdata.example("marks")
+                chart = sdata.chart(marks)
+                chart.bars(x="name", y="marks")
+                chart.save("my_first_chart.png")
+                chart.save("my_first_chart.pdf")"""),
+             "One chart can be saved many times; the end of the file name (.png or .pdf) decides "
+             "the type."),
+            (_sx("""\
+                import simplydata as sdata
+                fruit = sdata.example("fruit")
+                chart = sdata.chart(fruit)
+                chart.bars(x="fruit", y="count")
+                chart.save("fruit.png")"""),
+             "One bar per fruit. Each fruit was sold several times, so a bar is the average count "
+             'of one sale; show="total" would show how many were sold in the whole week.'),
+        ],
         words=["sdata.example", "sdata.chart", "bars", "save", "show"],
     ),
     dict(
@@ -982,6 +1016,39 @@ LESSONS = [
             'Give the chart your own title, and label the y-axis "Marks out of 100".',
             "Try chart.font_size(20). Then try 9. Which is easier to read?",
             "Take away the line chart.rotate_labels_x(45). What happens to the names?",
+        ],
+        solutions=[
+            (_sx("""\
+                import simplydata as sdata
+                marks = sdata.example("marks")
+                chart = sdata.chart(marks)
+                chart.bars(x="name", y="marks")
+                chart.title_top("How well did each child do?")
+                chart.label_y("Marks out of 100")
+                chart.rotate_labels_x(45)
+                chart.save("lesson2_my_title.png")"""),
+             "title_top writes any title you like, and label_y names the y-axis."),
+            (_sx("""\
+                import simplydata as sdata
+                marks = sdata.example("marks")
+                chart = sdata.chart(marks)
+                chart.bars(x="name", y="marks")
+                chart.title_top("Our class marks")
+                chart.rotate_labels_x(45)
+                chart.font_size(20)
+                chart.save("lesson2_big_text.png")
+                chart.font_size(9)
+                chart.save("lesson2_small_text.png")"""),
+             "The last font_size wins, so one chart gives both pictures. Size 20 is easy to read on "
+             "a slide but crowds the names; 9 fits everything but is small. 12 to 14 suits most charts."),
+            (_sx("""\
+                import simplydata as sdata
+                marks = sdata.example("marks")
+                chart = sdata.chart(marks)
+                chart.bars(x="name", y="marks")
+                chart.title_top("Our class marks")
+                chart.save("lesson2_no_rotate.png")"""),
+             "Without rotate_labels_x the 18 names lie flat under the bars and run into each other."),
         ],
         words=["title_top", "label_x", "label_y", "rotate_labels_x", "caption_bottom", "font_size"],
     ),
@@ -1030,6 +1097,34 @@ LESSONS = [
             'In the weather chart, add colour="city" to chart.lines(...). How many lines do you get?',
             "Move the legend to the top with chart.legend_top().",
             'Try chart.style("dark") and choose three colours that look good on it.',
+        ],
+        solutions=[
+            (_sx("""\
+                import simplydata as sdata
+                weather = sdata.example("weather")
+                chart = sdata.chart(weather)
+                chart.lines(x="month", y="rain", colour="city")
+                chart.save("lesson3_cities.png")"""),
+             "Three lines, one for each city, and a legend that says which colour is which city."),
+            (_sx("""\
+                import simplydata as sdata
+                marks = sdata.example("marks")
+                chart = sdata.chart(marks)
+                chart.bars(x="subject", y="marks", colour="class")
+                chart.colours("orange", "teal", "purple")
+                chart.legend_top()
+                chart.save("lesson3_legend_top.png")"""),
+             "legend_top puts the legend above the chart, in place of legend_bottom."),
+            (_sx("""\
+                import simplydata as sdata
+                marks = sdata.example("marks")
+                chart = sdata.chart(marks)
+                chart.bars(x="subject", y="marks", colour="class")
+                chart.style("dark")
+                chart.colours("gold", "turquoise", "hotpink")
+                chart.save("lesson3_dark.png")"""),
+             "Light, bright colours stand out on a dark background; dark colours such as navy "
+             "would almost disappear."),
         ],
         words=["colours", "colour", "legend_bottom", "legend_top", "hide_legend", "style", "lines"],
     ),
@@ -1101,6 +1196,32 @@ LESSONS = [
             'Make a chart of sdata.example("growth") and draw chart.area(x="year", y="population", '
             'colour="country").',
         ],
+        solutions=[
+            (_sx("""\
+                import simplydata as sdata
+                marks = sdata.example("marks")
+                chart = sdata.chart(marks)
+                chart.violins(x="class", y="marks")
+                chart.all_dots(x="class", y="marks")
+                chart.save("lesson4_violins.png")"""),
+             "A violin shows the whole shape of the marks: it is wide where many marks are and "
+             "thin where few are. A box shows only the middle half and the median."),
+            (_sx("""\
+                import simplydata as sdata
+                weather = sdata.example("weather")
+                chart = sdata.chart(weather)
+                chart.histogram(x="temperature", bins=6)
+                chart.save("lesson4_temperature.png")"""),
+             "Six ranges of temperature, each bar as high as the number of months (of all three "
+             "cities) that fall in it."),
+            (_sx("""\
+                import simplydata as sdata
+                growth = sdata.example("growth")
+                chart = sdata.chart(growth)
+                chart.area(x="year", y="population", colour="country")
+                chart.save("lesson4_area.png")"""),
+             "An area chart is a line chart with the space under each line filled in."),
+        ],
         words=["lines", "dots", "histogram", "boxes", "all_dots", "pie", "violins", "area"],
     ),
     dict(
@@ -1165,6 +1286,33 @@ LESSONS = [
             'Make a chart of the weather table, draw dots with x="month_number", y="temperature" '
             "and add chart.fit_curve(degree=2).",
         ],
+        solutions=[
+            (_sx("""\
+                import simplydata as sdata
+                marks = sdata.example("marks")
+                chart = sdata.chart(marks)
+                chart.bars(x="class", y="marks", show="median")
+                chart.numbers_on_bars()
+                chart.save("lesson5_median.png")"""),
+             "Error bars go with averages, so error= comes out. The medians (A 74, B 68.5, C 57) "
+             "are close to the averages (A 71.8, B 64.3, C 58.6): no single mark pulls them far."),
+            (_sx("""\
+                import simplydata as sdata
+                marks = sdata.example("marks")
+                chart = sdata.chart(marks)
+                chart.bars(x="class", y="marks", show="average", error="standard error")
+                chart.save("lesson5_standard_error.png")"""),
+             "Smaller: the standard error is the standard deviation divided by the square root of "
+             "the number of values (here 18), so it is about a quarter of the standard deviation."),
+            (_sx("""\
+                import simplydata as sdata
+                weather = sdata.example("weather")
+                chart = sdata.chart(weather)
+                chart.dots(x="month_number", y="temperature", colour="city")
+                chart.fit_curve(degree=2)
+                chart.save("lesson5_fit_curve.png")"""),
+             "Each city gets a curve with one bend: warm in the middle of the year, cold at both ends."),
+        ],
         words=["show=", "error=", "numbers_on_bars", "fit_line", "density", "fit_curve", "smooth_line"],
     ),
     dict(
@@ -1213,6 +1361,38 @@ LESSONS = [
             "Move the pass mark to 60 and shade between 0 and 40 instead.",
             "Take away chart.log_scale_y(). Which countries look different?",
             "Try chart.flip_y() on any chart. What happens?",
+        ],
+        solutions=[
+            (_sx("""\
+                import simplydata as sdata
+                marks = sdata.example("marks")
+                chart = sdata.chart(marks)
+                chart.bars(x="name", y="marks")
+                chart.range_y(0, 100)
+                chart.line_at_y(60, label="pass mark")
+                chart.shade_between_y(0, 40)
+                chart.rotate_labels_x()
+                chart.save("lesson6_pass_60.png")"""),
+             "line_at_y(60) moves the line; shade_between_y(0, 40) shades the band from 0 to 40."),
+            (_sx("""\
+                import simplydata as sdata
+                growth = sdata.example("growth")
+                chart = sdata.chart(growth)
+                chart.lines(x="year", y="population", colour="country")
+                chart.line_at_x(2010, label="2010")
+                chart.label_y("People (millions)")
+                chart.save("lesson6_no_log.png")"""),
+             "The lines now bend upwards instead of running straight, and the small countries "
+             "(Cherria and Applia) sit low and look flat, although Cherria nearly triples."),
+            (_sx("""\
+                import simplydata as sdata
+                marks = sdata.example("marks")
+                chart = sdata.chart(marks)
+                chart.bars(x="class", y="marks")
+                chart.flip_y()
+                chart.save("lesson6_flip.png")"""),
+             "The y-axis turns upside down: 0 is at the top and the bars hang down. Useful for "
+             "depths, where bigger numbers are further down."),
         ],
         words=["range_y", "ticks_y", "line_at_y", "shade_between_y", "log_scale_y", "line_at_x", "flip_y"],
     ),
@@ -1288,6 +1468,31 @@ LESSONS = [
             'Change chart.one_chart_per("class") to chart.one_chart_per("subject").',
             "Use sdata.side_by_side(a, b) instead of sdata.one_above_other(a, b) for the weather charts.",
             'Make sdata.pairs of sdata.example("weather") with colour="city".',
+        ],
+        solutions=[
+            (_sx("""\
+                import simplydata as sdata
+                marks = sdata.example("marks")
+                chart = sdata.chart(marks)
+                chart.dots(x="hours", y="marks")
+                chart.fit_line()
+                chart.one_chart_per("subject")
+                chart.save("lesson7_per_subject.png")"""),
+             "One small chart for each subject (Maths, Science and English), each with its own fit line."),
+            (_sx("""\
+                import simplydata as sdata
+                weather = sdata.example("weather")
+                a = sdata.chart(weather).lines(x="month", y="temperature", colour="city")
+                b = sdata.chart(weather).bars(x="month", y="rain", colour="city")
+                page = sdata.side_by_side(a, b)
+                page.title_top("A year of weather")
+                page.save("lesson7_side_by_side.png")"""),
+             "The same two charts, now next to each other instead of one above the other."),
+            (_sx("""\
+                import simplydata as sdata
+                pairs = sdata.pairs(sdata.example("weather"), colour="city")
+                pairs.save("lesson7_weather_pairs.png")"""),
+             "Every number column of the weather table against every other, one colour per city."),
         ],
         words=["one_chart_per", "sdata.one_above_other", "sdata.grid", "sdata.side_by_side", "sdata.pairs",
                "fit_line", "histogram"],
@@ -1376,6 +1581,42 @@ LESSONS = [
             "Make a second chart of the same table, put the two charts side by side and save the "
             "page as a PDF.",
         ],
+        solutions=[
+            (_sx("""\
+                import simplydata as sdata
+                fruit = sdata.example("fruit")
+                print(fruit)
+                chart = sdata.chart(fruit)
+                chart.bars(x="fruit", y="count", show="total")
+                chart.numbers_on_bars()
+                chart.title_top("Which fruit sells best?")
+                chart.label_x("Fruit")
+                chart.label_y("Sold in one week")
+                chart.save("lesson8_fruit.png")"""),
+             "One possible question: which fruit sells best? Same plan as always: get the data, "
+             "look, start, draw, words, save."),
+            (_sx("""\
+                import simplydata as sdata
+                growth = sdata.example("growth")
+                chart = sdata.chart(growth)
+                chart.lines(x="year", y="forest", colour="country")
+                chart.title_top("Forest in four countries")
+                chart.label_x("Year")
+                chart.label_y("Forest (% of the land)")
+                chart.note("Applia loses the most", x=2016, y=50, arrow=True)
+                chart.save("lesson8_forest.png")"""),
+             "Another table, with a title, both axis names and a note with an arrow."),
+            (_sx("""\
+                import simplydata as sdata
+                growth = sdata.example("growth")
+                people = sdata.chart(growth).lines(x="year", y="population", colour="country")
+                people.label_y("People (millions)")
+                forest = sdata.chart(growth).lines(x="year", y="forest", colour="country")
+                forest.label_y("Forest (% of the land)")
+                page = sdata.side_by_side(people, forest, letters=True)
+                page.save("lesson8_page.pdf")"""),
+             "Two charts of one table on one page, saved as a PDF because the name ends in .pdf."),
+        ],
         words=["second_y", "zoom_box", "heatmap", "label_colour_bar", "size", "animate",
                "contour", "note", "style", "sdata.words", "sdata.help"],
     ),
@@ -1426,6 +1667,24 @@ LESSONS = [
             'Make a table of sdata.example("weather"). How many rows does it have?',
             "Describe its columns. Which column has the biggest numbers?",
             'Count each "city". Does every city have the same number of rows?',
+        ],
+        solutions=[
+            (_sx("""\
+                import simplydata as sdata
+                table = sdata.table(sdata.example("weather"))
+                table.count_rows()"""),
+             "36 rows: 12 months for each of 3 cities."),
+            (_sx("""\
+                import simplydata as sdata
+                table = sdata.table(sdata.example("weather"))
+                table.describe_columns()"""),
+             "wind_direction has the biggest numbers (up to 354): it is an angle in degrees, from 0 "
+             "to 360."),
+            (_sx("""\
+                import simplydata as sdata
+                table = sdata.table(sdata.example("weather"))
+                table.count_each("city")"""),
+             "Yes: Frostby, Rainbridge and Sunnyvale have 12 rows each, one for every month."),
         ],
         words=["sdata.table", "table.show_first_rows", "table.show_last_rows", "table.column_names",
                "table.describe_columns", "table.count_rows", "table.count_each"],
@@ -1484,6 +1743,31 @@ LESSONS = [
             'In the marks table, keep only class "B" and sort by "hours". Who studied the longest?',
             "Undo the sorting, then sort by name instead.",
             'Keep 5 random rows with table.keep_random_rows(5, seed=1) and save them as "five.csv".',
+        ],
+        solutions=[
+            (_sx("""\
+                import simplydata as sdata
+                table = sdata.table(sdata.example("marks"))
+                table.keep_rows("class", equal_to="B")
+                table.sort_by("hours", biggest_first=True)
+                table.show_first_rows(3)"""),
+             "Jade studied the longest: 9.4 hours, for Maths. biggest_first=True puts the longest on top."),
+            (_sx("""\
+                import simplydata as sdata
+                table = sdata.table(sdata.example("marks"))
+                table.keep_rows("class", equal_to="B")
+                table.sort_by("hours", biggest_first=True)
+                table.undo()
+                table.sort_by("name")
+                table.show_first_rows()"""),
+             "undo() takes back only the sorting; class B stays. Text is sorted from A to Z."),
+            (_sx("""\
+                import simplydata as sdata
+                table = sdata.table(sdata.example("marks"))
+                table.keep_random_rows(5, seed=1)
+                print(table)
+                table.save("five.csv")"""),
+             "seed=1 picks the same 5 rows every time, so someone else can repeat it."),
         ],
         words=["table.keep_columns", "table.keep_rows", "table.sort_by", "table.steps", "table.undo",
                "table.start_again", "table.remove_rows", "table.remove_columns", "table.rename_column",
@@ -1572,6 +1856,32 @@ LESSONS = [
             "In the first example, fill the empty marks with the median instead of the average.",
             'Add a column "height_m" with the height in metres: from_column="height", divide_by=100.',
             'In the last example, add a column "best_two" with the formula "total - English".',
+        ],
+        solutions=[
+            (_sx("""\
+                import simplydata as sdata
+                table = sdata.table(sdata.example("marks"))
+                table.replace_values("marks", [61, 73], with_value=None)
+                table.count_empty_cells()
+                table.fill_empty_cells("marks", with_the="median")
+                table.count_empty_cells()"""),
+             'with_the="median" fills each empty mark with the middle mark of the others; afterwards '
+             "no cell is empty."),
+            (_sx("""\
+                import simplydata as sdata
+                table = sdata.table(sdata.example("marks"))
+                table.add_column("height_m", from_column="height", divide_by=100)
+                table.show_first_rows()"""),
+             "The height in centimetres divided by 100: 144 becomes 1.44."),
+            (_sx("""\
+                import simplydata as sdata
+                table = sdata.table(sdata.example("marks"))
+                table.keep_columns("name", "class", "subject", "marks")
+                table.turn_rows_into_columns(names_from="subject", values_from="marks")
+                table.add_column("total", "Maths + Science + English")
+                table.add_column("best_two", "total - English")
+                table.show_first_rows()"""),
+             "The formula can use a column made earlier (total); best_two is Maths + Science."),
         ],
         words=["table.replace_values", "table.count_empty_cells", "table.fill_empty_cells",
                "table.remove_rows_with_empty_cells",
@@ -1675,6 +1985,29 @@ LESSONS = [
             'Work out the average temperature for_each="city" in the weather table and draw it as bars.',
             "Is there a link between height and marks? Use correlation_between to find out.",
         ],
+        solutions=[
+            (_sx("""\
+                import simplydata as sdata
+                table = sdata.table(sdata.example("fruit"))
+                totals = table.total_of("count", for_each="shop")
+                print(totals)"""),
+             "The Market stall sold more: 457 pieces of fruit, against 354 at the Corner shop."),
+            (_sx("""\
+                import simplydata as sdata
+                table = sdata.table(sdata.example("weather"))
+                averages = table.average_of("temperature", for_each="city")
+                chart = averages.chart()
+                chart.bars(x="city", y="average of temperature")
+                chart.numbers_on_bars(decimals=1)
+                chart.save("lesson12_temperature.png")"""),
+             "Frostby 1.0, Rainbridge 10.1 and Sunnyvale 17.0 degrees. The summary table's column is "
+             'called "average of temperature".'),
+            (_sx("""\
+                import simplydata as sdata
+                table = sdata.table(sdata.example("marks"))
+                table.correlation_between("height", "marks")"""),
+             "No: r = 0.03, very close to 0, and p = 0.83 says it could easily be chance."),
+        ],
         words=["table.average_of", "table.biggest_of", "table.correlation_between", "table.total_of",
                "table.chart", "sdata.side_by_side", "table.join_with", "table.turn_columns_into_rows",
                "table.add_rows_from"],
@@ -1755,6 +2088,28 @@ LESSONS = [
             "Make a grid of 3 rows and 4 columns filled with 0: sdata.number_grid(rows=3, columns=4, "
             "filled_with=0).",
         ],
+        solutions=[
+            (_sx("""\
+                import simplydata as sdata
+                nums = sdata.numbers(1, to=10)
+                squares = nums ** 2
+                print(squares)
+                nums.power(2)
+                nums.show()"""),
+             "Both give 1, 4, 9 ... 100. ** 2 makes new numbers and leaves nums alone; power(2) "
+             "changes nums itself (and undo() can take it back)."),
+            (_sx("""\
+                import simplydata as sdata
+                dice = sdata.random_numbers(how_many=6, between=[1, 6], whole_numbers=True, seed=1)
+                dice.show()
+                dice.total()"""),
+             "With seed=1 the throws are 3, 4, 5, 6, 1 and 1, which add up to 20."),
+            (_sx("""\
+                import simplydata as sdata
+                grid = sdata.number_grid(rows=3, columns=4, filled_with=0)
+                print(grid)"""),
+             "Three rows of four zeros: a grid to fill in later."),
+        ],
         words=["sdata.numbers", "sdata.random_numbers", "sdata.number_grid", "nums.add", "nums.undo",
                "nums.keep_numbers", "nums.average", "nums.standard_deviation", "nums.median",
                "nums.percentile", "nums.chart", "grid.number_at", "grid.swap_rows_and_columns", "nums.steps"],
@@ -1828,6 +2183,28 @@ LESSONS = [
             'Compare the average marks between="subject". Could the differences be chance?',
             'Is the average temperature different between the cities of sdata.example("weather")?',
             'Fit a straight line of "forest" against "year" in sdata.example("growth") for one country.',
+        ],
+        solutions=[
+            (_sx("""\
+                import simplydata as sdata
+                table = sdata.table(sdata.example("marks"))
+                table.compare_averages("marks", between="subject")"""),
+             "Yes, they could: p = 0.26 is well above 0.05. That does not prove the subjects are "
+             "the same; these data simply cannot tell."),
+            (_sx("""\
+                import simplydata as sdata
+                table = sdata.table(sdata.example("weather"))
+                table.compare_averages("temperature", between="city")
+                table.compare_each_pair("temperature", between="city")"""),
+             "Yes: p = 0.0002, very unlikely to be chance. compare_each_pair then shows which "
+             "cities differ from each other."),
+            (_sx("""\
+                import simplydata as sdata
+                table = sdata.table(sdata.example("growth"))
+                table.keep_rows("country", equal_to="Applia")
+                table.fit_straight_line(x="year", y="forest")"""),
+             "In Applia the forest shrinks by about 0.57 percentage points a year (95 % CI 0.48 to "
+             "0.67), and the line explains 94 % of the differences."),
         ],
         words=["table.compare_averages", "table.compare_each_pair", "table.compare_counts",
                "table.fit_straight_line", "table.fit_formula", "table.add_group_column"],
@@ -1921,6 +2298,44 @@ LESSONS = [
             "sdata.side_by_side(..., letters=True).",
             "Read the steps() of your table out loud. Would someone else understand what you did?",
         ],
+        solutions=[
+            (_sx("""\
+                import simplydata as sdata
+                table = sdata.table(sdata.example("weather"))
+                table.describe_columns()
+                table.remove_columns("wind_direction", "wind_speed")
+                table.average_of("rain", for_each="city")
+                table.compare_averages("rain", between="city")
+                chart = table.chart()
+                chart.boxes(x="city", y="rain")
+                chart.all_dots(x="city", y="rain")
+                chart.label_y("Rain (mm)")
+                chart.save("lesson15_rain_boxes.png")
+                table.save("lesson15_weather.xlsx")"""),
+             "Rainbridge is much wetter (109 mm a month on average) than Frostby (42) and Sunnyvale "
+             "(26); p < 0.0001, so this is very unlikely to be chance."),
+            (_sx("""\
+                import simplydata as sdata
+                table = sdata.table(sdata.example("weather"))
+                rain = table.chart()
+                rain.boxes(x="city", y="rain")
+                rain.label_y("Rain (mm)")
+                warmth = table.chart()
+                warmth.lines(x="month", y="temperature", colour="city")
+                warmth.label_y("Temperature (°C)")
+                page = sdata.side_by_side(rain, warmth, letters=True)
+                page.save("lesson15_weather_page.png")"""),
+             "Two charts of one table, side by side, with A and B so a report can point to each."),
+            (_sx("""\
+                import simplydata as sdata
+                table = sdata.table(sdata.example("weather"))
+                table.remove_columns("wind_direction", "wind_speed")
+                table.keep_rows("month_number", between=[6, 8])
+                table.sort_by("rain", biggest_first=True)
+                table.steps()"""),
+             "steps() lists each change in plain words, in order; those lines are a first draft of "
+             "the methods part of a report."),
+        ],
         words=["sdata.table", "table.describe_columns", "table.remove_rows_with_empty_cells",
                "table.compare_averages", "table.chart", "boxes", "all_dots", "dots", "fit_line",
                "sdata.grid", "style", "table.save", "table.steps", "table.as_pandas", "sdata.chart"],
@@ -1946,10 +2361,16 @@ def _list_lessons() -> None:
     print("\nStart with sdata.lesson(1). Each lesson ends with a small task to try yourself.")
 
 
-def lesson(number=None) -> None:
+def lesson_solutions(number: int) -> list[tuple[str, str]]:
+    """The worked solution of each task of a lesson: [(code, explanation), ...]."""
+    return list(LESSONS[number - 1]["solutions"])
+
+
+def lesson(number=None, solutions=False) -> None:
     """A lesson: an example to run, what each line does, and a task. sdata.lesson(1)
 
-    sdata.lesson() on its own lists all the lessons.
+    sdata.lesson() on its own lists all the lessons. solutions=True also shows a worked
+    solution for each task: sdata.lesson(3, solutions=True).
     """
     if number is None:
         _list_lessons()
@@ -1988,6 +2409,14 @@ def lesson(number=None) -> None:
     print("\nTry it yourself")
     for i, task in enumerate(les["task"], start=1):
         print(textwrap.fill(task, WIDTH, initial_indent=f"  {i}. ", subsequent_indent="     "))
+    if solutions:
+        print("\nSolutions")
+        for i, (code, explain) in enumerate(les["solutions"], start=1):
+            print()
+            print(textwrap.fill(explain, WIDTH, initial_indent=f"  {i}. ", subsequent_indent="     "))
+            print(textwrap.indent(code, "        "))
+    else:
+        print(f"\nStuck? sdata.lesson({number}, solutions=True) shows a worked solution for each task.")
     print()
     if number < len(LESSONS):
         print(f"Next: sdata.lesson({number + 1})  {LESSONS[number]['title']}")
