@@ -226,7 +226,7 @@ def test_help_without_word_explains_help(capsys):
 def test_help_shows_options_with_defaults(capsys):
     sdata.help("bars")
     out = capsys.readouterr().out
-    assert 'show=       normally "average"' in out
+    assert re.search(r'show=\s+normally "average"', out)
     assert "sideways=" in out
 
 

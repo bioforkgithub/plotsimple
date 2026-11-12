@@ -28,13 +28,15 @@ GROUPS = [
     ("Chart types", ["bars", "lines", "dots", "area", "histogram", "boxes", "violins",
                      "heatmap", "pie", "polar", "contour", "surface", "dots_3d", "band", "empty_cells"]),
     ("Statistics", ["show=", "error=", "error_bars", "fit_line", "fit_curve", "smooth_line",
-                    "density", "count_bars", "all_dots", "side_histograms", "sdata.pairs"]),
-    ("Lines and shading", ["line_at_x", "line_at_y", "shade_between_x", "shade_between_y"]),
+                    "density", "count_bars", "all_dots", "side_histograms", "qq_dots",
+                    "cumulative_share", "sdata.pairs"]),
+    ("Lines and shading", ["line_at_x", "line_at_y", "line_with_slope", "shade_between_x", "shade_between_y"]),
     ("Words on the chart", ["title_top", "caption_bottom", "label_x", "label_y", "note",
-                            "numbers_on_bars", "names_on_dots", "font_size"]),
+                            "numbers_on_bars", "names_on_dots", "font_size", "font_name"]),
     ("Axes", ["range_x", "range_y", "log_scale_x", "log_scale_y", "ticks_x", "ticks_y",
-              "rotate_labels_x", "rotate_labels_y", "second_y", "flip_x", "flip_y"]),
-    ("Colours and look", ["colour", "colours", "style", "size", "show_grid", "hide_grid",
+              "rotate_labels_x", "rotate_labels_y", "tick_format_x", "tick_format_y", "second_y",
+              "flip_x", "flip_y"]),
+    ("Colours and look", ["colour", "colours", "colour_scale", "style", "size", "show_grid", "hide_grid",
                           "legend_top", "legend_bottom", "legend_left", "legend_right",
                           "hide_legend", "show_legend", "label_legend", "label_colour_bar"]),
     ("Order of groups", ["order_x", "order_y", "order_legend"]),
@@ -61,10 +63,12 @@ GROUPS = [
     ("Summaries", ["table.count_rows", "table.count_each", "table.average_of", "table.median_of",
                    "table.total_of", "table.smallest_of", "table.biggest_of",
                    "table.standard_deviation_of", "table.summary_of", "table.percent_of",
-                   "table.count_different_values", "table.correlation_between"]),
+                   "table.count_different_values", "table.percentile_of", "table.most_common_of",
+                   "table.correlation_between"]),
     ("Statistical tests", ["table.compare_averages", "table.compare_each_pair", "table.compare_before_after",
                            "table.compare_average_to", "table.compare_counts", "table.fit_straight_line",
-                           "table.fit_formula", "table.compare_shape_to", "table.add_adjusted_p_value_column"]),
+                           "table.fit_formula", "table.compare_shape_to", "table.add_adjusted_p_value_column",
+                           "table.compare_spreads", "table.compare_counts_to", "table.compare_percent_to"]),
     ("Models", ["table.explain", "table.add_predicted_column"]),
     ("Patterns across columns", ["table.add_principal_components", "table.principal_components_of",
                                  "table.add_clusters", "table.distances_between_rows", "table.add_nmds",
@@ -241,6 +245,8 @@ HELP_EXAMPLES = {
     "fit_curve": _ex("weather", 'chart.dots(x="month_number", y="temperature", colour="city")\nchart.fit_curve(degree=2)', "fit_curve"),
     "smooth_line": _ex("weather", 'chart.dots(x="month_number", y="rain", colour="city")\nchart.smooth_line()', "smooth_line"),
     "density": _ex("marks", 'chart.density(x="marks", colour="class")', "density"),
+    "qq_dots": _ex("marks", 'chart.qq_dots("marks")', "qq_dots"),
+    "cumulative_share": _ex("marks", 'chart.cumulative_share(x="marks", colour="class")', "cumulative_share"),
     "count_bars": _ex("fruit", 'chart.count_bars(x="fruit", colour="shop")', "count_bars"),
     "all_dots": _ex("marks", 'chart.boxes(x="class", y="marks")\nchart.all_dots(x="class", y="marks")', "all_dots"),
     "side_histograms": _ex("marks", 'chart.dots(x="hours", y="marks")\nchart.side_histograms()', "side_histograms"),
@@ -253,6 +259,7 @@ HELP_EXAMPLES = {
     # lines and shading
     "line_at_x": _ex("growth", 'chart.lines(x="year", y="population", colour="country")\nchart.line_at_x(2010, label="2010")', "line_at_x"),
     "line_at_y": _ex("marks", 'chart.bars(x="name", y="marks")\nchart.line_at_y(50, label="pass mark")\nchart.rotate_labels_x()', "line_at_y"),
+    "line_with_slope": _ex("marks", 'chart.dots(x="hours", y="hours")\nchart.line_with_slope(1, through=(0, 0))', "line_with_slope"),
     "shade_between_x": _ex("weather", 'chart.lines(x="month_number", y="temperature", colour="city")\nchart.shade_between_x(6, 8)', "shade_between_x"),
     "shade_between_y": _ex("marks", 'chart.dots(x="hours", y="marks")\nchart.shade_between_y(40, 60)', "shade_between_y"),
     # words on the chart
@@ -271,11 +278,14 @@ HELP_EXAMPLES = {
         chart.save("names_on_dots.png")"""),
     "numbers_on_bars": _ex("fruit", 'chart.bars(x="fruit", y="count", show="total")\nchart.numbers_on_bars()', "numbers_on_bars"),
     "font_size": _ex("marks", 'chart.bars(x="class", y="marks")\nchart.title_top("Big text")\nchart.font_size(18)', "font_size"),
+    "font_name": _ex("marks", 'chart.bars(x="class", y="marks")\nchart.font_name("DejaVu Serif")', "font_name"),
     # axes
     "range_x": _ex("marks", 'chart.dots(x="hours", y="marks")\nchart.range_x(0, 10)', "range_x"),
     "range_y": _ex("marks", 'chart.bars(x="class", y="marks")\nchart.range_y(0, 100)', "range_y"),
     "log_scale_x": _ex("growth", 'chart.dots(x="population", y="forest", colour="country")\nchart.log_scale_x()', "log_scale_x"),
     "log_scale_y": _ex("growth", 'chart.lines(x="year", y="population", colour="country")\nchart.log_scale_y()', "log_scale_y"),
+    "tick_format_x": _ex("growth", 'chart.dots(x="population", y="forest")\nchart.tick_format_x("thousands")', "tick_format_x"),
+    "tick_format_y": _ex("growth", 'chart.lines(x="year", y="forest", colour="country")\nchart.tick_format_y("percent")', "tick_format_y"),
     "ticks_x": _ex("weather", 'chart.lines(x="month_number", y="rain", colour="city")\n'
                    'chart.ticks_x(1, 4, 7, 10, labels=["Jan", "Apr", "Jul", "Oct"])', "ticks_x"),
     "ticks_y": _ex("marks", 'chart.bars(x="class", y="marks")\nchart.ticks_y(0, 25, 50, 75)', "ticks_y"),
@@ -286,6 +296,7 @@ HELP_EXAMPLES = {
     "flip_y": _ex("island", 'chart.contour(x="east", y="north", z="height")\nchart.flip_y()', "flip_y"),
     # colours and look
     "colour": _ex("marks", 'chart.bars(x="class", y="marks")\nchart.colour("purple")', "colour"),
+    "colour_scale": _ex("weather", 'chart.heatmap(x="month", y="city", value="rain")\nchart.colour_scale("magma")', "colour_scale"),
     "colours": _ex("marks", 'chart.bars(x="subject", y="marks", colour="class")\nchart.colours("orange", "teal", "purple")', "colours"),
     "style": _ex("marks", 'chart.bars(x="subject", y="marks", colour="class")\nchart.style("school")', "style"),
     "size": _ex("weather", 'chart.lines(x="month", y="rain", colour="city")\nchart.size(width=17, height=8, unit="cm")', "size"),
@@ -432,6 +443,8 @@ HELP_EXAMPLES = {
                                      'show=["average", "standard deviation", "count"])'),
     "table.percent_of": _tx("marks", 'table.percent_of("marks", above=60, for_each="class")'),
     "table.count_different_values": _tx("marks", 'table.count_different_values("name", for_each="class")'),
+    "table.percentile_of": _tx("marks", 'table.percentile_of("marks", 90, for_each="class")'),
+    "table.most_common_of": _tx("school", 'table.most_common_of("days_absent", for_each="school")'),
     "table.correlation_between": _tx("marks", 'table.correlation_between("hours", "marks")'),
     # statistical tests
     "table.compare_averages": _tx("marks", 'result = table.compare_averages("marks", for_each="class")\n'
@@ -448,6 +461,9 @@ HELP_EXAMPLES = {
     "table.fit_straight_line": _tx("marks", 'table.fit_straight_line(x="hours", y="marks")'),
     "table.fit_formula": _tx("growth", 'table.keep_rows("country", equal_to="Applia")\n'
                                        'table.fit_formula("population = a * exp(b * (year - 2000))")'),
+    "table.compare_spreads": _tx("marks", 'table.compare_spreads("marks", for_each="class")'),
+    "table.compare_counts_to": _tx("school", 'table.compare_counts_to("breakfast", expected={"yes": 0.6, "no": 0.4})'),
+    "table.compare_percent_to": _tx("school", 'table.compare_percent_to("passed", value="yes", percent=50)'),
     "table.compare_shape_to": _tx("marks", 'table.compare_shape_to("marks", "normal", for_each="class")'),
     "table.add_adjusted_p_value_column": _tx("marks", 'table = table.correlation_between("hours", "marks", "height", '
                                                       'show="each pair")\n'
@@ -1247,6 +1263,22 @@ LESSONS = [
                 ('chart.label_legend("Subject")', "The name above the legend (normally the column name)."),
                 ('chart.save("lesson3_order.png")', "Save it."),
             ]),
+            ("Numbers can have colours too: a colour scale. And dots that overlap are easier to see when "
+             "they let the others show through.", [
+                ("import simplydata as sdata", "Load simplydata."),
+                ('weather = sdata.example("weather")', "Get the weather table."),
+                ("chart = sdata.chart(weather)", "Start a chart."),
+                ('chart.heatmap(x="month", y="city", value="temperature")', "One square per city and month, "
+                                                                           "coloured by temperature."),
+                ('chart.colour_scale("blue to red", middle=10)', "Blue below 10 °C, red above, white at 10. "
+                                                                "middle= makes a scale that goes two ways."),
+                ('chart.save("lesson3_colour_scale.png")', "Save it."),
+                ('marks = sdata.example("marks")', "Get the marks table."),
+                ("dots = sdata.chart(marks)", "A second chart."),
+                ('dots.dots(x="hours", y="marks", colour="class", transparency=0.5)',
+                 "transparency=0.5 makes each dot half see-through, so dots on top of each other show."),
+                ('dots.save("lesson3_transparency.png")', "Save it."),
+            ]),
         ],
         notes=[
             'colour="class" (a column) gives each group a colour. colour="red" (a colour) makes '
@@ -1290,7 +1322,7 @@ LESSONS = [
              "Light, bright colours stand out on a dark background; dark colours such as navy "
              "would almost disappear."),
         ],
-        words=["colours", "colour", "legend_bottom", "legend_top", "hide_legend", "style", "lines",
+        words=["colours", "colour", "colour_scale", "legend_bottom", "legend_top", "hide_legend", "style", "lines",
                "order_x", "order_legend", "label_legend"],
     ),
     dict(
@@ -1428,6 +1460,20 @@ LESSONS = [
                                                              "(a kernel density estimate)."),
                 ('chart.save("lesson5_density.png")', "Save it."),
             ]),
+            ("Two more ways to see the shape of values: are they bell-shaped, and what share lies below "
+             "each value?", [
+                ("import simplydata as sdata", "Load simplydata."),
+                ('marks = sdata.example("marks")', "Get the marks table."),
+                ("chart = sdata.chart(marks)", "Start a chart."),
+                ('chart.qq_dots("marks")', "A Q-Q plot: if the marks follow a bell curve (normal), the dots "
+                                          "lie close to the straight line."),
+                ('chart.save("lesson5_qq.png")', "Save it."),
+                ("shares = sdata.chart(marks)", "A second chart."),
+                ('shares.cumulative_share(x="marks", colour="class")',
+                 "For each mark, the share of children with that mark or less (an ECDF). The class whose "
+                 "line is further right did better."),
+                ('shares.save("lesson5_cumulative.png")', "Save it."),
+            ]),
         ],
         notes=[
             "Average or median? The median is the middle value when the values are put in order. "
@@ -1478,7 +1524,8 @@ LESSONS = [
                 chart.save("lesson5_fit_curve.png")"""),
              "Each city gets a curve with one bend: warm in the middle of the year, cold at both ends."),
         ],
-        words=["show=", "error=", "numbers_on_bars", "fit_line", "density", "fit_curve", "smooth_line"],
+        words=["show=", "error=", "numbers_on_bars", "fit_line", "density", "fit_curve", "smooth_line",
+               "qq_dots", "cumulative_share"],
     ),
     dict(
         title="Axes and reference lines",
@@ -1527,6 +1574,22 @@ LESSONS = [
                 ('chart.label_y("Temperature (°C)")', "Name the y-axis."),
                 ('chart.save("lesson6_band.png")', "Save it."),
             ]),
+            ("Axes can say what their numbers mean, and a 1:1 line shows where two columns agree.", [
+                ("import simplydata as sdata", "Load simplydata."),
+                ('growth = sdata.example("growth")', "Get the growth table."),
+                ("chart = sdata.chart(growth)", "Start a chart."),
+                ('chart.lines(x="year", y="forest", colour="country")', "The forest of each country, in %."),
+                ('chart.tick_format_y("percent")', 'Write the y numbers as 40 %, 50 % ... ("thousands", '
+                                                   '"scientific" and dates such as "Jan 2026" work too).'),
+                ('chart.save("lesson6_percent.png")', "Save it."),
+                ('guesses = {"measured": [12, 18, 25, 31, 40], "predicted": [14, 17, 27, 29, 43]}',
+                 "Five measured values and what a model predicted for them."),
+                ("check = sdata.chart(guesses)", "A second chart."),
+                ('check.dots(x="measured", y="predicted")', "One dot per value."),
+                ('check.line_with_slope(1, through=(0, 0), label="1:1")',
+                 "The 1:1 line: dots on it were predicted exactly; above it, too high."),
+                ('check.save("lesson6_one_to_one.png")', "Save it."),
+            ]),
         ],
         notes=[
             "Every axis word ends in _x or _y: range_x, ticks_x, log_scale_x, line_at_x, "
@@ -1573,7 +1636,7 @@ LESSONS = [
              "depths, where bigger numbers are further down."),
         ],
         words=["range_y", "ticks_y", "line_at_y", "shade_between_y", "log_scale_y", "line_at_x", "flip_y",
-               "band"],
+               "band", "tick_format_y", "line_with_slope"],
     ),
     dict(
         title="Several charts together",
@@ -2112,6 +2175,9 @@ LESSONS = [
             ]),
         ],
         notes=[
+            "Formulas know more maths than + - * /: sqrt, log, exp, sin, cos, tan, pi, and special "
+            'functions such as erf, gamma, lgamma, beta and besselJ: table.add_column("z", '
+            'formula="erf(marks / 100)").',
             "Long or wide? A long table has one row for each measurement: the marks table has a row "
             "for each child in each subject. A wide table puts the measurements of one child side "
             "by side, one column per subject. Charts and tests like long tables (also called tidy "
@@ -2294,6 +2360,18 @@ LESSONS = [
                                                                          "correlation table, with the "
                                                                          "strongest pairs in words."),
             ]),
+            ("More ways to sum up: percentiles, the most common value, and measures of shape.", [
+                ("import simplydata as sdata", "Load simplydata."),
+                ('marks = sdata.table(sdata.example("marks"))', "A table of the marks."),
+                ('marks.percentile_of("marks", 90, for_each="class")', "The 90th percentile: 90 % of the "
+                                                                      "marks are below it (86.3 in class A)."),
+                ('marks.summary_of("marks", show=["median", "skewness", "coefficient of variation"], '
+                 'for_each="class")',
+                 "Skewness says if the values lean to one side (below 0: a longer tail of low marks); "
+                 "the coefficient of variation is the standard deviation divided by the average."),
+                ('school = sdata.table(sdata.example("school"))', "A table of pupils."),
+                ('school.most_common_of("days_absent")', "The most common number of days absent (the mode): 2."),
+            ]),
         ],
         notes=[
             "Correlation is not cause. Children who study more might also sleep more, or like the "
@@ -2348,7 +2426,7 @@ LESSONS = [
         words=["table.average_of", "table.biggest_of", "table.correlation_between", "table.total_of",
                "table.chart", "sdata.side_by_side", "table.join_with", "table.turn_columns_into_rows",
                "table.add_rows_from", "table.summary_of", "table.percent_of", "table.count_rows",
-               "table.count_different_values"],
+               "table.count_different_values", "table.percentile_of", "table.most_common_of"],
     ),
     dict(
         title="Numbers: lists and grids of numbers",
@@ -2519,6 +2597,20 @@ LESSONS = [
                  "the chance of even one false alarm at 5 %."),
                 ("pairs.show()", "The p-values and the adjusted ones, side by side."),
             ]),
+            ("Some questions are about spread, or about counts compared with what you expect.", [
+                ("import simplydata as sdata", "Load simplydata."),
+                ('table = sdata.table(sdata.example("marks"))', "Make a table of the marks."),
+                ('table.compare_spreads("marks", for_each="class")',
+                 "Are the marks of one class more spread out? Levene's test says this could easily be "
+                 "chance (p = 0.91)."),
+                ('table.compare_each_pair("marks", for_each="class", test="tukey")',
+                 "Tukey's test compares every pair at once: only A and C differ (p = 0.020)."),
+                ('school = sdata.table(sdata.example("school"))', "A table of pupils."),
+                ('school.compare_counts_to("breakfast", expected={"yes": 0.6, "no": 0.4})',
+                 "Did 60 % eat breakfast, as a survey said? 115 of 180 is close enough (p = 0.29)."),
+                ('school.compare_percent_to("passed", value="yes", percent=50)',
+                 "Did half the pupils pass? 43.3 % did; that could easily be chance (p = 0.086)."),
+            ]),
         ],
         notes=[
             "The idea behind every test: imagine there is no real difference (this is called the "
@@ -2577,7 +2669,8 @@ LESSONS = [
         words=["table.compare_averages", "table.compare_each_pair", "table.compare_counts",
                "table.fit_straight_line", "table.fit_formula", "table.add_group_column",
                "table.compare_shape_to", "table.show_rows_with_outliers", "table.add_adjusted_p_value_column",
-               "table.remove_rows_with_outliers"],
+               "table.remove_rows_with_outliers", "table.compare_spreads", "table.compare_counts_to",
+               "table.compare_percent_to"],
     ),
     dict(
         title="A whole analysis: from a question to a figure",
