@@ -117,12 +117,12 @@ def test_for_each_matches_pandas_groupby(word, engine, gappy, capsys):
     got = summary.done()
     if engine == "polars":
         got = got.to_pandas()
-    assert list(got.columns) == ["class", f"{start} marks"]
+    assert list(got.columns) == ["class", f"{start} of marks"]
     expected = gappy.groupby("class", dropna=False)["marks"].agg(calc)
     # sorted by group, empty group last
     assert got["class"].iloc[:3].tolist() == ["A", "B", "C"]
     assert pd.isna(got["class"].iloc[3])
-    for key, value in zip(got["class"], got[f"{start} marks"]):
+    for key, value in zip(got["class"], got[f"{start} of marks"]):
         want = expected[np.nan] if pd.isna(key) else expected[key]
         if pd.isna(want):
             assert pd.isna(value)  # e.g. SD of a single number
@@ -138,13 +138,13 @@ def test_for_each_many_columns(engine, gappy, capsys):
     got = t.average_of(["marks", "hours"], for_each=["class", "subject"]).done()
     if engine == "polars":
         got = got.to_pandas()
-    assert list(got.columns) == ["class", "subject", "average marks", "average hours"]
+    assert list(got.columns) == ["class", "subject", "average of marks", "average of hours"]
     expected = (gappy.groupby(["class", "subject"], dropna=False)[["marks", "hours"]].mean()
                 .reset_index().sort_values(["class", "subject"], na_position="last").reset_index(drop=True))
     assert got["class"].tolist()[:-1] == expected["class"].tolist()[:-1]
     assert got["subject"].tolist() == expected["subject"].tolist()
-    np.testing.assert_allclose(got["average marks"], expected["marks"], equal_nan=True)
-    np.testing.assert_allclose(got["average hours"], expected["hours"], equal_nan=True)
+    np.testing.assert_allclose(got["average of marks"], expected["marks"], equal_nan=True)
+    np.testing.assert_allclose(got["average of hours"], expected["hours"], equal_nan=True)
     assert capsys.readouterr().out == 'Note: empty cells were skipped: 3 in "marks", 1 in "hours".\n'
     unchanged(t, before)
 
@@ -154,9 +154,9 @@ def test_list_without_for_each_gives_one_row_table(engine, marks):
     got = t.total_of(["marks", "height"]).done()
     if engine == "polars":
         got = got.to_pandas()
-    assert list(got.columns) == ["total marks", "total height"]
-    assert got["total marks"].iloc[0] == pytest.approx(marks["marks"].sum())
-    assert got["total height"].iloc[0] == pytest.approx(marks["height"].sum())
+    assert list(got.columns) == ["total of marks", "total of height"]
+    assert got["total of marks"].iloc[0] == pytest.approx(marks["marks"].sum())
+    assert got["total of height"].iloc[0] == pytest.approx(marks["height"].sum())
 
 
 def test_pandas_result_has_clean_index(marks):
@@ -166,11 +166,11 @@ def test_pandas_result_has_clean_index(marks):
 
 def test_summary_works_with_chart_and_save(engine, marks, tmp_path):
     summary = make(marks, engine).average_of("marks", for_each="class")
-    chart = summary.chart().bars(x="class", y="average marks")
+    chart = summary.chart().bars(x="class", y="average of marks")
     assert len(chart._render().axes[0].patches) == 2
     summary.save(tmp_path / "summary.csv")
     back = pd.read_csv(tmp_path / "summary.csv")
-    assert back["average marks"].tolist() == pytest.approx(marks.groupby("class")["marks"].mean().tolist())
+    assert back["average of marks"].tolist() == pytest.approx(marks.groupby("class")["marks"].mean().tolist())
 
 
 def test_engine_kept(engine, marks):

@@ -155,7 +155,7 @@ class SummaryWords:
         columns = _as_list(step, "the column", column)
         groups = self._group_columns(step, for_each, columns) if for_each is not None else None
         frame = self._number_frame(step, columns)
-        exprs = [make(c).alias(f"{start} {c}") for c in columns]
+        exprs = [make(c).alias(f"{start} of {c}") for c in columns]
         if groups is None:
             result = frame.select(*exprs)
             self._note_empty(frame, columns)
