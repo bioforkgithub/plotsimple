@@ -1,6 +1,6 @@
 Note: 19 rows with an empty cell in "hours" or "sleep" or "marks" or "days_absent" were skipped.
 Principal components of 4 columns (hours, sleep, marks, days_absent), each put on the same scale first (mean 0, standard deviation 1): PC1 49.7 % and PC2 23.7 % of the spread (73.4 % together).
   PC1 weighs most on "hours" (0.60), "marks" (0.57) and "days_absent" (-0.49).
-  PC2 weighs most on "sleep" (-0.93), "hours" (0.35) and "marks" (0.08).
+  PC2 weighs most on "sleep" (0.93), "hours" (-0.35) and "marks" (-0.08).
 Method: principal component analysis by singular value decomposition, as R prcomp(scale. = TRUE). Added PC1 and PC2 (the scores of each row). The sign of each component is arbitrary: flipping it changes nothing.
 There are 4 components in all; table.principal_components_of() shows them all.

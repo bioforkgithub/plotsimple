@@ -9,8 +9,8 @@ R, so every number can be checked there.
 * add_principal_components / principal_components_of: principal component analysis by
   singular value decomposition of the centred (and, with same_scale=True, scaled) columns,
   exactly as R prcomp(x, scale. = TRUE). The sign of a component is arbitrary (flipping it
-  changes nothing); the signs are those of the same LAPACK routine R uses, so they usually
-  match R, but nothing promises it.
+  changes nothing) and differs between maths libraries, so each component is turned so that
+  its biggest weight is positive: the same answer on every computer, equal to R up to sign.
 * add_clusters, method="k-means": 25 random starts (as R kmeans(nstart = 25)); each start runs
   Lloyd's algorithm and then Hartigan's single-point moves (a row moves to another cluster
   whenever that lowers the total within-cluster sum of squares), which reaches the same kind
@@ -464,6 +464,10 @@ class PatternWords:
         sdev = s / math.sqrt(len(z) - 1)
         share = sdev ** 2 / (sdev ** 2).sum()
         rotation = vt.T
+        # the sign of a component is arbitrary and differs between maths libraries (macOS, Linux,
+        # Windows): turn each one so its biggest weight is positive, the same on every computer
+        biggest = rotation[np.abs(rotation).argmax(axis=0), np.arange(rotation.shape[1])]
+        rotation = rotation * np.where(biggest < 0, -1.0, 1.0)
         return columns, keep, sdev, share, rotation, z @ rotation
 
     # ------------------------------------------------------------------ principal components

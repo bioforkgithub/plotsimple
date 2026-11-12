@@ -83,8 +83,9 @@ def test_add_principal_components_matches_prcomp(school, capsys):
     scores = frame.loc[kept, ["PC1", "PC2"]].to_numpy()
     assert frame.loc[~kept, ["PC1", "PC2"]].isna().all().all()
     assert np.allclose(aligned(scores[:3], SCHOOL_SCORES), SCHOOL_SCORES, atol=1e-9)
-    # the same signs as R here (same LAPACK routine)
-    assert np.allclose(scores[:3], SCHOOL_SCORES, atol=1e-9)
+    # signs do not depend on the computer: each component's biggest weight is positive
+    weights = school.principal_components_of()._frame.to_pandas().filter(like="weight of").to_numpy()
+    assert (weights[np.arange(len(weights)), np.abs(weights).argmax(axis=1)] > 0).all()
     school.undo()
     assert "PC1" not in school.column_names()
 
