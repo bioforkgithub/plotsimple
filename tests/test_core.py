@@ -174,3 +174,11 @@ def test_assigning_tells_how(marks):
     chart = ps.chart(marks)
     with pytest.raises(PlotsimpleError, match=r"chart\.title_top\('Hi'\)"):
         chart.title = "Hi"
+
+
+def test_dates_get_short_labels():
+    from matplotlib.dates import ConciseDateFormatter
+    days = pd.date_range("2026-01-01", periods=120, freq="D")
+    chart = ps.chart(pd.DataFrame({"day": days, "temp": np.arange(120.0)})).lines(x="day", y="temp")
+    ax = chart._render().axes[0]
+    assert isinstance(ax.xaxis.get_major_formatter(), ConciseDateFormatter)

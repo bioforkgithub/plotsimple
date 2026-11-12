@@ -36,6 +36,16 @@ PHASES = {
     "finish": 5,  # legend and other last touches
 }
 
+def _tidy_dates(fig):
+    """Dates on an axis get short labels that don't overlap ("Jan", "Feb" ... with the year once)."""
+    from matplotlib.dates import AutoDateFormatter, ConciseDateFormatter
+
+    for ax in fig.axes:
+        for axis in (ax.xaxis, ax.yaxis):
+            if isinstance(axis.get_major_formatter(), AutoDateFormatter):
+                axis.set_major_formatter(ConciseDateFormatter(axis.get_major_locator()))
+
+
 SAVE_FORMATS = ("png", "pdf", "svg", "jpg", "jpeg", "tif", "tiff", "gif")
 
 
@@ -154,6 +164,7 @@ class BaseChart:
             else:
                 axes, ctx = self._render_split(fig, split)
                 self._draw_figure_steps(fig, axes, ctx)
+            _tidy_dates(fig)
         self._cache = fig
         return fig
 
