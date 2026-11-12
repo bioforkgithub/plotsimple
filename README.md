@@ -9,13 +9,20 @@ Polars), so you don't have to learn them first.
 ```python
 import plotsimple as ps
 
-marks = ps.example("marks")        # a made-up table to practise with
-chart = ps.chart(marks)            # your own file works too: ps.chart("marks.xlsx")
-chart.bars(x="name", y="marks")
-chart.title_top("My class marks")
-chart.label_y("Marks")
-chart.save("marks.png")
+story = ps.start(example="marks")       # a made-up table; your own: ps.start(file="marks.xlsx")
+story.keep_rows("marks", above=50)
+story.average_of("marks", for_each="class")   # says the answer in a sentence
+story.draw_bars(x="class", y="marks")
+story.title_top("Good marks in each class")
+story.label_y("Marks")
+story.save_chart("marks.png")
+story.save_table("good_marks.xlsx")
 ```
+
+A **story** is one object for the whole analysis: every table word and every chart word works
+on it, chart types start with `draw_`, and `story.undo()` and `story.steps()` cover table and
+chart steps together. A chart uses the table as it was when it was first drawn.
+`ps.table(...)` and `ps.chart(...)` are still there underneath, for programmers.
 
 ## Install
 
@@ -33,10 +40,11 @@ import plotsimple as ps
 ps.lesson(1)
 ```
 
-There are fourteen short lessons. Lessons 1 to 8 teach charts, from your first chart to
+There are fifteen short lessons. Lessons 1 to 8 teach charts, from your first chart to
 animations. Lessons 9 to 12 teach tables: looking at your data, choosing rows and columns,
 cleaning it, and summing it up. Lesson 13 teaches numbers (lists and grids of numbers), and
-lesson 14 the statistical tests: is a difference real, or could it be chance? Each lesson has an
+lesson 14 the statistical tests: is a difference real, or could it be chance? Lesson 15 tells a
+whole story, from opening a file to a saved figure and table. Each lesson has an
 example you can run, says what every line does, and ends with a small task to try yourself.
 
 - `ps.lesson()` lists the lessons

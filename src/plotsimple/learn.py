@@ -1,4 +1,4 @@
-"""Learning plotsimple: ps.words(), ps.help("bars") and ps.lesson(1) ... ps.lesson(14).
+"""Learning plotsimple: ps.words(), ps.help("bars") and ps.lesson(1) ... ps.lesson(15).
 
 The word list is built from the real words and their docstrings, so it cannot go out of
 date. Only the grouping (GROUPS) and the runnable examples (HELP_EXAMPLES, LESSONS) are
@@ -14,6 +14,7 @@ import re
 import textwrap
 
 from ._errors import ISSUES_URL, PlotsimpleError, suggest
+from .story import DRAW_WORDS
 
 WIDTH = 78
 
@@ -21,9 +22,14 @@ WIDTH = 78
 # "ps.name" is a function you call on ps; "name=" is an option used inside chart steps;
 # a plain name is a step on a chart (chart.name(...)); "table.name" is a step on a table
 # (table.name(...)); "nums.name" is a step on numbers and "grid.name" a step on a grid of
-# numbers. Other spellings of a word (bar, scatter, color ...) are found by themselves and
+# numbers. "story.name" is a word a story has in its own way (story.draw_bars(...)); the
+# other table and chart words work on a story too and are explained once, as table and chart
+# words. Other spellings of a word (bar, scatter, color ...) are found by themselves and
 # shown next to it. Old names (kept for one release) are never listed here.
 GROUPS = [
+    ("Story: a whole analysis in one object", ["ps.start"] + [f"story.draw_{kind}" for kind in DRAW_WORDS] + [
+        "story.new_chart", "story.put_charts_together", "story.show_chart", "story.save_chart",
+        "story.save_table", "story.save", "story.undo", "story.steps", "story.start_again"]),
     ("Start, show and save", ["ps.chart", "ps.example", "show", "save"]),
     ("Chart types", ["bars", "lines", "dots", "area", "histogram", "boxes", "violins",
                      "heatmap", "pie", "polar", "contour", "surface", "dots_3d"]),
@@ -470,6 +476,55 @@ HELP_EXAMPLES = {
 }
 
 
+def _as_story(code: str) -> str:
+    """A chart help example told as a story: ps.start(example=...), draw_ words, save_chart."""
+    lines = []
+    for line in code.splitlines():
+        start = re.fullmatch(r'\w+ = ps\.example\("(\w+)"\)', line)
+        if start:
+            lines.append(f'story = ps.start(example="{start.group(1)}")')
+        elif not re.fullmatch(r"chart = ps\.chart\(\w+\)", line):
+            line = re.sub(rf"\bchart\.({'|'.join(DRAW_WORDS)})\(", r"story.draw_\1(", line)
+            line = line.replace("chart.save(", "story.save_chart(").replace("chart.show(", "story.show_chart(")
+            lines.append(re.sub(r"(?<![\w.])chart\.", "story.", line))
+    return "\n".join(lines)
+
+
+def _sx(name: str, body: str) -> str:
+    """A runnable story example: start a story from a practice table, then the steps."""
+    lines = ["import plotsimple as ps", f'story = ps.start(example="{name}")']
+    lines += textwrap.dedent(body).strip().splitlines()
+    return "\n".join(lines)
+
+
+HELP_EXAMPLES.update({
+    "ps.start": _sx("marks", 'story.keep_rows("marks", above=50)\nstory.draw_bars(x="class", y="marks")\n'
+                             'story.title_top("Good marks")\nstory.save_chart("good_marks.png")'),
+    **{f"story.draw_{kind}": _as_story(HELP_EXAMPLES[kind]) for kind in DRAW_WORDS},
+    "story.new_chart": _sx("marks", 'story.draw_bars(x="class", y="marks")\nstory.save_chart("all_classes.png")\n'
+                                    'story.new_chart()\nstory.keep_rows("class", equal_to="A")\n'
+                                    'story.draw_dots(x="hours", y="marks")\nstory.save_chart("class_a.png")'),
+    "story.put_charts_together": _sx("marks", 'story.draw_boxes(x="class", y="marks")\nstory.new_chart()\n'
+                                              'story.draw_dots(x="hours", y="marks", colour="class")\n'
+                                              "story.put_charts_together(per_row=2, letters=True)\n"
+                                              'story.title_top("Marks")\nstory.save_chart("figure.png")'),
+    "story.show_chart": _sx("marks", 'story.draw_bars(x="class", y="marks")\nstory.show_chart()'),
+    "story.save_chart": _sx("marks", 'story.draw_bars(x="class", y="marks")\nstory.save_chart("results.png")\n'
+                                     'story.save_chart("results.pdf")\n'
+                                     'story.save_chart("results_sharp.png", quality="high")'),
+    "story.save_table": _sx("marks", 'story.keep_rows("marks", above=50)\nstory.save_table("clean.xlsx")\n'
+                                     'story.save_table("clean.csv")'),
+    "story.save": _sx("marks", 'story.keep_rows("marks", above=50)\nstory.draw_bars(x="class", y="marks")\n'
+                               'story.save("results.png")\nstory.save("clean.csv")'),
+    "story.undo": _sx("marks", 'story.keep_rows("marks", above=50)\nstory.draw_bars(x="class", y="marks")\n'
+                               "story.undo()\nstory.undo()\nstory.steps()"),
+    "story.steps": _sx("marks", 'story.keep_rows("marks", above=50)\nstory.draw_bars(x="class", y="marks")\n'
+                                'story.title_top("Good marks")\nstory.steps()'),
+    "story.start_again": _sx("marks", 'story.keep_rows("marks", above=50)\nstory.draw_bars(x="class", y="marks")\n'
+                                      "story.start_again()\nprint(story)"),
+})
+
+
 # ---------------------------------------------------------------- finding words
 def _ps():
     import plotsimple  # late import: plotsimple imports this file
@@ -503,13 +558,19 @@ def _grid_class():
 
 # The objects that have steps, and the name they go by in examples ("chart" has no prefix
 # in GROUPS: a plain name is a chart word).
-_PREFIX = {"table": "table", "numbers": "nums", "grid": "grid"}
+_PREFIX = {"table": "table", "numbers": "nums", "grid": "grid", "story": "story"}
+
+
+def _story_class():
+    from .story import Story
+
+    return Story
 
 
 def _classes():
     """(class, kind) for every object with steps."""
     return [(_chart_class(), "chart"), (_table_class(), "table"), (_numbers_class(), "numbers"),
-            (_grid_class(), "grid")]
+            (_grid_class(), "grid"), (_story_class(), "story")]
 
 
 def _kind(key: str) -> str:
@@ -591,7 +652,8 @@ def _prefixes(key: str) -> str:
     return _PREFIX.get(_kind(key), "chart|ps|page")
 
 
-def _find_call(text: str, prefix_word: str, prefixes: str = "chart|ps|page|table|nums|grid") -> str | None:
+def _find_call(text: str, prefix_word: str,
+               prefixes: str = "chart|ps|page|table|nums|grid|story") -> str | None:
     """Find the first call like chart.bars(...) in text, brackets and quotes included."""
     m = re.search(rf"(?:{prefixes})\.{re.escape(prefix_word)}\(", text)
     if not m:
@@ -623,13 +685,14 @@ def _short_example(key: str) -> str:
     return call or _call_form(key)
 
 
-_TABLE = re.compile(r'ps\.example\("(\w+)"\)')
+_TABLE = re.compile(r'ps\.(?:example\(|start\(example=)"(\w+)"')
 
 
 def _example_table(key: str) -> str | None:
     """The example table a word's examples use: named in the docstring, else in the help example.
 
     A docstring names its table like this: chart.lines(...) (with ps.example("weather")).
+    A help example names it with ps.example("weather") or ps.start(example="weather").
     """
     doc = "" if key in OPTIONS else inspect.getdoc(_function(key)) or ""
     found = _TABLE.search(doc) or _TABLE.search(HELP_EXAMPLES.get(key, ""))
@@ -661,6 +724,8 @@ def words() -> None:
     aliases = _aliases()
     pad = max(len(_display(k)) for k in _all_keys()) + 2
     print("plotsimple words. Type ps.help(\"bars\") to learn more about any of them.")
+    print('A story is one object for a whole analysis: story = ps.start(example="marks"), then')
+    print("every table word and chart word on it; chart types get draw_: story.draw_bars(...).")
     print("Chart words are steps on a chart: chart = ps.chart(table), then chart.bars(...).")
     print("Table words are steps on a table: table = ps.table(...), then table.keep_rows(...).")
     print("Number words are steps on numbers: nums = ps.numbers([3, 5, 2]), then nums.average();")
@@ -682,7 +747,7 @@ def words() -> None:
 # ---------------------------------------------------------------- ps.help()
 def _normalise(word: str) -> str:
     w = str(word).strip()
-    for start in ("ps.", "chart.", "table.", "page.", "nums.", "grid.", "."):
+    for start in ("ps.", "chart.", "table.", "page.", "nums.", "grid.", "story.", "."):
         if w.startswith(start):
             w = w[len(start):]
     if w.endswith("()"):
@@ -808,6 +873,7 @@ def _print_help_overview() -> None:
 
           ps.help("bars")       explains one word: what it does, its options and an example
           ps.help("keep_rows")  works for table words too, and ps.help("average") for numbers
+          ps.help("draw_bars")  works for story words, and says which chart word it draws
           ps.help("show=")      explains an option you use inside a step
           ps.words()            lists every word, with a short example of each
           ps.lesson()           lists the lessons: learn the whole of plotsimple in a day
@@ -1756,6 +1822,90 @@ LESSONS = [
         words=["table.compare_averages", "table.compare_each_pair", "table.compare_counts",
                "table.fit_straight_line", "table.fit_formula", "table.add_group_column"],
     ),
+    dict(
+        title="Tell a whole story",
+        learn=[
+            "how to do a whole analysis with one object, a story: open, clean, sum up, draw and save",
+            "why chart types start with draw_ in a story, and which chart the other chart words change",
+            "how undo() and steps() cover table steps and chart steps together",
+            "how to put several charts on one page with letters, for a paper",
+        ],
+        parts=[
+            ("A story is one object for the whole analysis. Every table word and every chart word "
+             "works on it, so the program reads from top to bottom like a short story.", [
+                ("import plotsimple as ps", "Load plotsimple."),
+                ('story = ps.start(example="marks")', "Open a table and start a story with it. For your own "
+                                                      'file, write ps.start(file="results.xlsx").'),
+                ("story.show_first_rows(5)", "Look at the first 5 rows before you change anything."),
+                ("story.remove_rows_with_empty_cells()", "Clean: remove the rows with an empty cell. The "
+                                                         "practice table has none, so nothing is removed."),
+                ('story.keep_rows("subject", equal_to="Maths")', "Keep only the Maths marks."),
+                ('story.average_of("marks", for_each="class")', "Sum up: the average Maths mark of each "
+                                                                 "class, said in a sentence."),
+                ('story.draw_boxes(x="class", y="marks")', "Now the chart part of the story begins. Chart "
+                                                           "types start with draw_, so every line starts with "
+                                                           "a verb. This is chart 1."),
+                ('story.draw_all_dots(x="class", y="marks")', "Draw every mark as a dot on top of the boxes: "
+                                                              "a second layer of the same chart."),
+                ('story.title_top("Maths marks in each class")', "Words such as title_top change the chart you "
+                                                                 "drew last."),
+                ('story.line_at_y(50, label="pass mark")', "A line at the pass mark."),
+                ("story.new_chart()", "Start another chart. The next draw_ step draws it."),
+                ('story.draw_dots(x="hours", y="marks", colour="class")', "Chart 2: hours of study against "
+                                                                          "marks, one colour per class."),
+                ("story.fit_line(confidence_band=True)", "A straight line for each class (linear regression), "
+                                                         "with a band for how sure the line is."),
+                ('story.label_x("Hours of study")', "The name under the x-axis of chart 2."),
+                ("story.put_charts_together(per_row=2, letters=True)", "Both charts on one page, 2 in a row, "
+                                                                       "with A and B at the top left, as "
+                                                                       "figures in papers have."),
+                ('story.save_chart("lesson15_figure.png")', "Save the page. save_chart saves the chart, or the "
+                                                            "page once the charts are put together."),
+                ('story.save_table("lesson15_maths.xlsx")', "Save the cleaned table too: only the Maths rows."),
+                ("story.steps()", "The whole story, table steps and chart steps in one list."),
+            ]),
+            ("Summaries give back a new story, so you can draw them. undo() takes back any step.", [
+                ("import plotsimple as ps", "Load plotsimple."),
+                ('story = ps.start(example="fruit")', "A story about fruit sold in two shops."),
+                ('totals = story.total_of("count", for_each="fruit")', "The total count of each fruit. It "
+                                                                       "says the answer, and gives back a new "
+                                                                       "story called totals."),
+                ('totals.sort_by("total of count", biggest_first=True)', "Sort the totals, biggest first."),
+                ('totals.draw_bars(x="fruit", y="total of count")', "Draw the totals as bars."),
+                ("totals.numbers_on_bars()", "Write the number on each bar."),
+                ('totals.save_chart("lesson15_totals.png")', "Save the chart."),
+                ('story.keep_rows("shop", equal_to="Corner shop")', "Back to the first story: keep one shop. "
+                                                                    "totals does not change."),
+                ('story.draw_dots(x="price", y="count")', "Draw price against how many were sold."),
+                ("story.undo()", "Undo takes back the last step, whether it changed the table or the chart: "
+                                 "here the dots."),
+                ("story.undo()", "And again: the shop rows come back."),
+                ("story.steps()", "Nothing is left in the list: both steps were taken back."),
+            ]),
+        ],
+        notes=[
+            "A chart uses the table as it was when its first draw_ step was written. Table steps "
+            "written after it do not change it, so the story reads from top to bottom. For the "
+            "table as it is now, start a new chart with story.new_chart().",
+            "save_table saves the table and save_chart the chart. Plain save works too, because the "
+            "file type says which: .xlsx or .csv is a table, .png or .pdf is a picture.",
+            "Charts from different tables go on one page with ps.grid(story_a, story_b, letters=True): "
+            "each story gives the chart it drew last.",
+            "ps.table(...) and ps.chart(...) are still there underneath, for programmers who want a "
+            "table and a chart as two separate objects.",
+        ],
+        task=[
+            'Tell a story about ps.start(example="weather"): keep one city, draw the temperature as '
+            "lines, give it a title and save the chart and the table.",
+            "Add a second chart of the rain with new_chart(), then put the two charts together with "
+            "letters=True.",
+            "Write a table step after your first chart, then undo() twice. Look at steps() after "
+            "each undo.",
+        ],
+        words=["ps.start", "story.draw_boxes", "story.draw_all_dots", "story.draw_dots", "story.draw_bars",
+               "story.new_chart", "story.put_charts_together", "story.save_chart", "story.save_table",
+               "story.steps", "story.undo"],
+    ),
 ]
 
 
@@ -1770,8 +1920,8 @@ def lesson_code(number: int) -> list[str]:
 
 def _list_lessons() -> None:
     print(f"Learn plotsimple in one day: {len(LESSONS)} lessons of about 30 minutes.")
-    print("Lessons 1 to 8 teach charts, lessons 9 to 12 teach tables, lesson 13 teaches numbers")
-    print("and lesson 14 teaches statistical tests.\n")
+    print("Lessons 1 to 8 teach charts, lessons 9 to 12 teach tables, lesson 13 teaches numbers,")
+    print("lesson 14 teaches statistical tests and lesson 15 tells a whole story with all of them.\n")
     for i, les in enumerate(LESSONS, start=1):
         print(f"  ps.lesson({i}){' ' * (5 - len(str(i)))}{les['title']}")
     print("\nStart with ps.lesson(1). Each lesson ends with a small task to try yourself.")

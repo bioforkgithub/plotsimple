@@ -1,9 +1,22 @@
 # plotsimple cheat sheet
 
-Every word on one page. Chart words are steps on a chart:
+Every word on one page. A story is one object for a whole analysis: every table word
+and every chart word works on it, and chart types start with `draw_`:
 
 ```python
 import plotsimple as ps
+story = ps.start(example="marks")     # or ps.start(file="results.xlsx")
+story.keep_rows("marks", above=50)
+story.draw_bars(x="class", y="marks")
+story.title_top("Good marks")         # changes the chart you drew last
+story.save_chart("marks.png")
+story.save_table("good_marks.xlsx")
+story.undo()                          # takes back a table step or a chart step
+```
+
+Underneath, chart words are steps on a chart:
+
+```python
 marks = ps.example("marks")        # a made-up table to practise with
 chart = ps.chart(marks)            # or ps.chart("my_file.xlsx")
 chart.bars(x="name", y="marks")
@@ -33,17 +46,49 @@ grid = ps.number_grid([[3, 5, 2], [8, 6, 4]])
 
 In Python, `ps.help("bars")` explains any word, `ps.words()` prints this list and
 `ps.lesson(1)` starts the one-day course (lessons 9 to 12 are about tables, lesson 13
-about numbers and lesson 14 about statistical tests).
+about numbers, lesson 14 about statistical tests and lesson 15 tells a whole story).
 
 Every example runs as written on the practice table in the *Table* column:
 for example `weather = ps.example("weather")` then `chart = ps.chart(weather)`,
 or `table = ps.table(ps.example("weather"))` for table words.
 Number words use `nums = ps.numbers([12, 15, 9, 20, 14])` and grid words
 `grid = ps.number_grid([[3, 5, 2], [8, 6, 4]])`; `ps.help("word")` shows each example ready to run.
+Story words use `story = ps.start(example="marks")` with the table in the *Table* column.
 Steps such as `fit_line` or `title_top` go after a chart step such as `chart.dots(...)`,
 and `a`, `b` in `ps.side_by_side(a, b)` are charts you made first.
 
 *This file is made by `docs/make_cheatsheet.py`. Do not edit it by hand.*
+
+## Story: a whole analysis in one object
+
+| Word | Example | Table | What it does |
+|---|---|---|---|
+| `ps.start` | `ps.start(example="marks")` | marks | Start a story: open a table, then tell what to do with it. |
+| `draw_bars` | `story.draw_bars(x="name", y="marks")` | marks | Draw bars. |
+| `draw_lines` | `story.draw_lines(x="month", y="temperature", colour="city")` | weather | Draw lines. |
+| `draw_dots` | `story.draw_dots(x="hours", y="marks")` | marks | Draw dots (a scatter chart). |
+| `draw_area` | `story.draw_area(x="year", y="population", colour="country")` | growth | Draw a line with the space under it coloured in. |
+| `draw_histogram` | `story.draw_histogram(x="marks", bins=10)` | marks | Draw bars that count how many values fall in each range. |
+| `draw_boxes` | `story.draw_boxes(x="class", y="marks")` | marks | Draw boxes that show the middle half of the values and the median. |
+| `draw_violins` | `story.draw_violins(x="class", y="marks")` | marks | Draw shapes that are wide where many values are. |
+| `draw_heatmap` | `story.draw_heatmap(x="month", y="city", value="rain", numbers=True)` | weather | Draw a grid of coloured squares, one colour for each number. |
+| `draw_pie` | `story.draw_pie(labels="fruit", values="count")` | fruit | Draw a circle cut into slices, one slice per group. |
+| `draw_polar` | `story.draw_polar(angle="wind_direction", distance="wind_speed", colour="city")` | weather | Draw dots on a round chart: how far round, and how far out. |
+| `draw_contour` | `story.draw_contour(x="east", y="north", z="height")` | island | Draw a map where each colour band joins places with the same height. |
+| `draw_surface` | `story.draw_surface(x="east", y="north", z="height")` | island | Draw a 3D landscape: z= is how high the ground is. |
+| `draw_dots_3d` | `story.draw_dots_3d(x="hours", y="height", z="marks", colour="class")` | marks | Draw dots floating in a 3D box. |
+| `draw_density` | `story.draw_density(x="marks", colour="class")` | marks | Draw a smooth curve that is high where many values are. |
+| `draw_count_bars` | `story.draw_count_bars(x="fruit", colour="shop")` | fruit | Draw bars that count how many rows each group has. |
+| `draw_all_dots` | `story.draw_all_dots(x="class", y="marks")` | marks | Draw every value as a dot, spread out so no dot hides another. |
+| `new_chart` | `story.new_chart()` | marks | Start another chart; the next draw_ step draws it. |
+| `put_charts_together` | `story.put_charts_together(per_row=2, letters=True)` | marks | All the charts of the story on one page. |
+| `show_chart` | `story.show_chart()` | marks | Show the chart you drew last (or the page) in a window. |
+| `save_chart` | `story.save_chart("results.png")` | marks | Save the chart you drew last (or the page of charts). |
+| `save_table` | `story.save_table("clean.xlsx")` | marks | Save the table as it is now. |
+| `save` | `story.save("results.png")` | marks | Save the table or the chart; the file type says which. |
+| `undo` | `story.undo()` | marks | Take the last step back: a table step or a chart step. |
+| `steps` | `story.steps()` | marks | List every step of the story, table and chart steps, in order. |
+| `start_again` | `story.start_again()` | marks | Go back to the very start: the table as it was opened, and no charts. |
 
 ## Start, show and save
 

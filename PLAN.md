@@ -44,7 +44,7 @@ grammar.
 | Saving | `chart.save("x.png")` or `chart.save("x.pdf")`, format from the file name |
 | Spelling | Both `colour` and `color`, `grey` and `gray` |
 | Errors | Friendly message, "did you mean …?", list of columns, link to request a missing word on GitHub |
-| Learning | Built-in lessons `ps.lesson(1)` … `ps.lesson(14)`, `ps.help("bars")`, `ps.words()` |
+| Learning | Built-in lessons `ps.lesson(1)` … `ps.lesson(15)`, `ps.help("bars")`, `ps.words()` |
 | Renaming | A renamed word or option keeps working for one release and prints one line, once per session: `Note: "remove_empty_rows" is now called "remove_rows_with_empty_cells".` Old names are never listed in `ps.words()`, the cheat sheet or the lessons; `ps.help("old_name")` points to the new one |
 
 ## 4. Grammar rules
@@ -64,11 +64,11 @@ A user who knows one word of a pattern should be able to guess the others.
 | # | Pattern | Examples |
 |---|---|---|
 | 1 | **verb + thing** changes a table or numbers: `keep_`, `remove_`, `add_`, `make_`, `fill_`, `turn_`, `rename_`, `sort_` + rows / columns / cells / numbers | `keep_rows`, `remove_columns`, `fill_empty_cells`, `remove_rows_with_empty_cells`, `fill_empty_numbers` |
-| 2 | **chart type** draws on a chart (a plain noun on a `chart`) | `bars`, `histogram`, `dots`, `all_dots` |
+| 2 | **`draw_` + chart type** draws on a story (a plain noun on a `chart`) | `draw_bars`, `draw_histogram`, `draw_all_dots` (`bars`, `histogram` on a chart) |
 | 3 | **thing + where** places something on a chart; where = `top`/`bottom`/`left`/`right`/`x`/`y`/`at`/`between` | `title_top`, `label_y`, `label_colour_bar`, `line_at_y`, `legend_bottom`, `zoom_box(where="top right")` |
 | 4 | **measure + `_of`(column, `for_each=`)** for one column; **relation + `_between`(a, b)** for two; **`compare_` + measure** for tests | `median_of`, `correlation_between`, `compare_averages` |
 | 5 | **`show_` / `hide_` + thing** to look at something without changing it | `show_first_rows`, `show_grid`/`hide_grid`, `show_legend`/`hide_legend` |
-| 6 | **`as_` + library** hands the data to another Python tool | `as_pandas`, `as_polars`, `as_numpy` |
+| 6 | **`as_` + library** hands the data to another Python tool; **`save_` + thing** writes a file | `as_pandas`, `as_polars`, `as_numpy`; `save_table`, `save_chart` |
 
 **One option name, one meaning, everywhere:** `for_each=` (groups), `colour=` (one colour, or a
 colour per group), `between=[low, high]` and `x_between=`/`y_between=` (every span),
@@ -85,6 +85,42 @@ a paper's Methods section.
 
 **Checklist for a new word:** can a user who has never seen it guess it from one sibling? If
 not, rename it before it is released.
+
+### The Story: one object for a whole analysis
+
+`ps.start(...)` opens a table and returns a **Story**: the table (with its history) and the
+charts drawn from it. It is the front door that the lessons and the README teach; `ps.table`
+and `ps.chart` stay underneath as the layer for programmers.
+
+```python
+story = ps.start(file="results.xlsx")   # or example="marks", table=df, sheet=, fast=
+story.remove_rows_with_empty_cells()
+story.keep_rows("score", above=50)
+story.draw_bars(x="class", y="score")
+story.title_top("Good scores")
+story.save_chart("results.png")
+story.save_table("clean.xlsx")
+```
+
+- **Every table word works on a story** and changes its table. A summary or test that gives
+  back a table gives back a **new story**, so `totals.draw_bars(...)` works; plain numbers stay
+  numbers.
+- **Chart types get `draw_`** (pattern 2), so every line starts with a verb. Every other chart
+  word (`title_top`, `label_y`, `fit_line`, `style`, `size` …) changes the **current chart**:
+  the one drawn last. A chart word before any `draw_` says "Draw a chart first".
+- **Snapshot rule:** a chart uses the table as it was when its first `draw_` step was written.
+  Later table steps do not change it, so the program reads top to bottom. `new_chart()` starts
+  another chart, which uses the table as it is when it is drawn.
+- **One history:** `undo()` takes back the last step, table or chart; `steps()` lists both as
+  sentences ("3. draw bars of score for each class"); `start_again()` goes back to the opened
+  table with no charts (and can be undone).
+- **Several charts:** `put_charts_together(per_row=2, letters=True)` puts the story's charts on
+  one page with panel letters A, B, C …; then `save_chart` saves the page, and `title_top`,
+  `style` and `size` change the page. Charts from different tables: `ps.grid(story_a, story_b,
+  letters=True)`, which takes each story's current chart.
+- **One meaning per word:** `save_table` / `save_chart` (plain `save` picks by file type, since
+  table and picture types never overlap); `show_chart` (a bare `show` would be ambiguous next to
+  `show_first_rows`); `table.chart()` is not needed on a story.
 
 ```python
 import plotsimple as ps

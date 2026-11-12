@@ -280,8 +280,9 @@ class LayoutWords:
 class Page(BaseChart):
     """Several charts on one page. Make one with ps.side_by_side, ps.one_above_other or ps.grid."""
 
-    def __init__(self, charts, rows, columns, same_x=False, same_y=False, how="grid"):
+    def __init__(self, charts, rows, columns, same_x=False, same_y=False, how="grid", letters=False):
         self._charts = list(charts)
+        self._letters = letters
         self._rows, self._columns, self._how = rows, columns, how
         self._same_x, self._same_y = same_x, same_y
         self._data = pd.DataFrame()
@@ -327,13 +328,17 @@ class Page(BaseChart):
             fig = Figure(figsize=self._page_size(), layout="constrained")
             cells = fig.subfigures(self._rows, self._columns, squeeze=False)
             panels = []
-            for chart, cell in zip(self._charts, cells.flat):
+            for number, (chart, cell) in enumerate(zip(self._charts, cells.flat)):
                 look = dict(chart._settings)
                 if s["style_set"]:
                     look["style"] = s["style"]
                 with _style.context(look):
                     cell.set_facecolor(matplotlib.rcParams["figure.facecolor"])
-                    panels.extend(ax for ax in _draw_chart(chart, cell) if ax.name == "rectilinear")
+                    drawn = _draw_chart(chart, cell)
+                    if self._letters and drawn:  # A, B, C ... at the top left, as in papers
+                        drawn[0].set_title(_letter(number), loc="left", fontweight="bold",
+                                           fontsize=matplotlib.rcParams["axes.titlesize"] * 1.2)
+                    panels.extend(ax for ax in drawn if ax.name == "rectilinear")
             if self._same_x:
                 _share(panels, "x")
             if self._same_y:
@@ -359,11 +364,24 @@ def _share(axes, which):
         (ax.set_xlim if which == "x" else ax.set_ylim)(*((low, high) if lim[0] <= lim[1] else (high, low)))
 
 
+def _letter(number):
+    """A, B, C ... Z, then AA, AB ... for very big pages."""
+    letters = ""
+    number += 1
+    while number:
+        number, rest = divmod(number - 1, 26)
+        letters = chr(ord("A") + rest) + letters
+    return letters
+
+
 def _page_charts(step, charts):
     if len(charts) == 1 and isinstance(charts[0], (list, tuple)):
         charts = tuple(charts[0])
     if not charts:
         raise PlotsimpleError(f"ps.{step}() needs some charts, for example ps.{step}(chart_a, chart_b).")
+    # a story gives its current chart (the one it drew last)
+    charts = tuple(c._chart_for_page(step, i) if getattr(c, "_is_plotsimple_story", False) else c
+                   for i, c in enumerate(charts, start=1))
     for i, c in enumerate(charts, start=1):
         if isinstance(c, Page):
             raise PlotsimpleError(
@@ -377,40 +395,48 @@ def _page_charts(step, charts):
     return charts
 
 
-def _check_page_options(step, same_x, same_y):
+def _check_page_options(step, same_x, same_y, letters=False):
     _check_bool(step, "same_x", same_x)
     _check_bool(step, "same_y", same_y)
+    _check_bool(step, "letters", letters)
 
 
-def side_by_side(*charts, same_x=False, same_y=False):
+def side_by_side(*charts, same_x=False, same_y=False, letters=False):
     """Charts next to each other. ps.side_by_side(a, b).save("both.png")
 
     same_y=True gives them all the same y range, so heights can be compared.
+    letters=True writes A, B, C ... at the top left of each chart, as in papers.
+    Stories work too: each one gives the chart it drew last.
     """
     charts = _page_charts("side_by_side", charts)
-    _check_page_options("side_by_side", same_x, same_y)
-    return Page(charts, 1, len(charts), same_x, same_y, how="side by side")
+    _check_page_options("side_by_side", same_x, same_y, letters)
+    return Page(charts, 1, len(charts), same_x, same_y, how="side by side", letters=letters)
 
 
-def one_above_other(*charts, same_x=False, same_y=False):
+def one_above_other(*charts, same_x=False, same_y=False, letters=False):
     """Charts on top of each other. ps.one_above_other(a, b).save("both.png")
 
     same_x=True gives them all the same x range, which suits time series.
+    letters=True writes A, B, C ... at the top left of each chart, as in papers.
+    Stories work too: each one gives the chart it drew last.
     """
     charts = _page_charts("one_above_other", charts)
-    _check_page_options("one_above_other", same_x, same_y)
-    return Page(charts, len(charts), 1, same_x, same_y, how="one above the other")
+    _check_page_options("one_above_other", same_x, same_y, letters)
+    return Page(charts, len(charts), 1, same_x, same_y, how="one above the other", letters=letters)
 
 
 @friendly(renamed={"columns": "per_row"})
-def grid(*charts, per_row=2, same_x=False, same_y=False):
+def grid(*charts, per_row=2, same_x=False, same_y=False, letters=False):
     """Charts in rows and columns. ps.grid(a, b, c, d, per_row=2)
 
     per_row=2 puts 2 charts in each row.
+    letters=True writes A, B, C ... at the top left of each chart, as figures in papers do.
+    Stories work too: ps.grid(story_a, story_b, letters=True) uses the chart each story drew last.
     """
     charts = _page_charts("grid", charts)
     if isinstance(per_row, bool) or not isinstance(per_row, int) or per_row < 1:
         raise PlotsimpleError(f"per_row= should be a whole number such as 2 or 3, not {per_row!r}.")
-    _check_page_options("grid", same_x, same_y)
+    _check_page_options("grid", same_x, same_y, letters)
     columns = min(per_row, len(charts))
-    return Page(charts, math.ceil(len(charts) / columns), columns, same_x, same_y, how=f"grid of {columns} columns")
+    return Page(charts, math.ceil(len(charts) / columns), columns, same_x, same_y,
+                how=f"grid of {columns} columns", letters=letters)

@@ -28,7 +28,7 @@ def _run(code, folder, monkeypatch):
 
 
 def _saved_files(code):
-    return [line.split('save("')[1].split('"')[0] for line in code.splitlines() if '.save("' in line]
+    return re.findall(r'\.save(?:_chart|_table)?\("([^"]+)"', code)
 
 
 # ---------------------------------------------------------------- example tables
@@ -65,7 +65,7 @@ def test_example_files_are_inside_the_package():
 
 # ---------------------------------------------------------------- the grouping
 def _public_ps_functions():
-    skip = {"Chart", "NumberGrid", "Numbers", "PlotsimpleError", "Table", "__version__"}
+    skip = {"Chart", "NumberGrid", "Numbers", "PlotsimpleError", "Story", "Table", "__version__"}
     return [n for n in ps.__all__ if n not in skip]
 
 
@@ -90,6 +90,15 @@ def test_every_grid_word_is_in_a_group():
     """Grid words that numbers also have (add, average, undo ...) are explained once, as nums words."""
     missing = [w for w in ps.NumberGrid._word_names() if f"grid.{w}" not in KEYS and f"nums.{w}" not in KEYS]
     assert not missing, f"Add these grid words to a group in learn.GROUPS: {missing}"
+
+
+def test_every_story_word_is_grouped_or_a_table_or_chart_word():
+    """A story's own words are in the Story group; the others are table and chart words."""
+    own = {learn._word(k) for k in KEYS if k.startswith("story.")}
+    borrowed = set(ps.Table._word_names()) | set(ps.Chart._word_names())
+    missing = [w for w in ps.Story._word_names() if w not in own and w not in borrowed]
+    assert not missing, f"Add these story words to the Story group in learn.GROUPS: {missing}"
+    assert {f"draw_{kind}" for kind in ("bars", "lines", "dots", "histogram", "boxes", "heatmap", "pie")} <= own
 
 
 def test_every_ps_function_is_in_a_group():
@@ -278,6 +287,8 @@ def test_every_docstring_example_runs_and_draws(key, tmp_path, monkeypatch, caps
             saved = _saved_files(learn.HELP_EXAMPLES[key])
             if any(getattr(target, f"_is_plotsimple_{kind}", False) for kind in ("table", "numbers", "grid")):
                 ending = ".csv"  # a table, numbers or a grid saves as a table file
+            elif getattr(target, "_is_plotsimple_story", False) and not target._has_chart():
+                ending = ".csv"  # a story with no chart (yet) saves its table
             else:
                 ending = Path(saved[-1]).suffix if saved else ".png"
             target.save(f"doc_example{ending}")
@@ -286,14 +297,14 @@ def test_every_docstring_example_runs_and_draws(key, tmp_path, monkeypatch, caps
 
 
 # ---------------------------------------------------------------- ps.lesson()
-LESSON_NUMBERS = range(1, 15)
+LESSON_NUMBERS = range(1, 16)
 
 
-def test_there_are_fourteen_lessons(capsys):
-    assert len(learn.LESSONS) == 14
+def test_there_are_fifteen_lessons(capsys):
+    assert len(learn.LESSONS) == 15
     ps.lesson()
     out = capsys.readouterr().out
-    assert "14 lessons" in out
+    assert "15 lessons" in out
     for i in LESSON_NUMBERS:
         assert f"ps.lesson({i})" in out
 
@@ -332,9 +343,9 @@ def test_every_group_comes_up_in_a_lesson():
         assert taught & set(keys), f"No lesson teaches anything from {group}"
 
 
-@pytest.mark.parametrize("bad", [0, 15, "1", 1.0, True])
+@pytest.mark.parametrize("bad", [0, 16, "1", 1.0, True])
 def test_wrong_lesson_number_is_explained(bad):
-    with pytest.raises(ps.PlotsimpleError, match="lessons 1 to 14"):
+    with pytest.raises(ps.PlotsimpleError, match="lessons 1 to 15"):
         ps.lesson(bad)
 
 
@@ -350,7 +361,7 @@ def test_cheatsheet_is_up_to_date():
 def test_readme_example_runs(tmp_path, monkeypatch):
     text = (ROOT / "README.md").read_text(encoding="utf-8")
     code = text.split("```python", 1)[1].split("```", 1)[0]
-    assert 'ps.example("marks")' in code
+    assert 'ps.start(example="marks")' in code
     _run(code, tmp_path, monkeypatch)
 
 
