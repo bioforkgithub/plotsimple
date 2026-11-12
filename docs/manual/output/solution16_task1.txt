@@ -1,0 +1,19 @@
+Explaining "marks" from "hours" and "school" (180 rows). Each effect below holds the other columns fixed:
+  intercept: 28.3, the expected "marks" when every number column is 0 and every group column is at its baseline.
+  hours: each 1 more "hours" goes with 2.82 more "marks" (95 % CI 2.39 to 3.26); very unlikely to be chance (p < 0.0001).
+  school "School B" against "School A": "marks" is 6.84 higher (95 % CI 1.82 to 11.9); unlikely to be chance (p = 0.008).
+  school "School C" against "School A": "marks" is 5.89 lower (95 % CI -11.0 to -0.838); unlikely to be chance (p = 0.023).
+  school "School D" against "School A": "marks" is 15.3 higher (95 % CI 10.3 to 20.4); very unlikely to be chance (p < 0.0001).
+  school "School E" against "School A": "marks" is 12.5 higher (95 % CI 7.45 to 17.5); very unlikely to be chance (p < 0.0001).
+  school "School F" against "School A": "marks" is 3.80 higher (95 % CI -1.22 to 8.83); could easily be chance (p = 0.137).
+  school "School G" against "School A": "marks" is 4.58 higher (95 % CI -0.476 to 9.63); could easily be chance (p = 0.076).
+  school "School H" against "School A": "marks" is 7.63 higher (95 % CI 2.58 to 12.7); unlikely to be chance (p = 0.003).
+  school "School I" against "School A": "marks" is 3.83 higher (95 % CI -1.25 to 8.92); could easily be chance (p = 0.138).
+  school "School J" against "School A": "marks" is 3.39 higher (95 % CI -1.63 to 8.41); could easily be chance (p = 0.184).
+  school "School K" against "School A": "marks" is 11.0 higher (95 % CI 5.94 to 16.0); very unlikely to be chance (p < 0.0001).
+  school "School L" against "School A": "marks" is 10.3 higher (95 % CI 5.24 to 15.3); very unlikely to be chance (p < 0.0001).
+  school, all groups together: F test (F = 10.4, df = 11 and 167); very unlikely to be chance (p < 0.0001).
+Method: linear model by least squares, as R lm(marks ~ hours + school).
+R squared = 0.635 (adjusted 0.609): the model explains about 63 % of the differences in "marks". The model as a whole (F = 24.2, df = 12 and 167): very unlikely to be chance (p < 0.0001).
+Note: the residuals (distances from the model) in this model don't look bell-shaped (Shapiro-Wilk p = 0.040), but with 180 values the average is close to bell-shaped anyway (the central limit theorem), so this test is usually still fine.
+A large p-value does not show that there is no effect, only that the data cannot tell. A link does not show that one thing causes the other.

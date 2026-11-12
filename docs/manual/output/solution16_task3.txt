@@ -1,0 +1,7 @@
+Explaining "days_absent" from "hours" and "breakfast" (180 rows). Each rate ratio below holds the other columns fixed:
+  intercept: 6.42, the expected count when every number column is 0 and every group column is at its baseline.
+  hours: each 1 more "hours" multiplies the expected count by 0.861 (95 % CI 0.828 to 0.895); very unlikely to be chance (p < 0.0001).
+  breakfast "yes" against "no": the expected count is 0.936 times as high (95 % CI 0.788 to 1.11); could easily be chance (p = 0.448).
+Method: Poisson regression, as R glm(days_absent ~ hours + breakfast, family = poisson). Wald 95 % intervals and z-tests, as R confint.default() and summary().
+Residual deviance 193 on 177 df (with no columns: 255 on 179 df). The model as a whole (likelihood-ratio chi-square = 62.4, df = 2): very unlikely to be chance (p < 0.0001). AIC = 693.
+A large p-value does not show that there is no effect, only that the data cannot tell. A link does not show that one thing causes the other.

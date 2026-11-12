@@ -1,0 +1,7 @@
+To find a difference of 0.5 standard deviations (Cohen's d) with an 80 % chance, using a two-sided test at 0.05, you need 64 values in each group (128 in all). Method: two-sample t-test power, as R power.t.test().
+Note: the calculation uses the usual equal-spread formula; compare_averages uses Welch's t-test, which is very close to it when the groups are the same size.
+Cohen's rough guide calls this a medium effect (Cohen's d: 0.2 small, 0.5 medium, 0.8 large); it is only a hint, sizes from your own field are better.
+With 20 values in each group (40 in all), a study has a 33.8 % chance (power = 0.338) to find a difference of 0.5 standard deviations (Cohen's d), using a two-sided test at 0.05. Method: two-sample t-test power, as R power.t.test().
+Note: this is below the usual 80 %; how_many_needed() tells you how many values you need.
+Note: the calculation uses the usual equal-spread formula; compare_averages uses Welch's t-test, which is very close to it when the groups are the same size.
+Cohen's rough guide calls this a medium effect (Cohen's d: 0.2 small, 0.5 medium, 0.8 large); it is only a hint, sizes from your own field are better.

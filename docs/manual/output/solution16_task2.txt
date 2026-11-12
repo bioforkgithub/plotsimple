@@ -1,0 +1,8 @@
+Note: 19 rows with an empty cell in "passed" or "hours" or "sleep" were skipped.
+Explaining "passed" from "hours" and "sleep" (161 rows). Each odds ratio below holds the other columns fixed:
+  intercept: 0.000233, the odds of yes when every number column is 0.
+  hours: each 1 more "hours" multiplies the odds of yes by 1.69 (95 % CI 1.39 to 2.05); very unlikely to be chance (p < 0.0001).
+  sleep: each 1 more "sleep" multiplies the odds of yes by 1.98 (95 % CI 1.29 to 3.04); unlikely to be chance (p = 0.002).
+Method: logistic regression, as R glm(passed ~ hours + sleep, family = binomial); counted as yes: "passed" = "yes". Wald 95 % intervals and z-tests, as R confint.default() and summary().
+Residual deviance 170 on 158 df (with no columns: 221 on 160 df). The model as a whole (likelihood-ratio chi-square = 51.5, df = 2): very unlikely to be chance (p < 0.0001). AIC = 176.
+A link does not show that one thing causes the other.

@@ -1,0 +1,16 @@
+Explaining "marks" from "hours" and "breakfast" (180 rows). Each effect below holds the other columns fixed:
+  intercept: 32.5, the expected "marks" when every number column is 0 and every group column is at its baseline.
+  hours: each 1 more "hours" goes with 2.81 more "marks" (95 % CI 2.38 to 3.23); very unlikely to be chance (p < 0.0001).
+  breakfast "yes" against "no": "marks" is 2.97 higher (95 % CI 0.818 to 5.13); unlikely to be chance (p = 0.007).
+Method: linear mixed model with a random intercept for each "school", fitted by REML, as R lme4::lmer(marks ~ hours + breakfast + (1 | school)).
+12 groups in "school". Variance between groups 30.1, within groups 46.8: about 39 % of the differences in "marks" that the columns do not explain lies between the groups (intraclass correlation, ICC = 0.392).
+P-values: Wald z-tests, with Wald 95 % intervals (standard errors as R vcov(), intervals as R confint(method = "Wald")); R lmerTest gives Satterthwaite t-tests instead, which give slightly larger p-values when there are few groups.
+A link does not show that one thing causes the other.
+Explaining "marks" from "hours", "sleep" and "breakfast" (180 rows, 19 of them with empty cells filled in). Each effect below holds the other columns fixed:
+  intercept: 14.7, the expected "marks" when every number column is 0 and every group column is at its baseline.
+  hours: each 1 more "hours" goes with 2.74 more "marks" (95 % CI 2.23 to 3.25); very unlikely to be chance (p < 0.0001).
+  sleep: each 1 more "sleep" goes with 2.27 more "marks" (95 % CI 0.901 to 3.64); unlikely to be chance (p = 0.001).
+  breakfast "yes" against "no": "marks" is 3.28 higher (95 % CI 0.698 to 5.87); unlikely to be chance (p = 0.013).
+Method: multiple imputation by chained equations (predictive mean matching with 5 donors, seed=1): the empty cells were filled in 20 times, the model was fitted to each of the 20 filled-in tables, and the results were pooled with Rubin's rules (t-based intervals with Barnard-Rubin degrees of freedom), as R pool(with(mice(...), lm(marks ~ hours + sleep + breakfast))).
+The filling-in adds uncertainty: up to 6 % of the variance of an effect comes from the differences between the filled-in tables. Tests for whole group columns are not pooled here.
+A link does not show that one thing causes the other.

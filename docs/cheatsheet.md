@@ -278,6 +278,40 @@ and `a`, `b` in `sdata.side_by_side(a, b)` are charts you made first.
 | `compare_shape_to` | `table.compare_shape_to("marks", "normal", for_each="class")` | marks | Do the values look bell-shaped (normal), or are they too far from it to be chance? |
 | `add_adjusted_p_value_column` | `table.add_adjusted_p_value_column("q", method="benjamini-hochberg")` | marks | Adjust p-values for testing many things at once, in a new column. |
 
+## Models
+
+| Word | Example | Table | What it does |
+|---|---|---|---|
+| `explain` | `table.explain("marks", using=["hours", "breakfast"])` | school | Explain one column from several others with a model, and say how big each effect is. |
+| `add_predicted_column` | `table.add_predicted_column("marks", using=["hours", "breakfast"])` | school | Add a column with the value the model predicts for each row. |
+
+## Patterns across columns
+
+| Word | Example | Table | What it does |
+|---|---|---|---|
+| `add_principal_components` | `table.add_principal_components(how_many=2)` | meadow | Add principal components: a few new columns that hold most of the spread of many columns. |
+| `principal_components_of` | `table.principal_components_of()` | meadow | A table of the principal components: how much spread each explains and the weight of each column. |
+| `add_clusters` | `table.add_clusters(how_many=3)` | meadow | Sort the rows into groups of similar rows (clusters), in a new column. |
+| `distances_between_rows` | `table.distances_between_rows(names="plot")` | meadow | How different each row is from every other row: a square table of distances. |
+| `add_nmds` | `table.add_nmds()` | meadow | Draw the rows as points on a map where close points are similar rows (NMDS), in new columns. |
+| `compare_profiles` | `table.compare_profiles(for_each="grazed")` | meadow | Do the groups differ in their make-up across many columns (PERMANOVA), or could it be chance? |
+
+## Survival
+
+| Word | Example | Table | What it does |
+|---|---|---|---|
+| `survival_over_time` | `table.survival_over_time(time="days", event="died", for_each="treatment")` | trial | The share still without the event over time (Kaplan-Meier), with the median time. |
+| `compare_survival` | `table.compare_survival(time="days", event="died", for_each="treatment")` | trial | Do the groups differ in the time until the event, or could it be chance? (log-rank test) |
+| `explain_survival` | `table.explain_survival(time="days", event="died", using=["treatment", "age"])` | trial | Which columns go with a higher or lower risk of the event? (Cox model, hazard ratios) |
+| `survival_curves` | `chart.survival_curves(time="days", event="died", colour="treatment")` | trial | The share still without the event over time (Kaplan-Meier curves). |
+
+## Planning a study
+
+| Word | Example | Table | What it does |
+|---|---|---|---|
+| `sdata.how_many_needed` | `sdata.how_many_needed(effect_size=0.5)` |  | How many values (in each group) does a study need to find a real difference? |
+| `sdata.chance_to_find` | `sdata.chance_to_find(effect_size=0.5, values_per_group=30)` |  | What chance does a study have to find a real difference of a given size (its power)? |
+
 ## Combine and reshape
 
 | Word | Example | Table | What it does |

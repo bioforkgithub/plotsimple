@@ -139,6 +139,28 @@ UNDERNEATH = {
     "table.compare_counts": "SciPy (stats.chi2_contingency, or fisher_exact with test=\"fisher\")",
     "table.fit_straight_line": "SciPy (stats.linregress)",
     "table.fit_formula": "SciPy (optimize.curve_fit)",
+    # models
+    "table.explain": "NumPy (least squares, and iteratively reweighted least squares as R glm); "
+                     "statsmodels for grouped_by= (MixedLM) and multiple imputation (MICEData)",
+    "table.add_predicted_column": "NumPy (the same model as table.explain); statsmodels for grouped_by=",
+    # patterns across columns
+    "table.add_principal_components": "NumPy (linalg.svd)",
+    "table.principal_components_of": "NumPy (linalg.svd)",
+    "table.add_clusters": "NumPy (k-means: Lloyd and Hartigan steps) or SciPy (cluster.hierarchy, for "
+                          "method=\"hierarchical\")",
+    "table.distances_between_rows": "SciPy (spatial.distance.pdist) and NumPy",
+    "table.add_nmds": "NumPy (SMACOF with monotone regression; SciPy optimize.isotonic_regression when "
+                      "available) and SciPy (spatial.distance.pdist)",
+    "table.compare_profiles": "NumPy (PERMANOVA and the spread check, with permutations) and SciPy "
+                              "(spatial.distance.pdist)",
+    # survival
+    "table.survival_over_time": "NumPy (Kaplan-Meier) and SciPy (stats, for the intervals)",
+    "table.compare_survival": "NumPy (log-rank sums) and SciPy (stats.chi2)",
+    "table.explain_survival": "NumPy (Cox model: Newton-Raphson with Efron ties) and SciPy (stats)",
+    "survival_curves": "NumPy (Kaplan-Meier), drawn with matplotlib",
+    # planning a study
+    "sdata.how_many_needed": "SciPy (stats.nct, ncf, ncx2 and norm, and optimize.brentq)",
+    "sdata.chance_to_find": "SciPy (stats.nct, ncf, ncx2 and norm)",
     "table.save": "pandas (to_excel, to_csv ...) or Polars, whichever holds the table",
     "table.chart": "matplotlib and seaborn (the chart is drawn from a pandas copy of the table)",
     "table.as_pandas": "pandas",
@@ -189,7 +211,7 @@ can write it up in a report or a paper.
 
 \section*{How this manual is built}
 \begin{description}[style=nextline,leftmargin=1.2em]
-  \item[{\hyperref[part:lessons]{Part II: Lessons}}] Fifteen short lessons that teach the whole
+  \item[{\hyperref[part:lessons]{Part II: Lessons}}] Eighteen short lessons that teach the whole
     of simplydata in a day. Each lesson shows code you can run, says what every line does, shows
     the real chart and output it makes, and ends with tasks to try yourself.
   \item[{\hyperref[part:dictionary]{Part III: Dictionary of words}}] Every word, with what it does,

@@ -20,21 +20,21 @@ Example tables you can use (all made up, for practice):
       Daily sales of two made-up shops from January to March 2026. Some cells are empty.
       Columns: date, shop, sales, customers
 
+  sdata.example("school")
+      Made-up pupils in 12 schools: study, sleep and test marks. Some sleep cells are empty.
+      Columns: school, pupil, hours, sleep, breakfast, marks, passed, days_absent
+
+  sdata.example("meadow")
+      Plants counted in 30 made-up plots of three fields, half of them grazed by sheep.
+      Columns: plot, field, grazed, clover, daisy, buttercup, dandelion, nettle, thistle, moss, fern, orchid, yarrow
+
+  sdata.example("trial")
+      120 made-up patients in a trial of a new medicine, followed for up to 3 years.
+      Columns: patient, treatment, age, days, died
+
   sdata.example("island")
       A map of a made-up island with two hills, on a 15 x 15 grid.
       Columns: east, north, height
 
-Use one like this:  table = sdata.example("marks")  then  chart = sdata.chart(table)
-      name class  subject  hours  marks  height
-0     Asha     A    Maths    6.3     61     144
-1     Asha     A  Science    3.8     66     144
-2     Asha     A  English    7.6     77     144
-3      Ben     A    Maths    6.4     73     152
-4      Ben     A  Science    9.2     98     152
-5      Ben     A  English    6.2     71     152
-6     Chen     A    Maths    7.9     81     151
-7     Chen     A  Science    3.5     59     151
-8     Chen     A  English    2.5     46     151
-9     Dina     A    Maths    6.5     74     155
 
-... (44 more lines)
+... (56 more lines)

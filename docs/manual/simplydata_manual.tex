@@ -253,7 +253,7 @@ can write it up in a report or a paper.
 
 \section*{How this manual is built}
 \begin{description}[style=nextline,leftmargin=1.2em]
-  \item[{\hyperref[part:lessons]{Part II: Lessons}}] Fifteen short lessons that teach the whole
+  \item[{\hyperref[part:lessons]{Part II: Lessons}}] Eighteen short lessons that teach the whole
     of simplydata in a day. Each lesson shows code you can run, says what every line does, shows
     the real chart and output it makes, and ends with tasks to try yourself.
   \item[{\hyperref[part:dictionary]{Part III: Dictionary of words}}] Every word, with what it does,
@@ -406,6 +406,50 @@ date & every day from 2026-01-01 to 2026-03-31 (real dates)\\
 shop & Northgate or Southside\\
 sales & money taken that day (made-up money); empty on days the till broke\\
 customers & how many people bought something; empty on days nobody counted\\
+\bottomrule\end{tabularx}\end{center}
+\section*{school}
+Made-up pupils in 12 schools: study, sleep and test marks. Some sleep cells are empty. \code{sdata.\allowbreak{}example(\textquotedbl{}school\textquotedbl{})}
+\begin{center}\small
+\begin{tabularx}{\textwidth}{@{}>{\ttfamily}l>{\raggedright\arraybackslash}X@{}}
+\toprule \textrm{\textbf{Column}} & \textbf{What it holds}\\ \midrule
+school & School A to School L (15 pupils in each)\\
+pupil & P001 to P180\\
+hours & hours spent studying for the test\\
+sleep & hours of sleep the night before; empty when the pupil did not say\\
+breakfast & yes or no: did the pupil eat breakfast that morning\\
+marks & marks in the test, out of 100\\
+passed & yes (50 marks or more) or no\\
+days\_absent & days the pupil missed school that term\\
+\bottomrule\end{tabularx}\end{center}
+\section*{meadow}
+Plants counted in 30 made-up plots of three fields, half of them grazed by sheep. \code{sdata.\allowbreak{}example(\textquotedbl{}meadow\textquotedbl{})}
+\begin{center}\small
+\begin{tabularx}{\textwidth}{@{}>{\ttfamily}l>{\raggedright\arraybackslash}X@{}}
+\toprule \textrm{\textbf{Column}} & \textbf{What it holds}\\ \midrule
+plot & a short name for the plot, such as NG1\\
+field & North field, South field or River field\\
+grazed & yes or no: do sheep graze the plot\\
+clover & how many clover plants in the plot\\
+daisy & how many daisies\\
+buttercup & how many buttercups\\
+dandelion & how many dandelions\\
+nettle & how many nettles\\
+thistle & how many thistles\\
+moss & how many patches of moss\\
+fern & how many ferns\\
+orchid & how many orchids\\
+yarrow & how many yarrow plants\\
+\bottomrule\end{tabularx}\end{center}
+\section*{trial}
+120 made-up patients in a trial of a new medicine, followed for up to 3 years. \code{sdata.\allowbreak{}example(\textquotedbl{}trial\textquotedbl{})}
+\begin{center}\small
+\begin{tabularx}{\textwidth}{@{}>{\ttfamily}l>{\raggedright\arraybackslash}X@{}}
+\toprule \textrm{\textbf{Column}} & \textbf{What it holds}\\ \midrule
+patient & T001 to T120\\
+treatment & new medicine or usual care\\
+age & age in years when the patient joined\\
+days & days from joining until the patient died or the follow-up ended\\
+died & yes (died on that day) or no (still alive when the follow-up ended)\\
 \bottomrule\end{tabularx}\end{center}
 \section*{island}
 A map of a made-up island with two hills, on a 15 x 15 grid. \code{sdata.\allowbreak{}example(\textquotedbl{}island\textquotedbl{})}
@@ -2284,6 +2328,268 @@ Worked solutions: page~\pageref{solutions:15}, or type \code{sdata.\allowbreak{}
 \end{tryit}
 \par\noindent{\small\sffamily\textbf{Words in this lesson:} \hyperref[word:sdata.table]{\code{sdata.\allowbreak{}table()}}, \hyperref[word:table.describe-columns]{\code{table.\allowbreak{}describe\_\allowbreak{}columns()}}, \hyperref[word:table.remove-rows-with-empty-cells]{\code{table.\allowbreak{}remove\_\allowbreak{}rows\_\allowbreak{}with\_\allowbreak{}empty\_\allowbreak{}cells()}}, \hyperref[word:table.compare-averages]{\code{table.\allowbreak{}compare\_\allowbreak{}averages()}}, \hyperref[word:table.chart]{\code{table.\allowbreak{}chart()}}, \hyperref[word:boxes]{\code{chart.\allowbreak{}boxes()}}, \hyperref[word:all-dots]{\code{chart.\allowbreak{}all\_\allowbreak{}dots()}}, \hyperref[word:dots]{\code{chart.\allowbreak{}dots()}}, \hyperref[word:fit-line]{\code{chart.\allowbreak{}fit\_\allowbreak{}line()}}, \hyperref[word:sdata.grid]{\code{sdata.\allowbreak{}grid()}}, \hyperref[word:style]{\code{chart.\allowbreak{}style()}}, \hyperref[word:table.save]{\code{table.\allowbreak{}save()}}, \hyperref[word:table.steps]{\code{table.\allowbreak{}steps()}}, \hyperref[word:table.as-pandas]{\code{table.\allowbreak{}as\_\allowbreak{}pandas()}}, \hyperref[word:sdata.chart]{\code{sdata.\allowbreak{}chart()}}.\par}
 
+\chapter{Models: explain one column from several others}\label{lesson:16}
+\begin{learnbox}
+\begin{itemize}
+  \item how to explain one column from several others at once (multiple regression)
+  \item how to explain a yes/no column (logistic regression) and a column of counts (Poisson regression)
+  \item how to allow for groups such as schools (a mixed model)
+  \item how to use rows with empty cells without guessing once (multiple imputation)
+\end{itemize}
+\end{learnbox}
+\section*{Example 1}
+Marks depend on more than one thing. \code{explain()} looks at several columns together, so each effect is the effect with the other columns held fixed.
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+table = sdata.table(sdata.example("school"))
+table.explain("marks", using=["hours", "sleep", "breakfast"])
+table.explain("marks", using=["hours * breakfast"])
+\end{lstlisting}
+\whateachline
+\begin{lineexplain}
+  \item[1] Load simplydata.
+  \item[2] Pupils in 12 schools: study, sleep, breakfast and marks.
+  \item[3] Explain the marks from hours of study, hours of sleep and breakfast. Each extra hour of study goes with about 2.7 more marks, each extra hour of sleep with 2.3 more, and breakfast with 3.2 more, each with its 95 \% confidence interval and p-value. This is a linear model (multiple regression) by least squares.
+  \item[4] hours * breakfast also asks: does the effect of study depend on breakfast? That is an interaction. Here it could easily be chance (p = 0.31).
+\end{lineexplain}
+\printedoutput{output/lesson16_example1.txt}
+\section*{Example 2}
+Not every column is a number to explain. A yes/no column needs the chance of yes, and a count needs a model for counts.
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+table = sdata.table(sdata.example("school"))
+table.explain("passed", using=["hours", "breakfast"], outcome="yes or no")
+table.explain("days_absent", using=["hours", "sleep"], outcome="counts")
+table.add_predicted_column("marks", using=["hours", "breakfast"])
+table.show_first_rows(5)
+\end{lstlisting}
+\whateachline
+\begin{lineexplain}
+  \item[1] Load simplydata.
+  \item[2] The school table.
+  \item[3] Did the pupil pass? \code{outcome=\textquotedbl{}yes or no\textquotedbl{}} is logistic regression. Each extra hour of study multiplies the odds of passing by 1.66 (an odds ratio).
+  \item[4] Days absent are counts (0, 1, 2 ...). \code{outcome=\textquotedbl{}counts\textquotedbl{}} is Poisson regression; each extra hour of study multiplies the expected days absent by 0.88 (a rate ratio).
+  \item[5] Add a column \code{\textquotedbl{}predicted marks\textquotedbl{}}: what the model expects for each pupil.
+  \item[6] Look at the marks next to the predicted marks.
+\end{lineexplain}
+\printedoutput{output/lesson16_example2.txt}
+\section*{Example 3}
+Pupils in the same school are alike in ways the columns do not show. A mixed model allows for that, and multiple imputation uses the rows with empty cells.
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+table = sdata.table(sdata.example("school"))
+table.explain("marks", using=["hours", "breakfast"], grouped_by="school")
+table.explain("marks", using=["hours", "sleep", "breakfast"], empty_cells="multiple imputation")
+\end{lstlisting}
+\whateachline
+\begin{lineexplain}
+  \item[1] Load simplydata.
+  \item[2] The school table.
+  \item[3] A mixed model: each school gets its own starting level (a random intercept). About 39 \% of the differences the columns do not explain lie between schools (the ICC).
+  \item[4] 19 pupils did not say how long they slept. Instead of leaving them out, multiple imputation fills the empty cells 20 times, fits the model to each filled-in table and pools the 20 answers (Rubin's rules), so the extra uncertainty is counted.
+\end{lineexplain}
+\printedoutput{output/lesson16_example3.txt}
+\begin{goodtoknow}
+\begin{itemize}
+  \item Each effect in \code{explain()} holds the other columns fixed: the effect of sleep is the effect for pupils who study the same number of hours and have the same breakfast.
+  \item A text column such as breakfast is compared with its first group in A to Z order (here \code{\textquotedbl{}no\textquotedbl{}}); the answer says which group is the baseline.
+  \item An odds ratio above 1 means higher odds of yes; a rate ratio above 1 means more counts. 1 means no difference.
+  \item If counts vary much more than a Poisson model expects (overdispersion), simplydata says so and suggests \code{outcome=\textquotedbl{}counts (overdispersed)\textquotedbl{}}; it never switches by itself.
+  \item \code{grouped\_\allowbreak{}by=} is for rows that come in groups: pupils in schools, measurements on the same animal, samples from the same site. Without it, the p-values are too small.
+  \item Multiple imputation needs the empty cells to be explainable by the other columns (missing at random). Say in your report how many cells were empty and how they were handled.
+  \item \code{grouped\_\allowbreak{}by=} and multiple imputation need the statsmodels package: pip install \code{\textquotedbl{}simplydata[stats]\textquotedbl{}}.
+\end{itemize}
+\end{goodtoknow}
+\begin{tryit}
+\begin{enumerate}
+  \item Explain \code{\textquotedbl{}marks\textquotedbl{}} using \code{\textquotedbl{}hours\textquotedbl{}} and \code{\textquotedbl{}school\textquotedbl{}} (school as a column of groups). Which schools differ from School A, and is school as a whole important?
+  \item Explain \code{\textquotedbl{}passed\textquotedbl{}} using \code{\textquotedbl{}hours\textquotedbl{}} and \code{\textquotedbl{}sleep\textquotedbl{}} with \code{outcome=\textquotedbl{}yes or no\textquotedbl{}}.
+  \item Explain \code{\textquotedbl{}days\_\allowbreak{}absent\textquotedbl{}} using \code{\textquotedbl{}hours\textquotedbl{}} and \code{\textquotedbl{}breakfast\textquotedbl{}} with \code{outcome=\textquotedbl{}counts\textquotedbl{}}. Does breakfast matter?
+\end{enumerate}
+Worked solutions: page~\pageref{solutions:16}, or type \code{sdata.\allowbreak{}lesson(16,\allowbreak{} solutions=True)}.
+\end{tryit}
+\par\noindent{\small\sffamily\textbf{Words in this lesson:} \hyperref[word:table.explain]{\code{table.\allowbreak{}explain()}}, \hyperref[word:table.add-predicted-column]{\code{table.\allowbreak{}add\_\allowbreak{}predicted\_\allowbreak{}column()}}, \hyperref[word:table.show-first-rows]{\code{table.\allowbreak{}show\_\allowbreak{}first\_\allowbreak{}rows()}}.\par}
+
+\chapter{Patterns across many columns}\label{lesson:17}
+\begin{learnbox}
+\begin{itemize}
+  \item how to sum up many columns in two new ones (principal components)
+  \item how to measure how different rows are (Bray-Curtis and other distances)
+  \item how to draw a map of the rows (NMDS) and test groups on all columns at once (PERMANOVA)
+  \item how to find groups of similar rows (clustering)
+\end{itemize}
+\end{learnbox}
+\section*{Example 1}
+Ten plant counts per plot are too many to look at one by one. Principal components make a few new columns that hold most of the spread.
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+table = sdata.table(sdata.example("meadow"))
+table.add_principal_components(how_many=2)
+chart = table.chart()
+chart.dots(x="PC1", y="PC2", colour="grazed")
+chart.save("lesson17_pca.png")
+\end{lstlisting}
+\whateachline
+\begin{lineexplain}
+  \item[1] Load simplydata.
+  \item[2] Plants counted in 30 plots, half of them grazed by sheep.
+  \item[3] Principal component analysis (PCA): adds PC1 and PC2. PC1 holds 30 \% of the spread, PC2 15 \%. The printout says which plants weigh most in each.
+  \item[4] Start a chart.
+  \item[5] Each plot is a dot; grazed and ungrazed plots sit apart.
+  \item[6] Save it.
+\end{lineexplain}
+\printedoutput{output/lesson17_example1.txt}
+\begin{center}\begin{minipage}{\linewidth}\centering
+\includegraphics[width=0.72\textwidth,height=0.36\textheight,keepaspectratio]{figures/lesson17_example1_lesson17_pca.pdf}
+\captionof{figure}{Lesson 17, example 1: \code{lesson17\_\allowbreak{}pca.\allowbreak{}png}.}
+\end{minipage}\end{center}
+\section*{Example 2}
+Ecologists compare plots by how different their make-up is. Bray-Curtis is the usual distance for counts, and NMDS draws a map that keeps the order of the distances.
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+table = sdata.table(sdata.example("meadow"))
+distances = table.distances_between_rows(measure="bray-curtis", names="plot")
+distances.show_first_rows(3)
+table.add_nmds(measure="bray-curtis")
+table.compare_profiles(for_each="grazed")
+chart = table.chart()
+chart.dots(x="NMDS1", y="NMDS2", colour="grazed")
+chart.save("lesson17_nmds.png")
+\end{lstlisting}
+\whateachline
+\begin{lineexplain}
+  \item[1] Load simplydata.
+  \item[2] The meadow table.
+  \item[3] A table of the Bray-Curtis distance between every pair of plots: 0 means the same plants in the same numbers, 1 means nothing in common.
+  \item[4] Look at the first rows.
+  \item[5] Non-metric multidimensional scaling (NMDS): adds NMDS1 and NMDS2. The stress (0.195) says how well the map keeps the distances: usable.
+  \item[6] Do grazed and ungrazed plots differ in make-up? PERMANOVA tests all ten plants at once: grazing explains 25 \% of the differences (p = 0.001).
+  \item[7] Start a chart.
+  \item[8] The NMDS map.
+  \item[9] Save it.
+\end{lineexplain}
+\printedoutput{output/lesson17_example2.txt}
+\begin{center}\begin{minipage}{\linewidth}\centering
+\includegraphics[width=0.72\textwidth,height=0.36\textheight,keepaspectratio]{figures/lesson17_example2_lesson17_nmds.pdf}
+\captionof{figure}{Lesson 17, example 2: \code{lesson17\_\allowbreak{}nmds.\allowbreak{}png}.}
+\end{minipage}\end{center}
+\section*{Example 3}
+Clustering finds groups of similar rows without being told the groups.
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+table = sdata.table(sdata.example("meadow"))
+table.add_clusters(how_many=2)
+table.count_rows(for_each="cluster", across="grazed")
+\end{lstlisting}
+\whateachline
+\begin{lineexplain}
+  \item[1] Load simplydata.
+  \item[2] The meadow table.
+  \item[3] k-means clustering: adds a column \code{\textquotedbl{}cluster\textquotedbl{}} with 1 or 2.
+  \item[4] Did the clusters find the grazing? Cluster 1 is 14 grazed plots, cluster 2 is the 15 ungrazed plots and one grazed one.
+\end{lineexplain}
+\printedoutput{output/lesson17_example3.txt}
+\begin{goodtoknow}
+\begin{itemize}
+  \item \code{same\_\allowbreak{}scale=True} (the normal choice for PCA and clusters) puts every column on the same scale first, so a column with big numbers does not drown the others.
+  \item The signs and the rotation of PC and NMDS axes are arbitrary; only the distances between the dots mean something.
+  \item Clarke's rule for NMDS stress: below 0.05 excellent, below 0.1 good, below 0.2 usable, above 0.2 hard to trust. Try \code{dimensions=3} if the stress is high.
+  \item PERMANOVA can mistake a difference in spread for a difference in make-up, so \code{compare\_\allowbreak{}profiles} also checks the spread of each group and says if it differs.
+  \item Clusters always appear, even in data without groups: check them against what you know.
+  \item \code{method=\textquotedbl{}hierarchical\textquotedbl{}} clusters step by step (Ward linkage) instead of k-means.
+\end{itemize}
+\end{goodtoknow}
+\begin{tryit}
+\begin{enumerate}
+  \item Add principal components of \code{\textquotedbl{}hours\textquotedbl{}}, \code{\textquotedbl{}sleep\textquotedbl{}}, \code{\textquotedbl{}marks\textquotedbl{}} and \code{\textquotedbl{}days\_\allowbreak{}absent\textquotedbl{}} in \code{sdata.\allowbreak{}example(\textquotedbl{}school\textquotedbl{})}. Which columns weigh most in PC1?
+  \item Make an NMDS map of the meadow in 3 dimensions. Is the stress lower than in 2?
+  \item Do the three fields differ in make-up? Use \code{compare\_\allowbreak{}profiles} with \code{for\_\allowbreak{}each=\textquotedbl{}field\textquotedbl{}}.
+  \item Cluster the meadow plots with \code{method=\textquotedbl{}hierarchical\textquotedbl{}}. Do the clusters match the grazing?
+\end{enumerate}
+Worked solutions: page~\pageref{solutions:17}, or type \code{sdata.\allowbreak{}lesson(17,\allowbreak{} solutions=True)}.
+\end{tryit}
+\par\noindent{\small\sffamily\textbf{Words in this lesson:} \hyperref[word:table.add-principal-components]{\code{table.\allowbreak{}add\_\allowbreak{}principal\_\allowbreak{}components()}}, \hyperref[word:table.principal-components-of]{\code{table.\allowbreak{}principal\_\allowbreak{}components\_\allowbreak{}of()}}, \hyperref[word:table.add-clusters]{\code{table.\allowbreak{}add\_\allowbreak{}clusters()}}, \hyperref[word:table.distances-between-rows]{\code{table.\allowbreak{}distances\_\allowbreak{}between\_\allowbreak{}rows()}}, \hyperref[word:table.add-nmds]{\code{table.\allowbreak{}add\_\allowbreak{}nmds()}}, \hyperref[word:table.compare-profiles]{\code{table.\allowbreak{}compare\_\allowbreak{}profiles()}}, \hyperref[word:dots]{\code{chart.\allowbreak{}dots()}}.\par}
+
+\chapter{Survival, and planning a study}\label{lesson:18}
+\begin{learnbox}
+\begin{itemize}
+  \item how to draw survival curves (Kaplan-Meier) and compare them (log-rank test)
+  \item how to explain the risk of an event from several columns (a Cox model)
+  \item how many values a study needs, before you collect them (power analysis)
+\end{itemize}
+\end{learnbox}
+\section*{Example 1}
+In a trial, some patients are still alive when the follow-up ends. Survival words use their time too: they count as followed without the event (censored).
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+table = sdata.table(sdata.example("trial"))
+table.survival_over_time(time="days", event="died", for_each="treatment")
+chart = table.chart()
+chart.survival_curves(time="days", event="died", colour="treatment", confidence_band=True, at_risk_table=True)
+chart.save("lesson18_survival.png")
+\end{lstlisting}
+\whateachline
+\begin{lineexplain}
+  \item[1] Load simplydata.
+  \item[2] 120 patients, a new medicine or usual care, followed for up to 3 years.
+  \item[3] The Kaplan-Meier estimate: the share still alive at each time, and the median time (706 days with the new medicine, 545 with usual care).
+  \item[4] Start a chart.
+  \item[5] Survival curves with their 95 \% bands, ticks where patients were censored, and the number still followed under the x-axis.
+  \item[6] Save it.
+\end{lineexplain}
+\printedoutput{output/lesson18_example1.txt}
+\begin{center}\begin{minipage}{\linewidth}\centering
+\includegraphics[width=0.72\textwidth,height=0.36\textheight,keepaspectratio]{figures/lesson18_example1_lesson18_survival.pdf}
+\captionof{figure}{Lesson 18, example 1: \code{lesson18\_\allowbreak{}survival.\allowbreak{}png}.}
+\end{minipage}\end{center}
+\section*{Example 2}
+Is the difference real? And what else changes the risk?
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+table = sdata.table(sdata.example("trial"))
+table.compare_survival(time="days", event="died", for_each="treatment")
+table.explain_survival(time="days", event="died", using=["treatment", "age"])
+\end{lstlisting}
+\whateachline
+\begin{lineexplain}
+  \item[1] Load simplydata.
+  \item[2] The trial table.
+  \item[3] The log-rank test compares the whole curves: here the difference could easily be chance (p = 0.22).
+  \item[4] A Cox model: each year of age raises the risk of dying at any moment by about 5 \% (hazard ratio 1.05), with the treatment held fixed.
+\end{lineexplain}
+\printedoutput{output/lesson18_example2.txt}
+\section*{Example 3}
+Was the trial big enough? Power analysis tells you how many values you need before you collect them.
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+sdata.how_many_needed(effect_size=0.5, power=0.8)
+sdata.chance_to_find(effect_size=0.5, values_per_group=20)
+\end{lstlisting}
+\whateachline
+\begin{lineexplain}
+  \item[1] Load simplydata.
+  \item[2] To find a medium difference between two averages (half a standard deviation) with an 80 \% chance, you need 64 values in each group.
+  \item[3] With only 20 values in each group, the chance to find it is just 34 \%.
+\end{lineexplain}
+\printedoutput{output/lesson18_example3.txt}
+\begin{goodtoknow}
+\begin{itemize}
+  \item Never leave out the censored rows or count them as survivors: the survival words use the time they were followed, which is what makes these methods right.
+  \item A hazard ratio above 1 means a higher risk of the event at any moment; 1 means no difference. The Cox model assumes the ratio stays the same over time, and simplydata checks this and says so if it does not.
+  \item A study that is too small often finds nothing even when there is something to find. Plan the size before collecting data, not after.
+  \item \code{effect\_\allowbreak{}size=} is Cohen's d for averages, f for 3 or more groups, w for counts and r for a correlation. You can also give \code{difference=} and \code{spread=} in your own units.
+\end{itemize}
+\end{goodtoknow}
+\begin{tryit}
+\begin{enumerate}
+  \item Explain the risk of dying from \code{\textquotedbl{}age\textquotedbl{}} alone with \code{explain\_\allowbreak{}survival}.
+  \item How many pairs does a before/after study need to find a small change (\code{effect\_\allowbreak{}size=0.\allowbreak{}3})?
+  \item What is the chance to find a medium difference (\code{effect\_\allowbreak{}size=0.\allowbreak{}25}) between 3 groups with 30 values in each?
+\end{enumerate}
+Worked solutions: page~\pageref{solutions:18}, or type \code{sdata.\allowbreak{}lesson(18,\allowbreak{} solutions=True)}.
+\end{tryit}
+\par\noindent{\small\sffamily\textbf{Words in this lesson:} \hyperref[word:table.survival-over-time]{\code{table.\allowbreak{}survival\_\allowbreak{}over\_\allowbreak{}time()}}, \hyperref[word:survival-curves]{\code{chart.\allowbreak{}survival\_\allowbreak{}curves()}}, \hyperref[word:table.compare-survival]{\code{table.\allowbreak{}compare\_\allowbreak{}survival()}}, \hyperref[word:table.explain-survival]{\code{table.\allowbreak{}explain\_\allowbreak{}survival()}}, \hyperref[word:sdata.how-many-needed]{\code{sdata.\allowbreak{}how\_\allowbreak{}many\_\allowbreak{}needed()}}, \hyperref[word:sdata.chance-to-find]{\code{sdata.\allowbreak{}chance\_\allowbreak{}to\_\allowbreak{}find()}}.\par}
+
 \otherchapters
 
 \part{Dictionary of words}\label{part:dictionary}
@@ -2324,7 +2630,7 @@ chart.save("my_chart.png")
 A small made-up table to practise with. \code{sdata.\allowbreak{}example(\textquotedbl{}marks\textquotedbl{})}
 
 \codeline{sdata.example() with no name lists every table and its columns.}\\
-The tables are: marks, weather, fruit, growth, shop, island. Only \code{\textquotedbl{}shop\textquotedbl{}} has empty cells and a column of dates, to practise with.
+The tables are: marks, weather, fruit, growth, shop, school, meadow, trial, island. \code{\textquotedbl{}shop\textquotedbl{}} has empty cells and a column of dates to practise with; \code{\textquotedbl{}school\textquotedbl{}} has empty cells too.
 
 \wordfield{Options}{}\par\nopagebreak
 \begin{optiontable}
@@ -5314,6 +5620,336 @@ table = table.correlation_between("hours", "marks", "height", show="each pair")
 table.add_adjusted_p_value_column("q", method="benjamini-hochberg")
 table.show()
 \end{lstlisting}
+\unsection{Models}{group:Models}
+\wordentry{table.explain()}{word:table.explain}
+Explain one column from several others with a model, and say how big each effect is.
+
+\codeline{table.explain(\textquotedbl{}marks\textquotedbl{}, using=[\textquotedbl{}hours\textquotedbl{}, \textquotedbl{}breakfast\textquotedbl{}])} (with \code{sdata.\allowbreak{}example(\textquotedbl{}school\textquotedbl{})})\\
+\code{outcome=\textquotedbl{}numbers\textquotedbl{}} (the default): linear model by least squares (R \code{lm()}). \code{outcome=\textquotedbl{}yes or no\textquotedbl{}}: logistic regression, odds ratios (R \code{glm(family = binomial)}). \code{outcome=\textquotedbl{}counts\textquotedbl{}}: Poisson regression, rate ratios (R \code{glm(family = poisson)}); \code{outcome=\textquotedbl{}counts (overdispersed)\textquotedbl{}}: quasi-Poisson (R \code{glm(family = quasipoisson)}). A text column in \code{using=} is a group column: each group is compared with the first group in sorted order (the baseline). \code{\textquotedbl{}hours * breakfast\textquotedbl{}} adds both columns and their interaction (does the effect of hours depend on breakfast?). \code{grouped\_\allowbreak{}by=\textquotedbl{}school\textquotedbl{}}: a mixed model with its own starting level for each school (R lme4::\code{lmer()}), for rows that belong together. \code{empty\_\allowbreak{}cells=\textquotedbl{}multiple imputation\textquotedbl{}} fills in empty cells 20 times (R \code{mice()}) instead of leaving those rows out; \code{seed=} fixes the random filling. Prints each effect with its 95 \% confidence interval and p-value in words, and how well the model fits; gives back a table with one row per term. A link does not show that one thing causes the other.
+
+\wordfield{Options}{}\par\nopagebreak
+\begin{optiontable}
+\code{column=} & \\
+\code{using=} & \\
+\code{outcome=} & normally \code{\textquotedbl{}numbers\textquotedbl{}}\\
+\code{grouped\_\allowbreak{}by=} & \\
+\code{empty\_\allowbreak{}cells=} & normally \code{\textquotedbl{}leave out\textquotedbl{}}\\
+\code{seed=} & normally \code{1}\\
+\end{optiontable}
+
+\wordfield{Underneath}{NumPy (least squares, and iteratively reweighted least squares as R glm); statsmodels for \code{grouped\_\allowbreak{}by=} (MixedLM) and multiple imputation (MICEData)}
+\wordfield{Example you can run}{(it uses the practice table \code{school})}\par\nopagebreak
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+table = sdata.table(sdata.example("school"))
+table.explain("marks", using=["hours", "sleep", "breakfast"])
+table.explain("passed", using=["hours", "breakfast"], outcome="yes or no")
+table.explain("marks", using=["hours", "breakfast"], grouped_by="school")
+\end{lstlisting}
+\wordentry{table.add\_predicted\_column()}{word:table.add-predicted-column}
+Add a column with the value the model predicts for each row.
+
+\codeline{table.add\_predicted\_column(\textquotedbl{}marks\textquotedbl{}, using=[\textquotedbl{}hours\textquotedbl{}, \textquotedbl{}breakfast\textquotedbl{}])} (with \code{sdata.\allowbreak{}example(\textquotedbl{}school\textquotedbl{})})\\
+The same model as \code{explain()} with the same options: \code{outcome=\textquotedbl{}numbers\textquotedbl{}} gives the fitted value (R \code{fitted(lm(.\allowbreak{}.\allowbreak{}.\allowbreak{}))}), \code{outcome=\textquotedbl{}yes or no\textquotedbl{}} the chance of yes from 0 to 1 and \code{outcome=\textquotedbl{}counts\textquotedbl{}} the expected count (R \code{fitted(glm(.\allowbreak{}.\allowbreak{}.\allowbreak{}))}). With \code{grouped\_\allowbreak{}by=} the prediction includes each group's own level (R \code{fitted(lmer(.\allowbreak{}.\allowbreak{}.\allowbreak{}))}). Rows with an empty cell in a column used stay empty. Undo with \code{table.\allowbreak{}undo()}.
+
+\wordfield{Options}{}\par\nopagebreak
+\begin{optiontable}
+\code{column=} & \\
+\code{using=} & \\
+\code{outcome=} & normally \code{\textquotedbl{}numbers\textquotedbl{}}\\
+\code{name=} & \\
+\code{grouped\_\allowbreak{}by=} & \\
+\end{optiontable}
+
+\wordfield{Underneath}{NumPy (the same model as \code{table.\allowbreak{}explain}); statsmodels for \code{grouped\_\allowbreak{}by=}}
+\wordfield{Example you can run}{(it uses the practice table \code{school})}\par\nopagebreak
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+table = sdata.table(sdata.example("school"))
+table.add_predicted_column("marks", using=["hours", "breakfast"])
+table.show_first_rows(5)
+\end{lstlisting}
+\unsection{Patterns across columns}{group:Patterns-across-columns}
+\wordentry{table.add\_principal\_components()}{word:table.add-principal-components}
+Add principal components: a few new columns that hold most of the spread of many columns.
+
+\codeline{table.add\_principal\_components(how\_many=2)} (with \code{sdata.\allowbreak{}example(\textquotedbl{}meadow\textquotedbl{})})\\
+Principal component analysis turns many related columns into new columns PC1, PC2 ... that do not overlap: PC1 holds the most spread, PC2 the most of what is left, and so on. The new columns are the scores of each row. \code{columns=None} uses every number column; \code{same\_\allowbreak{}scale=True} (the default, as R \code{prcomp(scale.\allowbreak{} = TRUE)}) first puts each column on the same scale (mean 0, standard deviation 1) so that big numbers do not dominate; \code{same\_\allowbreak{}scale=False} keeps the columns as they are (use it when all columns are the same kind of measure on the same scale). Prints how much of the spread each component explains and the 3 columns with the largest weights in each. The sign of a component is arbitrary: flipping it changes nothing. Rows with an empty cell get empty PC cells. \code{table.\allowbreak{}principal\_\allowbreak{}components\_\allowbreak{}of()} gives all the weights as a table. Method: singular value decomposition, as R \code{prcomp()}.
+
+\wordfield{Options}{}\par\nopagebreak
+\begin{optiontable}
+\code{columns=} & \\
+\code{how\_\allowbreak{}many=} & normally \code{2}\\
+\code{same\_\allowbreak{}scale=} & normally \code{True}\\
+\end{optiontable}
+
+\wordfield{Underneath}{NumPy (linalg.svd)}
+\wordfield{Example you can run}{(it uses the practice table \code{meadow})}\par\nopagebreak
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+table = sdata.table(sdata.example("meadow"))
+table.add_principal_components(how_many=2)
+chart = table.chart()
+chart.dots(x="PC1", y="PC2", colour="grazed")
+chart.save("meadow_pca.png")
+\end{lstlisting}
+\wordentry{table.principal\_components\_of()}{word:table.principal-components-of}
+A table of the principal components: how much spread each explains and the weight of each column.
+
+\codeline{table.principal\_components\_of()} (with \code{sdata.\allowbreak{}example(\textquotedbl{}meadow\textquotedbl{})})\\
+One row per component (PC1, PC2 ...) with its standard deviation, the share of the spread it explains, the cumulative share, and one column of weights per original column, \code{\textquotedbl{}weight of hours\textquotedbl{}} and so on (the loadings, R \code{prcomp()}\$rotation). A large weight, plus or minus, means the column counts a lot in that component. The sign of a component is arbitrary. \code{same\_\allowbreak{}scale=True} puts each column on the same scale first, as R \code{prcomp(scale.\allowbreak{} = TRUE)}.
+
+\wordfield{Options}{}\par\nopagebreak
+\begin{optiontable}
+\code{columns=} & \\
+\code{same\_\allowbreak{}scale=} & normally \code{True}\\
+\end{optiontable}
+
+\wordfield{Underneath}{NumPy (linalg.svd)}
+\wordfield{Example you can run}{(it uses the practice table \code{meadow})}\par\nopagebreak
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+table = sdata.table(sdata.example("meadow"))
+components = table.principal_components_of()
+components.show()
+\end{lstlisting}
+\wordentry{table.add\_clusters()}{word:table.add-clusters}
+Sort the rows into groups of similar rows (clusters), in a new column.
+
+\codeline{table.add\_clusters(how\_many=3)} (with \code{sdata.\allowbreak{}example(\textquotedbl{}meadow\textquotedbl{})})\\
+\code{method=\textquotedbl{}k-means\textquotedbl{}} (the default) finds \code{how\_\allowbreak{}many} clusters whose rows are as close as possible to their cluster's average, from 25 random starts (as R \code{kmeans(nstart = 25)}); \code{seed=} makes the result the same every time. \code{method=\textquotedbl{}hierarchical\textquotedbl{}} joins the closest rows step by step and cuts the tree into \code{how\_\allowbreak{}many} clusters; \code{linkage=\textquotedbl{}ward\textquotedbl{}} (the default, R \code{hclust(method = \textquotedbl{}ward.\allowbreak{}D2\textquotedbl{})}), \code{\textquotedbl{}average\textquotedbl{}}, \code{\textquotedbl{}complete\textquotedbl{}} or \code{\textquotedbl{}single\textquotedbl{}}. \code{same\_\allowbreak{}scale=True} (the default) puts each column on the same scale first (R \code{scale()}). The clusters are numbered 1, 2, 3 in the order they first appear in the table. Prints the size of each cluster and the share of the spread that lies between clusters (R kmeans: \code{between\_\allowbreak{}SS} / \code{total\_\allowbreak{}SS}). Rows with an empty cell get an empty cluster cell.
+
+\wordfield{Options}{}\par\nopagebreak
+\begin{optiontable}
+\code{columns=} & \\
+\code{how\_\allowbreak{}many=} & normally \code{3}\\
+\code{method=} & normally \code{\textquotedbl{}k-means\textquotedbl{}}\\
+\code{same\_\allowbreak{}scale=} & normally \code{True}\\
+\code{seed=} & normally \code{1}\\
+\code{name=} & normally \code{\textquotedbl{}cluster\textquotedbl{}}\\
+\code{linkage=} & normally \code{\textquotedbl{}ward\textquotedbl{}}\\
+\end{optiontable}
+
+\wordfield{Underneath}{NumPy (k-means: Lloyd and Hartigan steps) or SciPy (cluster.hierarchy, for \code{method=\textquotedbl{}hierarchical\textquotedbl{}})}
+\wordfield{Example you can run}{(it uses the practice table \code{meadow})}\par\nopagebreak
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+table = sdata.table(sdata.example("meadow"))
+table.add_clusters(how_many=2)
+table.count_rows(for_each="cluster", across="grazed")
+\end{lstlisting}
+\wordentry{table.distances\_between\_rows()}{word:table.distances-between-rows}
+How different each row is from every other row: a square table of distances.
+
+\codeline{table.distances\_between\_rows(names=\textquotedbl{}plot\textquotedbl{})} (with \code{sdata.\allowbreak{}example(\textquotedbl{}meadow\textquotedbl{})})\\
+\code{measure=\textquotedbl{}bray-curtis\textquotedbl{}} (the default, as R vegan::\code{vegdist()}) is the usual measure for counts of species: 0 when two rows have the same counts, 1 when they share nothing. \code{\textquotedbl{}jaccard\textquotedbl{}} uses only present / absent (a count above 0 is present), as vegan::\code{vegdist(binary = TRUE)}: the share of the species found in either row that are found in only one. \code{\textquotedbl{}euclidean\textquotedbl{}} is the straight-line distance and \code{\textquotedbl{}manhattan\textquotedbl{}} the sum of the differences. \code{names=} is a column whose values label the rows and columns.
+
+\wordfield{Options}{}\par\nopagebreak
+\begin{optiontable}
+\code{columns=} & \\
+\code{measure=} & normally \code{\textquotedbl{}bray-curtis\textquotedbl{}}\\
+\code{names=} & \\
+\end{optiontable}
+
+\wordfield{Underneath}{SciPy (spatial.distance.pdist) and NumPy}
+\wordfield{Example you can run}{(it uses the practice table \code{meadow})}\par\nopagebreak
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+table = sdata.table(sdata.example("meadow"))
+distances = table.distances_between_rows(measure="bray-curtis", names="plot")
+distances.show_first_rows(3)
+\end{lstlisting}
+\wordentry{table.add\_nmds()}{word:table.add-nmds}
+Draw the rows as points on a map where close points are similar rows (NMDS), in new columns.
+
+\codeline{table.add\_nmds()} (with \code{sdata.\allowbreak{}example(\textquotedbl{}meadow\textquotedbl{})})\\
+Non-metric multidimensional scaling puts each row on a map with \code{dimensions=} axes (NMDS1, NMDS2) so that the order of the distances on the map follows the order of the distances between the rows (\code{measure=\textquotedbl{}bray-curtis\textquotedbl{}}, as R vegan::metaMDS). It tries a classical-scaling start and \code{tries=} random starts (\code{seed=} makes them the same every time) and keeps the map with the lowest stress (Kruskal's stress-1: how badly the map fits). Clarke's (1993) rule of thumb: below 0.05 excellent, below 0.1 good, below 0.2 usable, above 0.2 hard to trust. The axes have no units; their rotation and signs are arbitrary. Rows with an empty cell get empty NMDS cells.
+
+\wordfield{Options}{}\par\nopagebreak
+\begin{optiontable}
+\code{columns=} & \\
+\code{measure=} & normally \code{\textquotedbl{}bray-curtis\textquotedbl{}}\\
+\code{dimensions=} & normally \code{2}\\
+\code{tries=} & normally \code{20}\\
+\code{seed=} & normally \code{1}\\
+\end{optiontable}
+
+\wordfield{Underneath}{NumPy (SMACOF with monotone regression; SciPy optimize.isotonic\_regression when available) and SciPy (spatial.distance.pdist)}
+\wordfield{Example you can run}{(it uses the practice table \code{meadow})}\par\nopagebreak
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+table = sdata.table(sdata.example("meadow"))
+table.add_nmds(measure="bray-curtis")
+chart = table.chart()
+chart.dots(x="NMDS1", y="NMDS2", colour="grazed")
+chart.save("meadow_nmds.png")
+\end{lstlisting}
+\wordentry{table.compare\_profiles()}{word:table.compare-profiles}
+Do the groups differ in their make-up across many columns (PERMANOVA), or could it be chance?
+
+\codeline{table.compare\_profiles(for\_each=\textquotedbl{}grazed\textquotedbl{})} (with \code{sdata.\allowbreak{}example(\textquotedbl{}meadow\textquotedbl{})})\\
+Compares whole profiles, such as the counts of all plant species in a plot, between the groups in \code{for\_\allowbreak{}each=}. PERMANOVA, as R vegan::\code{adonis2(distances \textasciitilde{} group)}: R squared is the share of the differences between rows (\code{measure=} distances, Bray-Curtis by default) that the groups explain, and pseudo-F compares the differences between groups with those within groups. The p-value comes from shuffling the rows \code{permutations=} times (\code{seed=} makes it the same every time). It also checks whether the groups differ in spread (vegan::betadisper and permutest), because PERMANOVA can then mistake a difference in spread for a difference in make-up. Gives back a one-row table.
+
+\wordfield{Options}{}\par\nopagebreak
+\begin{optiontable}
+\code{columns=} & \\
+\code{for\_\allowbreak{}each=} & \\
+\code{measure=} & normally \code{\textquotedbl{}bray-curtis\textquotedbl{}}\\
+\code{permutations=} & normally \code{999}\\
+\code{seed=} & normally \code{1}\\
+\end{optiontable}
+
+\wordfield{Underneath}{NumPy (PERMANOVA and the spread check, with permutations) and SciPy (spatial.distance.pdist)}
+\wordfield{Example you can run}{(it uses the practice table \code{meadow})}\par\nopagebreak
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+table = sdata.table(sdata.example("meadow"))
+table.compare_profiles(for_each="grazed")
+\end{lstlisting}
+\unchapter{Chart words}{family:chart}
+Steps on a chart: \code{chart = sdata.chart(table)}, then \code{chart.bars(...)}. Words that start with \code{sdata.} are called on simplydata itself, and words that end in \code{=} are options inside a chart step.
+\unsection{Survival}{group:Survival}
+\wordentry{table.survival\_over\_time()}{word:table.survival-over-time}
+The share still without the event over time (Kaplan-Meier), with the median time.
+
+\codeline{table.survival\_over\_time(time=\textquotedbl{}days\textquotedbl{}, event=\textquotedbl{}died\textquotedbl{}, for\_each=\textquotedbl{}treatment\textquotedbl{})} (with \code{sdata.\allowbreak{}example(\textquotedbl{}trial\textquotedbl{})})\\
+\code{time=} is the time until the event or the end of follow-up; \code{event=} says whether the event happened (yes/no, True/False or 1/0). \code{for\_\allowbreak{}each=} gives one curve per group. Prints the median time (by when half have had the event) with its 95 \% CI per group, or says it was not reached, as R \code{print(survfit(Surv(days,\allowbreak{} died == \textquotedbl{}yes\textquotedbl{}) \textasciitilde{} treatment))}. Gives back a table with one row per event time: the group, time, at risk, events, censored (since the previous row), survival and its 95 \% CI (log scale, R's default), as R \code{summary(survfit(.\allowbreak{}.\allowbreak{}.\allowbreak{}))}. Draw the curves with \code{chart.\allowbreak{}survival\_\allowbreak{}curves(.\allowbreak{}.\allowbreak{}.\allowbreak{})}.
+
+\wordfield{Options}{}\par\nopagebreak
+\begin{optiontable}
+\code{time=} & \\
+\code{event=} & \\
+\code{for\_\allowbreak{}each=} & \\
+\end{optiontable}
+
+\wordfield{Underneath}{NumPy (Kaplan-Meier) and SciPy (stats, for the intervals)}
+\wordfield{Example you can run}{(it uses the practice table \code{trial})}\par\nopagebreak
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+table = sdata.table(sdata.example("trial"))
+table.survival_over_time(time="days", event="died", for_each="treatment")
+\end{lstlisting}
+\wordentry{table.compare\_survival()}{word:table.compare-survival}
+Do the groups differ in the time until the event, or could it be chance? (log-rank test)
+
+\codeline{table.compare\_survival(time=\textquotedbl{}days\textquotedbl{}, event=\textquotedbl{}died\textquotedbl{}, for\_each=\textquotedbl{}treatment\textquotedbl{})} (with \code{sdata.\allowbreak{}example(\textquotedbl{}trial\textquotedbl{})})\\
+The log-rank test, as R \code{survdiff(Surv(days,\allowbreak{} died == \textquotedbl{}yes\textquotedbl{}) \textasciitilde{} treatment)}: at each event time the events are shared out over the groups by how many rows are at risk in each, and the observed events are compared with these expected ones over the whole follow-up. Prints the answer in words and the observed vs expected events per group; gives back a one-row table of results.
+
+\wordfield{Options}{}\par\nopagebreak
+\begin{optiontable}
+\code{time=} & \\
+\code{event=} & \\
+\code{for\_\allowbreak{}each=} & \\
+\end{optiontable}
+
+\wordfield{Underneath}{NumPy (log-rank sums) and SciPy (stats.chi2)}
+\wordfield{Example you can run}{(it uses the practice table \code{trial})}\par\nopagebreak
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+table = sdata.table(sdata.example("trial"))
+table.compare_survival(time="days", event="died", for_each="treatment")
+\end{lstlisting}
+\wordentry{table.explain\_survival()}{word:table.explain-survival}
+Which columns go with a higher or lower risk of the event? (Cox model, hazard ratios)
+
+\codeline{table.explain\_survival(time=\textquotedbl{}days\textquotedbl{}, event=\textquotedbl{}died\textquotedbl{}, using=[\textquotedbl{}treatment\textquotedbl{}, \textquotedbl{}age\textquotedbl{}])} (with \code{sdata.\allowbreak{}example(\textquotedbl{}trial\textquotedbl{})})\\
+The Cox proportional hazards model, as R \code{coxph(Surv(days,\allowbreak{} died == \textquotedbl{}yes\textquotedbl{}) \textasciitilde{} treatment + age)}, with Efron's method for tied times. A hazard ratio above 1 means a higher risk of the event at any moment (2 = twice the risk), below 1 a lower risk. Numbers count per 1 more; text columns are groups compared with the first group (A to Z). Prints each hazard ratio with its 95 \% CI and p-value, and the likelihood-ratio test of the whole model; a note says if a hazard ratio seems to change over time (the proportional-hazards check of R \code{cox.\allowbreak{}zph()}). Gives back a table with one row per term.
+
+\wordfield{Options}{}\par\nopagebreak
+\begin{optiontable}
+\code{time=} & \\
+\code{event=} & \\
+\code{using=} & \\
+\end{optiontable}
+
+\wordfield{Underneath}{NumPy (Cox model: Newton-Raphson with Efron ties) and SciPy (stats)}
+\wordfield{Example you can run}{(it uses the practice table \code{trial})}\par\nopagebreak
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+table = sdata.table(sdata.example("trial"))
+table.explain_survival(time="days", event="died", using=["treatment", "age"])
+\end{lstlisting}
+\wordentry{chart.survival\_curves()}{word:survival-curves}
+The share still without the event over time (Kaplan-Meier curves).\\
+\codeline{chart.survival\_curves(time=\textquotedbl{}days\textquotedbl{}, event=\textquotedbl{}died\textquotedbl{}, colour=\textquotedbl{}treatment\textquotedbl{})} (with \code{sdata.\allowbreak{}example(\textquotedbl{}trial\textquotedbl{})})
+
+\code{time=} is the time until the event or the end of follow-up; \code{event=} says whether the event happened (yes/no, True/False or 1/0). \code{colour=\textquotedbl{}treatment\textquotedbl{}} draws one curve per group, or \code{colour=\textquotedbl{}blue\textquotedbl{}} one colour. Each curve starts at 1 and drops at each event; censored rows (followed without the event) are small ticks (\code{censor\_\allowbreak{}marks=False} hides them). \code{confidence\_\allowbreak{}band=True} shades the 95 \% confidence interval. \code{at\_\allowbreak{}risk\_\allowbreak{}table=True} writes the number still at risk under the x-axis. The numbers are those of\\
+\codeline{table.survival\_over\_time() (as R survfit()).}
+
+\wordfield{Options}{}\par\nopagebreak
+\begin{optiontable}
+\code{time=} & \\
+\code{event=} & \\
+\code{colour=} & \\
+\code{confidence\_\allowbreak{}band=} & normally \code{False}\\
+\code{censor\_\allowbreak{}marks=} & normally \code{True}\\
+\code{at\_\allowbreak{}risk\_\allowbreak{}table=} & normally \code{False}\\
+\end{optiontable}
+
+\wordfield{Underneath}{NumPy (Kaplan-Meier), drawn with matplotlib}
+\wordfield{Example you can run}{(it uses the practice table \code{trial})}\par\nopagebreak
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+trial = sdata.example("trial")
+chart = sdata.chart(trial)
+chart.survival_curves(time="days", event="died", colour="treatment", confidence_band=True)
+chart.save("survival_curves.png")
+\end{lstlisting}
+\unchapter{Help words}{family:help}
+Words that teach simplydata.
+\unsection{Planning a study}{group:Planning-a-study}
+\wordentry{sdata.how\_many\_needed()}{word:sdata.how-many-needed}
+How many values (in each group) does a study need to find a real difference?
+
+\codeline{sdata.how\_many\_needed(effect\_size=0.5)}\enspace (two groups, a medium difference: 64 in each)\\
+\code{test=} is the simplydata test the study will use: \code{\textquotedbl{}compare\_\allowbreak{}averages\textquotedbl{}} (2 groups: t-test; \code{groups=3} or more: ANOVA with Cohen's f), \code{\textquotedbl{}compare\_\allowbreak{}before\_\allowbreak{}after\textquotedbl{}} (paired, Cohen's d of the changes), \code{\textquotedbl{}compare\_\allowbreak{}average\_\allowbreak{}to\textquotedbl{}} (one sample), \code{\textquotedbl{}compare\_\allowbreak{}counts\textquotedbl{}} (chi-square with Cohen's w; \code{groups=}(groups, kinds of outcome)) or \code{\textquotedbl{}correlation\_\allowbreak{}between\textquotedbl{}} (r; the answer is pairs). The size of the difference: \code{effect\_\allowbreak{}size=} (Cohen's d, f, w or r, the sentence says which), or \code{difference=} and \code{spread=} (the standard deviation) for the t-tests. \code{power=} is the chance you want to find it (0.8 is usual); \code{significance=} is the p-value limit (0.05); \code{sides=1} looks only in the direction you expect. The t-tests use the usual equal-spread formula (R \code{power.\allowbreak{}t.\allowbreak{}test()}), very close to Welch's t-test when the groups are the same size; the others match R pwr. The number is rounded UP to a whole number; the exact value is in the result. Gives back a one-row table.
+
+\wordfield{Options}{}\par\nopagebreak
+\begin{optiontable}
+\code{test=} & normally \code{\textquotedbl{}compare\_\allowbreak{}averages\textquotedbl{}}\\
+\code{effect\_\allowbreak{}size=} & \\
+\code{difference=} & \\
+\code{spread=} & \\
+\code{power=} & normally \code{0.\allowbreak{}8}\\
+\code{significance=} & normally \code{0.\allowbreak{}05}\\
+\code{groups=} & normally \code{2}\\
+\code{sides=} & normally \code{2}\\
+\end{optiontable}
+
+\wordfield{Underneath}{SciPy (stats.nct, ncf, ncx2 and norm, and optimize.brentq)}
+\wordfield{Example you can run}{}\par\nopagebreak
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+sdata.how_many_needed(effect_size=0.5, power=0.8)
+sdata.how_many_needed(test="compare_averages", difference=5, spread=10)
+sdata.how_many_needed(test="compare_averages", effect_size=0.25, groups=3)
+\end{lstlisting}
+\wordentry{sdata.chance\_to\_find()}{word:sdata.chance-to-find}
+What chance does a study have to find a real difference of a given size (its power)?
+
+\codeline{sdata.chance\_to\_find(effect\_size=0.5, values\_per\_group=30)}\enspace (two groups of 30: about 48 \%)\\
+The same options as \code{how\_\allowbreak{}many\_\allowbreak{}needed()}, with \code{values\_\allowbreak{}per\_\allowbreak{}group=} instead of \code{power=}: the number in each group (pairs for \code{compare\_\allowbreak{}before\_\allowbreak{}after} and \code{correlation\_\allowbreak{}between}; all the values for \code{compare\_\allowbreak{}average\_\allowbreak{}to}). The t-tests use the usual equal-spread formula (R \code{power.\allowbreak{}t.\allowbreak{}test()}), very close to Welch's t-test when the groups are the same size; the others match R pwr. Gives back a one-row table.
+
+\wordfield{Options}{}\par\nopagebreak
+\begin{optiontable}
+\code{test=} & normally \code{\textquotedbl{}compare\_\allowbreak{}averages\textquotedbl{}}\\
+\code{effect\_\allowbreak{}size=} & \\
+\code{difference=} & \\
+\code{spread=} & \\
+\code{values\_\allowbreak{}per\_\allowbreak{}group=} & \\
+\code{significance=} & normally \code{0.\allowbreak{}05}\\
+\code{groups=} & normally \code{2}\\
+\code{sides=} & normally \code{2}\\
+\end{optiontable}
+
+\wordfield{Underneath}{SciPy (stats.nct, ncf, ncx2 and norm)}
+\wordfield{Example you can run}{}\par\nopagebreak
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+sdata.chance_to_find(effect_size=0.5, values_per_group=20)
+\end{lstlisting}
+\unchapter{Table words}{family:table}
+Steps on a table: \code{table = sdata.table(...)}, then \code{table.keep\_rows(...)}. Table words work the same on pandas and Polars tables.
 \unsection{Combine and reshape}{group:Combine-and-reshape}
 \wordentry{table.join\_with()}{word:table.join-with}
 Bring in the columns of another table, matching rows on a column such as a name.
@@ -7164,6 +7800,91 @@ table.steps()
 \printedoutput{output/solution15_task3.txt}
 \solutionanswer{\code{steps()} lists each change in plain words, in order; those lines are a first draft of the methods part of a report.}
 \par\noindent{\small\sffamily\hyperref[lesson:15]{Back to lesson 15}}
+\unsection{Lesson 16: Models: explain one column from several others}{solutions:16}
+\solutiontask{1}{Explain \code{\textquotedbl{}marks\textquotedbl{}} using \code{\textquotedbl{}hours\textquotedbl{}} and \code{\textquotedbl{}school\textquotedbl{}} (school as a column of groups). Which schools differ from School A, and is school as a whole important?}
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+table = sdata.table(sdata.example("school"))
+table.explain("marks", using=["hours", "school"])
+\end{lstlisting}
+\printedoutput{output/solution16_task1.txt}
+\solutionanswer{School as a whole matters a lot (F = 10.4, p \textless{} 0.0001); School D scores about 15 marks more than School A for the same hours of study. \code{grouped\_\allowbreak{}by=} would instead treat the schools as a sample of many possible schools.}
+\solutiontask{2}{Explain \code{\textquotedbl{}passed\textquotedbl{}} using \code{\textquotedbl{}hours\textquotedbl{}} and \code{\textquotedbl{}sleep\textquotedbl{}} with \code{outcome=\textquotedbl{}yes or no\textquotedbl{}}.}
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+table = sdata.table(sdata.example("school"))
+table.explain("passed", using=["hours", "sleep"], outcome="yes or no")
+\end{lstlisting}
+\printedoutput{output/solution16_task2.txt}
+\solutionanswer{Each extra hour of study multiplies the odds of passing by 1.69 and each extra hour of sleep by 1.98; both are unlikely to be chance.}
+\solutiontask{3}{Explain \code{\textquotedbl{}days\_\allowbreak{}absent\textquotedbl{}} using \code{\textquotedbl{}hours\textquotedbl{}} and \code{\textquotedbl{}breakfast\textquotedbl{}} with \code{outcome=\textquotedbl{}counts\textquotedbl{}}. Does breakfast matter?}
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+table = sdata.table(sdata.example("school"))
+table.explain("days_absent", using=["hours", "breakfast"], outcome="counts")
+\end{lstlisting}
+\printedoutput{output/solution16_task3.txt}
+\solutionanswer{Breakfast could easily be chance (rate ratio 0.94, p = 0.45); study hours matter (rate ratio 0.86 for each hour).}
+\par\noindent{\small\sffamily\hyperref[lesson:16]{Back to lesson 16}}
+\unsection{Lesson 17: Patterns across many columns}{solutions:17}
+\solutiontask{1}{Add principal components of \code{\textquotedbl{}hours\textquotedbl{}}, \code{\textquotedbl{}sleep\textquotedbl{}}, \code{\textquotedbl{}marks\textquotedbl{}} and \code{\textquotedbl{}days\_\allowbreak{}absent\textquotedbl{}} in \code{sdata.\allowbreak{}example(\textquotedbl{}school\textquotedbl{})}. Which columns weigh most in PC1?}
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+table = sdata.table(sdata.example("school"))
+table.add_principal_components(columns=["hours", "sleep", "marks", "days_absent"])
+\end{lstlisting}
+\printedoutput{output/solution17_task1.txt}
+\solutionanswer{PC1 (50 \% of the spread) is mostly hours, marks and, the other way, days absent: pupils who study more get better marks and miss fewer days. PC2 is mostly sleep.}
+\solutiontask{2}{Make an NMDS map of the meadow in 3 dimensions. Is the stress lower than in 2?}
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+table = sdata.table(sdata.example("meadow"))
+table.add_nmds(measure="bray-curtis", dimensions=3)
+\end{lstlisting}
+\printedoutput{output/solution17_task2.txt}
+\solutionanswer{Yes: the stress drops from 0.195 to 0.127. That is still in the usable band (good is below 0.1), but the map keeps the distances clearly better.}
+\solutiontask{3}{Do the three fields differ in make-up? Use \code{compare\_\allowbreak{}profiles} with \code{for\_\allowbreak{}each=\textquotedbl{}field\textquotedbl{}}.}
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+table = sdata.table(sdata.example("meadow"))
+table.compare_profiles(for_each="field")
+\end{lstlisting}
+\printedoutput{output/solution17_task3.txt}
+\solutionanswer{The fields explain 12 \% of the differences (p = 0.037), much less than grazing, and they do not differ in spread (p = 0.54).}
+\solutiontask{4}{Cluster the meadow plots with \code{method=\textquotedbl{}hierarchical\textquotedbl{}}. Do the clusters match the grazing?}
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+table = sdata.table(sdata.example("meadow"))
+table.add_clusters(how_many=2, method="hierarchical")
+table.count_rows(for_each="cluster", across="grazed")
+\end{lstlisting}
+\printedoutput{output/solution17_task4.txt}
+\solutionanswer{Exactly: cluster 1 is the 15 grazed plots and cluster 2 the 15 ungrazed ones.}
+\par\noindent{\small\sffamily\hyperref[lesson:17]{Back to lesson 17}}
+\unsection{Lesson 18: Survival, and planning a study}{solutions:18}
+\solutiontask{1}{Explain the risk of dying from \code{\textquotedbl{}age\textquotedbl{}} alone with \code{explain\_\allowbreak{}survival}.}
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+table = sdata.table(sdata.example("trial"))
+table.explain_survival(time="days", event="died", using="age")
+\end{lstlisting}
+\printedoutput{output/solution18_task1.txt}
+\solutionanswer{Each year of age multiplies the risk by 1.05 (95 \% CI 1.03 to 1.08), p \textless{} 0.0001.}
+\solutiontask{2}{How many pairs does a before/after study need to find a small change (\code{effect\_\allowbreak{}size=0.\allowbreak{}3})?}
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+sdata.how_many_needed(test="compare_before_after", effect_size=0.3)
+\end{lstlisting}
+\printedoutput{output/solution18_task2.txt}
+\solutionanswer{90 pairs, each with a before and an after value.}
+\solutiontask{3}{What is the chance to find a medium difference (\code{effect\_\allowbreak{}size=0.\allowbreak{}25}) between 3 groups with 30 values in each?}
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+sdata.chance_to_find(test="compare_averages", effect_size=0.25, groups=3, values_per_group=30)
+\end{lstlisting}
+\printedoutput{output/solution18_task3.txt}
+\solutionanswer{Only 54 \%: too small. \code{how\_\allowbreak{}many\_\allowbreak{}needed} with \code{groups=3} tells you how many to aim for.}
+\par\noindent{\small\sffamily\hyperref[lesson:18]{Back to lesson 18}}
 
 \backmatter
 
@@ -7174,11 +7895,15 @@ Every word and option, A to Z, with the page of its dictionary entry. Other spel
 \indexline{word:nums.add}{nums.add()}
 \indexline{word:table.add-adjusted-p-value-column}{table.add\_adjusted\_p\_value\_column()}
 \indexline{word:table.add-change-column}{table.add\_change\_column()}
+\indexline{word:table.add-clusters}{table.add\_clusters()}
 \indexline{word:table.add-column}{table.add\_column()}
 \indexline{word:table.add-date-part-column}{table.add\_date\_part\_column()}
 \indexline{word:table.add-group-column}{table.add\_group\_column()}
 \indexline{word:table.add-is-empty-column}{table.add\_is\_empty\_column()}
+\indexline{word:table.add-nmds}{table.add\_nmds()}
+\indexline{word:table.add-predicted-column}{table.add\_predicted\_column()}
 \indexline{word:table.add-previous-value-column}{table.add\_previous\_value\_column()}
+\indexline{word:table.add-principal-components}{table.add\_principal\_components()}
 \indexline{word:table.add-rank-column}{table.add\_rank\_column()}
 \indexline{word:table.add-rolling-column}{table.add\_rolling\_column()}
 \indexline{word:table.add-rows-from}{table.add\_rows\_from()}
@@ -7199,6 +7924,7 @@ Every word and option, A to Z, with the page of its dictionary entry. Other spel
 \indexline{word:boxes}{chart.box()}
 \indexline{word:boxes}{chart.boxes()}
 \indexline{word:caption-bottom}{chart.caption\_bottom()}
+\indexline{word:sdata.chance-to-find}{sdata.chance\_to\_find()}
 \indexline{word:table.change-column}{table.change\_column()}
 \indexline{word:nums.chart}{nums.chart()}
 \indexline{word:sdata.chart}{sdata.chart()}
@@ -7215,7 +7941,9 @@ Every word and option, A to Z, with the page of its dictionary entry. Other spel
 \indexline{word:table.compare-before-after}{table.compare\_before\_after()}
 \indexline{word:table.compare-counts}{table.compare\_counts()}
 \indexline{word:table.compare-each-pair}{table.compare\_each\_pair()}
+\indexline{word:table.compare-profiles}{table.compare\_profiles()}
 \indexline{word:table.compare-shape-to}{table.compare\_shape\_to()}
+\indexline{word:table.compare-survival}{table.compare\_survival()}
 \indexline{word:contour}{chart.contour()}
 \indexline{word:table.correlation-between}{table.correlation\_between()}
 \indexline{word:nums.count}{nums.count()}
@@ -7230,6 +7958,7 @@ Every word and option, A to Z, with the page of its dictionary entry. Other spel
 \indexline{word:table.count-rows}{table.count\_rows()}
 \indexline{word:density}{chart.density()}
 \indexline{word:table.describe-columns}{table.describe\_columns()}
+\indexline{word:table.distances-between-rows}{table.distances\_between\_rows()}
 \indexline{word:nums.divide-by}{nums.divide\_by()}
 \indexline{word:dots}{chart.dots()}
 \indexline{word:dots-3d}{chart.dots\_3d()}
@@ -7238,6 +7967,8 @@ Every word and option, A to Z, with the page of its dictionary entry. Other spel
 \indexline{word:error-bars}{chart.error\_bars()}
 \indexline{word:sdata.example}{sdata.example()}
 \indexline{word:nums.exp}{nums.exp()}
+\indexline{word:table.explain}{table.explain()}
+\indexline{word:table.explain-survival}{table.explain\_survival()}
 \indexline{word:table.fill-empty-cells}{table.fill\_empty\_cells()}
 \indexline{word:nums.fill-empty-numbers}{nums.fill\_empty\_numbers()}
 \indexline{word:fit-curve}{chart.fit\_curve()}
@@ -7253,6 +7984,7 @@ Every word and option, A to Z, with the page of its dictionary entry. Other spel
 \indexline{word:hide-grid}{chart.hide\_grid()}
 \indexline{word:hide-legend}{chart.hide\_legend()}
 \indexline{word:histogram}{chart.histogram()}
+\indexline{word:sdata.how-many-needed}{sdata.how\_many\_needed()}
 \indexline{word:table.join-with}{table.join\_with()}
 \indexline{word:table.keep-biggest-rows}{table.keep\_biggest\_rows()}
 \indexline{word:table.keep-columns}{table.keep\_columns()}
@@ -7309,6 +8041,7 @@ Every word and option, A to Z, with the page of its dictionary entry. Other spel
 \indexline{word:pie}{chart.pie()}
 \indexline{word:polar}{chart.polar()}
 \indexline{word:nums.power}{nums.power()}
+\indexline{word:table.principal-components-of}{table.principal\_components\_of()}
 \indexline{word:sdata.random-numbers}{sdata.random\_numbers()}
 \indexline{word:range-x}{chart.range\_x()}
 \indexline{word:range-y}{chart.range\_y()}
@@ -7372,6 +8105,8 @@ Every word and option, A to Z, with the page of its dictionary entry. Other spel
 \indexline{word:nums.subtract}{nums.subtract()}
 \indexline{word:table.summary-of}{table.summary\_of()}
 \indexline{word:surface}{chart.surface()}
+\indexline{word:survival-curves}{chart.survival\_curves()}
+\indexline{word:table.survival-over-time}{table.survival\_over\_time()}
 \indexline{word:grid.swap-rows-and-columns}{grid.swap\_rows\_and\_columns()}
 \indexline{word:nums.table}{nums.table()}
 \indexline{word:sdata.table}{sdata.table()}

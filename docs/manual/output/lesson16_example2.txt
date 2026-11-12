@@ -1,0 +1,24 @@
+Explaining "passed" from "hours" and "breakfast" (180 rows). Each odds ratio below holds the other columns fixed:
+  intercept: 0.0454, the odds of yes when every number column is 0 and every group column is at its baseline.
+  hours: each 1 more "hours" multiplies the odds of yes by 1.66 (95 % CI 1.40 to 1.98); very unlikely to be chance (p < 0.0001).
+  breakfast "yes" against "no": the odds of yes is 1.52 times as high (95 % CI 0.747 to 3.07); could easily be chance (p = 0.250).
+Method: logistic regression, as R glm(passed ~ hours + breakfast, family = binomial); counted as yes: "passed" = "yes". Wald 95 % intervals and z-tests, as R confint.default() and summary().
+Residual deviance 199 on 177 df (with no columns: 246 on 179 df). The model as a whole (likelihood-ratio chi-square = 47.4, df = 2): very unlikely to be chance (p < 0.0001). AIC = 205.
+A large p-value does not show that there is no effect, only that the data cannot tell. A link does not show that one thing causes the other.
+Note: 19 rows with an empty cell in "days_absent" or "hours" or "sleep" were skipped.
+Explaining "days_absent" from "hours" and "sleep" (161 rows). Each rate ratio below holds the other columns fixed:
+  intercept: 14.3, the expected count when every number column is 0.
+  hours: each 1 more "hours" multiplies the expected count by 0.876 (95 % CI 0.841 to 0.913); very unlikely to be chance (p < 0.0001).
+  sleep: each 1 more "sleep" multiplies the expected count by 0.886 (95 % CI 0.803 to 0.977); unlikely to be chance (p = 0.015).
+Method: Poisson regression, as R glm(days_absent ~ hours + sleep, family = poisson). Wald 95 % intervals and z-tests, as R confint.default() and summary().
+Residual deviance 165 on 158 df (with no columns: 215 on 160 df). The model as a whole (likelihood-ratio chi-square = 49.9, df = 2): very unlikely to be chance (p < 0.0001). AIC = 603.
+A link does not show that one thing causes the other.
+Added "predicted marks": the fitted value of "marks" from "hours" and "breakfast" (least squares, 180 rows).
+     school pupil  hours  ... passed  days_absent  predicted marks
+0  School A  P001    4.3  ...     no            2        44.451206
+1  School A  P002    3.4  ...     no            3        45.126707
+2  School A  P003    4.8  ...    yes            3        49.068830
+3  School A  P004    5.7  ...     no            2        48.393329
+4  School A  P005   11.6  ...    yes            1        68.216285
+
+[5 rows x 9 columns]

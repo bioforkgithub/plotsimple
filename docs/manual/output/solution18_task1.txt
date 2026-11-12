@@ -1,0 +1,5 @@
+The event is "died" = "yes" (59 of 120 rows); the other rows count as followed without the event until their "days" (censored).
+Hazard ratios from 120 rows with 59 events (above 1: a higher risk of the event at any moment; below 1: a lower risk):
+  each 1 more "age": hazard ratio 1.05 (95 % CI 1.03 to 1.08); very unlikely to be chance (p < 0.0001).
+The model as a whole (likelihood-ratio test, chi-square = 20.4, df = 1) is very unlikely to be chance (p < 0.0001).
+Method: Cox proportional hazards model, Efron's method for tied times, as R coxph(Surv(days, died == "yes") ~ age).

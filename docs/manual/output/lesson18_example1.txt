@@ -1,0 +1,5 @@
+The event is "died" = "yes" (59 of 120 rows); the other rows count as followed without the event until their "days" (censored).
+Median time until the event (by then half have had it), with its 95 % CI:
+  new medicine: median "days" 706 (95 % CI 486 to not reached; 60 rows, 25 events).
+  usual care: median "days" 545 (95 % CI 394 to not reached; 60 rows, 34 events).
+Method: Kaplan-Meier estimate with 95 % confidence intervals on the log scale (Greenwood), as R survfit(Surv(days, died == "yes") ~ treatment).
