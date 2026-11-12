@@ -332,3 +332,13 @@ def test_chart_errors(trial):
         chart.survival_curves(time="days", event="treatment")
     with pytest.raises(SimplydataError, match="should hold numbers"):
         chart.survival_curves(time="patient", event="died")
+
+
+def test_survival_curves_transparency_and_thickness():
+    chart = sdata.chart(sdata.example("trial")).survival_curves(
+        time="days", event="died", colour="treatment", transparency=0.4, thickness=3)
+    lines = [ln for ln in chart._render().axes[0].lines if ln.get_drawstyle() == "steps-post"]
+    assert len(lines) == 2
+    assert all(abs(ln.get_alpha() - 0.6) < 1e-12 and ln.get_linewidth() == 3 for ln in lines)
+    with pytest.raises(sdata.SimplydataError, match="transparency"):
+        sdata.chart(sdata.example("trial")).survival_curves(time="days", event="died", transparency=2)
