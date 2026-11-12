@@ -469,16 +469,18 @@ def _draw_line_at(ctx, axis, value, dashed, colour, label):
     ax = ctx.ax
     style = dict(color=colour, linestyle="--" if dashed else "-", linewidth=1.5, zorder=2.5)
     size = rcParams["legend.fontsize"]
+    back = dict(boxstyle="round,pad=0.15", fc=rcParams["axes.facecolor"], ec="none", alpha=0.85)
     if axis == "x":
         ax.axvline(value, **style)
         if label:
             ax.text(value, 0.98, f" {label} ", transform=ax.get_xaxis_transform(), rotation=90,
-                    ha="right", va="top", color=colour, fontsize=size)
+                    ha="right", va="top", color=colour, fontsize=size, bbox=back)
     else:
         ax.axhline(value, **style)
         if label:
-            ax.text(0.99, value, f" {label} ", transform=ax.get_yaxis_transform(),
-                    ha="right", va="bottom", color=colour, fontsize=size)
+            # just outside the right edge, so it never sits on top of bars or dots
+            ax.text(1.01, value, label, transform=ax.get_yaxis_transform(),
+                    ha="left", va="center", color=colour, fontsize=size, clip_on=False)
 
 
 def _draw_shade(ctx, axis, low, high, colour):

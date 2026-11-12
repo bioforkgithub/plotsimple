@@ -67,7 +67,8 @@ def _draw_bars(ctx, x, y, colour, show, error, stacked, sideways):
             kw["estimator"] = how
             kw["errorbar"] = check_error("bars", error, show)
             if error:
-                kw["capsize"] = 0.15
+                kw["capsize"] = 0.1
+                kw["err_kws"] = {"linewidth": 1.3}
             sns.barplot(**kw)
     _remember(ctx, "bars", table, n, sideways=sideways)
 
