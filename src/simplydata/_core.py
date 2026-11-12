@@ -26,6 +26,7 @@ from matplotlib.figure import Figure
 from . import _style
 from ._data import load
 from ._errors import SimplydataError, choice_error, missing_word_error, old_word, suggest
+from ._units import check_number
 
 # Phases decide drawing order, whatever order the user wrote the steps in.
 PHASES = {
@@ -297,10 +298,11 @@ class BaseChart:
         return list(grid.flat), ctx
 
     # ------------------------------------------------------------------ output
-    def save(self, file_name, quality: str = "normal"):
-        """Save the chart. chart.save("marks.png")
+    def save(self, file_name, quality: str = "normal", resolution=None, dpi=None):
+        """Save the chart. chart.save("marks.png") or chart.save("marks.tif", resolution=600)
 
         The end of the file name decides the format: "marks.png", "marks.pdf".
+        resolution= is the sharpness in dots per inch (dpi); normally 300.
         """
         self._check_choice("save", "quality", quality, ("normal", "high"))
         path = Path(file_name)
@@ -313,15 +315,61 @@ class BaseChart:
             raise choice_error("save", "file type", fmt, SAVE_FORMATS)
         if path.parent and not path.parent.exists():
             raise SimplydataError(f'The folder "{path.parent}" does not exist. Create it first.')
+        resolution = self._save_resolution(fmt, quality, resolution, dpi)
+        s = self._settings
+        if not s.get("size_set"):
+            return self._save_now(path, fmt, resolution)
+        # chart.size() was used: the file is exactly that size (no trimming of the edges)
+        before = (s["width"], s["height"])
+        if s.get("pixels"):
+            s["width"], s["height"] = s["pixels"][0] / resolution, s["pixels"][1] / resolution
+            self._cache = None
+        self._check_pixels(resolution)
+        try:
+            return self._save_now(path, fmt, resolution, exact=True)
+        finally:
+            if s.get("pixels"):
+                s["width"], s["height"] = before
+                self._cache = None
+
+    def _save_resolution(self, fmt, quality, resolution, dpi):
+        if dpi is not None:
+            if resolution is not None:
+                raise SimplydataError(".save() needs resolution= or dpi= (they mean the same), not both.")
+            resolution = dpi
+        if resolution is None:
+            return 100 if fmt == "gif" else (600 if quality == "high" else 300)
+        if quality != "normal":
+            raise SimplydataError('.save() needs quality="high" or resolution=, not both. '
+                                  'quality="high" is the same as resolution=600.')
+        resolution = check_number(resolution, "resolution", "save")
+        if resolution < 10:
+            raise SimplydataError(f".save() needs resolution= to be at least 10 dots per inch, not {resolution:g}. "
+                                  "Pictures for papers usually need 300 or 600.")
+        self._check_pixels(resolution)
+        return resolution
+
+    def _check_pixels(self, resolution):
+        w, h = self._settings["width"] * resolution, self._settings["height"] * resolution
+        if max(w, h) >= 2**16:
+            raise SimplydataError(
+                f"This picture would be {round(w):,} x {round(h):,} pixels, too big to save. "
+                "Choose a smaller chart.size() or a lower resolution=."
+            )
+
+    def _save_now(self, path, fmt, resolution, exact=False):
         if fmt == "gif":
-            return self._save_animation(path)
+            return self._save_animation(path, resolution)
         fig = self._render()
-        dpi = 600 if quality == "high" else 300
+        # .tif files are compressed without losing anything (LZW), as journals ask
+        extra = {"pil_kwargs": {"compression": "tiff_lzw"}} if fmt in ("tif", "tiff") else {}
+        if exact:
+            extra["bbox_inches"] = fig.bbox_inches  # the whole page, exactly the size asked for
         with _style.context(self._settings):
-            fig.savefig(path, dpi=dpi)
+            fig.savefig(path, dpi=resolution, **extra)
         return self
 
-    def _save_animation(self, path):
+    def _save_animation(self, path, resolution=100):
         raise SimplydataError('To save a .gif, first make an animation with chart.animate(over="year").')
 
     def show(self):

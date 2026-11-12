@@ -2163,7 +2163,9 @@ b.label_x("Hours of study")
 figure = sdata.grid(a, b, per_row=2, letters=True)
 figure.title_top("Marks, classes and hours of study")
 figure.style("paper")
+figure.size(width=17, height=8, unit="cm")
 figure.save("lesson15_figure.pdf")
+figure.save("lesson15_figure.tif", resolution=600)
 table.save("lesson15_clean.xlsx")
 table.steps()
 \end{lstlisting}
@@ -2186,9 +2188,11 @@ table.steps()
   \item[15] Both charts on one page, with A and B at the top left.
   \item[16] A title for the whole page.
   \item[17] A quiet look that suits a paper.
-  \item[18] Save the figure as a PDF: sharp at any size.
-  \item[19] Save the cleaned table that the figure was drawn from.
-  \item[20] Every table step in plain words, in order: a good start for the methods part of your report.
+  \item[18] The size a journal asks for: 17 cm wide (a full page width) and 8 cm high.
+  \item[19] Save the figure as a PDF: sharp at any size.
+  \item[20] And as a \code{.\allowbreak{}tif} picture with 600 dots per inch, as many journals ask.
+  \item[21] Save the cleaned table that the figure was drawn from.
+  \item[22] Every table step in plain words, in order: a good start for the methods part of your report.
 \end{lineexplain}
 \printedoutput{output/lesson15_example1.txt}
 \begin{center}\begin{minipage}{\linewidth}\centering
@@ -2355,17 +2359,19 @@ chart.show()
 chart.save("marks.png")
 \end{lstlisting}
 \wordentry{chart.save()}{word:save}
-Save the chart. \code{chart.\allowbreak{}save(\textquotedbl{}marks.\allowbreak{}png\textquotedbl{})}
+Save the chart. \code{chart.\allowbreak{}save(\textquotedbl{}marks.\allowbreak{}png\textquotedbl{})} or \code{chart.\allowbreak{}save(\textquotedbl{}marks.\allowbreak{}tif\textquotedbl{},\allowbreak{} resolution=600)}
 
-The end of the file name decides the format: \code{\textquotedbl{}marks.\allowbreak{}png\textquotedbl{}}, \code{\textquotedbl{}marks.\allowbreak{}pdf\textquotedbl{}}.
+The end of the file name decides the format: \code{\textquotedbl{}marks.\allowbreak{}png\textquotedbl{}}, \code{\textquotedbl{}marks.\allowbreak{}pdf\textquotedbl{}}. \code{resolution=} is the sharpness in dots per inch (dpi); normally 300.
 
 \wordfield{Options}{}\par\nopagebreak
 \begin{optiontable}
 \code{file\_\allowbreak{}name} & needed\\
 \code{quality=} & normally \code{\textquotedbl{}normal\textquotedbl{}}\\
+\code{resolution=} & \\
+\code{dpi=} & \\
 \end{optiontable}
 
-\wordfield{Good to know}{File types: \code{.\allowbreak{}png} (a picture), \code{.\allowbreak{}pdf} and \code{.\allowbreak{}svg} (sharp at any size, good for printing), \code{.\allowbreak{}jpg}, \code{.\allowbreak{}tif}, and \code{.\allowbreak{}gif} for animations. \code{quality=\textquotedbl{}high\textquotedbl{}} saves a bigger, sharper picture.}
+\wordfield{Good to know}{File types: \code{.\allowbreak{}png} (a picture), \code{.\allowbreak{}pdf} and \code{.\allowbreak{}svg} (sharp at any size, good for printing), \code{.\allowbreak{}jpg}, \code{.\allowbreak{}tif}, and \code{.\allowbreak{}gif} for animations. \code{resolution=} is how sharp a picture is, in dots per inch (dpi): 300 is normal, journals often ask for 300 or 600 (\code{dpi=} means the same). \code{quality=\textquotedbl{}high\textquotedbl{}} is the same as \code{resolution=600}. \code{.\allowbreak{}tif} files are compressed without losing anything. To choose the size of the file in cm, mm or pixels, use \code{chart.\allowbreak{}size()} first.}
 
 \wordfield{Underneath}{matplotlib (Figure.savefig); Pillow writes \code{.\allowbreak{}gif} animations}
 \wordfield{Example you can run}{(it uses the practice table \code{marks})}\par\nopagebreak
@@ -2376,7 +2382,7 @@ chart = sdata.chart(marks)
 chart.bars(x="name", y="marks")
 chart.save("marks.png")
 chart.save("marks.pdf")
-chart.save("marks_sharp.png", quality="high")
+chart.save("marks.tif", resolution=600)
 \end{lstlisting}
 \unsection{Chart types}{group:Chart-types}
 \wordentry{chart.bars()}{word:bars}
@@ -3458,13 +3464,18 @@ chart.style("school")
 chart.save("style.png")
 \end{lstlisting}
 \wordentry{chart.size()}{word:size}
-The size in inches. \code{chart.\allowbreak{}size(width=8,\allowbreak{} height=6)}
+The size of the chart. \code{chart.\allowbreak{}size(width=17,\allowbreak{} height=12,\allowbreak{} unit=\textquotedbl{}cm\textquotedbl{})}
+
+\code{unit=} is \code{\textquotedbl{}inches\textquotedbl{}} (normal), \code{\textquotedbl{}cm\textquotedbl{}}, \code{\textquotedbl{}mm\textquotedbl{}} or \code{\textquotedbl{}pixels\textquotedbl{}}. A saved file is exactly this size. In pixels, the saved picture has exactly that many pixels at any \code{resolution=}.
 
 \wordfield{Options}{}\par\nopagebreak
 \begin{optiontable}
 \code{width=} & normally \code{8}\\
 \code{height=} & normally \code{6}\\
+\code{unit=} & normally \code{\textquotedbl{}inches\textquotedbl{}}\\
 \end{optiontable}
+
+\wordfield{Good to know}{\code{unit=} is \code{\textquotedbl{}inches\textquotedbl{}} (the normal choice), \code{\textquotedbl{}cm\textquotedbl{}}, \code{\textquotedbl{}mm\textquotedbl{}} or \code{\textquotedbl{}pixels\textquotedbl{}}. A saved file is exactly this size. With \code{\textquotedbl{}pixels\textquotedbl{}} the picture has exactly that many pixels whatever the \code{resolution=} in \code{chart.\allowbreak{}save()}. Text keeps its size, so a small chart for a paper (about 8 cm wide) usually also needs smaller text: \code{chart.\allowbreak{}font\_\allowbreak{}size(8)}.}
 
 \wordfield{Underneath}{matplotlib}
 \wordfield{Example you can run}{(it uses the practice table \code{weather})}\par\nopagebreak
@@ -3473,7 +3484,7 @@ import simplydata as sdata
 weather = sdata.example("weather")
 chart = sdata.chart(weather)
 chart.lines(x="month", y="rain", colour="city")
-chart.size(width=10, height=4)
+chart.size(width=17, height=8, unit="cm")
 chart.save("size.png")
 \end{lstlisting}
 \wordentry{chart.show\_grid()}{word:show-grid}

@@ -8,6 +8,7 @@ from matplotlib.patches import Rectangle
 from .._data import is_listlike
 from .._errors import SimplydataError, friendly, suggest
 from .._style import STYLES
+from .._units import PER_INCH, SCREEN_RESOLUTION, check_number, check_unit
 from .charts import set_order
 
 # Colour names we suggest from when a name is misspelt ("bleu" -> "blue").
@@ -179,13 +180,24 @@ class LookWords:
         return self._set(style=name)
 
     @friendly
-    def size(self, width=8, height=6):
-        """The size in inches. chart.size(width=8, height=6)"""
-        for name, value in (("width", width), ("height", height)):
-            if isinstance(value, bool) or not isinstance(value, (int, float)) or value <= 0:
-                raise SimplydataError(f"{name}= should be a number bigger than 0, not {value!r}.")
+    def size(self, width=8, height=6, unit="inches"):
+        """The size of the chart. chart.size(width=17, height=12, unit="cm")
+
+        unit= is "inches" (normal), "cm", "mm" or "pixels". A saved file is exactly this size.
+        In pixels, the saved picture has exactly that many pixels at any resolution=.
+        """
+        unit = check_unit(unit, "size")
+        width = check_number(width, "width", "size")
+        height = check_number(height, "height", "size")
+        if unit == "pixels":
+            # kept in pixels: the inches depend on the resolution the chart is saved at
+            pixels = (width, height)
+            width, height = width / SCREEN_RESOLUTION, height / SCREEN_RESOLUTION
+        else:
+            pixels = None
+            width, height = width / PER_INCH[unit], height / PER_INCH[unit]
         # size_set tells one_chart_per() and pages not to choose a size themselves
-        return self._set(width=float(width), height=float(height), size_set=True)
+        return self._set(width=width, height=height, pixels=pixels, size_set=True)
 
     # ------------------------------------------------------------ colours
     @friendly

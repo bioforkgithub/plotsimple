@@ -138,7 +138,16 @@ EXTRA_NOTES = {
     ),
     "save": (
         'File types: .png (a picture), .pdf and .svg (sharp at any size, good for printing), '
-        '.jpg, .tif, and .gif for animations. quality="high" saves a bigger, sharper picture.'
+        '.jpg, .tif, and .gif for animations. resolution= is how sharp a picture is, in dots '
+        'per inch (dpi): 300 is normal, journals often ask for 300 or 600 (dpi= means the same). '
+        'quality="high" is the same as resolution=600. .tif files are compressed without losing '
+        'anything. To choose the size of the file in cm, mm or pixels, use chart.size() first.'
+    ),
+    "size": (
+        'unit= is "inches" (the normal choice), "cm", "mm" or "pixels". A saved file is exactly '
+        'this size. With "pixels" the picture has exactly that many pixels whatever the '
+        'resolution= in chart.save(). Text keeps its size, so a small chart for a paper (about '
+        '8 cm wide) usually also needs smaller text: chart.font_size(8).'
     ),
 }
 
@@ -189,7 +198,7 @@ HELP_EXAMPLES = {
         chart.bars(x="name", y="marks")
         chart.save("marks.png")
         chart.save("marks.pdf")
-        chart.save("marks_sharp.png", quality="high")"""),
+        chart.save("marks.tif", resolution=600)"""),
     # chart types
     "bars": _ex("marks", 'chart.bars(x="name", y="marks", colour="class")\nchart.rotate_labels_x()', "bars"),
     "lines": _ex("weather", 'chart.lines(x="month", y="temperature", colour="city", dots=True)', "lines"),
@@ -272,7 +281,7 @@ HELP_EXAMPLES = {
     "colour": _ex("marks", 'chart.bars(x="class", y="marks")\nchart.colour("purple")', "colour"),
     "colours": _ex("marks", 'chart.bars(x="subject", y="marks", colour="class")\nchart.colours("orange", "teal", "purple")', "colours"),
     "style": _ex("marks", 'chart.bars(x="subject", y="marks", colour="class")\nchart.style("school")', "style"),
-    "size": _ex("weather", 'chart.lines(x="month", y="rain", colour="city")\nchart.size(width=10, height=4)', "size"),
+    "size": _ex("weather", 'chart.lines(x="month", y="rain", colour="city")\nchart.size(width=17, height=8, unit="cm")', "size"),
     "show_grid": _ex("marks", 'chart.dots(x="hours", y="marks")\nchart.show_grid()', "show_grid"),
     "hide_grid": _ex("marks", 'chart.dots(x="hours", y="marks")\nchart.hide_grid()', "hide_grid"),
     "legend_top": _ex("weather", 'chart.lines(x="month", y="temperature", colour="city")\nchart.legend_top()', "legend_top"),
@@ -2553,7 +2562,11 @@ LESSONS = [
                                                                     "and B at the top left."),
                 ('figure.title_top("Marks, classes and hours of study")', "A title for the whole page."),
                 ('figure.style("paper")', "A quiet look that suits a paper."),
+                ('figure.size(width=17, height=8, unit="cm")', "The size a journal asks for: 17 cm wide "
+                                                               "(a full page width) and 8 cm high."),
                 ('figure.save("lesson15_figure.pdf")', "Save the figure as a PDF: sharp at any size."),
+                ('figure.save("lesson15_figure.tif", resolution=600)', "And as a .tif picture with 600 "
+                                                                       "dots per inch, as many journals ask."),
                 ('table.save("lesson15_clean.xlsx")', "Save the cleaned table that the figure was "
                                                       "drawn from."),
                 ("table.steps()", "Every table step in plain words, in order: a good start for the "

@@ -182,3 +182,67 @@ def test_dates_get_short_labels():
     chart = sdata.chart(pd.DataFrame({"day": days, "temp": np.arange(120.0)})).lines(x="day", y="temp")
     ax = chart._render().axes[0]
     assert isinstance(ax.xaxis.get_major_formatter(), ConciseDateFormatter)
+
+
+# ---------------------------------------------------------------- size and resolution
+def _pixels(path):
+    from PIL import Image
+
+    with Image.open(path) as im:
+        return im.size, im.info.get("dpi"), im.info.get("compression")
+
+
+def test_save_resolution_sets_the_dots_per_inch(marks, tmp_path):
+    chart = sdata.chart(marks).bars(x="name", y="marks")
+    chart.save(tmp_path / "a.png", resolution=150)
+    (_, dpi, _) = _pixels(tmp_path / "a.png")
+    assert round(dpi[0]) == 150
+    chart.save(tmp_path / "b.png", dpi=72)  # dpi= means the same
+    assert round(_pixels(tmp_path / "b.png")[1][0]) == 72
+
+
+@pytest.mark.parametrize("unit, width, height", [("cm", 17, 8), ("mm", 85, 60), ("inches", 3, 2)])
+def test_size_in_units_gives_exactly_that_file_size(marks, tmp_path, unit, width, height):
+    per_inch = {"cm": 2.54, "mm": 25.4, "inches": 1}[unit]
+    chart = sdata.chart(marks).bars(x="name", y="marks", colour="class").legend_right()
+    chart.size(width=width, height=height, unit=unit)
+    chart.save(tmp_path / "a.tif", resolution=600)
+    (w, h), dpi, compression = _pixels(tmp_path / "a.tif")
+    assert abs(w - width / per_inch * 600) <= 1 and abs(h - height / per_inch * 600) <= 1
+    assert round(dpi[0]) == 600
+    assert compression == "tiff_lzw"
+
+
+def test_size_in_pixels_is_exact_at_any_resolution(marks, tmp_path):
+    chart = sdata.chart(marks).dots(x="height", y="marks").size(1200, 800, unit="pixels")
+    for resolution in (100, 300, 600):
+        chart.save(tmp_path / f"a{resolution}.png", resolution=resolution)
+        assert _pixels(tmp_path / f"a{resolution}.png")[0] == (1200, 800)
+    assert chart._settings["width"] == 12  # shown on screen at 100 dots per inch
+
+
+def test_page_size_in_cm(marks, tmp_path):
+    a = sdata.chart(marks).bars(x="name", y="marks")
+    b = sdata.chart(marks).dots(x="height", y="marks")
+    page = sdata.grid(a, b, letters=True).size(18, 9, unit="cm")
+    page.save(tmp_path / "page.png", resolution=300)
+    w, h = _pixels(tmp_path / "page.png")[0]
+    assert abs(w - 18 / 2.54 * 300) <= 1 and abs(h - 9 / 2.54 * 300) <= 1
+
+
+def test_size_and_resolution_mistakes_are_explained(marks, tmp_path):
+    chart = sdata.chart(marks).bars(x="name", y="marks")
+    with pytest.raises(SimplydataError, match='Did you mean unit="cm"'):
+        chart.size(10, 5, unit="cms")
+    with pytest.raises(SimplydataError, match="bigger than 0"):
+        chart.size(width=0, height=5)
+    with pytest.raises(SimplydataError, match="bigger than 0"):
+        chart.save(tmp_path / "a.png", resolution=-3)
+    with pytest.raises(SimplydataError, match="not both"):
+        chart.save(tmp_path / "a.png", resolution=300, dpi=300)
+    with pytest.raises(SimplydataError, match="not both"):
+        chart.save(tmp_path / "a.png", quality="high", resolution=300)
+    with pytest.raises(SimplydataError, match="too big"):
+        chart.save(tmp_path / "a.png", resolution=20000)
+    chart.size(10, 5, unit="centimetres")  # long names work too
+    assert abs(chart._settings["width"] - 10 / 2.54) < 1e-9

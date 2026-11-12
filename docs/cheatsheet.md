@@ -129,7 +129,7 @@ and `a`, `b` in `sdata.side_by_side(a, b)` are charts you made first.
 | `colour` (also `color`) | `chart.colour("blue")` | marks | One colour for the whole chart. |
 | `colours` (also `colors`) | `chart.colours("blue", "orange", "green")` | marks | Your own colours for the groups, in order. |
 | `style` | `chart.style("school")` | marks | The overall look. |
-| `size` | `chart.size(width=8, height=6)` | weather | The size in inches. |
+| `size` | `chart.size(width=17, height=12, unit="cm")` | weather | The size of the chart. |
 | `show_grid` | `chart.show_grid()` | marks | Grid lines across the chart in both directions. |
 | `hide_grid` | `chart.hide_grid()` | marks | No grid lines. |
 | `legend_top` | `chart.legend_top()` | weather | The legend above the chart, in one row. |

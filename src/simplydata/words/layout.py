@@ -251,9 +251,9 @@ class LayoutWords:
         self._cache = fig
         return fig
 
-    def _save_animation(self, path):
+    def _save_animation(self, path, resolution=100):
         if not self._settings.get("animate"):
-            return super()._save_animation(path)
+            return super()._save_animation(path, resolution)
         from matplotlib.animation import PillowWriter
 
         s = self._settings
@@ -263,7 +263,7 @@ class LayoutWords:
             limits = self._fixed_limits()
             fig = Figure(figsize=(s["width"], s["height"]), layout="constrained")
             writer = PillowWriter(fps=1.0 / seconds)
-            with writer.saving(fig, str(path), dpi=100):
+            with writer.saving(fig, str(path), dpi=resolution):
                 for value, table in self._frames():
                     self._draw_frame(fig, value, table, limits)
                     writer.grab_frame()
