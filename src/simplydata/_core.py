@@ -350,7 +350,10 @@ class BaseChart:
         return resolution
 
     def _check_pixels(self, resolution):
-        w, h = self._settings["width"] * resolution, self._settings["height"] * resolution
+        # a page of charts works out its own size unless page.size() was used
+        width, height = self._page_size() if hasattr(self, "_page_size") else (
+            self._settings["width"], self._settings["height"])
+        w, h = width * resolution, height * resolution
         if max(w, h) >= 2**16:
             raise SimplydataError(
                 f"This picture would be {round(w):,} x {round(h):,} pixels, too big to save. "
