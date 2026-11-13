@@ -368,9 +368,15 @@ def _draw_fit_distribution(ctx, distribution, colour, thickness, said):
         dist, printed = fit_distribution_to(values, distribution, column=x, say=name is None)
         span = _x_range_of_chart(ctx) or _default_range(dist)
         factor, words = histogram_scale(ctx, len(values))
-        xs = np.linspace(span[0], span[1], 200)
-        ctx.ax.plot(xs, _density(dist, xs) * factor, color=col, zorder=3,
-                    linewidth=2 if thickness is None else thickness)
+        width = 2 if thickness is None else thickness
+        if dist.is_discrete:  # counts: the chance of each whole number, as dots on thin lines
+            ks = np.arange(math.ceil(span[0]), math.floor(span[1]) + 1)
+            heights = _chance_of(dist, ks) * factor
+            ctx.ax.vlines(ks, 0, heights, color=col, linewidth=width, zorder=3)
+            ctx.ax.plot(ks, heights, "o", color=col, zorder=3.1)
+        else:
+            xs = np.linspace(span[0], span[1], 200)
+            ctx.ax.plot(xs, _density(dist, xs) * factor, color=col, zorder=3, linewidth=width)
         where = f'"{x}"' if name is None else f'"{x}" in "{name}"'
         lines.append(printed or f"Fitted {_label_of(dist)} to {where} ({len(values)} values), by maximum "
                                  "likelihood (as R MASS::fitdistr()).")

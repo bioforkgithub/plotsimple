@@ -265,3 +265,17 @@ def test_qq_dots_against_a_fitted_gamma(capsys):
     (theory, ordered), _ = stats.probplot(values, dist="norm")
     assert np.allclose(ax.collections[0].get_offsets()[:, 0], theory)
     assert ax.get_xlabel() == "normal quantiles"
+
+
+def test_fit_distribution_for_counts_draws_the_chance_of_each_whole_number(capsys):
+    from simplydata import distributions
+
+    school = sdata.example("school")
+    ax = drawn(Chart(school).histogram(x="days_absent", show="density").fit_distribution("negative binomial"))
+    fit = distributions.fit(school["days_absent"].dropna().to_numpy(float), "negative binomial")
+    dots = [line for line in ax.lines if line.get_marker() == "o"]
+    assert len(dots) == 1
+    ks = np.asarray(dots[0].get_xdata(), dtype=float)
+    assert np.all(ks == np.round(ks))  # whole numbers only
+    assert np.allclose(dots[0].get_ydata(), fit._pmf(ks))  # show="density": not scaled
+    assert "Fitted a negative binomial distribution" in capsys.readouterr().out
