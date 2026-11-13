@@ -6,6 +6,7 @@ from .._data import reading_options
 from .._errors import SimplydataError, friendly
 from ._base import BaseTable
 from .columns import ColumnWords
+from .distribution_words import DistributionTableWords
 from .fitting import FittingWords
 from .models import ModelWords
 from .patterns import PatternWords
@@ -16,7 +17,7 @@ from .survival import SurvivalWords
 
 
 class Table(RowWords, ColumnWords, SummaryWords, StatTestWords, FittingWords, ModelWords, PatternWords, SurvivalWords,
-            BaseTable):
+            DistributionTableWords, BaseTable):
     """A table. Make one with sdata.table(...), then add steps: table.keep_rows(...), table.sort_by(...)."""
 
 

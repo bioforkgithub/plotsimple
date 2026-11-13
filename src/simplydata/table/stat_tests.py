@@ -1328,7 +1328,7 @@ class StatTestWords:
 
     # ------------------------------------------------------------------ compare_shape_to
     @friendly
-    def compare_shape_to(self, column=None, shape="normal", for_each=None):
+    def compare_shape_to(self, column=None, shape="normal", for_each=None, seed=1):
         """Do the values look bell-shaped (normal), or are they too far from it to be chance?
 
         table.compare_shape_to("marks", "normal", for_each="class")   (with sdata.example("marks"))
@@ -1338,13 +1338,19 @@ class StatTestWords:
         few values the test can miss a different shape, and with many values (30 or more)
         it flags even tiny, harmless differences, while tests on averages are then usually
         fine anyway (the central limit theorem). Gives back a table with one row per group.
+
+        Any other smooth shape works too: table.compare_shape_to("days", "gamma") fits the
+        distribution (as table.fit_distribution) and runs the Anderson-Darling test, with a
+        p-value from 9999 simulated samples that are each fitted again (seed=1, printed).
         """
         step = "compare_shape_to"
         example = 'with sdata.example("marks"): table.compare_shape_to("marks", "normal", for_each="class")'
         self._need_name(step, "the column", column, example)
         name = shape.strip().lower() if isinstance(shape, str) else shape
+        if not isinstance(name, str) or not name:
+            raise SimplydataError(f'{step}() needs a shape in quotes, such as "normal" or "gamma".\nFor example, {example}')
         if name not in SHAPES:
-            raise choice_error(step, "shape", shape, list(SHAPES))
+            return self._compare_other_shape(step, column, shape, for_each, seed)
         groups = self._group_columns(step, for_each, [column]) if for_each is not None else []
         frame = self._number_frame(step, [column])
         values = frame.select(nw.col(column).cast(nw.Float64))[column].to_numpy()
@@ -1410,6 +1416,38 @@ class StatTestWords:
         if any_large_flag:
             print(f"Note: with {CLT_SIZE} or more values Shapiro-Wilk flags even small, harmless differences from a bell "
                   "shape; tests on averages are usually still fine (the central limit theorem).")
+        data = {k: [r[k] for r in rows] for k in rows[0]}
+        return self._new_table(nw.from_dict(data, backend=self._frame.implementation))
+
+    def _compare_other_shape(self, step, column, shape, for_each, seed):
+        """compare_shape_to() for any shape but normal: the engine is table/distribution_words.shape_test."""
+        from .distribution_words import shape_test
+
+        if isinstance(seed, bool) or not isinstance(seed, int):
+            raise SimplydataError("seed= needs a whole number, such as seed=1 (the same seed gives the same p-value).")
+        groups = self._group_columns(step, for_each, [column]) if for_each is not None else []
+        frame = self._number_frame(step, [column])
+        values = frame.select(nw.col(column).cast(nw.Float64))[column].to_numpy()
+        keys = [_key(r) for r in frame.select(groups).rows()] if groups else [()] * len(values)
+        by_group: dict = {}
+        for key, v in zip(keys, values):
+            by_group.setdefault(key, [])
+            if not math.isnan(v):
+                by_group[key].append(v)
+        order = sorted(by_group, key=lambda k: tuple(_order(v) for v in k))
+        _skipped_note(int(np.isnan(values).sum()), [column])
+        rows, method = [], None
+        for key in order:
+            label = " / ".join(_say_label(x) for x in key)
+            result = shape_test(np.asarray(by_group[key], dtype=float), shape, seed=seed, column=column)
+            sentence = result["sentence"]
+            print(f"  {label}: {sentence}" if groups else sentence)
+            method = result["method"]
+            row = {g: k for g, k in zip(groups, key)}
+            row.update({k: result[k] for k in ("test", "what it compares", "statistic name", "statistic", "p-value",
+                                               "rows", "Monte Carlo samples", "seed")})
+            rows.append(row)
+        print(method)
         data = {k: [r[k] for r in rows] for k in rows[0]}
         return self._new_table(nw.from_dict(data, backend=self._frame.implementation))
 

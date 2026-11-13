@@ -23,6 +23,7 @@ from .words.layout import grid, one_above_other, side_by_side
 from .words.stats import pairs
 from .power import chance_to_find, how_many_needed
 from .finding import find_biggest, find_smallest, solve
+from .distributions import distribution
 
 # Last, on purpose: the function sdata.words must win over the subpackage simplydata.words
 # (sdata.table and sdata.numbers win over their subpackages the same way, by being imported after them).
@@ -31,7 +32,7 @@ from .learn import help, lesson, words  # noqa: E402
 __version__ = "0.1.0"
 
 __all__ = [
-    "Chart", "NumberGrid", "Numbers", "SimplydataError", "Table", "chance_to_find", "chart",
+    "Chart", "NumberGrid", "Numbers", "SimplydataError", "Table", "chance_to_find", "chart", "distribution",
     "example", "find_biggest", "find_smallest", "grid", "help", "how_many_needed",
     "lesson", "number_grid", "numbers", "one_above_other", "pairs", "random_numbers", "side_by_side",
     "solve", "table", "words", "__version__",
