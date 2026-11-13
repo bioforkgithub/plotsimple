@@ -852,7 +852,8 @@ class ModelWords:
 
     # ------------------------------------------------------------------ add_predicted_column
     @friendly
-    def add_predicted_column(self, column=None, using=None, outcome="numbers", name=None, grouped_by=None):
+    def add_predicted_column(self, column=None, using=None, outcome="numbers", name=None, grouped_by=None,
+                             start=None, between=None, weights=None, for_each=None):
         """Add a column with the value the model predicts for each row.
 
         table.add_predicted_column("marks", using=["hours", "breakfast"])   (with sdata.example("school"))
@@ -861,8 +862,28 @@ class ModelWords:
         outcome="counts" the expected count (R fitted(glm(...))). With grouped_by= the
         prediction includes each group's own level (R fitted(lmer(...))). Rows with an empty
         cell in a column used stay empty. Undo with table.undo().
+
+        A formula with one = sign is fitted as table.fit_formula() (with its options start=,
+        between=, weights= and for_each=) and its value is added for every row, also rows
+        whose left-hand column is empty (as R predict(nls(...), newdata)):
+        table.add_predicted_column("population = a * exp(b * (year - 2000))", for_each="country")
+        using= a fit_formula() result takes its values instead of fitting again.
         """
         step = "add_predicted_column"
+        if isinstance(column, str) and "=" in column:
+            if outcome != "numbers" or grouped_by is not None:
+                raise SimplydataError("outcome= and grouped_by= are for a model from explain(); a formula is fitted "
+                                      "by nonlinear least squares, as table.fit_formula().")
+            return self._add_formula_column(column, using, name, start, between, weights, for_each)
+        given = [k for k, v in (("start", start), ("between", between), ("weights", weights),
+                                ("for_each", for_each)) if v is not None]
+        if given:
+            raise SimplydataError(
+                f"{', '.join(k + '=' for k in given)} {'is' if len(given) == 1 else 'are'} for a formula, such as "
+                'table.add_predicted_column("population = a * exp(b * (year - 2000))", for_each="country").\n'
+                'For a model from explain() use using= and grouped_by=, for example '
+                'table.add_predicted_column("marks", using=["hours", "breakfast"]).'
+            )
         terms, pieces, variables, raw, missing, kinds = self._model_parts(
             step, column, using, outcome, grouped_by, "leave out")
         names = [column] + variables + ([grouped_by] if grouped_by is not None else [])
