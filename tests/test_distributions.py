@@ -369,15 +369,9 @@ def test_interface_for_charts():
     assert counts.is_discrete and list(counts.pmf([0, 1])) == pytest.approx(stats.poisson(2).pmf([0, 1]))
 
 
-def test_chart_draws_with_the_curve_word(monkeypatch):
-    import sys
+def test_chart_draws_with_the_curve_word():
+    from simplydata.chart import Chart
 
-    module = sys.modules["simplydata.chart"]
-    Chart = module.Chart
-    if not hasattr(module.Chart, "curve"):  # until the chart words for curves are added to Chart
-        curves = pytest.importorskip("simplydata.words.curves")
-        monkeypatch.setattr(module, "Chart", type("Chart", (curves.CurveWords, module.Chart), {}))
-        Chart = module.Chart
     for dist in (distribution("normal", average=50, standard_deviation=10), distribution("poisson", average=3)):
         for show in ("density", "cumulative"):
             assert isinstance(dist.chart(show=show), Chart)

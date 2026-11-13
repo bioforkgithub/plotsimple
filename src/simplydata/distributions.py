@@ -1387,11 +1387,7 @@ class Distribution:
 
         if show not in ("density", "cumulative"):
             raise choice_error("chart", "show", show, ["density", "cumulative"])
-        new = chart()
-        if not hasattr(type(new), "curve"):
-            raise SimplydataError("Drawing a distribution needs chart.curve(), which this version of simplydata "
-                                  "does not have yet.")
-        return new.curve(self, between=between, show=show)
+        return chart().curve(self, between=between, show=show)
 
     @friendly
     def table(self):

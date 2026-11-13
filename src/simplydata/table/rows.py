@@ -36,7 +36,10 @@ CONDITIONS = (
 )
 COMPARE = ("above", "below", "at_least", "at_most")
 TEXT_ONLY = ("contains", "starts_with", "ends_with")
-FILL_CHOICES = ("average", "median", "value above", "value below", "line between neighbours")
+FILL_CHOICES = ("average", "median", "value above", "value below", "line between neighbours",
+                "curve between neighbours", "curve without overshoot")
+# with_the= choices that join the filled neighbours (they take sorted_by= and for_each=)
+BETWEEN_CHOICES = ("line between neighbours", "curve between neighbours", "curve without overshoot")
 
 # Text-to-date formats, tried in this order. Day comes before month (03/04/2026 is 3 April);
 # month-first is only used when day-first cannot work (12/25/2026).
@@ -666,6 +669,10 @@ class RowWords:
         those values, so a missing day counts as one day); for_each= fills each group on its
         own. Empty cells at the start or end have only one neighbour, so they stay empty.
           table.fill_empty_cells("sales", with_the="line between neighbours", sorted_by="date", for_each="shop")
+        with_the="curve between neighbours" fills them on a smooth curve through the filled
+        cells instead (a natural cubic spline, as R zoo::na.spline(method = "natural")), and
+        with_the="curve without overshoot" on a smooth curve that never goes above or below
+        its neighbours (PCHIP); both take sorted_by= and for_each= the same way.
         """
         example = 'table.fill_empty_cells("marks", with_the="average")'
         self._need_one_column("fill_empty_cells", column, example)
@@ -677,11 +684,11 @@ class RowWords:
             )
         if with_the is not None:
             choice = str(with_the).strip().lower().replace("_", " ").replace("neighbors", "neighbours")
-            if choice == "line between neighbours":
-                return self._fill_by_line(column, sorted_by, for_each)
+            if choice in BETWEEN_CHOICES:
+                return self._fill_by_line(column, sorted_by, for_each, choice)
         if sorted_by is not None or for_each is not None:
             raise SimplydataError(
-                'sorted_by= and for_each= go with with_the="line between neighbours".'
+                'sorted_by= and for_each= go with with_the="line between neighbours" (or "curve between neighbours").'
                 + _example('table.fill_empty_cells("sales", with_the="line between neighbours", sorted_by="date")',
                            "shop")
             )
@@ -715,15 +722,19 @@ class RowWords:
               + (f" {_cells(after)} stayed empty (nothing to copy from)." if after else ""))
         return self._change(f"fill empty cells in {column} with {how}", new)
 
-    def _fill_by_line(self, column, sorted_by, for_each):
-        """fill_empty_cells(with_the="line between neighbours"): see line_between_neighbours()."""
+    def _fill_by_line(self, column, sorted_by, for_each, choice="line between neighbours"):
+        """fill_empty_cells(with_the="line between neighbours"): see line_between_neighbours().
+
+        with_the="curve between neighbours" / "curve without overshoot": see
+        between.curve_between_neighbours() (natural cubic spline / PCHIP through the filled cells).
+        """
         from .._stats import line_between_neighbours
 
-        example = 'table.fill_empty_cells("sales", with_the="line between neighbours", sorted_by="date")'
+        example = f'table.fill_empty_cells("sales", with_the="{choice}", sorted_by="date")'
         kind = self._kind_of(column)
         if kind != "number":
             raise SimplydataError(
-                f'with_the="line between neighbours" needs numbers, but "{column}" is a {kind} column. '
+                f'with_the="{choice}" needs numbers, but "{column}" is a {kind} column. '
                 f'Try with_the="value above" or with_value= instead.' + _example(example, "shop")
             )
         keys = [for_each] if isinstance(for_each, str) else list(for_each or [])
@@ -755,13 +766,24 @@ class RowWords:
             columns = [frame[k].to_list() for k in keys]
             place = {}
             groups = [place.setdefault(key, len(place)) for key in zip(*columns)]
-        new_values = line_between_neighbours(values, x, groups)
+        if choice == "line between neighbours":
+            new_values = line_between_neighbours(values, x, groups)
+        else:
+            from .between import curve_between_neighbours
+
+            how = "smooth curve" if choice == "curve between neighbours" else "curve without overshoot"
+            new_values = curve_between_neighbours(values, x, groups, how)
         before = self._count(self._empty(column))
         new = frame.with_columns(nw.new_series(column, new_values, nw.Float64, backend=frame.implementation))
         after = _count_in(new, _empty_in(new, column))
         order = f" in order of {sorted_by}" if sorted_by else " in table order"
         each = f", for each {', '.join(keys)} on its own" if keys else ""
-        print(f"Filled {_cells(before - after)} in {column} on the line between neighbours{order}{each}.")
+        said = {"line between neighbours": "on the line between neighbours",
+                "curve between neighbours": "on a smooth curve through the filled cells (a natural cubic spline, "
+                                            'as R zoo::na.spline(method = "natural"))',
+                "curve without overshoot": "on a smooth curve through the filled cells that never overshoots "
+                                           "its neighbours (PCHIP)"}[choice]
+        print(f"Filled {_cells(before - after)} in {column} {said}{order}{each}.")
         no_place = _count_in(frame, self._empty(column) & self._empty(sorted_by)) if sorted_by else 0
         if after - no_place:
             ends = "the start or end of a group" if keys else "the start or end"
@@ -771,7 +793,7 @@ class RowWords:
         if no_place:
             print(f"Note: {_cells(no_place)} stayed empty because {sorted_by} is empty in "
                   f"{'that row' if no_place == 1 else 'those rows'}.")
-        what = f"fill empty cells in {column} with the line between neighbours{order}{each}"
+        what = f"fill empty cells in {column} with the {choice}{order}{each}"
         return self._change(what, new)
 
     # ================================================================== fixing columns

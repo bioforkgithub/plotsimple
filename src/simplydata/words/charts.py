@@ -389,9 +389,19 @@ def _draw_bars(ctx, x, y, colour, show, error, stacked, sideways, transparency=N
 
 
 # ---------------------------------------------------------------- lines
-def _draw_lines(ctx, x, y, colour, show, error, dots, dashed, transparency=None, thickness=None):
+def _draw_lines(ctx, x, y, colour, show, error, dots, dashed, transparency=None, thickness=None,
+                joined_by="straight lines"):
     group, fixed = colour_role(ctx.data, colour)
     table, n = _frame(ctx, measure=SHOW[show], size_role="y", x=x, y=y, colour=group)
+    if joined_by not in ("straight lines", "steps"):
+        # curves through the points: table/between.py, the engine of table.values_at()
+        from .curves import draw_joined_lines, lines_colours
+
+        colours = lines_colours(ctx, table, n["colour"], fixed)
+        draw_joined_lines(ctx, table, n, SHOW[show], joined_by, dots, dashed,
+                          None if transparency is None else opacity(transparency), thickness, colours)
+        _remember(ctx, "lines", table, n, show=show)
+        return
     kw = dict(data=table, x=n["x"], y=n["y"], **_hue(table, n), ax=ctx.ax,
               estimator=SHOW[show], errorbar=check_error("lines", error, show))
     if n["colour"]:
@@ -406,6 +416,8 @@ def _draw_lines(ctx, x, y, colour, show, error, dots, dashed, transparency=None,
         kw["alpha"] = opacity(transparency)
     if thickness is not None:
         kw["linewidth"] = thickness
+    if joined_by == "steps":
+        kw["drawstyle"] = "steps-post"  # each value stays until the next point, as R approx(f = 0)
     sns.lineplot(**kw)
     _remember(ctx, "lines", table, n, show=show)
 
@@ -962,15 +974,16 @@ def _draw_dots_3d(ctx, x, y, z, colour, transparency=None):
 QQ_SMALLEST = 3  # fewer values than this cannot show a shape
 
 
-def _draw_qq_dots(ctx, x, colour, transparency=None, thickness=None):
+def _draw_qq_dots(ctx, x, colour, transparency=None, thickness=None, distribution="normal", said=None):
     """scipy.stats.probplot: sorted values against normal quantiles at Filliben's positions,
-    and the least-squares line through the dots."""
+    and the least-squares line through the dots. Another distribution= is fitted to each
+    group first (maximum likelihood, see curves.qq_against) and its quantiles are used."""
     from matplotlib import rcParams
     from scipy import stats
 
     table, n = _frame(ctx, on_x=None, on_y=None, x=x, colour=colour)
     ax = ctx.ax
-    found, too_few = {}, []
+    found, too_few, fitted_labels = {}, [], []
     groups = _groups(table, n["colour"])
     colours = _group_colours(table, n["colour"], ctx, None)
     for (name, rows), c in zip(groups, colours):
@@ -978,7 +991,13 @@ def _draw_qq_dots(ctx, x, colour, transparency=None, thickness=None):
         if len(values) < QQ_SMALLEST:
             too_few.append(name)
             continue
-        (theory, ordered), (slope, intercept, r) = stats.probplot(values, dist="norm")
+        if distribution == "normal":
+            (theory, ordered), (slope, intercept, r) = stats.probplot(values, dist="norm")
+        else:
+            from .curves import _label_of, qq_against
+
+            ((theory, ordered), (slope, intercept, r)), fitted, _ = qq_against(values, distribution)
+            fitted_labels.append(_label_of(fitted) if name is None else f'"{name}": {_label_of(fitted)}')
         ax.scatter(theory, ordered, color=c, alpha=opacity(transparency), zorder=3,
                    label=None if name is None else str(name))
         ends = np.array([theory[0], theory[-1]])
@@ -997,8 +1016,15 @@ def _draw_qq_dots(ctx, x, colour, transparency=None, thickness=None):
         chart_note(line, lambda _count, line=line: line)
     if n["colour"]:
         ax.legend(title=n["colour"])
-    ax.set_xlabel("normal quantiles")
+    ax.set_xlabel(f"{distribution} quantiles" + ("" if distribution == "normal" else " (fitted)"))
     ax.set_ylabel(n["x"])
+    if fitted_labels and said is not None and not said.get("fit"):
+        from .._core import chart_note
+
+        said["fit"] = True
+        line = (f"qq_dots: each value against the {distribution} distribution fitted by maximum likelihood: "
+                + "; ".join(fitted_labels) + ".")
+        chart_note(("qq_fit", id(said)), lambda _count, line=line: line)
     ctx.store["qq"] = found
     _remember(ctx, "qq_dots", table, {"x": None, "y": n["x"], "colour": n["colour"]})
 
@@ -1078,7 +1104,7 @@ class ChartWords:
 
     @friendly
     def lines(self, x=None, y=None, colour=None, show="average", error=None, dots=False, dashed=False,
-              thickness=None, transparency=None):
+              thickness=None, transparency=None, joined_by="straight lines"):
         """Lines. chart.lines(x="month", y="temperature", colour="city") (with sdata.example("weather"))
 
         colour="city" draws one line per group. dots=True marks each point.
@@ -1087,7 +1113,14 @@ class ChartWords:
         band; a line says which one was drawn.
         thickness=3 draws thicker lines (normal is 2, in points); transparency=0.5 makes
         them half see-through (0 is solid).
+        joined_by= says how the points are joined, as in table.values_at(): "straight lines"
+        (normal), "smooth curve" (natural cubic spline), "curve without overshoot" (PCHIP),
+        "steps" (each value stays until the next point), "nearest"; experts: "akima",
+        "makima", "not-a-knot", "periodic". Curves need numbers on x and y.
         """
+        from ..table.between import join_choice
+
+        joined_by = join_choice("lines", joined_by)
         thickness = check_thickness("lines", thickness)
         transparency = check_transparency("lines", transparency)
         show = check_show("lines", show)
@@ -1101,11 +1134,14 @@ class ChartWords:
         group, _ = colour_role(self._data, colour)
         check(self._data, x=x, y=y, colour=group)
         self._need_axes("lines")
+        if error and joined_by not in ("straight lines", "steps"):
+            raise SimplydataError(f'error= draws a band around straight lines; with joined_by="{joined_by}" leave '
+                                  'out error= (or use joined_by="straight lines").')
         if error:
             say_error(error, "Shaded band")
         return self._add("lines", "draw", _draw_lines, x=x, y=y, colour=colour, show=show,
                          error=error, dots=dots, dashed=dashed, transparency=transparency,
-                         thickness=thickness)
+                         thickness=thickness, joined_by=joined_by)
 
     @friendly
     def dots(self, x=None, y=None, colour=None, size=None, shape=None, transparency=None):
@@ -1501,7 +1537,7 @@ class ChartWords:
         return self._replace("band_legend", "extra", _band_legend)
 
     @friendly
-    def qq_dots(self, column=None, for_each=None, transparency=None, thickness=None):
+    def qq_dots(self, column=None, for_each=None, transparency=None, thickness=None, distribution="normal"):
         """Dots that lie on a straight line when the values follow a normal (bell) curve.
         chart.qq_dots("marks") (with sdata.example("marks"))
 
@@ -1512,6 +1548,8 @@ class ChartWords:
         for_each="class" draws each group in its own colour, with its own line.
         SciPy places the dots at Filliben's positions; R's qqnorm() uses slightly different
         ones, and R's qqline() draws its line through the quartiles instead.
+        distribution="gamma" (any name of sdata.distribution) compares with that distribution
+        instead, its parameters fitted to each group by maximum likelihood (printed once).
         """
         transparency = check_transparency("qq_dots", transparency)
         thickness = check_thickness("qq_dots", thickness)
@@ -1522,8 +1560,11 @@ class ChartWords:
         check(self._data, x=column, colour=for_each)
         _check_numbers(self._data, "qq_dots", column=column)
         self._need_axes("qq_dots")
+        if not isinstance(distribution, str):
+            raise SimplydataError('distribution= should be the name of a distribution, such as "normal" or "gamma".')
+        distribution = distribution.strip().lower()
         return self._add("qq_dots", "draw", _draw_qq_dots, x=column, colour=for_each,
-                         transparency=transparency, thickness=thickness)
+                         transparency=transparency, thickness=thickness, distribution=distribution, said={})
 
     @friendly
     def cumulative_share(self, x=None, colour=None, transparency=None, thickness=None):

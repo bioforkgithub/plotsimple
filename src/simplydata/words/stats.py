@@ -330,6 +330,11 @@ def _fixed_colour(word, colour):
         )
 
 
+# smooth_line(method=): the plain names first, other spellings accepted
+SMOOTH_METHODS = {"lowess": "lowess", "loess": "lowess", "spline": "spline", "smoothing spline": "spline",
+                  "smooth.spline": "spline"}
+
+
 # ====================================================================== drawing
 def _not_average_error(show):
     return SimplydataError(
@@ -493,13 +498,13 @@ def _dodge(ax, last, bars):
     return [xs + off for xs, off in zip(numbers, offsets)]
 
 
-def _draw_fit(ctx, word, how, colour, show_equation, band=False, degree=1, thickness=None):
+def _draw_fit(ctx, word, how, colour, show_equation, band=False, degree=1, thickness=None, smoothness="auto"):
     last = _layer(ctx, word, {"dots"})
     table, x, y, group = last["table"], last["x"], last["y"], last["colour"]
     _numeric_xy(word, table, x, y)
     ax = ctx.ax
     drawn = 0
-    need = {"line": 2, "curve": degree + 1, "smooth": 3}[how]
+    need = {"line": 2, "curve": degree + 1, "smooth": 3, "spline": 4}[how]
     for name, part, col in _groups(ctx, table, group, colour):
         xv, yv = _numeric_xy(word, part, x, y)
         if len(np.unique(xv)) < need:
@@ -516,12 +521,16 @@ def _draw_fit(ctx, word, how, colour, show_equation, band=False, degree=1, thick
             fit = poly_fit(xv, yv, degree)
             ax.plot(xs, np.polyval(fit["coefs"], xs), color=col, zorder=3, linewidth=thickness)
             coefs, r2 = fit["coefs"], fit["r2"]
+        elif how == "spline":
+            from ..table.between import smoothing_spline
+
+            ax.plot(xs, smoothing_spline(xv, yv, smoothness)(xs), color=col, zorder=3, linewidth=thickness)
         else:
             delta = 0.01 * np.ptp(xv) if len(xv) > 1000 else 0.0
             xs, ys = lowess(xv, yv, delta=delta)
             ax.plot(xs, ys, color=col, zorder=3, linewidth=thickness)
         drawn += 1
-        if show_equation and how != "smooth":
+        if show_equation and how not in ("smooth", "spline"):
             text = equation_text(coefs, r2)
             _write_equation(ctx, text if name is None else f"{name}: {text}", col)
     if not drawn:
@@ -539,8 +548,9 @@ def _draw_fit_curve(ctx, degree, show_equation, colour, thickness=None):
     _draw_fit(ctx, "fit_curve", "curve", colour, show_equation, degree=degree, thickness=thickness)
 
 
-def _draw_smooth_line(ctx, colour, thickness=None):
-    _draw_fit(ctx, "smooth_line", "smooth", colour, False, thickness=thickness)
+def _draw_smooth_line(ctx, colour, thickness=None, method="lowess", smoothness="auto"):
+    how = "spline" if method == "spline" else "smooth"
+    _draw_fit(ctx, "smooth_line", how, colour, False, thickness=thickness, smoothness=smoothness)
 
 
 def _draw_side_histograms(ctx):
@@ -726,16 +736,35 @@ class StatsWords:
                          show_equation=bool(show_equation), colour=colour, thickness=thickness)
 
     @friendly
-    def smooth_line(self, colour=None, thickness=None):
+    def smooth_line(self, colour=None, thickness=None, method="lowess", smoothness="auto"):
         """A smooth line that follows the dots (LOWESS). chart.smooth_line()
 
         Good for seeing a trend that is not straight. Each colour group gets its own line.
         thickness=3 draws a thicker line (normal is 2).
+        method="spline" draws a smoothing spline instead (as table.values_at(...,
+        smoothness=) and R smooth.spline()): smoothness="auto" chooses how smooth by
+        generalised cross-validation; a number is R's lambda= (bigger is smoother).
         """
         _fixed_colour("smooth_line", colour)
         thickness = check_thickness("smooth_line", thickness)
+        if not isinstance(method, str) or method.strip().lower() not in SMOOTH_METHODS:
+            from .._errors import choice_error
+
+            raise choice_error("smooth_line", "method", method, ["lowess", "spline"])
+        method = SMOOTH_METHODS[method.strip().lower()]
+        from ..table.between import smoothness_choice
+
+        smoothness = smoothness_choice("smooth_line", smoothness)
+        if method == "lowess" and smoothness != "auto":
+            raise SimplydataError('smoothness= a number goes with method="spline" (a smoothing spline); LOWESS '
+                                  'always uses the nearest 2/3 of the dots, as R lowess().\n'
+                                  'For example chart.smooth_line(method="spline", smoothness=0.001)')
+        if smoothness == 0:
+            raise SimplydataError('smoothness=0 would pass through every dot; use "auto" or a number above 0, '
+                                  'or chart.lines(..., joined_by="smooth curve") to join the dots.')
         self._check_layer_now("smooth_line", {"dots"})
-        return self._add("smooth_line", "extra", _draw_smooth_line, colour=colour, thickness=thickness)
+        return self._add("smooth_line", "extra", _draw_smooth_line, colour=colour, thickness=thickness,
+                         method=method, smoothness=smoothness)
 
     @friendly
     def side_histograms(self):
