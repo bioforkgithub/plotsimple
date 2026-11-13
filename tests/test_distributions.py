@@ -11,6 +11,7 @@ short on some data (noted where it happens).
 """
 
 import math
+import re
 
 import numpy as np
 import pandas as pd
@@ -364,9 +365,13 @@ def test_interface_for_charts():
     dist = distribution("gamma", shape=2, rate=0.5)
     assert dist.is_discrete is False and dist.label == "gamma, shape 2, rate 0.5"
     assert dist.r_call == "dgamma(x, shape = 2, rate = 0.5)"
-    assert list(dist.pdf([1, 2])) == pytest.approx(stats.gamma(2, scale=2).pdf([1, 2]))
+    assert list(dist._pdf([1, 2])) == pytest.approx(stats.gamma(2, scale=2).pdf([1, 2]))
     counts = distribution("poisson", average=2)
-    assert counts.is_discrete and list(counts.pmf([0, 1])) == pytest.approx(stats.poisson(2).pmf([0, 1]))
+    assert counts.is_discrete and list(counts._pmf([0, 1])) == pytest.approx(stats.poisson(2).pmf([0, 1]))
+    for other, word in (("pdf", "dist.density_at(60)"), ("cdf", "dist.chance(below=60)"), ("ppf", "dist.percentile(95)"),
+                        ("rvs", "dist.random_numbers(how_many=100, seed=1)")):
+        with pytest.raises(AttributeError, match=re.escape(f"In simplydata this is {word}")):
+            getattr(dist, other)  # other tools' names point to the word, and never run
 
 
 def test_chart_draws_with_the_curve_word():

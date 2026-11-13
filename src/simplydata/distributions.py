@@ -790,7 +790,18 @@ HINTS = {"pdf": "density_at", "pmf": "chance", "cdf": "chance", "sf": "chance", 
          "quantile": "percentile", "isf": "cut_off", "critical_value": "cut_off", "rvs": "random_numbers",
          "sample": "random_numbers", "mean": "average", "std": "standard_deviation", "sd": "standard_deviation",
          "var": "variance", "interval": "middle_range", "stats": "summary", "describe": "summary",
-         "probability": "chance", "density": "density_at", "plot": "chart", "show": "summary", "fit": "fit_distribution"}
+         "probability": "chance", "density": "density_at", "plot": "chart", "show": "summary", "fit": "fit_distribution",
+         "dnorm": "density_at", "pnorm": "chance", "qnorm": "percentile", "rnorm": "random_numbers",
+         "logpdf": "density_at", "logcdf": "chance", "moment": "summary", "entropy": "summary",
+         "support": "summary", "params": "parameters", "args": "parameters", "kwds": "parameters"}
+# How the word a HINT points to is written, with a typical value.
+HINT_EXAMPLES = {"density_at": "dist.density_at(60)", "chance": "dist.chance(below=60) (or at_most=, above=, "
+                 "at_least=, between=; for counts dist.chance(3) is exactly 3)",
+                 "percentile": "dist.percentile(95)", "cut_off": "dist.cut_off(above=0.025)",
+                 "random_numbers": "dist.random_numbers(how_many=100, seed=1)", "middle_range": "dist.middle_range(95)",
+                 "summary": "dist.summary()", "average": "dist.average()",
+                 "standard_deviation": "dist.standard_deviation()", "variance": "dist.variance()",
+                 "chart": "dist.chart()", "parameters": "dist.parameters()"}
 
 
 class Distribution:
@@ -799,6 +810,12 @@ class Distribution:
     Words: chance, density_at, percentile, cut_off, middle_range, average, median,
     standard_deviation, variance, summary, random_numbers, chart, table, parameters.
     """
+
+    _OLD_WORDS: dict = {}  # no old names yet (sdata.help reads this, as for tables and charts)
+
+    @classmethod
+    def _word_names(cls) -> list[str]:
+        return sorted(WORDS)
 
     def __init__(self, family, params, fit_info=None, backend=None):
         object.__setattr__(self, "_family", family)
@@ -840,17 +857,19 @@ class Distribution:
         """The R density (or chance for counts) at x: 'dnorm(x, mean = 50, sd = 10)'."""
         return self._r("d", "x") or "no R function (a SciPy distribution)"
 
-    def pdf(self, x):
+    # pdf, pmf and cdf are for charts (words/curves.py), so they start with _: dist.pdf() is an
+    # other name that points to density_at(), never a word that runs (see HINTS).
+    def _pdf(self, x):
         """Height of the density curve (continuous); for people the word is density_at()."""
         with np.errstate(all="ignore"):
             return self._frozen.pdf(np.asarray(x, dtype=float))
 
-    def pmf(self, k):
+    def _pmf(self, k):
         """Chance of exactly k (counts); for people the word is chance(k)."""
         with np.errstate(all="ignore"):
             return self._frozen.pmf(np.asarray(k, dtype=float))
 
-    def cdf(self, x):
+    def _cdf(self, x):
         """Chance of a value at or below x; for people the word is chance(at_most=x)."""
         with np.errstate(all="ignore"):
             return self._frozen.cdf(np.asarray(x, dtype=float))
@@ -938,7 +957,9 @@ class Distribution:
                 raise MissingWordError(
                     f"A distribution has no step called .{name}(). To fit one to data use "
                     'table.fit_distribution("column", "gamma") or nums.fit_distribution("gamma").')
-            raise MissingWordError(f"A distribution has no step called .{name}(). Did you mean dist.{target}()?\n"
+            example = HINT_EXAMPLES.get(target, f"dist.{target}()")
+            raise MissingWordError(f"A distribution has no step called .{name}().\n"
+                                   f"In simplydata this is {example}.\n"
                                    "Every step for a distribution: " + ", ".join(known))
         lines = [f"A distribution has no step called .{name}()."]
         guesses = suggest(name, known)
@@ -948,7 +969,7 @@ class Distribution:
         raise MissingWordError("\n".join(lines))
 
     def __dir__(self):
-        return sorted(set(WORDS) | {"is_discrete", "label", "r_call", "name", "pdf", "pmf", "cdf"})
+        return sorted(set(WORDS) | {"is_discrete", "label", "r_call", "name"})
 
     # ------------------------------------------------------------------ input checks
     def _numbers_in(self, step, option, value, example):
@@ -1339,7 +1360,7 @@ class Distribution:
 
     @friendly
     def parameters(self):
-        """The parameters as a dictionary of plain names: {"average": 50, "standard_deviation": 10}."""
+        """The parameters as a dictionary of plain names: {"average": 50, "standard_deviation": 10}. dist.parameters()"""
         return dict(self._params)
 
     # ------------------------------------------------------------------ random numbers
@@ -1392,7 +1413,7 @@ class Distribution:
     @friendly
     def table(self):
         """A one-row table: the distribution, its parameters and, for a fit, the standard errors,
-        log-likelihood, AIC and BIC. fit.table()"""
+        log-likelihood, AIC and BIC. dist.table()"""
         info = self._fit_info
         row = {"distribution": self.name}
         if info and info.get("column"):

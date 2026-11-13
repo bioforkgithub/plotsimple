@@ -31,6 +31,17 @@ from .learn import help, lesson, words  # noqa: E402
 
 __version__ = "0.1.0"
 
+
+def __getattr__(name):
+    """sdata.<name> that does not exist: names from other tools (sdata.minimize, sdata.curve_fit ...)
+    point to the simplydata word and never run; other names get a did-you-mean."""
+    if name.startswith("_"):
+        raise AttributeError(f"module 'simplydata' has no attribute {name!r}")
+    from ._errors import missing_sdata_word
+
+    raise missing_sdata_word(name, __all__)
+
+
 __all__ = [
     "Chart", "NumberGrid", "Numbers", "SimplydataError", "Table", "chance_to_find", "chart", "distribution",
     "example", "find_biggest", "find_smallest", "grid", "help", "how_many_needed",

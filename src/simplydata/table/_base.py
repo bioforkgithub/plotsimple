@@ -16,6 +16,7 @@ import narwhals as nw
 
 from .._data import load_native
 from .._errors import (SimplydataError, choice_error, column_error, friendly, missing_word_error, old_word,
+                       other_name_error,
                        suggest)
 
 HISTORY_LIMIT = 30  # how many steps undo() can take back
@@ -281,7 +282,7 @@ class BaseTable:
             raise AttributeError(name)
         if name in self._OLD_WORDS:
             return old_word(self, name, self._OLD_WORDS)
-        raise missing_word_error(name, self._word_names())
+        raise other_name_error("table", name, self._word_names()) or missing_word_error(name, self._word_names())
 
     def __setattr__(self, name, value):
         if name.startswith("_"):

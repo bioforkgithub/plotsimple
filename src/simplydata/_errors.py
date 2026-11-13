@@ -9,6 +9,7 @@ from __future__ import annotations
 import difflib
 import functools
 import inspect
+import re
 
 ISSUES_URL = "https://github.com/bioforkgithub/simplydata/issues"
 
@@ -56,6 +57,65 @@ def missing_word_error(word: str, known) -> MissingWordError:
     if guesses:
         lines.append("Did you mean " + " or ".join(f".{g}()" for g in guesses) + "?")
     lines.append("Type sdata.words() to see every step.")
+    lines.append(f"Missing something? Ask for it at {ISSUES_URL}")
+    return MissingWordError("\n".join(lines))
+
+
+# ---------------------------------------------------------------- other names
+# Names from other tools and everyday maths (minimize, curve_fit, groupby, hist ...) never run:
+# they point to the simplydata word. The list is in _other_names.py.
+_PREFIXES = ("sdata", "table", "chart", "nums", "grid", "dist")
+_TARGET = re.compile(r"(?:sdata|table|chart|nums|grid|dist)\.(\w+)\(")
+
+
+def other_name_target(written: str) -> str:
+    """The word a pointer names: "sdata.find_smallest(...)" -> "find_smallest"."""
+    found = _TARGET.search(written)
+    return found.group(1) if found else written
+
+
+def other_name_pointer(kind: str, name: str, known=None, prefix: str | None = None) -> str | None:
+    """The line "In simplydata this is table.join_with(...)." for an other name, or None.
+
+    kind is "sdata", "table", "chart" or "numbers". With known= (the words of the object) and
+    prefix= (how the object is written, such as "grid"), a pointer to a word the object lacks
+    is not given, and "nums." is written as the prefix.
+    """
+    from ._other_names import OTHER_NAMES
+
+    written = OTHER_NAMES.get(kind, {}).get(str(name))
+    if written is None:
+        return None
+    if known is not None:
+        own = f"{'nums' if kind == 'numbers' else kind}."
+        if written.startswith(own) and other_name_target(written) not in known:
+            return None
+        if prefix and written.startswith(own):
+            written = prefix + "." + written[len(own):]
+    return f"In simplydata this is {written}."
+
+
+def other_name_error(kind: str, name: str, known=None, prefix: str | None = None) -> MissingWordError | None:
+    """A friendly error for a name from another tool (it never runs), or None if it is not one."""
+    pointer = other_name_pointer(kind, name, known, prefix)
+    if pointer is None:
+        return None
+    shown = f"word called sdata.{name}()" if kind == "sdata" else f"step called .{name}()"
+    word = other_name_target(pointer)
+    return MissingWordError(f"simplydata has no {shown}.\n{pointer}\n"
+                            f'Type sdata.help("{word}") to learn more.')
+
+
+def missing_sdata_word(name: str, known) -> MissingWordError:
+    """sdata.<name> for a name simplydata does not have: a pointer, or did-you-mean."""
+    error = other_name_error("sdata", name)
+    if error is not None:
+        return error
+    lines = [f"simplydata has no word called sdata.{name}."]
+    guesses = suggest(name, [k for k in known if not k[0].isupper() and not k.startswith("_")])
+    if guesses:
+        lines.append("Did you mean " + " or ".join(f"sdata.{g}()" for g in guesses) + "?")
+    lines.append("Type sdata.words() to see every word.")
     lines.append(f"Missing something? Ask for it at {ISSUES_URL}")
     return MissingWordError("\n".join(lines))
 

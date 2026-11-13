@@ -181,7 +181,7 @@ def test_fit_distribution_groups_on_density(capsys):
     assert len(ax.lines) == 6 and all(len(line.get_xdata()) == 200 for line in fitted)
     for line, (name, rows) in zip(fitted, marks.dropna(subset=["marks"]).groupby("class", sort=True)):
         dist = distributions.fit(rows["marks"].to_numpy(float), "gamma")
-        assert np.allclose(line.get_ydata(), dist.pdf(np.asarray(line.get_xdata())))
+        assert np.allclose(line.get_ydata(), dist._pdf(np.asarray(line.get_xdata())))
     assert capsys.readouterr().out.count("Fitted gamma") == 3
     with pytest.raises(SimplydataError, match="histogram or density"):
         Chart(marks).dots(x="hours", y="marks").fit_distribution()

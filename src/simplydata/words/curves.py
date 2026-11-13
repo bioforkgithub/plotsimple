@@ -117,7 +117,17 @@ def read_curve_formula(word, text):
 
 # ---------------------------------------------------------------------- distributions
 def _is_distribution(thing) -> bool:
-    return hasattr(thing, "is_discrete") and (hasattr(thing, "pdf") or hasattr(thing, "pmf"))
+    return hasattr(thing, "is_discrete") and any(hasattr(thing, n) for n in ("_pdf", "_pmf", "pdf", "pmf"))
+
+
+def _density(dist, x):
+    """Height of the density curve: a simplydata Distribution keeps pdf private (dist.pdf() points
+    people to density_at()); other objects with .pdf work too."""
+    return np.asarray((getattr(dist, "_pdf", None) or dist.pdf)(x), dtype=float)
+
+
+def _chance_of(dist, k):
+    return np.asarray((getattr(dist, "_pmf", None) or dist.pmf)(k), dtype=float)
 
 
 def _frozen(dist):
@@ -145,8 +155,8 @@ def _cumulative(dist, x):
     inner = _frozen(dist)
     if inner is not None:
         return np.asarray(inner.cdf(x), dtype=float)
-    if hasattr(dist, "cdf"):
-        return np.asarray(dist.cdf(x), dtype=float)
+    if hasattr(dist, "_cdf") or hasattr(dist, "cdf"):
+        return np.asarray((getattr(dist, "_cdf", None) or dist.cdf)(x), dtype=float)
     out = dist.chance(at_most=list(np.asarray(x, dtype=float)))
     return np.asarray(list(out), dtype=float)
 
@@ -257,7 +267,7 @@ def _draw_curve(ctx, thing, between, steps, dashed, colour, label, thickness, sh
         _say_once(said, "scale", f"Note: the curve of {_label_of(dist)} was scaled {words}.")
     if dist.is_discrete:
         ks = np.arange(math.ceil(span[0]), math.floor(span[1]) + 1)
-        heights = (_cumulative(dist, ks) if cumulative else np.asarray(dist.pmf(ks), dtype=float)) * factor
+        heights = (_cumulative(dist, ks) if cumulative else _chance_of(dist, ks)) * factor
         if ctx.last is None and not cumulative:
             bars = ax.bar(ks, heights, width=0.8, color=colour, alpha=0.7, zorder=2.5)
             handle = bars
@@ -271,7 +281,7 @@ def _draw_curve(ctx, thing, between, steps, dashed, colour, label, thickness, sh
             ax.set_ylabel("chance at or below" if cumulative else "chance")
         return
     xs = np.linspace(span[0], span[1], steps)
-    ys = (_cumulative(dist, xs) if cumulative else np.asarray(dist.pdf(xs), dtype=float)) * factor
+    ys = (_cumulative(dist, xs) if cumulative else _density(dist, xs)) * factor
     line, = ax.plot(xs, ys, **style)
     _legend_entry(ctx, line, label)
     if ctx.last is None:
@@ -359,7 +369,7 @@ def _draw_fit_distribution(ctx, distribution, colour, thickness, said):
         span = _x_range_of_chart(ctx) or _default_range(dist)
         factor, words = histogram_scale(ctx, len(values))
         xs = np.linspace(span[0], span[1], 200)
-        ctx.ax.plot(xs, np.asarray(dist.pdf(xs), dtype=float) * factor, color=col, zorder=3,
+        ctx.ax.plot(xs, _density(dist, xs) * factor, color=col, zorder=3,
                     linewidth=2 if thickness is None else thickness)
         where = f'"{x}"' if name is None else f'"{x}" in "{name}"'
         lines.append(printed or f"Fitted {_label_of(dist)} to {where} ({len(values)} values), by maximum "
@@ -415,7 +425,10 @@ class CurveWords:
 
     @friendly
     def fit_formula(self, formula=None, start=None, between=None, show_equation=False, colour=None, thickness=None):
-        """The curve of a formula fitted to the dots. chart.dots(x="year", y="population").fit_formula("population = a * exp(b * (year - 2000))")
+        """The curve of a formula fitted to the dots. chart.fit_formula("population = a * exp(b * (year - 2000))")
+
+        After dots, for example chart.dots(x="year", y="population", colour="country") (with
+        sdata.example("growth")).
 
         The same fit as table.fit_formula (nonlinear least squares, as R nls()): names that
         are columns are data, other names (a, b) are the values to find. start= and
@@ -436,7 +449,10 @@ class CurveWords:
 
     @friendly
     def fit_distribution(self, distribution="normal", colour=None, thickness=None):
-        """The best-fitting distribution's curve over a histogram or density chart. chart.histogram(x="marks", show="density").fit_distribution("normal")
+        """The best-fitting distribution's curve over a histogram or density chart. chart.fit_distribution("normal")
+
+        After a histogram or density, for example chart.histogram(x="marks", show="density")
+        (with sdata.example("marks")).
 
         The parameters are found by maximum likelihood, as table.fit_distribution (R
         MASS::fitdistr()), and printed (once). Each colour group gets its own curve. Over a
