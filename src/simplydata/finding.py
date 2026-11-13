@@ -379,7 +379,7 @@ def _find(step, goal, formula, between, start, rules, whole_numbers, search, met
                 if start is not None:
                     print("Note: start= is not used when one name has a range with two ends: Brent's method "
                           "searches the whole of between=.")
-                answer = _brent_range(names[0], low, high, objective)
+                answer = _brent_range(names[0], low, high, objective, biggest)
             else:
                 if start is None:
                     raise SimplydataError(f"{step}() needs between=[low, high] or start=... for {names[0]}, for "
@@ -451,8 +451,12 @@ def _scan(low, high, objective, points):
     return xs, ys
 
 
-def _brent_range(name, low, high, objective):
+def _brent_range(name, low, high, objective, biggest=False):
+    """Brent's method on [low, high]. The objective is minus the formula for find_biggest, so the
+    notes speak of the highest point and the peaks then."""
     from scipy import optimize
+
+    lowest, lower, dip = ("highest", "higher", "peak") if biggest else ("lowest", "lower", "dip")
 
     found = optimize.minimize_scalar(objective, bounds=(low, high), method="bounded",
                                      options={"xatol": BRENT_TOL, "maxiter": 10000})
@@ -463,8 +467,8 @@ def _brent_range(name, low, high, objective):
         edge_value = objective(edge)
         if abs(place - edge) <= 1e-4 * (high - low) and edge_value <= value:
             place, value = edge, edge_value
-            notes.append(f"Note: the lowest point is at the end of the range, {name} = {_show(edge)}; a wider "
-                         "between= may give a lower value.")
+            notes.append(f"Note: the {lowest} point is at the end of the range, {name} = {_show(edge)}; a wider "
+                         f"between= may give a {lower} value.")
     finite = np.isfinite(ys)
     dips = 0
     for i in range(len(ys)):
@@ -476,13 +480,14 @@ def _brent_range(name, low, high, objective):
             dips += 1
     words = "Method: Brent's method on the range, as R optimize()."
     if dips > 1:
-        words += (" It finds one lowest point; a curve with several dips may have a lower one elsewhere "
+        words += (f" It finds one {lowest} point; a curve with several {dip}s may have a {lower} one elsewhere "
                   '(try search="whole range").')
     best = int(np.nanargmin(np.where(finite, ys, np.nan))) if finite.any() else None
     if best is not None and ys[best] < value - 1e-9 * (1 + abs(value)):
+        shown = -ys[best] if biggest else ys[best]
         notes.append(f"Note: of {SCAN_POINTS} evenly spaced points checked first, {name} = {_show(xs[best])} gives "
-                     f"a lower value ({_show(ys[best])}) than Brent's answer: the curve has several dips and "
-                     'Brent\'s method found one of them. Try search="whole range", or a narrower between=.')
+                     f"a {lower} value ({_show(shown)}) than Brent's answer: the curve has several {dip}s and "
+                     f'Brent\'s method found one of them. Try search="whole range", or a narrower between=.')
     return _Answer([place], value, words, settled=bool(found.success), iterations=int(found.nit), notes=notes,
                    method_name="Brent's method on the range")
 

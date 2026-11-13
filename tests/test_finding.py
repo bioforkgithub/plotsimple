@@ -127,6 +127,19 @@ def test_lowest_point_at_the_edge(capsys):
     assert r["x"] == 0 and "at the end of the range" in capsys.readouterr().out
 
 
+def test_biggest_notes_speak_of_the_highest_point_and_peaks(capsys):
+    r = row(find_biggest("x", between=[0, 5]))
+    out = capsys.readouterr().out
+    assert r["x"] == 5 and "the highest point is at the end of the range, x = 5" in out
+    assert "may give a higher value" in out and "lowest" not in out
+    # minus x * sin(x) has the same places as above: the biggest of -x*sin(x) on [0, 15] is at 4.913...
+    r = row(find_biggest("-x * sin(x)", between=[0, 15]))
+    out = capsys.readouterr().out
+    assert r["x"] == pytest.approx(4.91318042873019, abs=1e-7)
+    assert "several peaks may have a higher one elsewhere" in out
+    assert "x = 11.0804 gives a higher value (11.0" in out
+
+
 def test_biggest_with_known_values(capsys):
     # R: optimize(function(x) 2 * x * exp(-0.5 * x), c(0, 20), tol = 1e-10, maximum = TRUE)
     #    -> 2.00000000572146, 1.47151776468577
