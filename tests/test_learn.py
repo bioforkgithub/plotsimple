@@ -426,8 +426,54 @@ def test_manual_has_every_figure_and_word():
         assert re.search(rf"^\\unsection\{{Lesson {number}: .*\}}\{{solutions:{number}\}}$", tex, flags=re.M), number
 
 
+def _calls_in(latex):
+    """(code, word, options) for each call written by hand in \\code{...}."""
+    for code in re.findall(r"\\code\{((?:[^{}]|\{[^{}]*\})*)\}", latex):
+        code = code.replace("\\_", "_").replace("\\%", "%")
+        bare = re.sub(r'"[^"]*"', '""', code)  # formulas inside quotes are not calls
+        for m in re.finditer(r"\b([a-z_]\w*)\(", bare):
+            depth, i = 1, m.end()
+            while i < len(bare) and depth:
+                depth += {"(": 1, ")": -1}.get(bare[i], 0)
+                i += 1
+            args = bare[m.end():i - 1]
+            while True:  # only the options of this call, not of calls inside it
+                shorter = re.sub(r"\([^()]*\)|\[[^\[\]]*\]", "", args)
+                if shorter == args:
+                    break
+                args = shorter
+            yield code, m.group(1), re.findall(r"\b(\w+)\s*=", args)
+
+
+def test_hand_written_manual_text_uses_current_words_and_options():
+    """The ideas chapters and the introduction are typed by hand: their words and options must
+    be today's names (an old name still works for one release, but the manual teaches the new one)."""
+    texts = [(ROOT / "docs" / "manual" / "ideas.tex").read_text(encoding="utf-8"),
+             _make_manual().GETTING_STARTED]
+    keys = learn._all_keys()
+    checked = 0
+    for text in texts:
+        for code, word, options in _calls_in(text):
+            found = [k for k in keys if learn._word(k) == word]
+            assert found, f"{word}() in \\code{{{code}}} is not a simplydata word"
+            names = set()
+            for key in found:
+                names |= set(inspect.signature(learn._function(key)).parameters)
+            unknown = [o for o in options if o not in names]
+            assert not unknown, f"\\code{{{code}}}: {word}() has no option {unknown}"
+            checked += 1
+    assert checked > 20
+
+
+def test_lesson_count_is_not_typed_by_hand():
+    tex = (ROOT / "docs" / "manual" / "simplydata_manual.tex").read_text(encoding="utf-8")
+    words = _make_manual().in_words(len(learn.LESSONS))
+    assert f"{words.capitalize()} short lessons" in tex
+    assert f"There are {words} short lessons" in (ROOT / "README.md").read_text(encoding="utf-8")
+
+
 # ---------------------------------------------------------------- the dictionary
-DICTIONARY = ROOT / "docs" / "manual" / "simplydataDictionary.tex"
+DICTIONARY =ROOT / "docs" / "manual" / "simplydataDictionary.tex"
 
 
 def _make_dictionary():

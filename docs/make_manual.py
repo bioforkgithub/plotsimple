@@ -251,7 +251,7 @@ can write it up in a report or a paper.
 
 \section*{How this manual is built}
 \begin{description}[style=nextline,leftmargin=1.2em]
-  \item[{\hyperref[part:lessons]{Part II: Lessons}}] Eighteen short lessons that teach the whole
+  \item[{\hyperref[part:lessons]{Part II: Lessons}}] @LESSON_COUNT@ short lessons that teach the whole
     of simplydata in a day. Each lesson shows code you can run, says what every line does, shows
     the real chart and output it makes, and ends with tasks to try yourself.
   \item[{\hyperref[part:dictionary]{Part III: Dictionary of words}}] Every word, with what it does,
@@ -828,6 +828,19 @@ def _index(aliases: dict) -> str:
     return "\n".join(lines)
 
 
+def in_words(number: int) -> str:
+    """A count in words ("twenty"), so that hand-written sentences follow the code."""
+    ones = ["zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten",
+            "eleven", "twelve", "thirteen", "fourteen", "fifteen", "sixteen", "seventeen", "eighteen",
+            "nineteen"]
+    tens = ["", "", "twenty", "thirty", "forty", "fifty", "sixty", "seventy", "eighty", "ninety"]
+    if number < 20:
+        return ones[number]
+    if number < 100:
+        return tens[number // 10] + ("" if number % 10 == 0 else "-" + ones[number % 10])
+    return str(number)
+
+
 def make() -> str:
     """The whole manual as LaTeX text. Runs nothing, so it is quick and always the same."""
     aliases = learn._aliases()
@@ -841,7 +854,7 @@ def make() -> str:
         r"\tableofcontents",
         r"\mainmatter",
         r"\part{Getting started}\label{part:start}",
-        GETTING_STARTED.strip(),
+        GETTING_STARTED.strip().replace("@LESSON_COUNT@", in_words(len(learn.LESSONS)).capitalize()),
         _practice_tables(),
         r"\part{Lessons}\label{part:lessons}",
         r"\lessonchapters",

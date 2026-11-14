@@ -131,6 +131,38 @@ def test_all_dots_shows_every_value(marks):
     assert sorted(ys) == sorted(marks["marks"])
 
 
+def _dot_colours(ax, before):
+    from matplotlib.colors import to_hex
+    return {to_hex(c) for coll in ax.collections[before:] for c in coll.get_facecolors()}
+
+
+@pytest.mark.parametrize("shapes", ["boxes", "violins"])
+def test_all_dots_over_boxes_stand_out(marks, shapes):
+    """Dots on top of boxes or violins are dark grey, not the boxes' own colour."""
+    from matplotlib.colors import to_hex
+    from simplydata.words._helpers import default_colour
+    alone = draw(sdata.chart(marks).all_dots(x="class", y="marks")).ax
+    assert _dot_colours(alone, 0) == {to_hex(default_colour())}  # alone: the usual colour
+    chart = getattr(sdata.chart(marks), shapes)(x="class", y="marks")
+    before = len(draw(chart).ax.collections)
+    ax = draw(chart.all_dots(x="class", y="marks")).ax
+    assert _dot_colours(ax, before) == {"#333333"}
+    # a colour the user gives is kept
+    chosen = getattr(sdata.chart(marks), shapes)(x="class", y="marks").all_dots(x="class", y="marks",
+                                                                                 colour="red")
+    assert _dot_colours(draw(chosen).ax, before) == {"#ff0000"}
+
+
+def test_all_dots_in_groups_over_boxes_get_a_dark_rim(marks):
+    from matplotlib.colors import to_hex
+    chart = sdata.chart(marks).boxes(x="class", y="marks", colour="class")
+    before = len(draw(chart).ax.collections)
+    ax = draw(chart.all_dots(x="class", y="marks", colour="class")).ax
+    edges = {to_hex(c) for coll in ax.collections[before:] for c in coll.get_edgecolors()}
+    assert edges == {"#333333"}
+    assert len(_dot_colours(ax, before)) == marks["class"].nunique()  # still one colour per group
+
+
 def test_all_dots_strip_is_same_every_time(big):
     state = np.random.get_state()
     a = draw(sdata.chart(big).all_dots(x="class", y="marks")).ax.collections[0].get_offsets()

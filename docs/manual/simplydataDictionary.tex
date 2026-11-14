@@ -3,7 +3,7 @@
 % code and the page numbers of the compiled manual. Do not edit it by hand: run
 %     python docs/make_manual.py --no-run
 % ---------------------------------------------------------------------------------------------
-% Page numbers from simplydata_manual.tex 97bc639c1ae6b3ee
+% Page numbers from simplydata_manual.tex 72ef04b81965b111
 
 \documentclass[10pt,a4paper]{article}
 % no dates or random IDs in the PDF, so it only changes when the dictionary changes
@@ -607,7 +607,7 @@ A family is learned once and used again and again: the start or the end of a wor
 \sense{table}{\code{table.\allowbreak{}compare\_\allowbreak{}shape\_\allowbreak{}to()}}
 \means{Do the values look bell-shaped (normal), or are they too far from it to be chance?}
 \eg{\code{table.\allowbreak{}compare\_\allowbreak{}shape\_\allowbreak{}to(\textquotedbl{}marks\textquotedbl{},\allowbreak{} \textquotedbl{}normal\textquotedbl{},\allowbreak{} for\_\allowbreak{}each=\textquotedbl{}class\textquotedbl{})} \practice{marks}}
-\field{Options}{\code{column=}, \code{shape=}, \code{for\_\allowbreak{}each=}, \code{seed=}}
+\field{Options}{\code{column=}, \code{shape=}, \code{for\_\allowbreak{}each=}, \code{seed=}, \code{samples=}}
 \field{Other tools}{\code{anderson}, \code{normaltest}, \code{shapiro}, \code{shapiro\_\allowbreak{}test}}
 \field{See also}{\hyperref[dict:compare-counts]{\code{compare\_\allowbreak{}counts}}, \hyperref[dict:compare-average-to]{\code{compare\_\allowbreak{}average\_\allowbreak{}to}}, \hyperref[dict:compare-spreads]{\code{compare\_\allowbreak{}spreads}}, \hyperref[dict:compare-before-after]{\code{compare\_\allowbreak{}before\_\allowbreak{}after}}, \hyperref[dict:compare-counts-to]{\code{compare\_\allowbreak{}counts\_\allowbreak{}to}}}
 \where{Manual \manualpage{word:table.compare-shape-to}{185}{section*.191}; lesson 14 (\manualpage{lesson:14}{76}{chapter.II.14})}
@@ -900,7 +900,7 @@ A family is learned once and used again and again: the start or the end of a wor
 \field{Options}{\code{x=}, \code{y=}, \code{degree=}, \code{weights=}, \code{for\_\allowbreak{}each=}}
 \field{Other tools}{\code{polyfit}}
 \field{See also}{\hyperref[dict:fit-line]{\code{fit\_\allowbreak{}line}}, \hyperref[dict:fit-formula]{\code{fit\_\allowbreak{}formula}}}
-\where{Manual \manualpage{word:table.fit-curve}{188}{section*.198}; lesson 19 (\manualpage{lesson:19}{99}{chapter.II.19})}
+\where{Manual \manualpage{word:table.fit-curve}{189}{section*.198}; lesson 19 (\manualpage{lesson:19}{99}{chapter.II.19})}
 \sense{chart}{\code{chart.\allowbreak{}fit\_\allowbreak{}curve()}}
 \means{A curve that fits the dots best.}
 \eg{\code{chart.\allowbreak{}fit\_\allowbreak{}curve(degree=2)} \practice{weather}}
@@ -2570,7 +2570,7 @@ Names from pandas, Polars, R, NumPy, SciPy, matplotlib and seaborn, and everyday
 \othername{plot\_surface}{\hyperref[dict:surface]{\code{chart.\allowbreak{}surface()}}, \manualpage{word:surface}{119}{section*.31}}
 \othername{pmf}{\hyperref[dict:density-at]{\code{dist.\allowbreak{}density\_\allowbreak{}at()}}, \manualpage{word:dist.density-at}{196}{section*.213}}
 \othername{pnorm}{\hyperref[dict:chance]{\code{dist.\allowbreak{}chance()}}, \manualpage{word:dist.chance}{195}{section*.212}}
-\othername{polyfit}{\hyperref[dict:fit-curve]{\code{table.\allowbreak{}fit\_\allowbreak{}curve()}}, \manualpage{word:table.fit-curve}{188}{section*.198}; \hyperref[dict:fit-curve]{\code{chart.\allowbreak{}fit\_\allowbreak{}curve()}}, \manualpage{word:fit-curve}{123}{section*.40}}
+\othername{polyfit}{\hyperref[dict:fit-curve]{\code{table.\allowbreak{}fit\_\allowbreak{}curve()}}, \manualpage{word:table.fit-curve}{189}{section*.198}; \hyperref[dict:fit-curve]{\code{chart.\allowbreak{}fit\_\allowbreak{}curve()}}, \manualpage{word:fit-curve}{123}{section*.40}}
 \othername{polyroot}{\hyperref[dict:solve]{\code{sdata.\allowbreak{}solve()}}, \manualpage{word:sdata.solve}{191}{section*.203}}
 \othername{power\_t\_test}{\hyperref[dict:how-many-needed]{\code{sdata.\allowbreak{}how\_\allowbreak{}many\_\allowbreak{}needed()}}, \manualpage{word:sdata.how-many-needed}{207}{section*.242}}
 \othername{ppf}{\hyperref[dict:percentile]{\code{dist.\allowbreak{}percentile()}}, \manualpage{word:dist.percentile}{196}{section*.214}}

@@ -211,6 +211,8 @@ slopes and areas under splines.
   imputation.
 - Panel letters on a page no longer cover the panel titles of a chart made with
   `one_chart_per`.
+- `chart.all_dots` drawn over `boxes` or `violins` uses dark grey dots (or, in colour groups, a
+  dark rim), so the dots no longer vanish into boxes of the same colour; `colour=` still wins.
 
 ## 0.1.0 (2026-11-12)
 
