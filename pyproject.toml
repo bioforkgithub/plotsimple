@@ -42,7 +42,8 @@ dependencies = [
 [project.optional-dependencies]
 fast = ["polars>=0.20", "pyarrow>=14"]
 files = ["python-docx>=1.1", "pyreadstat>=1.2"]
-test = ["pytest>=7", "polars>=0.20", "pyarrow>=14"]
+stats = ["statsmodels>=0.14"]
+test = ["pytest>=7", "polars>=0.20", "pyarrow>=14", "statsmodels>=0.14"]
 
 [project.urls]
 Homepage = "https://github.com/bioforkgithub/simplydata"

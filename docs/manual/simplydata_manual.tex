@@ -253,7 +253,7 @@ can write it up in a report or a paper.
 
 \section*{How this manual is built}
 \begin{description}[style=nextline,leftmargin=1.2em]
-  \item[{\hyperref[part:lessons]{Part II: Lessons}}] Fifteen short lessons that teach the whole
+  \item[{\hyperref[part:lessons]{Part II: Lessons}}] Eighteen short lessons that teach the whole
     of simplydata in a day. Each lesson shows code you can run, says what every line does, shows
     the real chart and output it makes, and ends with tasks to try yourself.
   \item[{\hyperref[part:dictionary]{Part III: Dictionary of words}}] Every word, with what it does,
@@ -406,6 +406,50 @@ date & every day from 2026-01-01 to 2026-03-31 (real dates)\\
 shop & Northgate or Southside\\
 sales & money taken that day (made-up money); empty on days the till broke\\
 customers & how many people bought something; empty on days nobody counted\\
+\bottomrule\end{tabularx}\end{center}
+\section*{school}
+Made-up pupils in 12 schools: study, sleep and test marks. Some sleep cells are empty. \code{sdata.\allowbreak{}example(\textquotedbl{}school\textquotedbl{})}
+\begin{center}\small
+\begin{tabularx}{\textwidth}{@{}>{\ttfamily}l>{\raggedright\arraybackslash}X@{}}
+\toprule \textrm{\textbf{Column}} & \textbf{What it holds}\\ \midrule
+school & School A to School L (15 pupils in each)\\
+pupil & P001 to P180\\
+hours & hours spent studying for the test\\
+sleep & hours of sleep the night before; empty when the pupil did not say\\
+breakfast & yes or no: did the pupil eat breakfast that morning\\
+marks & marks in the test, out of 100\\
+passed & yes (50 marks or more) or no\\
+days\_absent & days the pupil missed school that term\\
+\bottomrule\end{tabularx}\end{center}
+\section*{meadow}
+Plants counted in 30 made-up plots of three fields, half of them grazed by sheep. \code{sdata.\allowbreak{}example(\textquotedbl{}meadow\textquotedbl{})}
+\begin{center}\small
+\begin{tabularx}{\textwidth}{@{}>{\ttfamily}l>{\raggedright\arraybackslash}X@{}}
+\toprule \textrm{\textbf{Column}} & \textbf{What it holds}\\ \midrule
+plot & a short name for the plot, such as NG1\\
+field & North field, South field or River field\\
+grazed & yes or no: do sheep graze the plot\\
+clover & how many clover plants in the plot\\
+daisy & how many daisies\\
+buttercup & how many buttercups\\
+dandelion & how many dandelions\\
+nettle & how many nettles\\
+thistle & how many thistles\\
+moss & how many patches of moss\\
+fern & how many ferns\\
+orchid & how many orchids\\
+yarrow & how many yarrow plants\\
+\bottomrule\end{tabularx}\end{center}
+\section*{trial}
+120 made-up patients in a trial of a new medicine, followed for up to 3 years. \code{sdata.\allowbreak{}example(\textquotedbl{}trial\textquotedbl{})}
+\begin{center}\small
+\begin{tabularx}{\textwidth}{@{}>{\ttfamily}l>{\raggedright\arraybackslash}X@{}}
+\toprule \textrm{\textbf{Column}} & \textbf{What it holds}\\ \midrule
+patient & T001 to T120\\
+treatment & new medicine or usual care\\
+age & age in years when the patient joined\\
+days & days from joining until the patient died or the follow-up ended\\
+died & yes (died on that day) or no (still alive when the follow-up ended)\\
 \bottomrule\end{tabularx}\end{center}
 \section*{island}
 A map of a made-up island with two hills, on a 15 x 15 grid. \code{sdata.\allowbreak{}example(\textquotedbl{}island\textquotedbl{})}
@@ -649,6 +693,38 @@ chart.save("lesson3_order.png")
 \includegraphics[width=0.72\textwidth,height=0.36\textheight,keepaspectratio]{figures/lesson03_example3_lesson3_order.pdf}
 \captionof{figure}{Lesson 3, example 3: \code{lesson3\_\allowbreak{}order.\allowbreak{}png}.}
 \end{minipage}\end{center}
+\section*{Example 4}
+Numbers can have colours too: a colour scale. And dots that overlap are easier to see when they let the others show through.
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+weather = sdata.example("weather")
+chart = sdata.chart(weather)
+chart.heatmap(x="month", y="city", value="temperature")
+chart.colour_scale("blue to red", middle=10)
+chart.save("lesson3_colour_scale.png")
+marks = sdata.example("marks")
+dots = sdata.chart(marks)
+dots.dots(x="hours", y="marks", colour="class", transparency=0.5)
+dots.save("lesson3_transparency.png")
+\end{lstlisting}
+\whateachline
+\begin{lineexplain}
+  \item[1] Load simplydata.
+  \item[2] Get the weather table.
+  \item[3] Start a chart.
+  \item[4] One square per city and month, coloured by temperature.
+  \item[5] Blue below 10 \textdegree{}C, red above, white at 10. \code{middle=} makes a scale that goes two ways.
+  \item[6] Save it.
+  \item[7] Get the marks table.
+  \item[8] A second chart.
+  \item[9] \code{transparency=0.\allowbreak{}5} makes each dot half see-through, so dots on top of each other show.
+  \item[10] Save it.
+\end{lineexplain}
+\printedoutput{output/lesson03_example4.txt}
+\begin{center}\begin{minipage}{\linewidth}\centering
+\includegraphics[width=0.48\textwidth,height=0.36\textheight,keepaspectratio]{figures/lesson03_example4_lesson3_colour_scale.pdf}\hfill\includegraphics[width=0.48\textwidth,height=0.36\textheight,keepaspectratio]{figures/lesson03_example4_lesson3_transparency.pdf}
+\captionof{figure}{Lesson 3, example 4: \code{lesson3\_\allowbreak{}colour\_\allowbreak{}scale.\allowbreak{}png} and \code{lesson3\_\allowbreak{}transparency.\allowbreak{}png}.}
+\end{minipage}\end{center}
 \begin{goodtoknow}
 \begin{itemize}
   \item \code{colour=\textquotedbl{}class\textquotedbl{}} (a column) gives each group a colour. \code{colour=\textquotedbl{}red\textquotedbl{}} (a colour) makes that step red. color works too.
@@ -664,7 +740,7 @@ chart.save("lesson3_order.png")
 \end{enumerate}
 Worked solutions: page~\pageref{solutions:3}, or type \code{sdata.\allowbreak{}lesson(3,\allowbreak{} solutions=True)}.
 \end{tryit}
-\par\noindent{\small\sffamily\textbf{Words in this lesson:} \hyperref[word:colours]{\code{chart.\allowbreak{}colours()}}, \hyperref[word:colour]{\code{chart.\allowbreak{}colour()}}, \hyperref[word:legend-bottom]{\code{chart.\allowbreak{}legend\_\allowbreak{}bottom()}}, \hyperref[word:legend-top]{\code{chart.\allowbreak{}legend\_\allowbreak{}top()}}, \hyperref[word:hide-legend]{\code{chart.\allowbreak{}hide\_\allowbreak{}legend()}}, \hyperref[word:style]{\code{chart.\allowbreak{}style()}}, \hyperref[word:lines]{\code{chart.\allowbreak{}lines()}}, \hyperref[word:order-x]{\code{chart.\allowbreak{}order\_\allowbreak{}x()}}, \hyperref[word:order-legend]{\code{chart.\allowbreak{}order\_\allowbreak{}legend()}}, \hyperref[word:label-legend]{\code{chart.\allowbreak{}label\_\allowbreak{}legend()}}.\par}
+\par\noindent{\small\sffamily\textbf{Words in this lesson:} \hyperref[word:colours]{\code{chart.\allowbreak{}colours()}}, \hyperref[word:colour]{\code{chart.\allowbreak{}colour()}}, \hyperref[word:colour-scale]{\code{chart.\allowbreak{}colour\_\allowbreak{}scale()}}, \hyperref[word:legend-bottom]{\code{chart.\allowbreak{}legend\_\allowbreak{}bottom()}}, \hyperref[word:legend-top]{\code{chart.\allowbreak{}legend\_\allowbreak{}top()}}, \hyperref[word:hide-legend]{\code{chart.\allowbreak{}hide\_\allowbreak{}legend()}}, \hyperref[word:style]{\code{chart.\allowbreak{}style()}}, \hyperref[word:lines]{\code{chart.\allowbreak{}lines()}}, \hyperref[word:order-x]{\code{chart.\allowbreak{}order\_\allowbreak{}x()}}, \hyperref[word:order-legend]{\code{chart.\allowbreak{}order\_\allowbreak{}legend()}}, \hyperref[word:label-legend]{\code{chart.\allowbreak{}label\_\allowbreak{}legend()}}.\par}
 
 \chapter{Different chart types}\label{lesson:4}
 \begin{learnbox}
@@ -880,6 +956,34 @@ chart.save("lesson5_density.png")
 \includegraphics[width=0.72\textwidth,height=0.36\textheight,keepaspectratio]{figures/lesson05_example3_lesson5_density.pdf}
 \captionof{figure}{Lesson 5, example 3: \code{lesson5\_\allowbreak{}density.\allowbreak{}png}.}
 \end{minipage}\end{center}
+\section*{Example 4}
+Two more ways to see the shape of values: are they bell-shaped, and what share lies below each value?
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+marks = sdata.example("marks")
+chart = sdata.chart(marks)
+chart.qq_dots("marks")
+chart.save("lesson5_qq.png")
+shares = sdata.chart(marks)
+shares.cumulative_share(x="marks", colour="class")
+shares.save("lesson5_cumulative.png")
+\end{lstlisting}
+\whateachline
+\begin{lineexplain}
+  \item[1] Load simplydata.
+  \item[2] Get the marks table.
+  \item[3] Start a chart.
+  \item[4] A Q-Q plot: if the marks follow a bell curve (normal), the dots lie close to the straight line.
+  \item[5] Save it.
+  \item[6] A second chart.
+  \item[7] For each mark, the share of children with that mark or less (an ECDF). The class whose line is further right did better.
+  \item[8] Save it.
+\end{lineexplain}
+\printedoutput{output/lesson05_example4.txt}
+\begin{center}\begin{minipage}{\linewidth}\centering
+\includegraphics[width=0.48\textwidth,height=0.36\textheight,keepaspectratio]{figures/lesson05_example4_lesson5_qq.pdf}\hfill\includegraphics[width=0.48\textwidth,height=0.36\textheight,keepaspectratio]{figures/lesson05_example4_lesson5_cumulative.pdf}
+\captionof{figure}{Lesson 5, example 4: \code{lesson5\_\allowbreak{}qq.\allowbreak{}png} and \code{lesson5\_\allowbreak{}cumulative.\allowbreak{}png}.}
+\end{minipage}\end{center}
 \begin{goodtoknow}
 \begin{itemize}
   \item Average or median? The median is the middle value when the values are put in order. One very big or very small value pulls the average towards it, but hardly moves the median, so the median is safer when a few values are far from the rest (outliers).
@@ -897,7 +1001,7 @@ chart.save("lesson5_density.png")
 \end{enumerate}
 Worked solutions: page~\pageref{solutions:5}, or type \code{sdata.\allowbreak{}lesson(5,\allowbreak{} solutions=True)}.
 \end{tryit}
-\par\noindent{\small\sffamily\textbf{Words in this lesson:} \hyperref[word:show-eq]{\code{show=}}, \hyperref[word:error-eq]{\code{error=}}, \hyperref[word:numbers-on-bars]{\code{chart.\allowbreak{}numbers\_\allowbreak{}on\_\allowbreak{}bars()}}, \hyperref[word:fit-line]{\code{chart.\allowbreak{}fit\_\allowbreak{}line()}}, \hyperref[word:density]{\code{chart.\allowbreak{}density()}}, \hyperref[word:fit-curve]{\code{chart.\allowbreak{}fit\_\allowbreak{}curve()}}, \hyperref[word:smooth-line]{\code{chart.\allowbreak{}smooth\_\allowbreak{}line()}}.\par}
+\par\noindent{\small\sffamily\textbf{Words in this lesson:} \hyperref[word:show-eq]{\code{show=}}, \hyperref[word:error-eq]{\code{error=}}, \hyperref[word:numbers-on-bars]{\code{chart.\allowbreak{}numbers\_\allowbreak{}on\_\allowbreak{}bars()}}, \hyperref[word:fit-line]{\code{chart.\allowbreak{}fit\_\allowbreak{}line()}}, \hyperref[word:density]{\code{chart.\allowbreak{}density()}}, \hyperref[word:fit-curve]{\code{chart.\allowbreak{}fit\_\allowbreak{}curve()}}, \hyperref[word:smooth-line]{\code{chart.\allowbreak{}smooth\_\allowbreak{}line()}}, \hyperref[word:qq-dots]{\code{chart.\allowbreak{}qq\_\allowbreak{}dots()}}, \hyperref[word:cumulative-share]{\code{chart.\allowbreak{}cumulative\_\allowbreak{}share()}}.\par}
 
 \chapter{Axes and reference lines}\label{lesson:6}
 \begin{learnbox}
@@ -993,6 +1097,40 @@ chart.save("lesson6_band.png")
 \includegraphics[width=0.72\textwidth,height=0.36\textheight,keepaspectratio]{figures/lesson06_example3_lesson6_band.pdf}
 \captionof{figure}{Lesson 6, example 3: \code{lesson6\_\allowbreak{}band.\allowbreak{}png}.}
 \end{minipage}\end{center}
+\section*{Example 4}
+Axes can say what their numbers mean, and a 1:1 line shows where two columns agree.
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+growth = sdata.example("growth")
+chart = sdata.chart(growth)
+chart.lines(x="year", y="forest", colour="country")
+chart.tick_format_y("percent")
+chart.save("lesson6_percent.png")
+guesses = {"measured": [12, 18, 25, 31, 40], "predicted": [14, 17, 27, 29, 43]}
+check = sdata.chart(guesses)
+check.dots(x="measured", y="predicted")
+check.line_with_slope(1, through=(0, 0), label="1:1")
+check.save("lesson6_one_to_one.png")
+\end{lstlisting}
+\whateachline
+\begin{lineexplain}
+  \item[1] Load simplydata.
+  \item[2] Get the growth table.
+  \item[3] Start a chart.
+  \item[4] The forest of each country, in \%.
+  \item[5] Write the y numbers as 40 \%, 50 \% ... (\code{\textquotedbl{}thousands\textquotedbl{}}, \code{\textquotedbl{}scientific\textquotedbl{}} and dates such as \code{\textquotedbl{}Jan 2026\textquotedbl{}} work too).
+  \item[6] Save it.
+  \item[7] Five measured values and what a model predicted for them.
+  \item[8] A second chart.
+  \item[9] One dot per value.
+  \item[10] The 1:1 line: dots on it were predicted exactly; above it, too high.
+  \item[11] Save it.
+\end{lineexplain}
+\printedoutput{output/lesson06_example4.txt}
+\begin{center}\begin{minipage}{\linewidth}\centering
+\includegraphics[width=0.48\textwidth,height=0.36\textheight,keepaspectratio]{figures/lesson06_example4_lesson6_percent.pdf}\hfill\includegraphics[width=0.48\textwidth,height=0.36\textheight,keepaspectratio]{figures/lesson06_example4_lesson6_one_to_one.pdf}
+\captionof{figure}{Lesson 6, example 4: \code{lesson6\_\allowbreak{}percent.\allowbreak{}png} and \code{lesson6\_\allowbreak{}one\_\allowbreak{}to\_\allowbreak{}one.\allowbreak{}png}.}
+\end{minipage}\end{center}
 \begin{goodtoknow}
 \begin{itemize}
   \item Every axis word ends in \_x or \_y: \code{range\_\allowbreak{}x}, \code{ticks\_\allowbreak{}x}, \code{log\_\allowbreak{}scale\_\allowbreak{}x}, \code{line\_\allowbreak{}at\_\allowbreak{}x}, \code{shade\_\allowbreak{}between\_\allowbreak{}x}, \code{flip\_\allowbreak{}x} ...
@@ -1008,7 +1146,7 @@ chart.save("lesson6_band.png")
 \end{enumerate}
 Worked solutions: page~\pageref{solutions:6}, or type \code{sdata.\allowbreak{}lesson(6,\allowbreak{} solutions=True)}.
 \end{tryit}
-\par\noindent{\small\sffamily\textbf{Words in this lesson:} \hyperref[word:range-y]{\code{chart.\allowbreak{}range\_\allowbreak{}y()}}, \hyperref[word:ticks-y]{\code{chart.\allowbreak{}ticks\_\allowbreak{}y()}}, \hyperref[word:line-at-y]{\code{chart.\allowbreak{}line\_\allowbreak{}at\_\allowbreak{}y()}}, \hyperref[word:shade-between-y]{\code{chart.\allowbreak{}shade\_\allowbreak{}between\_\allowbreak{}y()}}, \hyperref[word:log-scale-y]{\code{chart.\allowbreak{}log\_\allowbreak{}scale\_\allowbreak{}y()}}, \hyperref[word:line-at-x]{\code{chart.\allowbreak{}line\_\allowbreak{}at\_\allowbreak{}x()}}, \hyperref[word:flip-y]{\code{chart.\allowbreak{}flip\_\allowbreak{}y()}}, \hyperref[word:band]{\code{chart.\allowbreak{}band()}}.\par}
+\par\noindent{\small\sffamily\textbf{Words in this lesson:} \hyperref[word:range-y]{\code{chart.\allowbreak{}range\_\allowbreak{}y()}}, \hyperref[word:ticks-y]{\code{chart.\allowbreak{}ticks\_\allowbreak{}y()}}, \hyperref[word:line-at-y]{\code{chart.\allowbreak{}line\_\allowbreak{}at\_\allowbreak{}y()}}, \hyperref[word:shade-between-y]{\code{chart.\allowbreak{}shade\_\allowbreak{}between\_\allowbreak{}y()}}, \hyperref[word:log-scale-y]{\code{chart.\allowbreak{}log\_\allowbreak{}scale\_\allowbreak{}y()}}, \hyperref[word:line-at-x]{\code{chart.\allowbreak{}line\_\allowbreak{}at\_\allowbreak{}x()}}, \hyperref[word:flip-y]{\code{chart.\allowbreak{}flip\_\allowbreak{}y()}}, \hyperref[word:band]{\code{chart.\allowbreak{}band()}}, \hyperref[word:tick-format-y]{\code{chart.\allowbreak{}tick\_\allowbreak{}format\_\allowbreak{}y()}}, \hyperref[word:line-with-slope]{\code{chart.\allowbreak{}line\_\allowbreak{}with\_\allowbreak{}slope()}}.\par}
 
 \chapter{Several charts together}\label{lesson:7}
 \begin{learnbox}
@@ -1686,6 +1824,7 @@ table.show()
 \printedoutput{output/lesson11_example6.txt}
 \begin{goodtoknow}
 \begin{itemize}
+  \item Formulas know more maths than + - * /: sqrt, log, exp, sin, cos, tan, pi, and special functions such as erf, gamma, lgamma, beta and besselJ: \code{table.\allowbreak{}add\_\allowbreak{}column(\textquotedbl{}z\textquotedbl{},\allowbreak{} formula=\textquotedbl{}erf(marks / 100)\textquotedbl{})}.
   \item Long or wide? A long table has one row for each measurement: the marks table has a row for each child in each subject. A wide table puts the measurements of one child side by side, one column per subject. Charts and tests like long tables (also called tidy data); sums across columns, like the total above, need wide ones.
   \item Filling empty cells is called imputation. Filling with the average makes the values look less spread out than they really are, so say in your report how you filled them. \code{with\_\allowbreak{}the=\textquotedbl{}median\textquotedbl{}}, \code{\textquotedbl{}value above\textquotedbl{}} or \code{\textquotedbl{}value below\textquotedbl{}} and \code{with\_\allowbreak{}value=0} work too.
   \item \code{remove\_\allowbreak{}rows\_\allowbreak{}with\_\allowbreak{}empty\_\allowbreak{}cells()} with nothing in the brackets removes every row that has an empty cell in any column.
@@ -1883,6 +2022,26 @@ marks.correlation_between("hours", "marks", "height")
   \item[7] Every pair of the three columns at once: a correlation table, with the strongest pairs in words.
 \end{lineexplain}
 \printedoutput{output/lesson12_example7.txt}
+\section*{Example 8}
+More ways to sum up: percentiles, the most common value, and measures of shape.
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+marks = sdata.table(sdata.example("marks"))
+marks.percentile_of("marks", 90, for_each="class")
+marks.summary_of("marks", show=["median", "skewness", "coefficient of variation"], for_each="class")
+school = sdata.table(sdata.example("school"))
+school.most_common_of("days_absent")
+\end{lstlisting}
+\whateachline
+\begin{lineexplain}
+  \item[1] Load simplydata.
+  \item[2] A table of the marks.
+  \item[3] The 90th percentile: 90 \% of the marks are below it (86.3 in class A).
+  \item[4] Skewness says if the values lean to one side (below 0: a longer tail of low marks); the coefficient of variation is the standard deviation divided by the average.
+  \item[5] A table of pupils.
+  \item[6] The most common number of days absent (the mode): 2.
+\end{lineexplain}
+\printedoutput{output/lesson12_example8.txt}
 \begin{goodtoknow}
 \begin{itemize}
   \item Correlation is not cause. Children who study more might also sleep more, or like the subject more; r only says that two columns go up and down together, not which one makes the other change.
@@ -1902,7 +2061,7 @@ marks.correlation_between("hours", "marks", "height")
 \end{enumerate}
 Worked solutions: page~\pageref{solutions:12}, or type \code{sdata.\allowbreak{}lesson(12,\allowbreak{} solutions=True)}.
 \end{tryit}
-\par\noindent{\small\sffamily\textbf{Words in this lesson:} \hyperref[word:table.average-of]{\code{table.\allowbreak{}average\_\allowbreak{}of()}}, \hyperref[word:table.biggest-of]{\code{table.\allowbreak{}biggest\_\allowbreak{}of()}}, \hyperref[word:table.correlation-between]{\code{table.\allowbreak{}correlation\_\allowbreak{}between()}}, \hyperref[word:table.total-of]{\code{table.\allowbreak{}total\_\allowbreak{}of()}}, \hyperref[word:table.chart]{\code{table.\allowbreak{}chart()}}, \hyperref[word:sdata.side-by-side]{\code{sdata.\allowbreak{}side\_\allowbreak{}by\_\allowbreak{}side()}}, \hyperref[word:table.join-with]{\code{table.\allowbreak{}join\_\allowbreak{}with()}}, \hyperref[word:table.turn-columns-into-rows]{\code{table.\allowbreak{}turn\_\allowbreak{}columns\_\allowbreak{}into\_\allowbreak{}rows()}}, \hyperref[word:table.add-rows-from]{\code{table.\allowbreak{}add\_\allowbreak{}rows\_\allowbreak{}from()}}, \hyperref[word:table.summary-of]{\code{table.\allowbreak{}summary\_\allowbreak{}of()}}, \hyperref[word:table.percent-of]{\code{table.\allowbreak{}percent\_\allowbreak{}of()}}, \hyperref[word:table.count-rows]{\code{table.\allowbreak{}count\_\allowbreak{}rows()}}, \hyperref[word:table.count-different-values]{\code{table.\allowbreak{}count\_\allowbreak{}different\_\allowbreak{}values()}}.\par}
+\par\noindent{\small\sffamily\textbf{Words in this lesson:} \hyperref[word:table.average-of]{\code{table.\allowbreak{}average\_\allowbreak{}of()}}, \hyperref[word:table.biggest-of]{\code{table.\allowbreak{}biggest\_\allowbreak{}of()}}, \hyperref[word:table.correlation-between]{\code{table.\allowbreak{}correlation\_\allowbreak{}between()}}, \hyperref[word:table.total-of]{\code{table.\allowbreak{}total\_\allowbreak{}of()}}, \hyperref[word:table.chart]{\code{table.\allowbreak{}chart()}}, \hyperref[word:sdata.side-by-side]{\code{sdata.\allowbreak{}side\_\allowbreak{}by\_\allowbreak{}side()}}, \hyperref[word:table.join-with]{\code{table.\allowbreak{}join\_\allowbreak{}with()}}, \hyperref[word:table.turn-columns-into-rows]{\code{table.\allowbreak{}turn\_\allowbreak{}columns\_\allowbreak{}into\_\allowbreak{}rows()}}, \hyperref[word:table.add-rows-from]{\code{table.\allowbreak{}add\_\allowbreak{}rows\_\allowbreak{}from()}}, \hyperref[word:table.summary-of]{\code{table.\allowbreak{}summary\_\allowbreak{}of()}}, \hyperref[word:table.percent-of]{\code{table.\allowbreak{}percent\_\allowbreak{}of()}}, \hyperref[word:table.count-rows]{\code{table.\allowbreak{}count\_\allowbreak{}rows()}}, \hyperref[word:table.count-different-values]{\code{table.\allowbreak{}count\_\allowbreak{}different\_\allowbreak{}values()}}, \hyperref[word:table.percentile-of]{\code{table.\allowbreak{}percentile\_\allowbreak{}of()}}, \hyperref[word:table.most-common-of]{\code{table.\allowbreak{}most\_\allowbreak{}common\_\allowbreak{}of()}}.\par}
 
 \chapter{Numbers: lists and grids of numbers}\label{lesson:13}
 \begin{learnbox}
@@ -2112,6 +2271,28 @@ pairs.show()
   \item[7] The p-values and the adjusted ones, side by side.
 \end{lineexplain}
 \printedoutput{output/lesson14_example4.txt}
+\section*{Example 5}
+Some questions are about spread, or about counts compared with what you expect.
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+table = sdata.table(sdata.example("marks"))
+table.compare_spreads("marks", for_each="class")
+table.compare_each_pair("marks", for_each="class", test="tukey")
+school = sdata.table(sdata.example("school"))
+school.compare_counts_to("breakfast", expected={"yes": 0.6, "no": 0.4})
+school.compare_percent_to("passed", value="yes", percent=50)
+\end{lstlisting}
+\whateachline
+\begin{lineexplain}
+  \item[1] Load simplydata.
+  \item[2] Make a table of the marks.
+  \item[3] Are the marks of one class more spread out? Levene's test says this could easily be chance (p = 0.91).
+  \item[4] Tukey's test compares every pair at once: only A and C differ (p = 0.020).
+  \item[5] A table of pupils.
+  \item[6] Did 60 \% eat breakfast, as a survey said? 115 of 180 is close enough (p = 0.29).
+  \item[7] Did half the pupils pass? 43.3 \% did; that could easily be chance (p = 0.086).
+\end{lineexplain}
+\printedoutput{output/lesson14_example5.txt}
 \begin{goodtoknow}
 \begin{itemize}
   \item The idea behind every test: imagine there is no real difference (this is called the null hypothesis). The p-value says how surprising your data would be then. A small p-value means: hard to explain by chance alone.
@@ -2132,7 +2313,7 @@ pairs.show()
 \end{enumerate}
 Worked solutions: page~\pageref{solutions:14}, or type \code{sdata.\allowbreak{}lesson(14,\allowbreak{} solutions=True)}.
 \end{tryit}
-\par\noindent{\small\sffamily\textbf{Words in this lesson:} \hyperref[word:table.compare-averages]{\code{table.\allowbreak{}compare\_\allowbreak{}averages()}}, \hyperref[word:table.compare-each-pair]{\code{table.\allowbreak{}compare\_\allowbreak{}each\_\allowbreak{}pair()}}, \hyperref[word:table.compare-counts]{\code{table.\allowbreak{}compare\_\allowbreak{}counts()}}, \hyperref[word:table.fit-straight-line]{\code{table.\allowbreak{}fit\_\allowbreak{}straight\_\allowbreak{}line()}}, \hyperref[word:table.fit-formula]{\code{table.\allowbreak{}fit\_\allowbreak{}formula()}}, \hyperref[word:table.add-group-column]{\code{table.\allowbreak{}add\_\allowbreak{}group\_\allowbreak{}column()}}, \hyperref[word:table.compare-shape-to]{\code{table.\allowbreak{}compare\_\allowbreak{}shape\_\allowbreak{}to()}}, \hyperref[word:table.show-rows-with-outliers]{\code{table.\allowbreak{}show\_\allowbreak{}rows\_\allowbreak{}with\_\allowbreak{}outliers()}}, \hyperref[word:table.add-adjusted-p-value-column]{\code{table.\allowbreak{}add\_\allowbreak{}adjusted\_\allowbreak{}p\_\allowbreak{}value\_\allowbreak{}column()}}, \hyperref[word:table.remove-rows-with-outliers]{\code{table.\allowbreak{}remove\_\allowbreak{}rows\_\allowbreak{}with\_\allowbreak{}outliers()}}.\par}
+\par\noindent{\small\sffamily\textbf{Words in this lesson:} \hyperref[word:table.compare-averages]{\code{table.\allowbreak{}compare\_\allowbreak{}averages()}}, \hyperref[word:table.compare-each-pair]{\code{table.\allowbreak{}compare\_\allowbreak{}each\_\allowbreak{}pair()}}, \hyperref[word:table.compare-counts]{\code{table.\allowbreak{}compare\_\allowbreak{}counts()}}, \hyperref[word:table.fit-straight-line]{\code{table.\allowbreak{}fit\_\allowbreak{}straight\_\allowbreak{}line()}}, \hyperref[word:table.fit-formula]{\code{table.\allowbreak{}fit\_\allowbreak{}formula()}}, \hyperref[word:table.add-group-column]{\code{table.\allowbreak{}add\_\allowbreak{}group\_\allowbreak{}column()}}, \hyperref[word:table.compare-shape-to]{\code{table.\allowbreak{}compare\_\allowbreak{}shape\_\allowbreak{}to()}}, \hyperref[word:table.show-rows-with-outliers]{\code{table.\allowbreak{}show\_\allowbreak{}rows\_\allowbreak{}with\_\allowbreak{}outliers()}}, \hyperref[word:table.add-adjusted-p-value-column]{\code{table.\allowbreak{}add\_\allowbreak{}adjusted\_\allowbreak{}p\_\allowbreak{}value\_\allowbreak{}column()}}, \hyperref[word:table.remove-rows-with-outliers]{\code{table.\allowbreak{}remove\_\allowbreak{}rows\_\allowbreak{}with\_\allowbreak{}outliers()}}, \hyperref[word:table.compare-spreads]{\code{table.\allowbreak{}compare\_\allowbreak{}spreads()}}, \hyperref[word:table.compare-counts-to]{\code{table.\allowbreak{}compare\_\allowbreak{}counts\_\allowbreak{}to()}}, \hyperref[word:table.compare-percent-to]{\code{table.\allowbreak{}compare\_\allowbreak{}percent\_\allowbreak{}to()}}.\par}
 
 \chapter{A whole analysis: from a question to a figure}\label{lesson:15}
 \begin{learnbox}
@@ -2284,6 +2465,268 @@ Worked solutions: page~\pageref{solutions:15}, or type \code{sdata.\allowbreak{}
 \end{tryit}
 \par\noindent{\small\sffamily\textbf{Words in this lesson:} \hyperref[word:sdata.table]{\code{sdata.\allowbreak{}table()}}, \hyperref[word:table.describe-columns]{\code{table.\allowbreak{}describe\_\allowbreak{}columns()}}, \hyperref[word:table.remove-rows-with-empty-cells]{\code{table.\allowbreak{}remove\_\allowbreak{}rows\_\allowbreak{}with\_\allowbreak{}empty\_\allowbreak{}cells()}}, \hyperref[word:table.compare-averages]{\code{table.\allowbreak{}compare\_\allowbreak{}averages()}}, \hyperref[word:table.chart]{\code{table.\allowbreak{}chart()}}, \hyperref[word:boxes]{\code{chart.\allowbreak{}boxes()}}, \hyperref[word:all-dots]{\code{chart.\allowbreak{}all\_\allowbreak{}dots()}}, \hyperref[word:dots]{\code{chart.\allowbreak{}dots()}}, \hyperref[word:fit-line]{\code{chart.\allowbreak{}fit\_\allowbreak{}line()}}, \hyperref[word:sdata.grid]{\code{sdata.\allowbreak{}grid()}}, \hyperref[word:style]{\code{chart.\allowbreak{}style()}}, \hyperref[word:table.save]{\code{table.\allowbreak{}save()}}, \hyperref[word:table.steps]{\code{table.\allowbreak{}steps()}}, \hyperref[word:table.as-pandas]{\code{table.\allowbreak{}as\_\allowbreak{}pandas()}}, \hyperref[word:sdata.chart]{\code{sdata.\allowbreak{}chart()}}.\par}
 
+\chapter{Models: explain one column from several others}\label{lesson:16}
+\begin{learnbox}
+\begin{itemize}
+  \item how to explain one column from several others at once (multiple regression)
+  \item how to explain a yes/no column (logistic regression) and a column of counts (Poisson regression)
+  \item how to allow for groups such as schools (a mixed model)
+  \item how to use rows with empty cells without guessing once (multiple imputation)
+\end{itemize}
+\end{learnbox}
+\section*{Example 1}
+Marks depend on more than one thing. \code{explain()} looks at several columns together, so each effect is the effect with the other columns held fixed.
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+table = sdata.table(sdata.example("school"))
+table.explain("marks", using=["hours", "sleep", "breakfast"])
+table.explain("marks", using=["hours * breakfast"])
+\end{lstlisting}
+\whateachline
+\begin{lineexplain}
+  \item[1] Load simplydata.
+  \item[2] Pupils in 12 schools: study, sleep, breakfast and marks.
+  \item[3] Explain the marks from hours of study, hours of sleep and breakfast. Each extra hour of study goes with about 2.7 more marks, each extra hour of sleep with 2.3 more, and breakfast with 3.2 more, each with its 95 \% confidence interval and p-value. This is a linear model (multiple regression) by least squares.
+  \item[4] hours * breakfast also asks: does the effect of study depend on breakfast? That is an interaction. Here it could easily be chance (p = 0.31).
+\end{lineexplain}
+\printedoutput{output/lesson16_example1.txt}
+\section*{Example 2}
+Not every column is a number to explain. A yes/no column needs the chance of yes, and a count needs a model for counts.
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+table = sdata.table(sdata.example("school"))
+table.explain("passed", using=["hours", "breakfast"], outcome="yes or no")
+table.explain("days_absent", using=["hours", "sleep"], outcome="counts")
+table.add_predicted_column("marks", using=["hours", "breakfast"])
+table.show_first_rows(5)
+\end{lstlisting}
+\whateachline
+\begin{lineexplain}
+  \item[1] Load simplydata.
+  \item[2] The school table.
+  \item[3] Did the pupil pass? \code{outcome=\textquotedbl{}yes or no\textquotedbl{}} is logistic regression. Each extra hour of study multiplies the odds of passing by 1.66 (an odds ratio).
+  \item[4] Days absent are counts (0, 1, 2 ...). \code{outcome=\textquotedbl{}counts\textquotedbl{}} is Poisson regression; each extra hour of study multiplies the expected days absent by 0.88 (a rate ratio).
+  \item[5] Add a column \code{\textquotedbl{}predicted marks\textquotedbl{}}: what the model expects for each pupil.
+  \item[6] Look at the marks next to the predicted marks.
+\end{lineexplain}
+\printedoutput{output/lesson16_example2.txt}
+\section*{Example 3}
+Pupils in the same school are alike in ways the columns do not show. A mixed model allows for that, and multiple imputation uses the rows with empty cells.
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+table = sdata.table(sdata.example("school"))
+table.explain("marks", using=["hours", "breakfast"], grouped_by="school")
+table.explain("marks", using=["hours", "sleep", "breakfast"], empty_cells="multiple imputation")
+\end{lstlisting}
+\whateachline
+\begin{lineexplain}
+  \item[1] Load simplydata.
+  \item[2] The school table.
+  \item[3] A mixed model: each school gets its own starting level (a random intercept). About 39 \% of the differences the columns do not explain lie between schools (the ICC).
+  \item[4] 19 pupils did not say how long they slept. Instead of leaving them out, multiple imputation fills the empty cells 20 times, fits the model to each filled-in table and pools the 20 answers (Rubin's rules), so the extra uncertainty is counted.
+\end{lineexplain}
+\printedoutput{output/lesson16_example3.txt}
+\begin{goodtoknow}
+\begin{itemize}
+  \item Each effect in \code{explain()} holds the other columns fixed: the effect of sleep is the effect for pupils who study the same number of hours and have the same breakfast.
+  \item A text column such as breakfast is compared with its first group in A to Z order (here \code{\textquotedbl{}no\textquotedbl{}}); the answer says which group is the baseline.
+  \item An odds ratio above 1 means higher odds of yes; a rate ratio above 1 means more counts. 1 means no difference.
+  \item If counts vary much more than a Poisson model expects (overdispersion), simplydata says so and suggests \code{outcome=\textquotedbl{}counts (overdispersed)\textquotedbl{}}; it never switches by itself.
+  \item \code{grouped\_\allowbreak{}by=} is for rows that come in groups: pupils in schools, measurements on the same animal, samples from the same site. Without it, the p-values are too small.
+  \item Multiple imputation needs the empty cells to be explainable by the other columns (missing at random). Say in your report how many cells were empty and how they were handled.
+  \item \code{grouped\_\allowbreak{}by=} and multiple imputation need the statsmodels package: pip install \code{\textquotedbl{}simplydata[stats]\textquotedbl{}}.
+\end{itemize}
+\end{goodtoknow}
+\begin{tryit}
+\begin{enumerate}
+  \item Explain \code{\textquotedbl{}marks\textquotedbl{}} using \code{\textquotedbl{}hours\textquotedbl{}} and \code{\textquotedbl{}school\textquotedbl{}} (school as a column of groups). Which schools differ from School A, and is school as a whole important?
+  \item Explain \code{\textquotedbl{}passed\textquotedbl{}} using \code{\textquotedbl{}hours\textquotedbl{}} and \code{\textquotedbl{}sleep\textquotedbl{}} with \code{outcome=\textquotedbl{}yes or no\textquotedbl{}}.
+  \item Explain \code{\textquotedbl{}days\_\allowbreak{}absent\textquotedbl{}} using \code{\textquotedbl{}hours\textquotedbl{}} and \code{\textquotedbl{}breakfast\textquotedbl{}} with \code{outcome=\textquotedbl{}counts\textquotedbl{}}. Does breakfast matter?
+\end{enumerate}
+Worked solutions: page~\pageref{solutions:16}, or type \code{sdata.\allowbreak{}lesson(16,\allowbreak{} solutions=True)}.
+\end{tryit}
+\par\noindent{\small\sffamily\textbf{Words in this lesson:} \hyperref[word:table.explain]{\code{table.\allowbreak{}explain()}}, \hyperref[word:table.add-predicted-column]{\code{table.\allowbreak{}add\_\allowbreak{}predicted\_\allowbreak{}column()}}, \hyperref[word:table.show-first-rows]{\code{table.\allowbreak{}show\_\allowbreak{}first\_\allowbreak{}rows()}}.\par}
+
+\chapter{Patterns across many columns}\label{lesson:17}
+\begin{learnbox}
+\begin{itemize}
+  \item how to sum up many columns in two new ones (principal components)
+  \item how to measure how different rows are (Bray-Curtis and other distances)
+  \item how to draw a map of the rows (NMDS) and test groups on all columns at once (PERMANOVA)
+  \item how to find groups of similar rows (clustering)
+\end{itemize}
+\end{learnbox}
+\section*{Example 1}
+Ten plant counts per plot are too many to look at one by one. Principal components make a few new columns that hold most of the spread.
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+table = sdata.table(sdata.example("meadow"))
+table.add_principal_components(how_many=2)
+chart = table.chart()
+chart.dots(x="PC1", y="PC2", colour="grazed")
+chart.save("lesson17_pca.png")
+\end{lstlisting}
+\whateachline
+\begin{lineexplain}
+  \item[1] Load simplydata.
+  \item[2] Plants counted in 30 plots, half of them grazed by sheep.
+  \item[3] Principal component analysis (PCA): adds PC1 and PC2. PC1 holds 30 \% of the spread, PC2 15 \%. The printout says which plants weigh most in each.
+  \item[4] Start a chart.
+  \item[5] Each plot is a dot; grazed and ungrazed plots sit apart.
+  \item[6] Save it.
+\end{lineexplain}
+\printedoutput{output/lesson17_example1.txt}
+\begin{center}\begin{minipage}{\linewidth}\centering
+\includegraphics[width=0.72\textwidth,height=0.36\textheight,keepaspectratio]{figures/lesson17_example1_lesson17_pca.pdf}
+\captionof{figure}{Lesson 17, example 1: \code{lesson17\_\allowbreak{}pca.\allowbreak{}png}.}
+\end{minipage}\end{center}
+\section*{Example 2}
+Ecologists compare plots by how different their make-up is. Bray-Curtis is the usual distance for counts, and NMDS draws a map that keeps the order of the distances.
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+table = sdata.table(sdata.example("meadow"))
+distances = table.distances_between_rows(measure="bray-curtis", names="plot")
+distances.show_first_rows(3)
+table.add_nmds(measure="bray-curtis")
+table.compare_profiles(for_each="grazed")
+chart = table.chart()
+chart.dots(x="NMDS1", y="NMDS2", colour="grazed")
+chart.save("lesson17_nmds.png")
+\end{lstlisting}
+\whateachline
+\begin{lineexplain}
+  \item[1] Load simplydata.
+  \item[2] The meadow table.
+  \item[3] A table of the Bray-Curtis distance between every pair of plots: 0 means the same plants in the same numbers, 1 means nothing in common.
+  \item[4] Look at the first rows.
+  \item[5] Non-metric multidimensional scaling (NMDS): adds NMDS1 and NMDS2. The stress (0.195) says how well the map keeps the distances: usable.
+  \item[6] Do grazed and ungrazed plots differ in make-up? PERMANOVA tests all ten plants at once: grazing explains 25 \% of the differences (p = 0.001).
+  \item[7] Start a chart.
+  \item[8] The NMDS map.
+  \item[9] Save it.
+\end{lineexplain}
+\printedoutput{output/lesson17_example2.txt}
+\begin{center}\begin{minipage}{\linewidth}\centering
+\includegraphics[width=0.72\textwidth,height=0.36\textheight,keepaspectratio]{figures/lesson17_example2_lesson17_nmds.pdf}
+\captionof{figure}{Lesson 17, example 2: \code{lesson17\_\allowbreak{}nmds.\allowbreak{}png}.}
+\end{minipage}\end{center}
+\section*{Example 3}
+Clustering finds groups of similar rows without being told the groups.
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+table = sdata.table(sdata.example("meadow"))
+table.add_clusters(how_many=2)
+table.count_rows(for_each="cluster", across="grazed")
+\end{lstlisting}
+\whateachline
+\begin{lineexplain}
+  \item[1] Load simplydata.
+  \item[2] The meadow table.
+  \item[3] k-means clustering: adds a column \code{\textquotedbl{}cluster\textquotedbl{}} with 1 or 2.
+  \item[4] Did the clusters find the grazing? Cluster 1 is 14 grazed plots, cluster 2 is the 15 ungrazed plots and one grazed one.
+\end{lineexplain}
+\printedoutput{output/lesson17_example3.txt}
+\begin{goodtoknow}
+\begin{itemize}
+  \item \code{same\_\allowbreak{}scale=True} (the normal choice for PCA and clusters) puts every column on the same scale first, so a column with big numbers does not drown the others.
+  \item The signs and the rotation of PC and NMDS axes are arbitrary; only the distances between the dots mean something.
+  \item Clarke's rule for NMDS stress: below 0.05 excellent, below 0.1 good, below 0.2 usable, above 0.2 hard to trust. Try \code{dimensions=3} if the stress is high.
+  \item PERMANOVA can mistake a difference in spread for a difference in make-up, so \code{compare\_\allowbreak{}profiles} also checks the spread of each group and says if it differs.
+  \item Clusters always appear, even in data without groups: check them against what you know.
+  \item \code{method=\textquotedbl{}hierarchical\textquotedbl{}} clusters step by step (Ward linkage) instead of k-means.
+\end{itemize}
+\end{goodtoknow}
+\begin{tryit}
+\begin{enumerate}
+  \item Add principal components of \code{\textquotedbl{}hours\textquotedbl{}}, \code{\textquotedbl{}sleep\textquotedbl{}}, \code{\textquotedbl{}marks\textquotedbl{}} and \code{\textquotedbl{}days\_\allowbreak{}absent\textquotedbl{}} in \code{sdata.\allowbreak{}example(\textquotedbl{}school\textquotedbl{})}. Which columns weigh most in PC1?
+  \item Make an NMDS map of the meadow in 3 dimensions. Is the stress lower than in 2?
+  \item Do the three fields differ in make-up? Use \code{compare\_\allowbreak{}profiles} with \code{for\_\allowbreak{}each=\textquotedbl{}field\textquotedbl{}}.
+  \item Cluster the meadow plots with \code{method=\textquotedbl{}hierarchical\textquotedbl{}}. Do the clusters match the grazing?
+\end{enumerate}
+Worked solutions: page~\pageref{solutions:17}, or type \code{sdata.\allowbreak{}lesson(17,\allowbreak{} solutions=True)}.
+\end{tryit}
+\par\noindent{\small\sffamily\textbf{Words in this lesson:} \hyperref[word:table.add-principal-components]{\code{table.\allowbreak{}add\_\allowbreak{}principal\_\allowbreak{}components()}}, \hyperref[word:table.principal-components-of]{\code{table.\allowbreak{}principal\_\allowbreak{}components\_\allowbreak{}of()}}, \hyperref[word:table.add-clusters]{\code{table.\allowbreak{}add\_\allowbreak{}clusters()}}, \hyperref[word:table.distances-between-rows]{\code{table.\allowbreak{}distances\_\allowbreak{}between\_\allowbreak{}rows()}}, \hyperref[word:table.add-nmds]{\code{table.\allowbreak{}add\_\allowbreak{}nmds()}}, \hyperref[word:table.compare-profiles]{\code{table.\allowbreak{}compare\_\allowbreak{}profiles()}}, \hyperref[word:dots]{\code{chart.\allowbreak{}dots()}}.\par}
+
+\chapter{Survival, and planning a study}\label{lesson:18}
+\begin{learnbox}
+\begin{itemize}
+  \item how to draw survival curves (Kaplan-Meier) and compare them (log-rank test)
+  \item how to explain the risk of an event from several columns (a Cox model)
+  \item how many values a study needs, before you collect them (power analysis)
+\end{itemize}
+\end{learnbox}
+\section*{Example 1}
+In a trial, some patients are still alive when the follow-up ends. Survival words use their time too: they count as followed without the event (censored).
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+table = sdata.table(sdata.example("trial"))
+table.survival_over_time(time="days", event="died", for_each="treatment")
+chart = table.chart()
+chart.survival_curves(time="days", event="died", colour="treatment", confidence_band=True, at_risk_table=True)
+chart.save("lesson18_survival.png")
+\end{lstlisting}
+\whateachline
+\begin{lineexplain}
+  \item[1] Load simplydata.
+  \item[2] 120 patients, a new medicine or usual care, followed for up to 3 years.
+  \item[3] The Kaplan-Meier estimate: the share still alive at each time, and the median time (706 days with the new medicine, 545 with usual care).
+  \item[4] Start a chart.
+  \item[5] Survival curves with their 95 \% bands, ticks where patients were censored, and the number still followed under the x-axis.
+  \item[6] Save it.
+\end{lineexplain}
+\printedoutput{output/lesson18_example1.txt}
+\begin{center}\begin{minipage}{\linewidth}\centering
+\includegraphics[width=0.72\textwidth,height=0.36\textheight,keepaspectratio]{figures/lesson18_example1_lesson18_survival.pdf}
+\captionof{figure}{Lesson 18, example 1: \code{lesson18\_\allowbreak{}survival.\allowbreak{}png}.}
+\end{minipage}\end{center}
+\section*{Example 2}
+Is the difference real? And what else changes the risk?
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+table = sdata.table(sdata.example("trial"))
+table.compare_survival(time="days", event="died", for_each="treatment")
+table.explain_survival(time="days", event="died", using=["treatment", "age"])
+\end{lstlisting}
+\whateachline
+\begin{lineexplain}
+  \item[1] Load simplydata.
+  \item[2] The trial table.
+  \item[3] The log-rank test compares the whole curves: here the difference could easily be chance (p = 0.22).
+  \item[4] A Cox model: each year of age raises the risk of dying at any moment by about 5 \% (hazard ratio 1.05), with the treatment held fixed.
+\end{lineexplain}
+\printedoutput{output/lesson18_example2.txt}
+\section*{Example 3}
+Was the trial big enough? Power analysis tells you how many values you need before you collect them.
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+sdata.how_many_needed(effect_size=0.5, power=0.8)
+sdata.chance_to_find(effect_size=0.5, values_per_group=20)
+\end{lstlisting}
+\whateachline
+\begin{lineexplain}
+  \item[1] Load simplydata.
+  \item[2] To find a medium difference between two averages (half a standard deviation) with an 80 \% chance, you need 64 values in each group.
+  \item[3] With only 20 values in each group, the chance to find it is just 34 \%.
+\end{lineexplain}
+\printedoutput{output/lesson18_example3.txt}
+\begin{goodtoknow}
+\begin{itemize}
+  \item Never leave out the censored rows or count them as survivors: the survival words use the time they were followed, which is what makes these methods right.
+  \item A hazard ratio above 1 means a higher risk of the event at any moment; 1 means no difference. The Cox model assumes the ratio stays the same over time, and simplydata checks this and says so if it does not.
+  \item A study that is too small often finds nothing even when there is something to find. Plan the size before collecting data, not after.
+  \item \code{effect\_\allowbreak{}size=} is Cohen's d for averages, f for 3 or more groups, w for counts and r for a correlation. You can also give \code{difference=} and \code{spread=} in your own units.
+\end{itemize}
+\end{goodtoknow}
+\begin{tryit}
+\begin{enumerate}
+  \item Explain the risk of dying from \code{\textquotedbl{}age\textquotedbl{}} alone with \code{explain\_\allowbreak{}survival}.
+  \item How many pairs does a before/after study need to find a small change (\code{effect\_\allowbreak{}size=0.\allowbreak{}3})?
+  \item What is the chance to find a medium difference (\code{effect\_\allowbreak{}size=0.\allowbreak{}25}) between 3 groups with 30 values in each?
+\end{enumerate}
+Worked solutions: page~\pageref{solutions:18}, or type \code{sdata.\allowbreak{}lesson(18,\allowbreak{} solutions=True)}.
+\end{tryit}
+\par\noindent{\small\sffamily\textbf{Words in this lesson:} \hyperref[word:table.survival-over-time]{\code{table.\allowbreak{}survival\_\allowbreak{}over\_\allowbreak{}time()}}, \hyperref[word:survival-curves]{\code{chart.\allowbreak{}survival\_\allowbreak{}curves()}}, \hyperref[word:table.compare-survival]{\code{table.\allowbreak{}compare\_\allowbreak{}survival()}}, \hyperref[word:table.explain-survival]{\code{table.\allowbreak{}explain\_\allowbreak{}survival()}}, \hyperref[word:sdata.how-many-needed]{\code{sdata.\allowbreak{}how\_\allowbreak{}many\_\allowbreak{}needed()}}, \hyperref[word:sdata.chance-to-find]{\code{sdata.\allowbreak{}chance\_\allowbreak{}to\_\allowbreak{}find()}}.\par}
+
 \otherchapters
 
 \part{Dictionary of words}\label{part:dictionary}
@@ -2324,7 +2767,7 @@ chart.save("my_chart.png")
 A small made-up table to practise with. \code{sdata.\allowbreak{}example(\textquotedbl{}marks\textquotedbl{})}
 
 \codeline{sdata.example() with no name lists every table and its columns.}\\
-The tables are: marks, weather, fruit, growth, shop, island. Only \code{\textquotedbl{}shop\textquotedbl{}} has empty cells and a column of dates, to practise with.
+The tables are: marks, weather, fruit, growth, shop, school, meadow, trial, island. \code{\textquotedbl{}shop\textquotedbl{}} has empty cells and a column of dates to practise with; \code{\textquotedbl{}school\textquotedbl{}} has empty cells too.
 
 \wordfield{Options}{}\par\nopagebreak
 \begin{optiontable}
@@ -2389,7 +2832,7 @@ chart.save("marks.tif", resolution=600)
 \wordfield{Also written}{\code{chart.\allowbreak{}bar()}}
 Bars. \code{chart.\allowbreak{}bars(x=\textquotedbl{}name\textquotedbl{},\allowbreak{} y=\textquotedbl{}marks\textquotedbl{})} (with \code{sdata.\allowbreak{}example(\textquotedbl{}marks\textquotedbl{})})
 
-\code{colour=\textquotedbl{}class\textquotedbl{}} gives each group its own colour, or \code{colour=\textquotedbl{}blue\textquotedbl{}} one colour. \code{show=} says what each bar stands for when a group has many rows: \code{\textquotedbl{}average\textquotedbl{}} (default), \code{\textquotedbl{}median\textquotedbl{}}, \code{\textquotedbl{}total\textquotedbl{}}, \code{\textquotedbl{}count\textquotedbl{}}, \code{\textquotedbl{}smallest\textquotedbl{}}, \code{\textquotedbl{}biggest\textquotedbl{}} or \code{\textquotedbl{}standard deviation\textquotedbl{}}. \code{error=\textquotedbl{}standard deviation\textquotedbl{}}, \code{\textquotedbl{}standard error\textquotedbl{}} or \code{\textquotedbl{}confidence interval\textquotedbl{}} adds error bars (with \code{show=\textquotedbl{}average\textquotedbl{}}); a line says which one was drawn. \code{stacked=True} puts groups on top of each other; \code{sideways=True} lays bars down.
+\code{colour=\textquotedbl{}class\textquotedbl{}} gives each group its own colour, or \code{colour=\textquotedbl{}blue\textquotedbl{}} one colour. \code{show=} says what each bar stands for when a group has many rows: \code{\textquotedbl{}average\textquotedbl{}} (default), \code{\textquotedbl{}median\textquotedbl{}}, \code{\textquotedbl{}total\textquotedbl{}}, \code{\textquotedbl{}count\textquotedbl{}}, \code{\textquotedbl{}smallest\textquotedbl{}}, \code{\textquotedbl{}biggest\textquotedbl{}} or \code{\textquotedbl{}standard deviation\textquotedbl{}}. \code{error=\textquotedbl{}standard deviation\textquotedbl{}}, \code{\textquotedbl{}standard error\textquotedbl{}} or \code{\textquotedbl{}confidence interval\textquotedbl{}} adds error bars (with \code{show=\textquotedbl{}average\textquotedbl{}}); a line says which one was drawn. \code{stacked=True} puts groups on top of each other; \code{sideways=True} lays bars down. \code{transparency=0.\allowbreak{}5} makes them half see-through (0 is solid).
 
 \wordfield{Options}{}\par\nopagebreak
 \begin{optiontable}
@@ -2400,6 +2843,7 @@ Bars. \code{chart.\allowbreak{}bars(x=\textquotedbl{}name\textquotedbl{},\allowb
 \code{error=} & \\
 \code{stacked=} & normally \code{False}\\
 \code{sideways=} & normally \code{False}\\
+\code{transparency=} & \\
 \end{optiontable}
 
 \wordfield{Underneath}{seaborn (barplot; countplot for \code{show=\textquotedbl{}count\textquotedbl{}})}
@@ -2416,7 +2860,7 @@ chart.save("bars.png")
 \wordfield{Also written}{\code{chart.\allowbreak{}line()}}
 Lines. \code{chart.\allowbreak{}lines(x=\textquotedbl{}month\textquotedbl{},\allowbreak{} y=\textquotedbl{}temperature\textquotedbl{},\allowbreak{} colour=\textquotedbl{}city\textquotedbl{})} (with \code{sdata.\allowbreak{}example(\textquotedbl{}weather\textquotedbl{})})
 
-\code{colour=\textquotedbl{}city\textquotedbl{}} draws one line per group. \code{dots=True} marks each point. \code{dashed=True} draws a dashed line. \code{show=} works as in bars (not \code{\textquotedbl{}count\textquotedbl{}}). \code{error=\textquotedbl{}standard deviation\textquotedbl{}}, \code{\textquotedbl{}standard error\textquotedbl{}} or \code{\textquotedbl{}confidence interval\textquotedbl{}} adds a shaded band; a line says which one was drawn.
+\code{colour=\textquotedbl{}city\textquotedbl{}} draws one line per group. \code{dots=True} marks each point. \code{dashed=True} draws a dashed line. \code{show=} works as in bars (not \code{\textquotedbl{}count\textquotedbl{}}). \code{error=\textquotedbl{}standard deviation\textquotedbl{}}, \code{\textquotedbl{}standard error\textquotedbl{}} or \code{\textquotedbl{}confidence interval\textquotedbl{}} adds a shaded band; a line says which one was drawn. \code{thickness=3} draws thicker lines (normal is 2, in points); \code{transparency=0.\allowbreak{}5} makes them half see-through (0 is solid).
 
 \wordfield{Options}{}\par\nopagebreak
 \begin{optiontable}
@@ -2427,6 +2871,8 @@ Lines. \code{chart.\allowbreak{}lines(x=\textquotedbl{}month\textquotedbl{},\all
 \code{error=} & \\
 \code{dots=} & normally \code{False}\\
 \code{dashed=} & normally \code{False}\\
+\code{thickness=} & \\
+\code{transparency=} & \\
 \end{optiontable}
 
 \wordfield{Underneath}{seaborn (lineplot)}
@@ -2442,7 +2888,7 @@ chart.save("lines.png")
 \wordfield{Also written}{\code{chart.\allowbreak{}scatter()}}
 Dots (a scatter chart). \code{chart.\allowbreak{}dots(x=\textquotedbl{}hours\textquotedbl{},\allowbreak{} y=\textquotedbl{}marks\textquotedbl{})} (with \code{sdata.\allowbreak{}example(\textquotedbl{}marks\textquotedbl{})})
 
-\code{colour=\textquotedbl{}class\textquotedbl{}} colours dots by group. \code{size=\textquotedbl{}height\textquotedbl{}} makes dots bigger for bigger values, or \code{size=10} makes all dots that big. \code{shape=\textquotedbl{}subject\textquotedbl{}} gives each group a shape.
+\code{colour=\textquotedbl{}class\textquotedbl{}} colours dots by group. \code{size=\textquotedbl{}height\textquotedbl{}} makes dots bigger for bigger values, or \code{size=10} makes all dots that big. \code{shape=\textquotedbl{}subject\textquotedbl{}} gives each group a shape. \code{transparency=0.\allowbreak{}5} makes dots half see-through, so dots on top of each other show. With \code{colour=} a number column and \code{chart.\allowbreak{}colour\_\allowbreak{}scale(.\allowbreak{}.\allowbreak{}.\allowbreak{})}, dots get a smooth colour scale and a colour bar.
 
 \wordfield{Options}{}\par\nopagebreak
 \begin{optiontable}
@@ -2451,6 +2897,7 @@ Dots (a scatter chart). \code{chart.\allowbreak{}dots(x=\textquotedbl{}hours\tex
 \code{colour=} & \\
 \code{size=} & \\
 \code{shape=} & \\
+\code{transparency=} & \\
 \end{optiontable}
 
 \wordfield{Underneath}{seaborn (scatterplot)}
@@ -2466,7 +2913,7 @@ chart.save("dots.png")
 A line with the space under it coloured in.\\
 \codeline{chart.area(x=\textquotedbl{}year\textquotedbl{}, y=\textquotedbl{}population\textquotedbl{}, colour=\textquotedbl{}country\textquotedbl{})} (with \code{sdata.\allowbreak{}example(\textquotedbl{}growth\textquotedbl{})})
 
-\code{colour=\textquotedbl{}country\textquotedbl{}} gives each group its own area; \code{stacked=True} piles the groups on top of each other, so the top edge shows the total.
+\code{colour=\textquotedbl{}country\textquotedbl{}} gives each group its own area; \code{stacked=True} piles the groups on top of each other, so the top edge shows the total. \code{transparency=0.\allowbreak{}3} sets how see-through the coloured space is (0 is solid); \code{thickness=3} makes its top line thicker.
 
 \wordfield{Options}{}\par\nopagebreak
 \begin{optiontable}
@@ -2474,6 +2921,8 @@ A line with the space under it coloured in.\\
 \code{y=} & \\
 \code{colour=} & \\
 \code{stacked=} & normally \code{False}\\
+\code{transparency=} & \\
+\code{thickness=} & \\
 \end{optiontable}
 
 \wordfield{Underneath}{matplotlib (\code{fill\_\allowbreak{}between}, or stackplot with \code{stacked=True})}
@@ -2488,13 +2937,20 @@ chart.save("area.png")
 \wordentry{chart.histogram()}{word:histogram}
 Bars that count how many values fall in each range. \code{chart.\allowbreak{}histogram(x=\textquotedbl{}marks\textquotedbl{},\allowbreak{} bins=10)} (with \code{sdata.\allowbreak{}example(\textquotedbl{}marks\textquotedbl{})})
 
-\code{bins=} is how many bars (or a list of where each bar starts and ends). \code{colour=\textquotedbl{}class\textquotedbl{}} draws one see-through histogram per group.
+\code{bins=} is how many bars (normally 10), or a list of where each bar starts and ends; \code{bin\_\allowbreak{}width=5} makes every bar 5 wide instead. \code{show=} is what the height of a bar means: \code{\textquotedbl{}count\textquotedbl{}} (normal), \code{\textquotedbl{}percent\textquotedbl{}} (of the values) or \code{\textquotedbl{}density\textquotedbl{}} (the bars have an area of 1, to compare with a density curve). \code{colour=\textquotedbl{}class\textquotedbl{}} draws one see-through histogram per group; with \code{show=\textquotedbl{}percent\textquotedbl{}} or \code{\textquotedbl{}density\textquotedbl{}} each group is worked out on its own. \code{stacked=True} piles the groups on top of each other instead (then the whole stack makes 100 \%). \code{steps=True} draws only the outline, as steps; \code{cumulative=True} adds up from the left, so each bar counts the values up to its right edge. \code{transparency=0.\allowbreak{}5} makes the bars half see-through; \code{thickness=} sets the outline width.
 
 \wordfield{Options}{}\par\nopagebreak
 \begin{optiontable}
 \code{x=} & \\
-\code{bins=} & normally \code{10}\\
+\code{bins=} & \\
 \code{colour=} & \\
+\code{show=} & normally \code{\textquotedbl{}count\textquotedbl{}}\\
+\code{stacked=} & normally \code{False}\\
+\code{steps=} & normally \code{False}\\
+\code{cumulative=} & normally \code{False}\\
+\code{bin\_\allowbreak{}width=} & \\
+\code{transparency=} & \\
+\code{thickness=} & \\
 \end{optiontable}
 
 \wordfield{Underneath}{seaborn (histplot)}
@@ -2511,13 +2967,15 @@ chart.save("histogram.png")
 Boxes that show the middle half of the values and the median.\\
 \codeline{chart.boxes(x=\textquotedbl{}class\textquotedbl{}, y=\textquotedbl{}marks\textquotedbl{})} (with \code{sdata.\allowbreak{}example(\textquotedbl{}marks\textquotedbl{})})
 
-The line in the box is the median, the box holds the middle half of the values, the whiskers reach the rest, and lone dots are values far away from the others.
+The line in the box is the median, the box holds the middle half of the values, the whiskers reach the rest, and lone dots are values far away from the others. \code{transparency=0.\allowbreak{}5} makes the boxes half see-through; \code{thickness=} sets the width of their lines.
 
 \wordfield{Options}{}\par\nopagebreak
 \begin{optiontable}
 \code{x=} & \\
 \code{y=} & \\
 \code{colour=} & \\
+\code{transparency=} & \\
+\code{thickness=} & \\
 \end{optiontable}
 
 \wordfield{Underneath}{seaborn (boxplot)}
@@ -2533,13 +2991,15 @@ chart.save("boxes.png")
 \wordfield{Also written}{\code{chart.\allowbreak{}violin()}}
 Shapes that are wide where many values are. \code{chart.\allowbreak{}violins(x=\textquotedbl{}class\textquotedbl{},\allowbreak{} y=\textquotedbl{}marks\textquotedbl{})} (with \code{sdata.\allowbreak{}example(\textquotedbl{}marks\textquotedbl{})})
 
-Each violin stops at the smallest and the largest value; the small box inside shows the middle half of the values.
+Each violin stops at the smallest and the largest value; the small box inside shows the middle half of the values. \code{transparency=0.\allowbreak{}5} makes the violins half see-through; \code{thickness=} sets the width of their lines.
 
 \wordfield{Options}{}\par\nopagebreak
 \begin{optiontable}
 \code{x=} & \\
 \code{y=} & \\
 \code{colour=} & \\
+\code{transparency=} & \\
+\code{thickness=} & \\
 \end{optiontable}
 
 \wordfield{Underneath}{seaborn (violinplot)}
@@ -2555,7 +3015,8 @@ chart.save("violins.png")
 A grid of coloured squares, one colour for each number.\\
 \codeline{chart.heatmap(x=\textquotedbl{}month\textquotedbl{}, y=\textquotedbl{}city\textquotedbl{}, value=\textquotedbl{}rain\textquotedbl{}, numbers=True)} (with \code{sdata.\allowbreak{}example(\textquotedbl{}weather\textquotedbl{})})
 
-With no columns named, every number column of the table is used (rows are the table's rows): \code{chart.\allowbreak{}heatmap(numbers=True)}. \code{numbers=True} writes the number in each square. \code{cluster=True} puts similar rows and columns next to each other and draws a tree of how alike they are.
+With no columns named, every number column of the table is used (rows are the table's rows): \code{chart.\allowbreak{}heatmap(numbers=True)}. \code{numbers=True} writes the number in each square. \code{cluster=True} puts similar rows and columns next to each other and draws a tree of how alike they are.\\
+\codeline{chart.colour\_scale(...) chooses the colours. transparency=0.3 lets grid lines show through.}
 
 \wordfield{Options}{}\par\nopagebreak
 \begin{optiontable}
@@ -2564,6 +3025,7 @@ With no columns named, every number column of the table is used (rows are the ta
 \code{value=} & \\
 \code{numbers=} & normally \code{False}\\
 \code{cluster=} & normally \code{False}\\
+\code{transparency=} & \\
 \end{optiontable}
 
 \wordfield{Underneath}{seaborn (heatmap); SciPy (scipy.cluster.hierarchy) for \code{cluster=True}}
@@ -2578,12 +3040,13 @@ chart.save("heatmap.png")
 \wordentry{chart.pie()}{word:pie}
 A circle cut into slices, one slice per group. \code{chart.\allowbreak{}pie(labels=\textquotedbl{}fruit\textquotedbl{},\allowbreak{} values=\textquotedbl{}count\textquotedbl{})} (with \code{sdata.\allowbreak{}example(\textquotedbl{}fruit\textquotedbl{})})
 
-Without \code{values=} each slice shows how many rows have that label.
+Without \code{values=} each slice shows how many rows have that label. \code{transparency=0.\allowbreak{}3} makes the slices a little see-through (0 is solid).
 
 \wordfield{Options}{}\par\nopagebreak
 \begin{optiontable}
 \code{labels=} & \\
 \code{values=} & \\
+\code{transparency=} & \\
 \end{optiontable}
 
 \wordfield{Underneath}{matplotlib (Axes.pie)}
@@ -2599,7 +3062,7 @@ chart.save("pie.png")
 Dots on a round chart: how far round, and how far out.\\
 \codeline{chart.polar(angle=\textquotedbl{}wind\_direction\textquotedbl{}, distance=\textquotedbl{}wind\_speed\textquotedbl{}, colour=\textquotedbl{}city\textquotedbl{})} (with \code{sdata.\allowbreak{}example(\textquotedbl{}weather\textquotedbl{})})
 
-Angles are in degrees (a full turn is 360), going round from the right, the way maths measures angles. Use \code{degrees=False} if your angles are in radians.
+Angles are in degrees (a full turn is 360), going round from the right, the way maths measures angles. Use \code{degrees=False} if your angles are in radians. \code{transparency=0.\allowbreak{}5} makes them half see-through (0 is solid).
 
 \wordfield{Options}{}\par\nopagebreak
 \begin{optiontable}
@@ -2607,6 +3070,7 @@ Angles are in degrees (a full turn is 360), going round from the right, the way 
 \code{distance=} & \\
 \code{colour=} & \\
 \code{degrees=} & normally \code{True}\\
+\code{transparency=} & \\
 \end{optiontable}
 
 \wordfield{Underneath}{matplotlib (polar axes)}
@@ -2622,7 +3086,9 @@ chart.save("polar.png")
 A map where each colour band joins places with the same height.\\
 \codeline{chart.contour(x=\textquotedbl{}east\textquotedbl{}, y=\textquotedbl{}north\textquotedbl{}, z=\textquotedbl{}height\textquotedbl{})} (with \code{sdata.\allowbreak{}example(\textquotedbl{}island\textquotedbl{})})
 
-\code{z=} is the height (or depth, or temperature). The points can be a full grid or scattered; scattered points are joined up with straight lines in between. \code{filled=False} draws only the lines, with their numbers written on them.
+\code{z=} is the height (or depth, or temperature). The points can be a full grid or scattered; scattered points are joined up with straight lines in between. \code{filled=False} draws only the lines, with their numbers written on them.\\
+\codeline{chart.colour\_scale(...) chooses the colours (and steps= the bands).}\\
+\code{transparency=0.\allowbreak{}3} lets what is under it show through; \code{thickness=} sets the width of the lines.
 
 \wordfield{Options}{}\par\nopagebreak
 \begin{optiontable}
@@ -2630,6 +3096,8 @@ A map where each colour band joins places with the same height.\\
 \code{y=} & \\
 \code{z=} & \\
 \code{filled=} & normally \code{True}\\
+\code{transparency=} & \\
+\code{thickness=} & \\
 \end{optiontable}
 
 \wordfield{Underneath}{matplotlib (contourf); SciPy (interpolate.griddata) for scattered points}
@@ -2645,13 +3113,15 @@ chart.save("contour.png")
 A 3D landscape: \code{z=} is how high the ground is.\\
 \codeline{chart.surface(x=\textquotedbl{}east\textquotedbl{}, y=\textquotedbl{}north\textquotedbl{}, z=\textquotedbl{}height\textquotedbl{})} (with \code{sdata.\allowbreak{}example(\textquotedbl{}island\textquotedbl{})})
 
-The points can be a full grid or scattered; scattered points are joined up.
+The points can be a full grid or scattered; scattered points are joined up.\\
+\codeline{chart.colour\_scale(...) chooses the colours. transparency=0.3 makes it a little see-through.}
 
 \wordfield{Options}{}\par\nopagebreak
 \begin{optiontable}
 \code{x=} & \\
 \code{y=} & \\
 \code{z=} & \\
+\code{transparency=} & \\
 \end{optiontable}
 
 \wordfield{Underneath}{matplotlib (mplot3d \code{plot\_\allowbreak{}surface}); SciPy (interpolate.griddata) for scattered points}
@@ -2666,7 +3136,7 @@ chart.save("surface.png")
 \wordentry{chart.dots\_3d()}{word:dots-3d}
 Dots floating in a 3D box. \code{chart.\allowbreak{}dots\_\allowbreak{}3d(x=\textquotedbl{}hours\textquotedbl{},\allowbreak{} y=\textquotedbl{}height\textquotedbl{},\allowbreak{} z=\textquotedbl{}marks\textquotedbl{},\allowbreak{} colour=\textquotedbl{}class\textquotedbl{})} (with \code{sdata.\allowbreak{}example(\textquotedbl{}marks\textquotedbl{})})
 
-\code{colour=\textquotedbl{}class\textquotedbl{}} gives each group its own colour.
+\code{colour=\textquotedbl{}class\textquotedbl{}} gives each group its own colour; a number column with many values gets a colour scale (\code{chart.\allowbreak{}colour\_\allowbreak{}scale(.\allowbreak{}.\allowbreak{}.\allowbreak{})} chooses it). \code{transparency=0.\allowbreak{}5} makes dots half see-through (0 is solid).
 
 \wordfield{Options}{}\par\nopagebreak
 \begin{optiontable}
@@ -2674,6 +3144,7 @@ Dots floating in a 3D box. \code{chart.\allowbreak{}dots\_\allowbreak{}3d(x=\tex
 \code{y=} & \\
 \code{z=} & \\
 \code{colour=} & \\
+\code{transparency=} & \\
 \end{optiontable}
 
 \wordfield{Underneath}{matplotlib (mplot3d scatter)}
@@ -2689,7 +3160,7 @@ chart.save("dots_3d.png")
 A shaded band between a low and a high column, along x.\\
 \codeline{chart.band(x=\textquotedbl{}month\textquotedbl{}, between=[\textquotedbl{}lowest\textquotedbl{}, \textquotedbl{}highest\textquotedbl{}]) (with a table that has those columns)}
 
-\code{between=[\textquotedbl{}low column\textquotedbl{},\allowbreak{} \textquotedbl{}high column\textquotedbl{}]} gives the bottom and the top edge at each x: a range of temperatures, a confidence band you worked out, or a smallest-to-biggest band around a line. Draw .lines() as well to show the middle. \code{colour=\textquotedbl{}city\textquotedbl{}} draws one band per group (in the group's colour), or \code{colour=\textquotedbl{}blue\textquotedbl{}} one colour. \code{label=\textquotedbl{}Range\textquotedbl{}} names the band in the legend. Empty cells leave a gap.
+\code{between=[\textquotedbl{}low column\textquotedbl{},\allowbreak{} \textquotedbl{}high column\textquotedbl{}]} gives the bottom and the top edge at each x: a range of temperatures, a confidence band you worked out, or a smallest-to-biggest band around a line. Draw .lines() as well to show the middle. \code{colour=\textquotedbl{}city\textquotedbl{}} draws one band per group (in the group's colour), or \code{colour=\textquotedbl{}blue\textquotedbl{}} one colour. \code{label=\textquotedbl{}Range\textquotedbl{}} names the band in the legend. Empty cells leave a gap. \code{transparency=} is how see-through the band is (normally 0.75; 0 is solid).
 
 \wordfield{Options}{}\par\nopagebreak
 \begin{optiontable}
@@ -2697,6 +3168,7 @@ A shaded band between a low and a high column, along x.\\
 \code{between=} & \\
 \code{colour=} & \\
 \code{label=} & \\
+\code{transparency=} & \\
 \end{optiontable}
 
 \wordfield{Underneath}{matplotlib (\code{fill\_\allowbreak{}between})}
@@ -2792,13 +3264,14 @@ chart.save("error_bars.png")
 \wordentry{chart.fit\_line()}{word:fit-line}
 A straight line that fits the dots best (linear regression). \code{chart.\allowbreak{}fit\_\allowbreak{}line()}
 
-The line is found by least squares: it makes the squared distances from the dots to the line as small as possible. \code{confidence\_\allowbreak{}band=True} shades the 95 \% confidence band: where the true line very likely is. \code{show\_\allowbreak{}equation=True} writes the equation and R\textsuperscript{2} on the chart. Each colour group gets its own line. \code{colour=\textquotedbl{}red\textquotedbl{}} makes every line red.
+The line is found by least squares: it makes the squared distances from the dots to the line as small as possible. \code{confidence\_\allowbreak{}band=True} shades the 95 \% confidence band: where the true line very likely is. \code{show\_\allowbreak{}equation=True} writes the equation and R\textsuperscript{2} on the chart. Each colour group gets its own line. \code{colour=\textquotedbl{}red\textquotedbl{}} makes every line red. \code{thickness=3} draws a thicker line (normal is 2).
 
 \wordfield{Options}{}\par\nopagebreak
 \begin{optiontable}
 \code{confidence\_\allowbreak{}band=} & normally \code{False}\\
 \code{show\_\allowbreak{}equation=} & normally \code{False}\\
 \code{colour=} & \\
+\code{thickness=} & \\
 \end{optiontable}
 
 \wordfield{Underneath}{SciPy (stats.linregress), drawn with matplotlib}
@@ -2814,13 +3287,14 @@ chart.save("fit_line.png")
 \wordentry{chart.fit\_curve()}{word:fit-curve}
 A curve that fits the dots best. \code{chart.\allowbreak{}fit\_\allowbreak{}curve(degree=2)}
 
-\code{degree=2} is a curve with one bend (x\textsuperscript{2}), \code{degree=3} can bend twice (x\textsuperscript{3}), and so on. \code{show\_\allowbreak{}equation=True} writes the equation and R\textsuperscript{2} on the chart.
+\code{degree=2} is a curve with one bend (x\textsuperscript{2}), \code{degree=3} can bend twice (x\textsuperscript{3}), and so on. \code{show\_\allowbreak{}equation=True} writes the equation and R\textsuperscript{2} on the chart. \code{thickness=3} draws a thicker curve (normal is 2).
 
 \wordfield{Options}{}\par\nopagebreak
 \begin{optiontable}
 \code{degree=} & normally \code{2}\\
 \code{show\_\allowbreak{}equation=} & normally \code{False}\\
 \code{colour=} & \\
+\code{thickness=} & \\
 \end{optiontable}
 
 \wordfield{Underneath}{NumPy (polyfit), drawn with matplotlib}
@@ -2836,11 +3310,12 @@ chart.save("fit_curve.png")
 \wordentry{chart.smooth\_line()}{word:smooth-line}
 A smooth line that follows the dots (LOWESS). \code{chart.\allowbreak{}smooth\_\allowbreak{}line()}
 
-Good for seeing a trend that is not straight. Each colour group gets its own line.
+Good for seeing a trend that is not straight. Each colour group gets its own line. \code{thickness=3} draws a thicker line (normal is 2).
 
 \wordfield{Options}{}\par\nopagebreak
 \begin{optiontable}
 \code{colour=} & \\
+\code{thickness=} & \\
 \end{optiontable}
 
 \wordfield{Underneath}{NumPy (LOWESS, written out in simplydata as in R's \code{lowess()}), drawn with matplotlib}
@@ -2856,12 +3331,14 @@ chart.save("smooth_line.png")
 \wordentry{chart.density()}{word:density}
 A smooth curve that is high where many values are. \code{chart.\allowbreak{}density(x=\textquotedbl{}marks\textquotedbl{},\allowbreak{} colour=\textquotedbl{}class\textquotedbl{})} (with \code{sdata.\allowbreak{}example(\textquotedbl{}marks\textquotedbl{})})
 
-\code{colour=\textquotedbl{}class\textquotedbl{}} draws one curve per group; each curve has an area of 1.
+\code{colour=\textquotedbl{}class\textquotedbl{}} draws one curve per group; each curve has an area of 1. \code{thickness=3} draws thicker curves; \code{transparency=0.\allowbreak{}5} makes them half see-through.
 
 \wordfield{Options}{}\par\nopagebreak
 \begin{optiontable}
 \code{x=} & \\
 \code{colour=} & \\
+\code{transparency=} & \\
+\code{thickness=} & \\
 \end{optiontable}
 
 \wordfield{Underneath}{seaborn (kdeplot)}
@@ -2876,13 +3353,14 @@ chart.save("density.png")
 \wordentry{chart.count\_bars()}{word:count-bars}
 Bars that count how many rows each group has. \code{chart.\allowbreak{}count\_\allowbreak{}bars(x=\textquotedbl{}fruit\textquotedbl{},\allowbreak{} colour=\textquotedbl{}shop\textquotedbl{})} (with \code{sdata.\allowbreak{}example(\textquotedbl{}fruit\textquotedbl{})})
 
-\code{colour=\textquotedbl{}shop\textquotedbl{}} splits each bar by group; \code{sideways=True} lays the bars down.
+\code{colour=\textquotedbl{}shop\textquotedbl{}} splits each bar by group; \code{sideways=True} lays the bars down. \code{transparency=0.\allowbreak{}5} makes them half see-through (0 is solid).
 
 \wordfield{Options}{}\par\nopagebreak
 \begin{optiontable}
 \code{x=} & \\
 \code{colour=} & \\
 \code{sideways=} & normally \code{False}\\
+\code{transparency=} & \\
 \end{optiontable}
 
 \wordfield{Underneath}{seaborn (countplot)}
@@ -2898,13 +3376,14 @@ chart.save("count_bars.png")
 Every value as a dot, spread out so no dot hides another.\\
 \codeline{chart.all\_dots(x=\textquotedbl{}class\textquotedbl{}, y=\textquotedbl{}marks\textquotedbl{})} (with \code{sdata.\allowbreak{}example(\textquotedbl{}marks\textquotedbl{})})
 
-Good on top of .boxes() or .violins(), to show each value as well.
+Good on top of .boxes() or .violins(), to show each value as well. \code{transparency=0.\allowbreak{}5} makes them half see-through (0 is solid).
 
 \wordfield{Options}{}\par\nopagebreak
 \begin{optiontable}
 \code{x=} & \\
 \code{y=} & \\
 \code{colour=} & \\
+\code{transparency=} & \\
 \end{optiontable}
 
 \wordfield{Underneath}{seaborn (swarmplot; stripplot for groups of more than 100 dots)}
@@ -2932,6 +3411,52 @@ chart.dots(x="hours", y="marks")
 chart.side_histograms()
 chart.save("side_histograms.png")
 \end{lstlisting}
+\wordentry{chart.qq\_dots()}{word:qq-dots}
+Dots that lie on a straight line when the values follow a normal (bell) curve.\\
+\codeline{chart.qq\_dots(\textquotedbl{}marks\textquotedbl{})} (with \code{sdata.\allowbreak{}example(\textquotedbl{}marks\textquotedbl{})})
+
+Each value, smallest to biggest, is drawn against where it would be if the values were normal (a normal Q-Q plot, scipy.stats.probplot), with the straight line that fits the dots best. Dots that bend away from the line at the ends mean long or short tails; a curve means the values lean to one side. Good for checking residuals. \code{for\_\allowbreak{}each=\textquotedbl{}class\textquotedbl{}} draws each group in its own colour, with its own line. SciPy places the dots at Filliben's positions; R's \code{qqnorm()} uses slightly different ones, and R's \code{qqline()} draws its line through the quartiles instead.
+
+\wordfield{Options}{}\par\nopagebreak
+\begin{optiontable}
+\code{column=} & \\
+\code{for\_\allowbreak{}each=} & \\
+\code{transparency=} & \\
+\code{thickness=} & \\
+\end{optiontable}
+
+\wordfield{Underneath}{SciPy (stats.probplot) for the points and the line; matplotlib draws them}
+\wordfield{Example you can run}{(it uses the practice table \code{marks})}\par\nopagebreak
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+marks = sdata.example("marks")
+chart = sdata.chart(marks)
+chart.qq_dots("marks")
+chart.save("qq_dots.png")
+\end{lstlisting}
+\wordentry{chart.cumulative\_share()}{word:cumulative-share}
+A line that climbs from 0 to 1: the share of values at or below each x.\\
+\codeline{chart.cumulative\_share(x=\textquotedbl{}marks\textquotedbl{}, colour=\textquotedbl{}class\textquotedbl{})} (with \code{sdata.\allowbreak{}example(\textquotedbl{}marks\textquotedbl{})})
+
+Also called the empirical cumulative distribution (ECDF; seaborn's ecdfplot). It shows every value, needs no bins, and groups of any size compare directly: at marks = 50 a line at 0.3 means 30 \% of that group scored 50 or less. \code{colour=\textquotedbl{}class\textquotedbl{}} draws one line per group. \code{thickness=3} draws thicker lines.
+
+\wordfield{Options}{}\par\nopagebreak
+\begin{optiontable}
+\code{x=} & \\
+\code{colour=} & \\
+\code{transparency=} & \\
+\code{thickness=} & \\
+\end{optiontable}
+
+\wordfield{Underneath}{seaborn (ecdfplot)}
+\wordfield{Example you can run}{(it uses the practice table \code{marks})}\par\nopagebreak
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+marks = sdata.example("marks")
+chart = sdata.chart(marks)
+chart.cumulative_share(x="marks", colour="class")
+chart.save("cumulative_share.png")
+\end{lstlisting}
 \wordentry{sdata.pairs()}{word:sdata.pairs}
 Every number column against every other. \code{sdata.\allowbreak{}pairs(sdata.\allowbreak{}example(\textquotedbl{}marks\textquotedbl{}),\allowbreak{} colour=\textquotedbl{}class\textquotedbl{})}
 
@@ -2957,12 +3482,15 @@ chart.save("pairs.png")
 \wordentry{chart.line\_at\_x()}{word:line-at-x}
 A straight up-and-down line at one x value. \code{chart.\allowbreak{}line\_\allowbreak{}at\_\allowbreak{}x(2010,\allowbreak{} label=\textquotedbl{}2010\textquotedbl{})}
 
+\code{thickness=3} draws a thicker line (normal is 1.5).
+
 \wordfield{Options}{}\par\nopagebreak
 \begin{optiontable}
 \code{value} & needed\\
 \code{dashed=} & normally \code{True}\\
 \code{colour=} & normally \code{\textquotedbl{}grey\textquotedbl{}}\\
 \code{label=} & \\
+\code{thickness=} & \\
 \end{optiontable}
 
 \wordfield{Underneath}{matplotlib}
@@ -2978,12 +3506,15 @@ chart.save("line_at_x.png")
 \wordentry{chart.line\_at\_y()}{word:line-at-y}
 A straight side-to-side line at one y value. \code{chart.\allowbreak{}line\_\allowbreak{}at\_\allowbreak{}y(50,\allowbreak{} label=\textquotedbl{}pass mark\textquotedbl{})}
 
+\code{thickness=3} draws a thicker line (normal is 1.5).
+
 \wordfield{Options}{}\par\nopagebreak
 \begin{optiontable}
 \code{value} & needed\\
 \code{dashed=} & normally \code{True}\\
 \code{colour=} & normally \code{\textquotedbl{}grey\textquotedbl{}}\\
 \code{label=} & \\
+\code{thickness=} & \\
 \end{optiontable}
 
 \wordfield{Underneath}{matplotlib}
@@ -2996,6 +3527,36 @@ chart.bars(x="name", y="marks")
 chart.line_at_y(50, label="pass mark")
 chart.rotate_labels_x()
 chart.save("line_at_y.png")
+\end{lstlisting}
+\wordentry{chart.line\_with\_slope()}{word:line-with-slope}
+A straight line with a given slope, right across the chart. \code{chart.\allowbreak{}line\_\allowbreak{}with\_\allowbreak{}slope(1,\allowbreak{} through=(0,\allowbreak{} 0))}
+
+\codeline{chart.line\_with\_slope(1, label=\textquotedbl{}1:1\textquotedbl{}) draws the 1:1 line (y = x) on a chart of}\\
+observed against predicted values. \code{through=}(2, 10) makes the line pass through\\
+\codeline{x = 2, y = 10 (normally through 0, 0); intercept=5 instead sets where it crosses}\\
+\codeline{x = 0, so y = intercept + slope * x. label= names it in the legend.}\\
+\code{thickness=3} draws a thicker line (normal is 1.5). Ordinary (not log) axes only.
+
+\wordfield{Options}{}\par\nopagebreak
+\begin{optiontable}
+\code{slope} & needed\\
+\code{through=} & \\
+\code{intercept=} & \\
+\code{dashed=} & normally \code{True}\\
+\code{colour=} & normally \code{\textquotedbl{}grey\textquotedbl{}}\\
+\code{label=} & \\
+\code{thickness=} & \\
+\end{optiontable}
+
+\wordfield{Underneath}{matplotlib}
+\wordfield{Example you can run}{(it uses the practice table \code{marks})}\par\nopagebreak
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+marks = sdata.example("marks")
+chart = sdata.chart(marks)
+chart.dots(x="hours", y="hours")
+chart.line_with_slope(1, through=(0, 0))
+chart.save("line_with_slope.png")
 \end{lstlisting}
 \wordentry{chart.shade\_between\_x()}{word:shade-between-x}
 Shade the band between two x values, behind the data. \code{chart.\allowbreak{}shade\_\allowbreak{}between\_\allowbreak{}x(6,\allowbreak{} 8)}
@@ -3192,6 +3753,26 @@ chart.title_top("Big text")
 chart.font_size(18)
 chart.save("font_size.png")
 \end{lstlisting}
+\wordentry{chart.font\_name()}{word:font-name}
+The font for all the text on the chart. \code{chart.\allowbreak{}font\_\allowbreak{}name(\textquotedbl{}DejaVu Serif\textquotedbl{})}
+
+Any font installed on your computer, such as \code{\textquotedbl{}Arial\textquotedbl{}} or \code{\textquotedbl{}Times New Roman\textquotedbl{}}, or a kind of font: \code{\textquotedbl{}serif\textquotedbl{}}, \code{\textquotedbl{}sans-serif\textquotedbl{}} (normal) or \code{\textquotedbl{}monospace\textquotedbl{}}. If the font is not installed, the message lists the installed fonts with a similar name.
+
+\wordfield{Options}{}\par\nopagebreak
+\begin{optiontable}
+\code{name} & needed\\
+\end{optiontable}
+
+\wordfield{Underneath}{matplotlib}
+\wordfield{Example you can run}{(it uses the practice table \code{marks})}\par\nopagebreak
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+marks = sdata.example("marks")
+chart = sdata.chart(marks)
+chart.bars(x="class", y="marks")
+chart.font_name("DejaVu Serif")
+chart.save("font_name.png")
+\end{lstlisting}
 \unsection{Axes}{group:Axes}
 \wordentry{chart.range\_x()}{word:range-x}
 From where to where the x-axis goes. \code{chart.\allowbreak{}range\_\allowbreak{}x(0,\allowbreak{} 10)}
@@ -3268,12 +3849,15 @@ chart.save("log_scale_y.png")
 \wordentry{chart.ticks\_x()}{word:ticks-x}
 Where the marks on the x-axis go. \code{chart.\allowbreak{}ticks\_\allowbreak{}x(1,\allowbreak{} 4,\allowbreak{} 7,\allowbreak{} 10)}
 
-\code{labels=[\textquotedbl{}Jan\textquotedbl{},\allowbreak{} \textquotedbl{}Apr\textquotedbl{},\allowbreak{} \textquotedbl{}Jul\textquotedbl{},\allowbreak{} \textquotedbl{}Oct\textquotedbl{}]} writes your own words at those places.
+\code{labels=[\textquotedbl{}Jan\textquotedbl{},\allowbreak{} \textquotedbl{}Apr\textquotedbl{},\allowbreak{} \textquotedbl{}Jul\textquotedbl{},\allowbreak{} \textquotedbl{}Oct\textquotedbl{}]} writes your own words at those places. \code{every=5} puts a tick every 5 units; for dates \code{every=\textquotedbl{}month\textquotedbl{}} (or \code{\textquotedbl{}year\textquotedbl{}}, \code{\textquotedbl{}week\textquotedbl{}}, \code{\textquotedbl{}day\textquotedbl{}}, \code{\textquotedbl{}hour\textquotedbl{}}, \code{\textquotedbl{}3 months\textquotedbl{}} ...). \code{how\_\allowbreak{}many=5} asks for about 5 ticks at round numbers; \code{whole\_\allowbreak{}numbers=True} keeps them to whole numbers, for counts.
 
 \wordfield{Options}{}\par\nopagebreak
 \begin{optiontable}
 \code{values.\allowbreak{}.\allowbreak{}.\allowbreak{}} & as many as you like, separated by commas\\
 \code{labels=} & \\
+\code{every=} & \\
+\code{how\_\allowbreak{}many=} & \\
+\code{whole\_\allowbreak{}numbers=} & normally \code{False}\\
 \end{optiontable}
 
 \wordfield{Underneath}{matplotlib}
@@ -3289,12 +3873,15 @@ chart.save("ticks_x.png")
 \wordentry{chart.ticks\_y()}{word:ticks-y}
 Where the marks on the y-axis go. \code{chart.\allowbreak{}ticks\_\allowbreak{}y(0,\allowbreak{} 50,\allowbreak{} 100)}
 
-\code{labels=[\textquotedbl{}low\textquotedbl{},\allowbreak{} \textquotedbl{}mid\textquotedbl{},\allowbreak{} \textquotedbl{}high\textquotedbl{}]} writes your own words at those places.
+\code{labels=[\textquotedbl{}low\textquotedbl{},\allowbreak{} \textquotedbl{}mid\textquotedbl{},\allowbreak{} \textquotedbl{}high\textquotedbl{}]} writes your own words at those places. \code{every=10} puts a tick every 10 units (\code{every=\textquotedbl{}month\textquotedbl{}} for dates); \code{how\_\allowbreak{}many=5} asks for about 5 ticks at round numbers; \code{whole\_\allowbreak{}numbers=True} keeps them to whole numbers.
 
 \wordfield{Options}{}\par\nopagebreak
 \begin{optiontable}
 \code{values.\allowbreak{}.\allowbreak{}.\allowbreak{}} & as many as you like, separated by commas\\
 \code{labels=} & \\
+\code{every=} & \\
+\code{how\_\allowbreak{}many=} & \\
+\code{whole\_\allowbreak{}numbers=} & normally \code{False}\\
 \end{optiontable}
 
 \wordfield{Underneath}{matplotlib}
@@ -3344,6 +3931,50 @@ chart = sdata.chart(fruit)
 chart.bars(x="fruit", y="count", sideways=True)
 chart.rotate_labels_y(30)
 chart.save("rotate_labels_y.png")
+\end{lstlisting}
+\wordentry{chart.tick\_format\_x()}{word:tick-format-x}
+How the numbers or dates under the x-axis are written. \code{chart.\allowbreak{}tick\_\allowbreak{}format\_\allowbreak{}x(\textquotedbl{}thousands\textquotedbl{})}
+
+\code{\textquotedbl{}percent\textquotedbl{}} adds a \% sign (\code{out\_\allowbreak{}of=1} if your numbers are shares, so 0.25 shows as 25 \%); \code{\textquotedbl{}thousands\textquotedbl{}} writes 12,500; \code{\textquotedbl{}scientific\textquotedbl{}} writes 1.2 \texttimes{} 10\textsuperscript{4}; \code{\textquotedbl{}plain\textquotedbl{}} never uses 1e4. \code{decimals=1} sets the number of decimals. For dates, write how 31 January 2026 should look: \code{\textquotedbl{}Jan 2026\textquotedbl{}}, \code{\textquotedbl{}31.\allowbreak{}01.\allowbreak{}2026\textquotedbl{}}, \code{\textquotedbl{}2026-01-31\textquotedbl{}}, \code{\textquotedbl{}31 Jan\textquotedbl{}} or \code{\textquotedbl{}13:45\textquotedbl{}} (or a code such as \code{\textquotedbl{}\%d \%b\textquotedbl{}}).
+
+\wordfield{Options}{}\par\nopagebreak
+\begin{optiontable}
+\code{style=} & \\
+\code{decimals=} & \\
+\code{out\_\allowbreak{}of=} & normally \code{100}\\
+\end{optiontable}
+
+\wordfield{Underneath}{matplotlib}
+\wordfield{Example you can run}{(it uses the practice table \code{growth})}\par\nopagebreak
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+growth = sdata.example("growth")
+chart = sdata.chart(growth)
+chart.dots(x="population", y="forest")
+chart.tick_format_x("thousands")
+chart.save("tick_format_x.png")
+\end{lstlisting}
+\wordentry{chart.tick\_format\_y()}{word:tick-format-y}
+How the numbers beside the y-axis are written. \code{chart.\allowbreak{}tick\_\allowbreak{}format\_\allowbreak{}y(\textquotedbl{}percent\textquotedbl{})}
+
+\code{\textquotedbl{}percent\textquotedbl{}} adds a \% sign (\code{out\_\allowbreak{}of=1} if your numbers are shares, so 0.25 shows as 25 \%); \code{\textquotedbl{}thousands\textquotedbl{}} writes 12,500; \code{\textquotedbl{}scientific\textquotedbl{}} writes 1.2 \texttimes{} 10\textsuperscript{4}; \code{\textquotedbl{}plain\textquotedbl{}} never uses 1e4. \code{decimals=1} sets the number of decimals. Dates work as in \code{tick\_\allowbreak{}format\_\allowbreak{}x}.
+
+\wordfield{Options}{}\par\nopagebreak
+\begin{optiontable}
+\code{style=} & \\
+\code{decimals=} & \\
+\code{out\_\allowbreak{}of=} & normally \code{100}\\
+\end{optiontable}
+
+\wordfield{Underneath}{matplotlib}
+\wordfield{Example you can run}{(it uses the practice table \code{growth})}\par\nopagebreak
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+growth = sdata.example("growth")
+chart = sdata.chart(growth)
+chart.lines(x="year", y="forest", colour="country")
+chart.tick_format_y("percent")
+chart.save("tick_format_y.png")
 \end{lstlisting}
 \wordentry{chart.second\_y()}{word:second-y}
 A second y-axis on the right, for a column measured in other units.
@@ -3442,6 +4073,32 @@ chart = sdata.chart(marks)
 chart.bars(x="subject", y="marks", colour="class")
 chart.colours("orange", "teal", "purple")
 chart.save("colours.png")
+\end{lstlisting}
+\wordentry{chart.colour\_scale()}{word:colour-scale}
+\wordfield{Also written}{\code{chart.\allowbreak{}color\_\allowbreak{}scale()}}
+The colours for numbers on a heatmap, contour map, surface or dots coloured by a number column.\\
+\codeline{chart.colour\_scale(\textquotedbl{}magma\textquotedbl{}) (with chart.heatmap(x=\textquotedbl{}month\textquotedbl{}, y=\textquotedbl{}city\textquotedbl{}, value=\textquotedbl{}rain\textquotedbl{}) on sdata.example(\textquotedbl{}weather\textquotedbl{}))}
+
+A name: \code{\textquotedbl{}viridis\textquotedbl{}} (normal), \code{\textquotedbl{}cividis\textquotedbl{}}, \code{\textquotedbl{}magma\textquotedbl{}}, \code{\textquotedbl{}blues\textquotedbl{}}, \code{\textquotedbl{}greens\textquotedbl{}} ..., \code{\textquotedbl{}blue to red\textquotedbl{}} or \code{\textquotedbl{}purple to orange\textquotedbl{}} for numbers on both sides of a middle; these are all safe for colour-blind readers. Any matplotlib colour map name works too (\code{\textquotedbl{}Blues\textquotedbl{}}, \code{\textquotedbl{}turbo\textquotedbl{}}, \code{\textquotedbl{}rocket\textquotedbl{}}), and two or more colours make your own: \code{chart.\allowbreak{}colour\_\allowbreak{}scale(\textquotedbl{}white\textquotedbl{},\allowbreak{} \textquotedbl{}navy\textquotedbl{})}. \code{middle=0} puts the middle colour of a two-sided scale at 0 (or \code{middle=1} for ratios); the scale goes equally far on both sides, so a step of 1 is the same change of colour. \code{log=True} spreads the colours on a log scale (1, 10, 100 ... evenly), for counts that span many sizes. \code{steps=5} cuts the scale into 5 colours, or \code{steps=[0,\allowbreak{} 5,\allowbreak{} 10,\allowbreak{} 20]} sets where each colour starts. \code{between=[0,\allowbreak{} 30]} fixes the ends of the scale, so several charts can share it; values beyond them get the end colour (the colour bar shows an arrow).
+
+\wordfield{Options}{}\par\nopagebreak
+\begin{optiontable}
+\code{names.\allowbreak{}.\allowbreak{}.\allowbreak{}} & as many as you like, separated by commas\\
+\code{middle=} & \\
+\code{log=} & normally \code{False}\\
+\code{steps=} & \\
+\code{between=} & \\
+\end{optiontable}
+
+\wordfield{Underneath}{matplotlib}
+\wordfield{Example you can run}{(it uses the practice table \code{weather})}\par\nopagebreak
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+weather = sdata.example("weather")
+chart = sdata.chart(weather)
+chart.heatmap(x="month", y="city", value="rain")
+chart.colour_scale("magma")
+chart.save("colour_scale.png")
 \end{lstlisting}
 \wordentry{chart.style()}{word:style}
 The overall look. \code{chart.\allowbreak{}style(\textquotedbl{}school\textquotedbl{})}
@@ -5030,7 +5687,7 @@ table.standard_deviation_of("marks", for_each="class")
 Several measures of one or more columns at once, in one tidy table.
 
 \codeline{table.summary\_of(\textquotedbl{}marks\textquotedbl{}, for\_each=\textquotedbl{}class\textquotedbl{}, show=[\textquotedbl{}average\textquotedbl{}, \textquotedbl{}standard deviation\textquotedbl{}, \textquotedbl{}count\textquotedbl{}])}\\
-(with \code{sdata.\allowbreak{}example(\textquotedbl{}marks\textquotedbl{})}). Several columns: \code{table.\allowbreak{}summary\_\allowbreak{}of([\textquotedbl{}marks\textquotedbl{},\allowbreak{} \textquotedbl{}hours\textquotedbl{}])}. \code{show=} takes any of: \code{\textquotedbl{}count\textquotedbl{}} (numbers, empty cells left out), \code{\textquotedbl{}average\textquotedbl{}}, \code{\textquotedbl{}median\textquotedbl{}}, \code{\textquotedbl{}total\textquotedbl{}}, \code{\textquotedbl{}smallest\textquotedbl{}}, \code{\textquotedbl{}biggest\textquotedbl{}}, \code{\textquotedbl{}standard deviation\textquotedbl{}} (sample, n - 1), \code{\textquotedbl{}variance\textquotedbl{}} (sample, n - 1), \code{\textquotedbl{}standard error\textquotedbl{}} (of the average), \code{\textquotedbl{}confidence interval\textquotedbl{}} (95 \% t interval of the average, as R t.test), \code{\textquotedbl{}range\textquotedbl{}} (biggest minus smallest), \code{\textquotedbl{}interquartile range\textquotedbl{}} (upper quartile minus lower quartile, R type 7) and \code{\textquotedbl{}empty cells\textquotedbl{}}. Without \code{show=}: count, average, standard deviation, smallest, median, biggest. A measure of your own also works: a function that gets one group's numbers (a NumPy array) and gives back one number, \code{show=[\textquotedbl{}average\textquotedbl{},\allowbreak{} my\_\allowbreak{}measure]}. The new table has one row for each column (and each group), so it can be saved or charted. \code{every=} groups a date column in \code{for\_\allowbreak{}each=} by \code{\textquotedbl{}week\textquotedbl{}}, \code{\textquotedbl{}month\textquotedbl{}}, \code{\textquotedbl{}year\textquotedbl{}} ...
+(with \code{sdata.\allowbreak{}example(\textquotedbl{}marks\textquotedbl{})}). Several columns: \code{table.\allowbreak{}summary\_\allowbreak{}of([\textquotedbl{}marks\textquotedbl{},\allowbreak{} \textquotedbl{}hours\textquotedbl{}])}. \code{show=} takes any of: \code{\textquotedbl{}count\textquotedbl{}} (numbers, empty cells left out), \code{\textquotedbl{}average\textquotedbl{}}, \code{\textquotedbl{}median\textquotedbl{}}, \code{\textquotedbl{}total\textquotedbl{}}, \code{\textquotedbl{}smallest\textquotedbl{}}, \code{\textquotedbl{}biggest\textquotedbl{}}, \code{\textquotedbl{}standard deviation\textquotedbl{}} (sample, n - 1), \code{\textquotedbl{}variance\textquotedbl{}} (sample, n - 1), \code{\textquotedbl{}standard error\textquotedbl{}} (of the average), \code{\textquotedbl{}confidence interval\textquotedbl{}} (95 \% t interval of the average, as R t.test), \code{\textquotedbl{}range\textquotedbl{}} (biggest minus smallest), \code{\textquotedbl{}interquartile range\textquotedbl{}} (upper quartile minus lower quartile, R type 7), \code{\textquotedbl{}empty cells\textquotedbl{}}, and these, with the definitions R uses: \code{\textquotedbl{}geometric mean\textquotedbl{}} (numbers above 0), \code{\textquotedbl{}skewness\textquotedbl{}} and \code{\textquotedbl{}kurtosis\textquotedbl{}} (the bias-corrected sample values G1 and G2, as SciPy skew/\code{kurtosis(bias=False)}, R e1071 type 2 and Excel; kurtosis is excess kurtosis, 0 for a bell shape), \code{\textquotedbl{}coefficient of variation\textquotedbl{}} (standard deviation / average, a ratio), \code{\textquotedbl{}median absolute deviation\textquotedbl{}} (as R \code{mad()}, times 1.4826), \code{\textquotedbl{}trimmed average\textquotedbl{}} (10 \% cut from each end, as R \code{mean(trim = 0.\allowbreak{}1)}; \code{\textquotedbl{}trimmed average 20\textquotedbl{}} cuts 20 \%), \code{\textquotedbl{}most common\textquotedbl{}} (the smallest if tied) and \code{\textquotedbl{}percentile 90\textquotedbl{}} (any percent, R quantile type 7). Without \code{show=}: count, average, standard deviation, smallest, median, biggest. A measure of your own also works: a function that gets one group's numbers (a NumPy array) and gives back one number, \code{show=[\textquotedbl{}average\textquotedbl{},\allowbreak{} my\_\allowbreak{}measure]}. The new table has one row for each column (and each group), so it can be saved or charted. \code{every=} groups a date column in \code{for\_\allowbreak{}each=} by \code{\textquotedbl{}week\textquotedbl{}}, \code{\textquotedbl{}month\textquotedbl{}}, \code{\textquotedbl{}year\textquotedbl{}} ...
 
 \wordfield{Options}{}\par\nopagebreak
 \begin{optiontable}
@@ -5102,6 +5759,48 @@ import simplydata as sdata
 table = sdata.table(sdata.example("marks"))
 table.count_different_values("name", for_each="class")
 \end{lstlisting}
+\wordentry{table.percentile\_of()}{word:table.percentile-of}
+The value below which a given percent of the numbers lie; empty cells are skipped.
+
+\codeline{table.percentile\_of(\textquotedbl{}marks\textquotedbl{}, 90, for\_each=\textquotedbl{}class\textquotedbl{})} (with \code{sdata.\allowbreak{}example(\textquotedbl{}marks\textquotedbl{})})\\
+\code{percentile\_\allowbreak{}of(\textquotedbl{}marks\textquotedbl{},\allowbreak{} 50)} is the median, 25 and 75 the quartiles. Between two numbers it uses the usual linear rule (R \code{quantile(type = 7)}, NumPy and pandas default). \code{across=} and \code{every=} work as in \code{average\_\allowbreak{}of}.
+
+\wordfield{Options}{}\par\nopagebreak
+\begin{optiontable}
+\code{column=} & \\
+\code{percent=} & \\
+\code{for\_\allowbreak{}each=} & \\
+\code{every=} & \\
+\code{across=} & \\
+\end{optiontable}
+
+\wordfield{Underneath}{narwhals (quantile with linear interpolation, as R quantile type 7)}
+\wordfield{Example you can run}{(it uses the practice table \code{marks})}\par\nopagebreak
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+table = sdata.table(sdata.example("marks"))
+table.percentile_of("marks", 90, for_each="class")
+\end{lstlisting}
+\wordentry{table.most\_common\_of()}{word:table.most-common-of}
+The value that turns up most often (the mode), for numbers or text; empty cells are skipped.
+
+\codeline{table.most\_common\_of(\textquotedbl{}days\_absent\textquotedbl{}, for\_each=\textquotedbl{}school\textquotedbl{})} (with \code{sdata.\allowbreak{}example(\textquotedbl{}school\textquotedbl{})})\\
+When values are tied, the smallest (first in order) is given and a note names the others. Without \code{for\_\allowbreak{}each=} you get the value; with it a new table with, for each group, the most common value, how many rows have it, its percent of the group's filled cells, and how many values share the top count.
+
+\wordfield{Options}{}\par\nopagebreak
+\begin{optiontable}
+\code{column=} & \\
+\code{for\_\allowbreak{}each=} & \\
+\code{every=} & \\
+\end{optiontable}
+
+\wordfield{Underneath}{narwhals (value counts per group)}
+\wordfield{Example you can run}{(it uses the practice table \code{school})}\par\nopagebreak
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+table = sdata.table(sdata.example("school"))
+table.most_common_of("days_absent", for_each="school")
+\end{lstlisting}
 \wordentry{table.correlation\_between()}{word:table.correlation-between}
 How strongly columns of numbers go up or down together, from -1 to 1.
 
@@ -5152,13 +5851,14 @@ result.save("marks_test.csv")
 Which pairs of groups differ? Every pair is compared, with Holm's correction.
 
 \codeline{table.compare\_each\_pair(\textquotedbl{}marks\textquotedbl{}, for\_each=\textquotedbl{}class\textquotedbl{})} (with \code{sdata.\allowbreak{}example(\textquotedbl{}marks\textquotedbl{})})\\
-Each pair gets Welch's t-test (or Mann-Whitney U with \code{based\_\allowbreak{}on=\textquotedbl{}ranks\textquotedbl{}}). Testing many pairs makes a false alarm more likely, so the p-values are adjusted with Holm's method: the chance of at least one false alarm stays at 5 \%. This is the same as R \code{pairwise.\allowbreak{}t.\allowbreak{}test(pool.\allowbreak{}sd = FALSE,\allowbreak{} p.\allowbreak{}adjust.\allowbreak{}method = \textquotedbl{}holm\textquotedbl{})}. Gives back a table with one row per pair.
+Each pair gets Welch's t-test (or Mann-Whitney U with \code{based\_\allowbreak{}on=\textquotedbl{}ranks\textquotedbl{}}). Testing many pairs makes a false alarm more likely, so the p-values are adjusted with Holm's method: the chance of at least one false alarm stays at 5 \%. This is the same as R \code{pairwise.\allowbreak{}t.\allowbreak{}test(pool.\allowbreak{}sd = FALSE,\allowbreak{} p.\allowbreak{}adjust.\allowbreak{}method = \textquotedbl{}holm\textquotedbl{})}. Gives back a table with one row per pair. \code{test=\textquotedbl{}tukey\textquotedbl{}} gives Tukey's honest significant difference instead (R \code{TukeyHSD(aov(marks \textasciitilde{} class))}, the Tukey-Kramer form when the groups differ in size): the textbook follow-up to a one-way ANOVA, with 95 \% confidence intervals that hold for all pairs at once. It assumes the groups have the same spread; the default does not. \code{test=\textquotedbl{}welch\textquotedbl{}} and \code{test=\textquotedbl{}mann-whitney\textquotedbl{}} name the other two choices.
 
 \wordfield{Options}{}\par\nopagebreak
 \begin{optiontable}
 \code{column=} & \\
 \code{for\_\allowbreak{}each=} & \\
 \code{based\_\allowbreak{}on=} & normally \code{\textquotedbl{}averages\textquotedbl{}}\\
+\code{test=} & \\
 \end{optiontable}
 
 \wordfield{Underneath}{SciPy (stats.ttest\_ind or mannwhitneyu), with Holm's correction}
@@ -5314,6 +6014,397 @@ table = table.correlation_between("hours", "marks", "height", show="each pair")
 table.add_adjusted_p_value_column("q", method="benjamini-hochberg")
 table.show()
 \end{lstlisting}
+\wordentry{table.compare\_spreads()}{word:table.compare-spreads}
+Do the groups differ in how spread out their values are, more than chance?
+
+\codeline{table.compare\_spreads(\textquotedbl{}marks\textquotedbl{}, for\_each=\textquotedbl{}class\textquotedbl{})} (with \code{sdata.\allowbreak{}example(\textquotedbl{}marks\textquotedbl{})})\\
+\code{test=\textquotedbl{}levene\textquotedbl{}} (the default): Levene's test centred on each group's median, also called the Brown-Forsythe test. It is the default of R car::\code{leveneTest()} and SciPy \code{levene(center=\textquotedbl{}median\textquotedbl{})}, and copes well with values that are not bell-shaped. \code{test=\textquotedbl{}bartlett\textquotedbl{}}: Bartlett's test (R \code{bartlett.\allowbreak{}test()}), a little stronger when the values are bell-shaped but easily fooled when they are not. \code{test=\textquotedbl{}fligner\textquotedbl{}}: the Fligner-Killeen test (R \code{fligner.\allowbreak{}test()}), based on ranks, the safest with outliers. Empty cells are skipped. Prints the standard deviation of each group and the answer in words; gives back a one-row table of results. \code{compare\_\allowbreak{}averages()} uses Welch's test by default, which does not need equal spreads.
+
+\wordfield{Options}{}\par\nopagebreak
+\begin{optiontable}
+\code{column=} & \\
+\code{for\_\allowbreak{}each=} & \\
+\code{test=} & normally \code{\textquotedbl{}levene\textquotedbl{}}\\
+\end{optiontable}
+
+\wordfield{Underneath}{SciPy (stats.levene with \code{center=\textquotedbl{}median\textquotedbl{}}, stats.bartlett, stats.fligner)}
+\wordfield{Example you can run}{(it uses the practice table \code{marks})}\par\nopagebreak
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+table = sdata.table(sdata.example("marks"))
+table.compare_spreads("marks", for_each="class")
+\end{lstlisting}
+\wordentry{table.compare\_counts\_to()}{word:table.compare-counts-to}
+Does how often each value turns up match the shares you expect, more than chance?
+
+\codeline{table.compare\_counts\_to(\textquotedbl{}breakfast\textquotedbl{}, expected=\{\textquotedbl{}yes\textquotedbl{}: 0.6, \textquotedbl{}no\textquotedbl{}: 0.4\})} (with \code{sdata.\allowbreak{}example(\textquotedbl{}school\textquotedbl{})})\\
+The chi-square goodness-of-fit test (as R \code{chisq.\allowbreak{}test(x,\allowbreak{} p = .\allowbreak{}.\allowbreak{}.\allowbreak{})}). \code{expected=} gives the share of each value, adding up to 1 (or percents adding up to 100); for a ratio such as 9:3:3:1 write \{\code{\textquotedbl{}a\textquotedbl{}}: 9/16, \code{\textquotedbl{}b\textquotedbl{}}: 3/16, ...\}. Without \code{expected=} every value is expected equally often (as R \code{chisq.\allowbreak{}test(table(x))}). Empty cells are skipped. If an expected count is below 5 a note says so. Effect size: Cohen's w, how far the counts are from the expected shares (0.1 small, 0.3 medium, 0.5 large). For one value against one percent, \code{compare\_\allowbreak{}percent\_\allowbreak{}to()} gives an exact test. Gives back a one-row table with the count and expected count of each value.
+
+\wordfield{Options}{}\par\nopagebreak
+\begin{optiontable}
+\code{column=} & \\
+\code{expected=} & \\
+\end{optiontable}
+
+\wordfield{Underneath}{SciPy (stats.chisquare)}
+\wordfield{Example you can run}{(it uses the practice table \code{school})}\par\nopagebreak
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+table = sdata.table(sdata.example("school"))
+table.compare_counts_to("breakfast", expected={"yes": 0.6, "no": 0.4})
+\end{lstlisting}
+\wordentry{table.compare\_percent\_to()}{word:table.compare-percent-to}
+Is the percent of rows with one value different from a percent you choose, or could it be chance?
+
+\codeline{table.compare\_percent\_to(\textquotedbl{}passed\textquotedbl{}, value=\textquotedbl{}yes\textquotedbl{}, percent=50)} (with \code{sdata.\allowbreak{}example(\textquotedbl{}school\textquotedbl{})})\\
+The exact binomial test (as R \code{binom.\allowbreak{}test(x,\allowbreak{} n,\allowbreak{} p)}), with the exact Clopper-Pearson 95 \% interval of the percent (as \code{percent\_\allowbreak{}of()}). Percents go from 0 to 100. For a yes/no column (yes/no, True/False or 1/0) \code{value=} may be left out: \code{\textquotedbl{}yes\textquotedbl{}} (True, 1) is counted. Empty cells are skipped. Effect size: Cohen's h, the difference between the two shares on the arcsine scale (0.2 small, 0.5 medium, 0.8 large). Gives back a one-row table of results.
+
+\wordfield{Options}{}\par\nopagebreak
+\begin{optiontable}
+\code{column=} & \\
+\code{value=} & \\
+\code{percent=} & \\
+\end{optiontable}
+
+\wordfield{Underneath}{SciPy (stats.binomtest, the Clopper-Pearson exact interval)}
+\wordfield{Example you can run}{(it uses the practice table \code{school})}\par\nopagebreak
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+table = sdata.table(sdata.example("school"))
+table.compare_percent_to("passed", value="yes", percent=50)
+\end{lstlisting}
+\unsection{Models}{group:Models}
+\wordentry{table.explain()}{word:table.explain}
+Explain one column from several others with a model, and say how big each effect is.
+
+\codeline{table.explain(\textquotedbl{}marks\textquotedbl{}, using=[\textquotedbl{}hours\textquotedbl{}, \textquotedbl{}breakfast\textquotedbl{}])} (with \code{sdata.\allowbreak{}example(\textquotedbl{}school\textquotedbl{})})\\
+\code{outcome=\textquotedbl{}numbers\textquotedbl{}} (the default): linear model by least squares (R \code{lm()}). \code{outcome=\textquotedbl{}yes or no\textquotedbl{}}: logistic regression, odds ratios (R \code{glm(family = binomial)}). \code{outcome=\textquotedbl{}counts\textquotedbl{}}: Poisson regression, rate ratios (R \code{glm(family = poisson)}); \code{outcome=\textquotedbl{}counts (overdispersed)\textquotedbl{}}: quasi-Poisson (R \code{glm(family = quasipoisson)}). A text column in \code{using=} is a group column: each group is compared with the first group in sorted order (the baseline). \code{\textquotedbl{}hours * breakfast\textquotedbl{}} adds both columns and their interaction (does the effect of hours depend on breakfast?). \code{grouped\_\allowbreak{}by=\textquotedbl{}school\textquotedbl{}}: a mixed model with its own starting level for each school (R lme4::\code{lmer()}), for rows that belong together. \code{empty\_\allowbreak{}cells=\textquotedbl{}multiple imputation\textquotedbl{}} fills in empty cells 20 times (R \code{mice()}) instead of leaving those rows out; \code{seed=} fixes the random filling. Prints each effect with its 95 \% confidence interval and p-value in words, and how well the model fits; gives back a table with one row per term. A link does not show that one thing causes the other.
+
+\wordfield{Options}{}\par\nopagebreak
+\begin{optiontable}
+\code{column=} & \\
+\code{using=} & \\
+\code{outcome=} & normally \code{\textquotedbl{}numbers\textquotedbl{}}\\
+\code{grouped\_\allowbreak{}by=} & \\
+\code{empty\_\allowbreak{}cells=} & normally \code{\textquotedbl{}leave out\textquotedbl{}}\\
+\code{seed=} & normally \code{1}\\
+\end{optiontable}
+
+\wordfield{Underneath}{NumPy (least squares, and iteratively reweighted least squares as R glm); statsmodels for \code{grouped\_\allowbreak{}by=} (MixedLM) and multiple imputation (MICEData)}
+\wordfield{Example you can run}{(it uses the practice table \code{school})}\par\nopagebreak
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+table = sdata.table(sdata.example("school"))
+table.explain("marks", using=["hours", "sleep", "breakfast"])
+table.explain("passed", using=["hours", "breakfast"], outcome="yes or no")
+table.explain("marks", using=["hours", "breakfast"], grouped_by="school")
+\end{lstlisting}
+\wordentry{table.add\_predicted\_column()}{word:table.add-predicted-column}
+Add a column with the value the model predicts for each row.
+
+\codeline{table.add\_predicted\_column(\textquotedbl{}marks\textquotedbl{}, using=[\textquotedbl{}hours\textquotedbl{}, \textquotedbl{}breakfast\textquotedbl{}])} (with \code{sdata.\allowbreak{}example(\textquotedbl{}school\textquotedbl{})})\\
+The same model as \code{explain()} with the same options: \code{outcome=\textquotedbl{}numbers\textquotedbl{}} gives the fitted value (R \code{fitted(lm(.\allowbreak{}.\allowbreak{}.\allowbreak{}))}), \code{outcome=\textquotedbl{}yes or no\textquotedbl{}} the chance of yes from 0 to 1 and \code{outcome=\textquotedbl{}counts\textquotedbl{}} the expected count (R \code{fitted(glm(.\allowbreak{}.\allowbreak{}.\allowbreak{}))}). With \code{grouped\_\allowbreak{}by=} the prediction includes each group's own level (R \code{fitted(lmer(.\allowbreak{}.\allowbreak{}.\allowbreak{}))}). Rows with an empty cell in a column used stay empty. Undo with \code{table.\allowbreak{}undo()}.
+
+\wordfield{Options}{}\par\nopagebreak
+\begin{optiontable}
+\code{column=} & \\
+\code{using=} & \\
+\code{outcome=} & normally \code{\textquotedbl{}numbers\textquotedbl{}}\\
+\code{name=} & \\
+\code{grouped\_\allowbreak{}by=} & \\
+\end{optiontable}
+
+\wordfield{Underneath}{NumPy (the same model as \code{table.\allowbreak{}explain}); statsmodels for \code{grouped\_\allowbreak{}by=}}
+\wordfield{Example you can run}{(it uses the practice table \code{school})}\par\nopagebreak
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+table = sdata.table(sdata.example("school"))
+table.add_predicted_column("marks", using=["hours", "breakfast"])
+table.show_first_rows(5)
+\end{lstlisting}
+\unsection{Patterns across columns}{group:Patterns-across-columns}
+\wordentry{table.add\_principal\_components()}{word:table.add-principal-components}
+Add principal components: a few new columns that hold most of the spread of many columns.
+
+\codeline{table.add\_principal\_components(how\_many=2)} (with \code{sdata.\allowbreak{}example(\textquotedbl{}meadow\textquotedbl{})})\\
+Principal component analysis turns many related columns into new columns PC1, PC2 ... that do not overlap: PC1 holds the most spread, PC2 the most of what is left, and so on. The new columns are the scores of each row. \code{columns=None} uses every number column; \code{same\_\allowbreak{}scale=True} (the default, as R \code{prcomp(scale.\allowbreak{} = TRUE)}) first puts each column on the same scale (mean 0, standard deviation 1) so that big numbers do not dominate; \code{same\_\allowbreak{}scale=False} keeps the columns as they are (use it when all columns are the same kind of measure on the same scale). Prints how much of the spread each component explains and the 3 columns with the largest weights in each. The sign of a component is arbitrary: flipping it changes nothing. Rows with an empty cell get empty PC cells. \code{table.\allowbreak{}principal\_\allowbreak{}components\_\allowbreak{}of()} gives all the weights as a table. Method: singular value decomposition, as R \code{prcomp()}.
+
+\wordfield{Options}{}\par\nopagebreak
+\begin{optiontable}
+\code{columns=} & \\
+\code{how\_\allowbreak{}many=} & normally \code{2}\\
+\code{same\_\allowbreak{}scale=} & normally \code{True}\\
+\end{optiontable}
+
+\wordfield{Underneath}{NumPy (linalg.svd)}
+\wordfield{Example you can run}{(it uses the practice table \code{meadow})}\par\nopagebreak
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+table = sdata.table(sdata.example("meadow"))
+table.add_principal_components(how_many=2)
+chart = table.chart()
+chart.dots(x="PC1", y="PC2", colour="grazed")
+chart.save("meadow_pca.png")
+\end{lstlisting}
+\wordentry{table.principal\_components\_of()}{word:table.principal-components-of}
+A table of the principal components: how much spread each explains and the weight of each column.
+
+\codeline{table.principal\_components\_of()} (with \code{sdata.\allowbreak{}example(\textquotedbl{}meadow\textquotedbl{})})\\
+One row per component (PC1, PC2 ...) with its standard deviation, the share of the spread it explains, the cumulative share, and one column of weights per original column, \code{\textquotedbl{}weight of hours\textquotedbl{}} and so on (the loadings, R \code{prcomp()}\$rotation). A large weight, plus or minus, means the column counts a lot in that component. The sign of a component is arbitrary. \code{same\_\allowbreak{}scale=True} puts each column on the same scale first, as R \code{prcomp(scale.\allowbreak{} = TRUE)}.
+
+\wordfield{Options}{}\par\nopagebreak
+\begin{optiontable}
+\code{columns=} & \\
+\code{same\_\allowbreak{}scale=} & normally \code{True}\\
+\end{optiontable}
+
+\wordfield{Underneath}{NumPy (linalg.svd)}
+\wordfield{Example you can run}{(it uses the practice table \code{meadow})}\par\nopagebreak
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+table = sdata.table(sdata.example("meadow"))
+components = table.principal_components_of()
+components.show()
+\end{lstlisting}
+\wordentry{table.add\_clusters()}{word:table.add-clusters}
+Sort the rows into groups of similar rows (clusters), in a new column.
+
+\codeline{table.add\_clusters(how\_many=3)} (with \code{sdata.\allowbreak{}example(\textquotedbl{}meadow\textquotedbl{})})\\
+\code{method=\textquotedbl{}k-means\textquotedbl{}} (the default) finds \code{how\_\allowbreak{}many} clusters whose rows are as close as possible to their cluster's average, from 25 random starts (as R \code{kmeans(nstart = 25)}); \code{seed=} makes the result the same every time. \code{method=\textquotedbl{}hierarchical\textquotedbl{}} joins the closest rows step by step and cuts the tree into \code{how\_\allowbreak{}many} clusters; \code{linkage=\textquotedbl{}ward\textquotedbl{}} (the default, R \code{hclust(method = \textquotedbl{}ward.\allowbreak{}D2\textquotedbl{})}), \code{\textquotedbl{}average\textquotedbl{}}, \code{\textquotedbl{}complete\textquotedbl{}} or \code{\textquotedbl{}single\textquotedbl{}}. \code{same\_\allowbreak{}scale=True} (the default) puts each column on the same scale first (R \code{scale()}). The clusters are numbered 1, 2, 3 in the order they first appear in the table. Prints the size of each cluster and the share of the spread that lies between clusters (R kmeans: \code{between\_\allowbreak{}SS} / \code{total\_\allowbreak{}SS}). Rows with an empty cell get an empty cluster cell.
+
+\wordfield{Options}{}\par\nopagebreak
+\begin{optiontable}
+\code{columns=} & \\
+\code{how\_\allowbreak{}many=} & normally \code{3}\\
+\code{method=} & normally \code{\textquotedbl{}k-means\textquotedbl{}}\\
+\code{same\_\allowbreak{}scale=} & normally \code{True}\\
+\code{seed=} & normally \code{1}\\
+\code{name=} & normally \code{\textquotedbl{}cluster\textquotedbl{}}\\
+\code{linkage=} & normally \code{\textquotedbl{}ward\textquotedbl{}}\\
+\end{optiontable}
+
+\wordfield{Underneath}{NumPy (k-means: Lloyd and Hartigan steps) or SciPy (cluster.hierarchy, for \code{method=\textquotedbl{}hierarchical\textquotedbl{}})}
+\wordfield{Example you can run}{(it uses the practice table \code{meadow})}\par\nopagebreak
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+table = sdata.table(sdata.example("meadow"))
+table.add_clusters(how_many=2)
+table.count_rows(for_each="cluster", across="grazed")
+\end{lstlisting}
+\wordentry{table.distances\_between\_rows()}{word:table.distances-between-rows}
+How different each row is from every other row: a square table of distances.
+
+\codeline{table.distances\_between\_rows(names=\textquotedbl{}plot\textquotedbl{})} (with \code{sdata.\allowbreak{}example(\textquotedbl{}meadow\textquotedbl{})})\\
+\code{measure=\textquotedbl{}bray-curtis\textquotedbl{}} (the default, as R vegan::\code{vegdist()}) is the usual measure for counts of species: 0 when two rows have the same counts, 1 when they share nothing. \code{\textquotedbl{}jaccard\textquotedbl{}} uses only present / absent (a count above 0 is present), as vegan::\code{vegdist(binary = TRUE)}: the share of the species found in either row that are found in only one. \code{\textquotedbl{}euclidean\textquotedbl{}} is the straight-line distance and \code{\textquotedbl{}manhattan\textquotedbl{}} the sum of the differences. \code{names=} is a column whose values label the rows and columns.
+
+\wordfield{Options}{}\par\nopagebreak
+\begin{optiontable}
+\code{columns=} & \\
+\code{measure=} & normally \code{\textquotedbl{}bray-curtis\textquotedbl{}}\\
+\code{names=} & \\
+\end{optiontable}
+
+\wordfield{Underneath}{SciPy (spatial.distance.pdist) and NumPy}
+\wordfield{Example you can run}{(it uses the practice table \code{meadow})}\par\nopagebreak
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+table = sdata.table(sdata.example("meadow"))
+distances = table.distances_between_rows(measure="bray-curtis", names="plot")
+distances.show_first_rows(3)
+\end{lstlisting}
+\wordentry{table.add\_nmds()}{word:table.add-nmds}
+Draw the rows as points on a map where close points are similar rows (NMDS), in new columns.
+
+\codeline{table.add\_nmds()} (with \code{sdata.\allowbreak{}example(\textquotedbl{}meadow\textquotedbl{})})\\
+Non-metric multidimensional scaling puts each row on a map with \code{dimensions=} axes (NMDS1, NMDS2) so that the order of the distances on the map follows the order of the distances between the rows (\code{measure=\textquotedbl{}bray-curtis\textquotedbl{}}, as R vegan::metaMDS). It tries a classical-scaling start and \code{tries=} random starts (\code{seed=} makes them the same every time) and keeps the map with the lowest stress (Kruskal's stress-1: how badly the map fits). Clarke's (1993) rule of thumb: below 0.05 excellent, below 0.1 good, below 0.2 usable, above 0.2 hard to trust. The axes have no units; their rotation and signs are arbitrary. Rows with an empty cell get empty NMDS cells.
+
+\wordfield{Options}{}\par\nopagebreak
+\begin{optiontable}
+\code{columns=} & \\
+\code{measure=} & normally \code{\textquotedbl{}bray-curtis\textquotedbl{}}\\
+\code{dimensions=} & normally \code{2}\\
+\code{tries=} & normally \code{20}\\
+\code{seed=} & normally \code{1}\\
+\end{optiontable}
+
+\wordfield{Underneath}{NumPy (SMACOF with monotone regression; SciPy optimize.isotonic\_regression when available) and SciPy (spatial.distance.pdist)}
+\wordfield{Example you can run}{(it uses the practice table \code{meadow})}\par\nopagebreak
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+table = sdata.table(sdata.example("meadow"))
+table.add_nmds(measure="bray-curtis")
+chart = table.chart()
+chart.dots(x="NMDS1", y="NMDS2", colour="grazed")
+chart.save("meadow_nmds.png")
+\end{lstlisting}
+\wordentry{table.compare\_profiles()}{word:table.compare-profiles}
+Do the groups differ in their make-up across many columns (PERMANOVA), or could it be chance?
+
+\codeline{table.compare\_profiles(for\_each=\textquotedbl{}grazed\textquotedbl{})} (with \code{sdata.\allowbreak{}example(\textquotedbl{}meadow\textquotedbl{})})\\
+Compares whole profiles, such as the counts of all plant species in a plot, between the groups in \code{for\_\allowbreak{}each=}. PERMANOVA, as R vegan::\code{adonis2(distances \textasciitilde{} group)}: R squared is the share of the differences between rows (\code{measure=} distances, Bray-Curtis by default) that the groups explain, and pseudo-F compares the differences between groups with those within groups. The p-value comes from shuffling the rows \code{permutations=} times (\code{seed=} makes it the same every time). It also checks whether the groups differ in spread (vegan::betadisper and permutest), because PERMANOVA can then mistake a difference in spread for a difference in make-up. Gives back a one-row table.
+
+\wordfield{Options}{}\par\nopagebreak
+\begin{optiontable}
+\code{columns=} & \\
+\code{for\_\allowbreak{}each=} & \\
+\code{measure=} & normally \code{\textquotedbl{}bray-curtis\textquotedbl{}}\\
+\code{permutations=} & normally \code{999}\\
+\code{seed=} & normally \code{1}\\
+\end{optiontable}
+
+\wordfield{Underneath}{NumPy (PERMANOVA and the spread check, with permutations) and SciPy (spatial.distance.pdist)}
+\wordfield{Example you can run}{(it uses the practice table \code{meadow})}\par\nopagebreak
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+table = sdata.table(sdata.example("meadow"))
+table.compare_profiles(for_each="grazed")
+\end{lstlisting}
+\unchapter{Chart words}{family:chart}
+Steps on a chart: \code{chart = sdata.chart(table)}, then \code{chart.bars(...)}. Words that start with \code{sdata.} are called on simplydata itself, and words that end in \code{=} are options inside a chart step.
+\unsection{Survival}{group:Survival}
+\wordentry{table.survival\_over\_time()}{word:table.survival-over-time}
+The share still without the event over time (Kaplan-Meier), with the median time.
+
+\codeline{table.survival\_over\_time(time=\textquotedbl{}days\textquotedbl{}, event=\textquotedbl{}died\textquotedbl{}, for\_each=\textquotedbl{}treatment\textquotedbl{})} (with \code{sdata.\allowbreak{}example(\textquotedbl{}trial\textquotedbl{})})\\
+\code{time=} is the time until the event or the end of follow-up; \code{event=} says whether the event happened (yes/no, True/False or 1/0). \code{for\_\allowbreak{}each=} gives one curve per group. Prints the median time (by when half have had the event) with its 95 \% CI per group, or says it was not reached, as R \code{print(survfit(Surv(days,\allowbreak{} died == \textquotedbl{}yes\textquotedbl{}) \textasciitilde{} treatment))}. Gives back a table with one row per event time: the group, time, at risk, events, censored (since the previous row), survival and its 95 \% CI (log scale, R's default), as R \code{summary(survfit(.\allowbreak{}.\allowbreak{}.\allowbreak{}))}. Draw the curves with \code{chart.\allowbreak{}survival\_\allowbreak{}curves(.\allowbreak{}.\allowbreak{}.\allowbreak{})}.
+
+\wordfield{Options}{}\par\nopagebreak
+\begin{optiontable}
+\code{time=} & \\
+\code{event=} & \\
+\code{for\_\allowbreak{}each=} & \\
+\end{optiontable}
+
+\wordfield{Underneath}{NumPy (Kaplan-Meier) and SciPy (stats, for the intervals)}
+\wordfield{Example you can run}{(it uses the practice table \code{trial})}\par\nopagebreak
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+table = sdata.table(sdata.example("trial"))
+table.survival_over_time(time="days", event="died", for_each="treatment")
+\end{lstlisting}
+\wordentry{table.compare\_survival()}{word:table.compare-survival}
+Do the groups differ in the time until the event, or could it be chance? (log-rank test)
+
+\codeline{table.compare\_survival(time=\textquotedbl{}days\textquotedbl{}, event=\textquotedbl{}died\textquotedbl{}, for\_each=\textquotedbl{}treatment\textquotedbl{})} (with \code{sdata.\allowbreak{}example(\textquotedbl{}trial\textquotedbl{})})\\
+The log-rank test, as R \code{survdiff(Surv(days,\allowbreak{} died == \textquotedbl{}yes\textquotedbl{}) \textasciitilde{} treatment)}: at each event time the events are shared out over the groups by how many rows are at risk in each, and the observed events are compared with these expected ones over the whole follow-up. Prints the answer in words and the observed vs expected events per group; gives back a one-row table of results.
+
+\wordfield{Options}{}\par\nopagebreak
+\begin{optiontable}
+\code{time=} & \\
+\code{event=} & \\
+\code{for\_\allowbreak{}each=} & \\
+\end{optiontable}
+
+\wordfield{Underneath}{NumPy (log-rank sums) and SciPy (stats.chi2)}
+\wordfield{Example you can run}{(it uses the practice table \code{trial})}\par\nopagebreak
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+table = sdata.table(sdata.example("trial"))
+table.compare_survival(time="days", event="died", for_each="treatment")
+\end{lstlisting}
+\wordentry{table.explain\_survival()}{word:table.explain-survival}
+Which columns go with a higher or lower risk of the event? (Cox model, hazard ratios)
+
+\codeline{table.explain\_survival(time=\textquotedbl{}days\textquotedbl{}, event=\textquotedbl{}died\textquotedbl{}, using=[\textquotedbl{}treatment\textquotedbl{}, \textquotedbl{}age\textquotedbl{}])} (with \code{sdata.\allowbreak{}example(\textquotedbl{}trial\textquotedbl{})})\\
+The Cox proportional hazards model, as R \code{coxph(Surv(days,\allowbreak{} died == \textquotedbl{}yes\textquotedbl{}) \textasciitilde{} treatment + age)}, with Efron's method for tied times. A hazard ratio above 1 means a higher risk of the event at any moment (2 = twice the risk), below 1 a lower risk. Numbers count per 1 more; text columns are groups compared with the first group (A to Z). Prints each hazard ratio with its 95 \% CI and p-value, and the likelihood-ratio test of the whole model; a note says if a hazard ratio seems to change over time (the proportional-hazards check of R \code{cox.\allowbreak{}zph()}). Gives back a table with one row per term.
+
+\wordfield{Options}{}\par\nopagebreak
+\begin{optiontable}
+\code{time=} & \\
+\code{event=} & \\
+\code{using=} & \\
+\end{optiontable}
+
+\wordfield{Underneath}{NumPy (Cox model: Newton-Raphson with Efron ties) and SciPy (stats)}
+\wordfield{Example you can run}{(it uses the practice table \code{trial})}\par\nopagebreak
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+table = sdata.table(sdata.example("trial"))
+table.explain_survival(time="days", event="died", using=["treatment", "age"])
+\end{lstlisting}
+\wordentry{chart.survival\_curves()}{word:survival-curves}
+The share still without the event over time (Kaplan-Meier curves).\\
+\codeline{chart.survival\_curves(time=\textquotedbl{}days\textquotedbl{}, event=\textquotedbl{}died\textquotedbl{}, colour=\textquotedbl{}treatment\textquotedbl{})} (with \code{sdata.\allowbreak{}example(\textquotedbl{}trial\textquotedbl{})})
+
+\code{time=} is the time until the event or the end of follow-up; \code{event=} says whether the event happened (yes/no, True/False or 1/0). \code{colour=\textquotedbl{}treatment\textquotedbl{}} draws one curve per group, or \code{colour=\textquotedbl{}blue\textquotedbl{}} one colour. Each curve starts at 1 and drops at each event; censored rows (followed without the event) are small ticks (\code{censor\_\allowbreak{}marks=False} hides them). \code{confidence\_\allowbreak{}band=True} shades the 95 \% confidence interval. \code{at\_\allowbreak{}risk\_\allowbreak{}table=True} writes the number still at risk under the x-axis. \code{transparency=} (0 to 1) makes the curves see-through and \code{thickness=} sets their width in points. The numbers are those of\\
+\codeline{table.survival\_over\_time() (as R survfit()).}
+
+\wordfield{Options}{}\par\nopagebreak
+\begin{optiontable}
+\code{time=} & \\
+\code{event=} & \\
+\code{colour=} & \\
+\code{confidence\_\allowbreak{}band=} & normally \code{False}\\
+\code{censor\_\allowbreak{}marks=} & normally \code{True}\\
+\code{at\_\allowbreak{}risk\_\allowbreak{}table=} & normally \code{False}\\
+\code{transparency=} & \\
+\code{thickness=} & \\
+\end{optiontable}
+
+\wordfield{Underneath}{NumPy (Kaplan-Meier), drawn with matplotlib}
+\wordfield{Example you can run}{(it uses the practice table \code{trial})}\par\nopagebreak
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+trial = sdata.example("trial")
+chart = sdata.chart(trial)
+chart.survival_curves(time="days", event="died", colour="treatment", confidence_band=True)
+chart.save("survival_curves.png")
+\end{lstlisting}
+\unchapter{Help words}{family:help}
+Words that teach simplydata.
+\unsection{Planning a study}{group:Planning-a-study}
+\wordentry{sdata.how\_many\_needed()}{word:sdata.how-many-needed}
+How many values (in each group) does a study need to find a real difference?
+
+\codeline{sdata.how\_many\_needed(effect\_size=0.5)}\enspace (two groups, a medium difference: 64 in each)\\
+\code{test=} is the simplydata test the study will use: \code{\textquotedbl{}compare\_\allowbreak{}averages\textquotedbl{}} (2 groups: t-test; \code{groups=3} or more: ANOVA with Cohen's f), \code{\textquotedbl{}compare\_\allowbreak{}before\_\allowbreak{}after\textquotedbl{}} (paired, Cohen's d of the changes), \code{\textquotedbl{}compare\_\allowbreak{}average\_\allowbreak{}to\textquotedbl{}} (one sample), \code{\textquotedbl{}compare\_\allowbreak{}counts\textquotedbl{}} (chi-square with Cohen's w; \code{groups=}(groups, kinds of outcome)) or \code{\textquotedbl{}correlation\_\allowbreak{}between\textquotedbl{}} (r; the answer is pairs). The size of the difference: \code{effect\_\allowbreak{}size=} (Cohen's d, f, w or r, the sentence says which), or \code{difference=} and \code{spread=} (the standard deviation) for the t-tests. \code{power=} is the chance you want to find it (0.8 is usual); \code{significance=} is the p-value limit (0.05); \code{sides=1} looks only in the direction you expect. The t-tests use the usual equal-spread formula (R \code{power.\allowbreak{}t.\allowbreak{}test()}), very close to Welch's t-test when the groups are the same size; the others match R pwr. The number is rounded UP to a whole number; the exact value is in the result. Gives back a one-row table.
+
+\wordfield{Options}{}\par\nopagebreak
+\begin{optiontable}
+\code{test=} & normally \code{\textquotedbl{}compare\_\allowbreak{}averages\textquotedbl{}}\\
+\code{effect\_\allowbreak{}size=} & \\
+\code{difference=} & \\
+\code{spread=} & \\
+\code{power=} & normally \code{0.\allowbreak{}8}\\
+\code{significance=} & normally \code{0.\allowbreak{}05}\\
+\code{groups=} & normally \code{2}\\
+\code{sides=} & normally \code{2}\\
+\end{optiontable}
+
+\wordfield{Underneath}{SciPy (stats.nct, ncf, ncx2 and norm, and optimize.brentq)}
+\wordfield{Example you can run}{}\par\nopagebreak
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+sdata.how_many_needed(effect_size=0.5, power=0.8)
+sdata.how_many_needed(test="compare_averages", difference=5, spread=10)
+sdata.how_many_needed(test="compare_averages", effect_size=0.25, groups=3)
+\end{lstlisting}
+\wordentry{sdata.chance\_to\_find()}{word:sdata.chance-to-find}
+What chance does a study have to find a real difference of a given size (its power)?
+
+\codeline{sdata.chance\_to\_find(effect\_size=0.5, values\_per\_group=30)}\enspace (two groups of 30: about 48 \%)\\
+The same options as \code{how\_\allowbreak{}many\_\allowbreak{}needed()}, with \code{values\_\allowbreak{}per\_\allowbreak{}group=} instead of \code{power=}: the number in each group (pairs for \code{compare\_\allowbreak{}before\_\allowbreak{}after} and \code{correlation\_\allowbreak{}between}; all the values for \code{compare\_\allowbreak{}average\_\allowbreak{}to}). The t-tests use the usual equal-spread formula (R \code{power.\allowbreak{}t.\allowbreak{}test()}), very close to Welch's t-test when the groups are the same size; the others match R pwr. Gives back a one-row table.
+
+\wordfield{Options}{}\par\nopagebreak
+\begin{optiontable}
+\code{test=} & normally \code{\textquotedbl{}compare\_\allowbreak{}averages\textquotedbl{}}\\
+\code{effect\_\allowbreak{}size=} & \\
+\code{difference=} & \\
+\code{spread=} & \\
+\code{values\_\allowbreak{}per\_\allowbreak{}group=} & \\
+\code{significance=} & normally \code{0.\allowbreak{}05}\\
+\code{groups=} & normally \code{2}\\
+\code{sides=} & normally \code{2}\\
+\end{optiontable}
+
+\wordfield{Underneath}{SciPy (stats.nct, ncf, ncx2 and norm)}
+\wordfield{Example you can run}{}\par\nopagebreak
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+sdata.chance_to_find(effect_size=0.5, values_per_group=20)
+\end{lstlisting}
+\unchapter{Table words}{family:table}
+Steps on a table: \code{table = sdata.table(...)}, then \code{table.keep\_rows(...)}. Table words work the same on pandas and Polars tables.
 \unsection{Combine and reshape}{group:Combine-and-reshape}
 \wordentry{table.join\_with()}{word:table.join-with}
 Bring in the columns of another table, matching rows on a column such as a name.
@@ -7164,6 +8255,91 @@ table.steps()
 \printedoutput{output/solution15_task3.txt}
 \solutionanswer{\code{steps()} lists each change in plain words, in order; those lines are a first draft of the methods part of a report.}
 \par\noindent{\small\sffamily\hyperref[lesson:15]{Back to lesson 15}}
+\unsection{Lesson 16: Models: explain one column from several others}{solutions:16}
+\solutiontask{1}{Explain \code{\textquotedbl{}marks\textquotedbl{}} using \code{\textquotedbl{}hours\textquotedbl{}} and \code{\textquotedbl{}school\textquotedbl{}} (school as a column of groups). Which schools differ from School A, and is school as a whole important?}
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+table = sdata.table(sdata.example("school"))
+table.explain("marks", using=["hours", "school"])
+\end{lstlisting}
+\printedoutput{output/solution16_task1.txt}
+\solutionanswer{School as a whole matters a lot (F = 10.4, p \textless{} 0.0001); School D scores about 15 marks more than School A for the same hours of study. \code{grouped\_\allowbreak{}by=} would instead treat the schools as a sample of many possible schools.}
+\solutiontask{2}{Explain \code{\textquotedbl{}passed\textquotedbl{}} using \code{\textquotedbl{}hours\textquotedbl{}} and \code{\textquotedbl{}sleep\textquotedbl{}} with \code{outcome=\textquotedbl{}yes or no\textquotedbl{}}.}
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+table = sdata.table(sdata.example("school"))
+table.explain("passed", using=["hours", "sleep"], outcome="yes or no")
+\end{lstlisting}
+\printedoutput{output/solution16_task2.txt}
+\solutionanswer{Each extra hour of study multiplies the odds of passing by 1.69 and each extra hour of sleep by 1.98; both are unlikely to be chance.}
+\solutiontask{3}{Explain \code{\textquotedbl{}days\_\allowbreak{}absent\textquotedbl{}} using \code{\textquotedbl{}hours\textquotedbl{}} and \code{\textquotedbl{}breakfast\textquotedbl{}} with \code{outcome=\textquotedbl{}counts\textquotedbl{}}. Does breakfast matter?}
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+table = sdata.table(sdata.example("school"))
+table.explain("days_absent", using=["hours", "breakfast"], outcome="counts")
+\end{lstlisting}
+\printedoutput{output/solution16_task3.txt}
+\solutionanswer{Breakfast could easily be chance (rate ratio 0.94, p = 0.45); study hours matter (rate ratio 0.86 for each hour).}
+\par\noindent{\small\sffamily\hyperref[lesson:16]{Back to lesson 16}}
+\unsection{Lesson 17: Patterns across many columns}{solutions:17}
+\solutiontask{1}{Add principal components of \code{\textquotedbl{}hours\textquotedbl{}}, \code{\textquotedbl{}sleep\textquotedbl{}}, \code{\textquotedbl{}marks\textquotedbl{}} and \code{\textquotedbl{}days\_\allowbreak{}absent\textquotedbl{}} in \code{sdata.\allowbreak{}example(\textquotedbl{}school\textquotedbl{})}. Which columns weigh most in PC1?}
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+table = sdata.table(sdata.example("school"))
+table.add_principal_components(columns=["hours", "sleep", "marks", "days_absent"])
+\end{lstlisting}
+\printedoutput{output/solution17_task1.txt}
+\solutionanswer{PC1 (50 \% of the spread) is mostly hours, marks and, the other way, days absent: pupils who study more get better marks and miss fewer days. PC2 is mostly sleep.}
+\solutiontask{2}{Make an NMDS map of the meadow in 3 dimensions. Is the stress lower than in 2?}
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+table = sdata.table(sdata.example("meadow"))
+table.add_nmds(measure="bray-curtis", dimensions=3)
+\end{lstlisting}
+\printedoutput{output/solution17_task2.txt}
+\solutionanswer{Yes: the stress drops from 0.195 to 0.127. That is still in the usable band (good is below 0.1), but the map keeps the distances clearly better.}
+\solutiontask{3}{Do the three fields differ in make-up? Use \code{compare\_\allowbreak{}profiles} with \code{for\_\allowbreak{}each=\textquotedbl{}field\textquotedbl{}}.}
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+table = sdata.table(sdata.example("meadow"))
+table.compare_profiles(for_each="field")
+\end{lstlisting}
+\printedoutput{output/solution17_task3.txt}
+\solutionanswer{The fields explain 12 \% of the differences (p = 0.037), much less than grazing, and they do not differ in spread (p = 0.54).}
+\solutiontask{4}{Cluster the meadow plots with \code{method=\textquotedbl{}hierarchical\textquotedbl{}}. Do the clusters match the grazing?}
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+table = sdata.table(sdata.example("meadow"))
+table.add_clusters(how_many=2, method="hierarchical")
+table.count_rows(for_each="cluster", across="grazed")
+\end{lstlisting}
+\printedoutput{output/solution17_task4.txt}
+\solutionanswer{Exactly: cluster 1 is the 15 grazed plots and cluster 2 the 15 ungrazed ones.}
+\par\noindent{\small\sffamily\hyperref[lesson:17]{Back to lesson 17}}
+\unsection{Lesson 18: Survival, and planning a study}{solutions:18}
+\solutiontask{1}{Explain the risk of dying from \code{\textquotedbl{}age\textquotedbl{}} alone with \code{explain\_\allowbreak{}survival}.}
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+table = sdata.table(sdata.example("trial"))
+table.explain_survival(time="days", event="died", using="age")
+\end{lstlisting}
+\printedoutput{output/solution18_task1.txt}
+\solutionanswer{Each year of age multiplies the risk by 1.05 (95 \% CI 1.03 to 1.08), p \textless{} 0.0001.}
+\solutiontask{2}{How many pairs does a before/after study need to find a small change (\code{effect\_\allowbreak{}size=0.\allowbreak{}3})?}
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+sdata.how_many_needed(test="compare_before_after", effect_size=0.3)
+\end{lstlisting}
+\printedoutput{output/solution18_task2.txt}
+\solutionanswer{90 pairs, each with a before and an after value.}
+\solutiontask{3}{What is the chance to find a medium difference (\code{effect\_\allowbreak{}size=0.\allowbreak{}25}) between 3 groups with 30 values in each?}
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+sdata.chance_to_find(test="compare_averages", effect_size=0.25, groups=3, values_per_group=30)
+\end{lstlisting}
+\printedoutput{output/solution18_task3.txt}
+\solutionanswer{Only 54 \%: too small. \code{how\_\allowbreak{}many\_\allowbreak{}needed} with \code{groups=3} tells you how many to aim for.}
+\par\noindent{\small\sffamily\hyperref[lesson:18]{Back to lesson 18}}
 
 \backmatter
 
@@ -7174,11 +8350,15 @@ Every word and option, A to Z, with the page of its dictionary entry. Other spel
 \indexline{word:nums.add}{nums.add()}
 \indexline{word:table.add-adjusted-p-value-column}{table.add\_adjusted\_p\_value\_column()}
 \indexline{word:table.add-change-column}{table.add\_change\_column()}
+\indexline{word:table.add-clusters}{table.add\_clusters()}
 \indexline{word:table.add-column}{table.add\_column()}
 \indexline{word:table.add-date-part-column}{table.add\_date\_part\_column()}
 \indexline{word:table.add-group-column}{table.add\_group\_column()}
 \indexline{word:table.add-is-empty-column}{table.add\_is\_empty\_column()}
+\indexline{word:table.add-nmds}{table.add\_nmds()}
+\indexline{word:table.add-predicted-column}{table.add\_predicted\_column()}
 \indexline{word:table.add-previous-value-column}{table.add\_previous\_value\_column()}
+\indexline{word:table.add-principal-components}{table.add\_principal\_components()}
 \indexline{word:table.add-rank-column}{table.add\_rank\_column()}
 \indexline{word:table.add-rolling-column}{table.add\_rolling\_column()}
 \indexline{word:table.add-rows-from}{table.add\_rows\_from()}
@@ -7199,13 +8379,16 @@ Every word and option, A to Z, with the page of its dictionary entry. Other spel
 \indexline{word:boxes}{chart.box()}
 \indexline{word:boxes}{chart.boxes()}
 \indexline{word:caption-bottom}{chart.caption\_bottom()}
+\indexline{word:sdata.chance-to-find}{sdata.chance\_to\_find()}
 \indexline{word:table.change-column}{table.change\_column()}
 \indexline{word:nums.chart}{nums.chart()}
 \indexline{word:sdata.chart}{sdata.chart()}
 \indexline{word:table.chart}{table.chart()}
 \indexline{word:colour}{chart.color()}
+\indexline{word:colour-scale}{chart.color\_scale()}
 \indexline{word:colours}{chart.colors()}
 \indexline{word:colour}{chart.colour()}
+\indexline{word:colour-scale}{chart.colour\_scale()}
 \indexline{word:colours}{chart.colours()}
 \indexline{word:grid.column}{grid.column()}
 \indexline{word:table.column}{table.column()}
@@ -7214,8 +8397,13 @@ Every word and option, A to Z, with the page of its dictionary entry. Other spel
 \indexline{word:table.compare-averages}{table.compare\_averages()}
 \indexline{word:table.compare-before-after}{table.compare\_before\_after()}
 \indexline{word:table.compare-counts}{table.compare\_counts()}
+\indexline{word:table.compare-counts-to}{table.compare\_counts\_to()}
 \indexline{word:table.compare-each-pair}{table.compare\_each\_pair()}
+\indexline{word:table.compare-percent-to}{table.compare\_percent\_to()}
+\indexline{word:table.compare-profiles}{table.compare\_profiles()}
 \indexline{word:table.compare-shape-to}{table.compare\_shape\_to()}
+\indexline{word:table.compare-spreads}{table.compare\_spreads()}
+\indexline{word:table.compare-survival}{table.compare\_survival()}
 \indexline{word:contour}{chart.contour()}
 \indexline{word:table.correlation-between}{table.correlation\_between()}
 \indexline{word:nums.count}{nums.count()}
@@ -7228,8 +8416,10 @@ Every word and option, A to Z, with the page of its dictionary entry. Other spel
 \indexline{word:nums.count-empty-numbers}{nums.count\_empty\_numbers()}
 \indexline{word:grid.count-rows}{grid.count\_rows()}
 \indexline{word:table.count-rows}{table.count\_rows()}
+\indexline{word:cumulative-share}{chart.cumulative\_share()}
 \indexline{word:density}{chart.density()}
 \indexline{word:table.describe-columns}{table.describe\_columns()}
+\indexline{word:table.distances-between-rows}{table.distances\_between\_rows()}
 \indexline{word:nums.divide-by}{nums.divide\_by()}
 \indexline{word:dots}{chart.dots()}
 \indexline{word:dots-3d}{chart.dots\_3d()}
@@ -7238,6 +8428,8 @@ Every word and option, A to Z, with the page of its dictionary entry. Other spel
 \indexline{word:error-bars}{chart.error\_bars()}
 \indexline{word:sdata.example}{sdata.example()}
 \indexline{word:nums.exp}{nums.exp()}
+\indexline{word:table.explain}{table.explain()}
+\indexline{word:table.explain-survival}{table.explain\_survival()}
 \indexline{word:table.fill-empty-cells}{table.fill\_empty\_cells()}
 \indexline{word:nums.fill-empty-numbers}{nums.fill\_empty\_numbers()}
 \indexline{word:fit-curve}{chart.fit\_curve()}
@@ -7246,6 +8438,7 @@ Every word and option, A to Z, with the page of its dictionary entry. Other spel
 \indexline{word:table.fit-straight-line}{table.fit\_straight\_line()}
 \indexline{word:flip-x}{chart.flip\_x()}
 \indexline{word:flip-y}{chart.flip\_y()}
+\indexline{word:font-name}{chart.font\_name()}
 \indexline{word:font-size}{chart.font\_size()}
 \indexline{word:sdata.grid}{sdata.grid()}
 \indexline{word:heatmap}{chart.heatmap()}
@@ -7253,6 +8446,7 @@ Every word and option, A to Z, with the page of its dictionary entry. Other spel
 \indexline{word:hide-grid}{chart.hide\_grid()}
 \indexline{word:hide-legend}{chart.hide\_legend()}
 \indexline{word:histogram}{chart.histogram()}
+\indexline{word:sdata.how-many-needed}{sdata.how\_many\_needed()}
 \indexline{word:table.join-with}{table.join\_with()}
 \indexline{word:table.keep-biggest-rows}{table.keep\_biggest\_rows()}
 \indexline{word:table.keep-columns}{table.keep\_columns()}
@@ -7278,6 +8472,7 @@ Every word and option, A to Z, with the page of its dictionary entry. Other spel
 \indexline{word:lines}{chart.line()}
 \indexline{word:line-at-x}{chart.line\_at\_x()}
 \indexline{word:line-at-y}{chart.line\_at\_y()}
+\indexline{word:line-with-slope}{chart.line\_with\_slope()}
 \indexline{word:lines}{chart.lines()}
 \indexline{word:nums.log}{nums.log()}
 \indexline{word:log-scale-x}{chart.log\_scale\_x()}
@@ -7289,6 +8484,7 @@ Every word and option, A to Z, with the page of its dictionary entry. Other spel
 \indexline{word:table.make-uppercase}{table.make\_uppercase()}
 \indexline{word:nums.median}{nums.median()}
 \indexline{word:table.median-of}{table.median\_of()}
+\indexline{word:table.most-common-of}{table.most\_common\_of()}
 \indexline{word:names-on-dots}{chart.names\_on\_dots()}
 \indexline{word:note}{chart.note()}
 \indexline{word:grid.number-at}{grid.number\_at()}
@@ -7306,9 +8502,12 @@ Every word and option, A to Z, with the page of its dictionary entry. Other spel
 \indexline{word:sdata.pairs}{sdata.pairs()}
 \indexline{word:table.percent-of}{table.percent\_of()}
 \indexline{word:nums.percentile}{nums.percentile()}
+\indexline{word:table.percentile-of}{table.percentile\_of()}
 \indexline{word:pie}{chart.pie()}
 \indexline{word:polar}{chart.polar()}
 \indexline{word:nums.power}{nums.power()}
+\indexline{word:table.principal-components-of}{table.principal\_components\_of()}
+\indexline{word:qq-dots}{chart.qq\_dots()}
 \indexline{word:sdata.random-numbers}{sdata.random\_numbers()}
 \indexline{word:range-x}{chart.range\_x()}
 \indexline{word:range-y}{chart.range\_y()}
@@ -7372,9 +8571,13 @@ Every word and option, A to Z, with the page of its dictionary entry. Other spel
 \indexline{word:nums.subtract}{nums.subtract()}
 \indexline{word:table.summary-of}{table.summary\_of()}
 \indexline{word:surface}{chart.surface()}
+\indexline{word:survival-curves}{chart.survival\_curves()}
+\indexline{word:table.survival-over-time}{table.survival\_over\_time()}
 \indexline{word:grid.swap-rows-and-columns}{grid.swap\_rows\_and\_columns()}
 \indexline{word:nums.table}{nums.table()}
 \indexline{word:sdata.table}{sdata.table()}
+\indexline{word:tick-format-x}{chart.tick\_format\_x()}
+\indexline{word:tick-format-y}{chart.tick\_format\_y()}
 \indexline{word:ticks-x}{chart.ticks\_x()}
 \indexline{word:ticks-y}{chart.ticks\_y()}
 \indexline{word:nums.times}{nums.times()}

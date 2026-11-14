@@ -1,4 +1,4 @@
-"""Learning simplydata: sdata.words(), sdata.help("bars") and sdata.lesson(1) ... sdata.lesson(15).
+"""Learning simplydata: sdata.words(), sdata.help("bars") and sdata.lesson(1) ... sdata.lesson(18).
 
 The word list is built from the real words and their docstrings, so it cannot go out of
 date. Only the grouping (GROUPS) and the runnable examples (HELP_EXAMPLES, LESSONS) are
@@ -28,13 +28,15 @@ GROUPS = [
     ("Chart types", ["bars", "lines", "dots", "area", "histogram", "boxes", "violins",
                      "heatmap", "pie", "polar", "contour", "surface", "dots_3d", "band", "empty_cells"]),
     ("Statistics", ["show=", "error=", "error_bars", "fit_line", "fit_curve", "smooth_line",
-                    "density", "count_bars", "all_dots", "side_histograms", "sdata.pairs"]),
-    ("Lines and shading", ["line_at_x", "line_at_y", "shade_between_x", "shade_between_y"]),
+                    "density", "count_bars", "all_dots", "side_histograms", "qq_dots",
+                    "cumulative_share", "sdata.pairs"]),
+    ("Lines and shading", ["line_at_x", "line_at_y", "line_with_slope", "shade_between_x", "shade_between_y"]),
     ("Words on the chart", ["title_top", "caption_bottom", "label_x", "label_y", "note",
-                            "numbers_on_bars", "names_on_dots", "font_size"]),
+                            "numbers_on_bars", "names_on_dots", "font_size", "font_name"]),
     ("Axes", ["range_x", "range_y", "log_scale_x", "log_scale_y", "ticks_x", "ticks_y",
-              "rotate_labels_x", "rotate_labels_y", "second_y", "flip_x", "flip_y"]),
-    ("Colours and look", ["colour", "colours", "style", "size", "show_grid", "hide_grid",
+              "rotate_labels_x", "rotate_labels_y", "tick_format_x", "tick_format_y", "second_y",
+              "flip_x", "flip_y"]),
+    ("Colours and look", ["colour", "colours", "colour_scale", "style", "size", "show_grid", "hide_grid",
                           "legend_top", "legend_bottom", "legend_left", "legend_right",
                           "hide_legend", "show_legend", "label_legend", "label_colour_bar"]),
     ("Order of groups", ["order_x", "order_y", "order_legend"]),
@@ -61,10 +63,19 @@ GROUPS = [
     ("Summaries", ["table.count_rows", "table.count_each", "table.average_of", "table.median_of",
                    "table.total_of", "table.smallest_of", "table.biggest_of",
                    "table.standard_deviation_of", "table.summary_of", "table.percent_of",
-                   "table.count_different_values", "table.correlation_between"]),
+                   "table.count_different_values", "table.percentile_of", "table.most_common_of",
+                   "table.correlation_between"]),
     ("Statistical tests", ["table.compare_averages", "table.compare_each_pair", "table.compare_before_after",
                            "table.compare_average_to", "table.compare_counts", "table.fit_straight_line",
-                           "table.fit_formula", "table.compare_shape_to", "table.add_adjusted_p_value_column"]),
+                           "table.fit_formula", "table.compare_shape_to", "table.add_adjusted_p_value_column",
+                           "table.compare_spreads", "table.compare_counts_to", "table.compare_percent_to"]),
+    ("Models", ["table.explain", "table.add_predicted_column"]),
+    ("Patterns across columns", ["table.add_principal_components", "table.principal_components_of",
+                                 "table.add_clusters", "table.distances_between_rows", "table.add_nmds",
+                                 "table.compare_profiles"]),
+    ("Survival", ["table.survival_over_time", "table.compare_survival", "table.explain_survival",
+                  "survival_curves"]),
+    ("Planning a study", ["sdata.how_many_needed", "sdata.chance_to_find"]),
     ("Combine and reshape", ["table.join_with", "table.add_rows_from", "table.turn_columns_into_rows",
                              "table.turn_rows_into_columns"]),
     ("Undo and finish", ["table.undo", "table.steps", "table.start_again", "table.save",
@@ -234,6 +245,8 @@ HELP_EXAMPLES = {
     "fit_curve": _ex("weather", 'chart.dots(x="month_number", y="temperature", colour="city")\nchart.fit_curve(degree=2)', "fit_curve"),
     "smooth_line": _ex("weather", 'chart.dots(x="month_number", y="rain", colour="city")\nchart.smooth_line()', "smooth_line"),
     "density": _ex("marks", 'chart.density(x="marks", colour="class")', "density"),
+    "qq_dots": _ex("marks", 'chart.qq_dots("marks")', "qq_dots"),
+    "cumulative_share": _ex("marks", 'chart.cumulative_share(x="marks", colour="class")', "cumulative_share"),
     "count_bars": _ex("fruit", 'chart.count_bars(x="fruit", colour="shop")', "count_bars"),
     "all_dots": _ex("marks", 'chart.boxes(x="class", y="marks")\nchart.all_dots(x="class", y="marks")', "all_dots"),
     "side_histograms": _ex("marks", 'chart.dots(x="hours", y="marks")\nchart.side_histograms()', "side_histograms"),
@@ -246,6 +259,7 @@ HELP_EXAMPLES = {
     # lines and shading
     "line_at_x": _ex("growth", 'chart.lines(x="year", y="population", colour="country")\nchart.line_at_x(2010, label="2010")', "line_at_x"),
     "line_at_y": _ex("marks", 'chart.bars(x="name", y="marks")\nchart.line_at_y(50, label="pass mark")\nchart.rotate_labels_x()', "line_at_y"),
+    "line_with_slope": _ex("marks", 'chart.dots(x="hours", y="hours")\nchart.line_with_slope(1, through=(0, 0))', "line_with_slope"),
     "shade_between_x": _ex("weather", 'chart.lines(x="month_number", y="temperature", colour="city")\nchart.shade_between_x(6, 8)', "shade_between_x"),
     "shade_between_y": _ex("marks", 'chart.dots(x="hours", y="marks")\nchart.shade_between_y(40, 60)', "shade_between_y"),
     # words on the chart
@@ -264,11 +278,14 @@ HELP_EXAMPLES = {
         chart.save("names_on_dots.png")"""),
     "numbers_on_bars": _ex("fruit", 'chart.bars(x="fruit", y="count", show="total")\nchart.numbers_on_bars()', "numbers_on_bars"),
     "font_size": _ex("marks", 'chart.bars(x="class", y="marks")\nchart.title_top("Big text")\nchart.font_size(18)', "font_size"),
+    "font_name": _ex("marks", 'chart.bars(x="class", y="marks")\nchart.font_name("DejaVu Serif")', "font_name"),
     # axes
     "range_x": _ex("marks", 'chart.dots(x="hours", y="marks")\nchart.range_x(0, 10)', "range_x"),
     "range_y": _ex("marks", 'chart.bars(x="class", y="marks")\nchart.range_y(0, 100)', "range_y"),
     "log_scale_x": _ex("growth", 'chart.dots(x="population", y="forest", colour="country")\nchart.log_scale_x()', "log_scale_x"),
     "log_scale_y": _ex("growth", 'chart.lines(x="year", y="population", colour="country")\nchart.log_scale_y()', "log_scale_y"),
+    "tick_format_x": _ex("growth", 'chart.dots(x="population", y="forest")\nchart.tick_format_x("thousands")', "tick_format_x"),
+    "tick_format_y": _ex("growth", 'chart.lines(x="year", y="forest", colour="country")\nchart.tick_format_y("percent")', "tick_format_y"),
     "ticks_x": _ex("weather", 'chart.lines(x="month_number", y="rain", colour="city")\n'
                    'chart.ticks_x(1, 4, 7, 10, labels=["Jan", "Apr", "Jul", "Oct"])', "ticks_x"),
     "ticks_y": _ex("marks", 'chart.bars(x="class", y="marks")\nchart.ticks_y(0, 25, 50, 75)', "ticks_y"),
@@ -279,6 +296,7 @@ HELP_EXAMPLES = {
     "flip_y": _ex("island", 'chart.contour(x="east", y="north", z="height")\nchart.flip_y()', "flip_y"),
     # colours and look
     "colour": _ex("marks", 'chart.bars(x="class", y="marks")\nchart.colour("purple")', "colour"),
+    "colour_scale": _ex("weather", 'chart.heatmap(x="month", y="city", value="rain")\nchart.colour_scale("magma")', "colour_scale"),
     "colours": _ex("marks", 'chart.bars(x="subject", y="marks", colour="class")\nchart.colours("orange", "teal", "purple")', "colours"),
     "style": _ex("marks", 'chart.bars(x="subject", y="marks", colour="class")\nchart.style("school")', "style"),
     "size": _ex("weather", 'chart.lines(x="month", y="rain", colour="city")\nchart.size(width=17, height=8, unit="cm")', "size"),
@@ -425,6 +443,8 @@ HELP_EXAMPLES = {
                                      'show=["average", "standard deviation", "count"])'),
     "table.percent_of": _tx("marks", 'table.percent_of("marks", above=60, for_each="class")'),
     "table.count_different_values": _tx("marks", 'table.count_different_values("name", for_each="class")'),
+    "table.percentile_of": _tx("marks", 'table.percentile_of("marks", 90, for_each="class")'),
+    "table.most_common_of": _tx("school", 'table.most_common_of("days_absent", for_each="school")'),
     "table.correlation_between": _tx("marks", 'table.correlation_between("hours", "marks")'),
     # statistical tests
     "table.compare_averages": _tx("marks", 'result = table.compare_averages("marks", for_each="class")\n'
@@ -441,6 +461,9 @@ HELP_EXAMPLES = {
     "table.fit_straight_line": _tx("marks", 'table.fit_straight_line(x="hours", y="marks")'),
     "table.fit_formula": _tx("growth", 'table.keep_rows("country", equal_to="Applia")\n'
                                        'table.fit_formula("population = a * exp(b * (year - 2000))")'),
+    "table.compare_spreads": _tx("marks", 'table.compare_spreads("marks", for_each="class")'),
+    "table.compare_counts_to": _tx("school", 'table.compare_counts_to("breakfast", expected={"yes": 0.6, "no": 0.4})'),
+    "table.compare_percent_to": _tx("school", 'table.compare_percent_to("passed", value="yes", percent=50)'),
     "table.compare_shape_to": _tx("marks", 'table.compare_shape_to("marks", "normal", for_each="class")'),
     "table.add_adjusted_p_value_column": _tx("marks", 'table = table.correlation_between("hours", "marks", "height", '
                                                       'show="each pair")\n'
@@ -468,6 +491,51 @@ HELP_EXAMPLES = {
                                 'chart.save("maths_marks.png")'),
     "table.as_pandas": _tx("marks", 'table.keep_rows("marks", above=50)\ndf = table.as_pandas()\nprint(type(df))'),
     "table.as_polars": _tx("marks", 'table.keep_rows("marks", above=50)\ndf = table.as_polars()\nprint(type(df))'),
+    # models
+    "table.explain": _tx("school", """\
+        table.explain("marks", using=["hours", "sleep", "breakfast"])
+        table.explain("passed", using=["hours", "breakfast"], outcome="yes or no")
+        table.explain("marks", using=["hours", "breakfast"], grouped_by="school")"""),
+    "table.add_predicted_column": _tx("school", """\
+        table.add_predicted_column("marks", using=["hours", "breakfast"])
+        table.show_first_rows(5)"""),
+    # patterns across columns
+    "table.add_principal_components": _tx("meadow", """\
+        table.add_principal_components(how_many=2)
+        chart = table.chart()
+        chart.dots(x="PC1", y="PC2", colour="grazed")
+        chart.save("meadow_pca.png")"""),
+    "table.principal_components_of": _tx("meadow", """\
+        components = table.principal_components_of()
+        components.show()"""),
+    "table.add_clusters": _tx("meadow", """\
+        table.add_clusters(how_many=2)
+        table.count_rows(for_each="cluster", across="grazed")"""),
+    "table.distances_between_rows": _tx("meadow", """\
+        distances = table.distances_between_rows(measure="bray-curtis", names="plot")
+        distances.show_first_rows(3)"""),
+    "table.add_nmds": _tx("meadow", """\
+        table.add_nmds(measure="bray-curtis")
+        chart = table.chart()
+        chart.dots(x="NMDS1", y="NMDS2", colour="grazed")
+        chart.save("meadow_nmds.png")"""),
+    "table.compare_profiles": _tx("meadow", 'table.compare_profiles(for_each="grazed")'),
+    # survival
+    "table.survival_over_time": _tx("trial", 'table.survival_over_time(time="days", event="died", for_each="treatment")'),
+    "table.compare_survival": _tx("trial", 'table.compare_survival(time="days", event="died", for_each="treatment")'),
+    "table.explain_survival": _tx("trial", 'table.explain_survival(time="days", event="died", '
+                                           'using=["treatment", "age"])'),
+    "survival_curves": _ex("trial", 'chart.survival_curves(time="days", event="died", colour="treatment", '
+                                    'confidence_band=True)', "survival_curves"),
+    # planning a study
+    "sdata.how_many_needed": textwrap.dedent("""\
+        import simplydata as sdata
+        sdata.how_many_needed(effect_size=0.5, power=0.8)
+        sdata.how_many_needed(test="compare_averages", difference=5, spread=10)
+        sdata.how_many_needed(test="compare_averages", effect_size=0.25, groups=3)"""),
+    "sdata.chance_to_find": textwrap.dedent("""\
+        import simplydata as sdata
+        sdata.chance_to_find(effect_size=0.5, values_per_group=20)"""),
     # numbers: make and look
     "sdata.numbers": textwrap.dedent("""\
         import simplydata as sdata
@@ -1195,6 +1263,22 @@ LESSONS = [
                 ('chart.label_legend("Subject")', "The name above the legend (normally the column name)."),
                 ('chart.save("lesson3_order.png")', "Save it."),
             ]),
+            ("Numbers can have colours too: a colour scale. And dots that overlap are easier to see when "
+             "they let the others show through.", [
+                ("import simplydata as sdata", "Load simplydata."),
+                ('weather = sdata.example("weather")', "Get the weather table."),
+                ("chart = sdata.chart(weather)", "Start a chart."),
+                ('chart.heatmap(x="month", y="city", value="temperature")', "One square per city and month, "
+                                                                           "coloured by temperature."),
+                ('chart.colour_scale("blue to red", middle=10)', "Blue below 10 °C, red above, white at 10. "
+                                                                "middle= makes a scale that goes two ways."),
+                ('chart.save("lesson3_colour_scale.png")', "Save it."),
+                ('marks = sdata.example("marks")', "Get the marks table."),
+                ("dots = sdata.chart(marks)", "A second chart."),
+                ('dots.dots(x="hours", y="marks", colour="class", transparency=0.5)',
+                 "transparency=0.5 makes each dot half see-through, so dots on top of each other show."),
+                ('dots.save("lesson3_transparency.png")', "Save it."),
+            ]),
         ],
         notes=[
             'colour="class" (a column) gives each group a colour. colour="red" (a colour) makes '
@@ -1238,7 +1322,7 @@ LESSONS = [
              "Light, bright colours stand out on a dark background; dark colours such as navy "
              "would almost disappear."),
         ],
-        words=["colours", "colour", "legend_bottom", "legend_top", "hide_legend", "style", "lines",
+        words=["colours", "colour", "colour_scale", "legend_bottom", "legend_top", "hide_legend", "style", "lines",
                "order_x", "order_legend", "label_legend"],
     ),
     dict(
@@ -1376,6 +1460,20 @@ LESSONS = [
                                                              "(a kernel density estimate)."),
                 ('chart.save("lesson5_density.png")', "Save it."),
             ]),
+            ("Two more ways to see the shape of values: are they bell-shaped, and what share lies below "
+             "each value?", [
+                ("import simplydata as sdata", "Load simplydata."),
+                ('marks = sdata.example("marks")', "Get the marks table."),
+                ("chart = sdata.chart(marks)", "Start a chart."),
+                ('chart.qq_dots("marks")', "A Q-Q plot: if the marks follow a bell curve (normal), the dots "
+                                          "lie close to the straight line."),
+                ('chart.save("lesson5_qq.png")', "Save it."),
+                ("shares = sdata.chart(marks)", "A second chart."),
+                ('shares.cumulative_share(x="marks", colour="class")',
+                 "For each mark, the share of children with that mark or less (an ECDF). The class whose "
+                 "line is further right did better."),
+                ('shares.save("lesson5_cumulative.png")', "Save it."),
+            ]),
         ],
         notes=[
             "Average or median? The median is the middle value when the values are put in order. "
@@ -1426,7 +1524,8 @@ LESSONS = [
                 chart.save("lesson5_fit_curve.png")"""),
              "Each city gets a curve with one bend: warm in the middle of the year, cold at both ends."),
         ],
-        words=["show=", "error=", "numbers_on_bars", "fit_line", "density", "fit_curve", "smooth_line"],
+        words=["show=", "error=", "numbers_on_bars", "fit_line", "density", "fit_curve", "smooth_line",
+               "qq_dots", "cumulative_share"],
     ),
     dict(
         title="Axes and reference lines",
@@ -1475,6 +1574,22 @@ LESSONS = [
                 ('chart.label_y("Temperature (°C)")', "Name the y-axis."),
                 ('chart.save("lesson6_band.png")', "Save it."),
             ]),
+            ("Axes can say what their numbers mean, and a 1:1 line shows where two columns agree.", [
+                ("import simplydata as sdata", "Load simplydata."),
+                ('growth = sdata.example("growth")', "Get the growth table."),
+                ("chart = sdata.chart(growth)", "Start a chart."),
+                ('chart.lines(x="year", y="forest", colour="country")', "The forest of each country, in %."),
+                ('chart.tick_format_y("percent")', 'Write the y numbers as 40 %, 50 % ... ("thousands", '
+                                                   '"scientific" and dates such as "Jan 2026" work too).'),
+                ('chart.save("lesson6_percent.png")', "Save it."),
+                ('guesses = {"measured": [12, 18, 25, 31, 40], "predicted": [14, 17, 27, 29, 43]}',
+                 "Five measured values and what a model predicted for them."),
+                ("check = sdata.chart(guesses)", "A second chart."),
+                ('check.dots(x="measured", y="predicted")', "One dot per value."),
+                ('check.line_with_slope(1, through=(0, 0), label="1:1")',
+                 "The 1:1 line: dots on it were predicted exactly; above it, too high."),
+                ('check.save("lesson6_one_to_one.png")', "Save it."),
+            ]),
         ],
         notes=[
             "Every axis word ends in _x or _y: range_x, ticks_x, log_scale_x, line_at_x, "
@@ -1521,7 +1636,7 @@ LESSONS = [
              "depths, where bigger numbers are further down."),
         ],
         words=["range_y", "ticks_y", "line_at_y", "shade_between_y", "log_scale_y", "line_at_x", "flip_y",
-               "band"],
+               "band", "tick_format_y", "line_with_slope"],
     ),
     dict(
         title="Several charts together",
@@ -2060,6 +2175,9 @@ LESSONS = [
             ]),
         ],
         notes=[
+            "Formulas know more maths than + - * /: sqrt, log, exp, sin, cos, tan, pi, and special "
+            'functions such as erf, gamma, lgamma, beta and besselJ: table.add_column("z", '
+            'formula="erf(marks / 100)").',
             "Long or wide? A long table has one row for each measurement: the marks table has a row "
             "for each child in each subject. A wide table puts the measurements of one child side "
             "by side, one column per subject. Charts and tests like long tables (also called tidy "
@@ -2242,6 +2360,18 @@ LESSONS = [
                                                                          "correlation table, with the "
                                                                          "strongest pairs in words."),
             ]),
+            ("More ways to sum up: percentiles, the most common value, and measures of shape.", [
+                ("import simplydata as sdata", "Load simplydata."),
+                ('marks = sdata.table(sdata.example("marks"))', "A table of the marks."),
+                ('marks.percentile_of("marks", 90, for_each="class")', "The 90th percentile: 90 % of the "
+                                                                      "marks are below it (86.3 in class A)."),
+                ('marks.summary_of("marks", show=["median", "skewness", "coefficient of variation"], '
+                 'for_each="class")',
+                 "Skewness says if the values lean to one side (below 0: a longer tail of low marks); "
+                 "the coefficient of variation is the standard deviation divided by the average."),
+                ('school = sdata.table(sdata.example("school"))', "A table of pupils."),
+                ('school.most_common_of("days_absent")', "The most common number of days absent (the mode): 2."),
+            ]),
         ],
         notes=[
             "Correlation is not cause. Children who study more might also sleep more, or like the "
@@ -2296,7 +2426,7 @@ LESSONS = [
         words=["table.average_of", "table.biggest_of", "table.correlation_between", "table.total_of",
                "table.chart", "sdata.side_by_side", "table.join_with", "table.turn_columns_into_rows",
                "table.add_rows_from", "table.summary_of", "table.percent_of", "table.count_rows",
-               "table.count_different_values"],
+               "table.count_different_values", "table.percentile_of", "table.most_common_of"],
     ),
     dict(
         title="Numbers: lists and grids of numbers",
@@ -2467,6 +2597,20 @@ LESSONS = [
                  "the chance of even one false alarm at 5 %."),
                 ("pairs.show()", "The p-values and the adjusted ones, side by side."),
             ]),
+            ("Some questions are about spread, or about counts compared with what you expect.", [
+                ("import simplydata as sdata", "Load simplydata."),
+                ('table = sdata.table(sdata.example("marks"))', "Make a table of the marks."),
+                ('table.compare_spreads("marks", for_each="class")',
+                 "Are the marks of one class more spread out? Levene's test says this could easily be "
+                 "chance (p = 0.91)."),
+                ('table.compare_each_pair("marks", for_each="class", test="tukey")',
+                 "Tukey's test compares every pair at once: only A and C differ (p = 0.020)."),
+                ('school = sdata.table(sdata.example("school"))', "A table of pupils."),
+                ('school.compare_counts_to("breakfast", expected={"yes": 0.6, "no": 0.4})',
+                 "Did 60 % eat breakfast, as a survey said? 115 of 180 is close enough (p = 0.29)."),
+                ('school.compare_percent_to("passed", value="yes", percent=50)',
+                 "Did half the pupils pass? 43.3 % did; that could easily be chance (p = 0.086)."),
+            ]),
         ],
         notes=[
             "The idea behind every test: imagine there is no real difference (this is called the "
@@ -2525,7 +2669,8 @@ LESSONS = [
         words=["table.compare_averages", "table.compare_each_pair", "table.compare_counts",
                "table.fit_straight_line", "table.fit_formula", "table.add_group_column",
                "table.compare_shape_to", "table.show_rows_with_outliers", "table.add_adjusted_p_value_column",
-               "table.remove_rows_with_outliers"],
+               "table.remove_rows_with_outliers", "table.compare_spreads", "table.compare_counts_to",
+               "table.compare_percent_to"],
     ),
     dict(
         title="A whole analysis: from a question to a figure",
@@ -2662,6 +2807,278 @@ LESSONS = [
                "table.compare_averages", "table.chart", "boxes", "all_dots", "dots", "fit_line",
                "sdata.grid", "style", "table.save", "table.steps", "table.as_pandas", "sdata.chart"],
     ),
+    dict(
+        title="Models: explain one column from several others",
+        learn=[
+            "how to explain one column from several others at once (multiple regression)",
+            "how to explain a yes/no column (logistic regression) and a column of counts (Poisson regression)",
+            "how to allow for groups such as schools (a mixed model)",
+            "how to use rows with empty cells without guessing once (multiple imputation)",
+        ],
+        parts=[
+            ("Marks depend on more than one thing. explain() looks at several columns together, so each "
+             "effect is the effect with the other columns held fixed.", [
+                ("import simplydata as sdata", "Load simplydata."),
+                ('table = sdata.table(sdata.example("school"))', "Pupils in 12 schools: study, sleep, "
+                                                                 "breakfast and marks."),
+                ('table.explain("marks", using=["hours", "sleep", "breakfast"])',
+                 "Explain the marks from hours of study, hours of sleep and breakfast. Each extra hour of "
+                 "study goes with about 2.7 more marks, each extra hour of sleep with 2.3 more, and "
+                 "breakfast with 3.2 more, each with its 95 % confidence interval and p-value. This is "
+                 "a linear model (multiple regression) by least squares."),
+                ('table.explain("marks", using=["hours * breakfast"])',
+                 "hours * breakfast also asks: does the effect of study depend on breakfast? That is an "
+                 "interaction. Here it could easily be chance (p = 0.31)."),
+            ]),
+            ("Not every column is a number to explain. A yes/no column needs the chance of yes, and a "
+             "count needs a model for counts.", [
+                ("import simplydata as sdata", "Load simplydata."),
+                ('table = sdata.table(sdata.example("school"))', "The school table."),
+                ('table.explain("passed", using=["hours", "breakfast"], outcome="yes or no")',
+                 'Did the pupil pass? outcome="yes or no" is logistic regression. Each extra hour of '
+                 "study multiplies the odds of passing by 1.66 (an odds ratio)."),
+                ('table.explain("days_absent", using=["hours", "sleep"], outcome="counts")',
+                 'Days absent are counts (0, 1, 2 ...). outcome="counts" is Poisson regression; each '
+                 "extra hour of study multiplies the expected days absent by 0.88 (a rate ratio)."),
+                ('table.add_predicted_column("marks", using=["hours", "breakfast"])',
+                 'Add a column "predicted marks": what the model expects for each pupil.'),
+                ("table.show_first_rows(5)", "Look at the marks next to the predicted marks."),
+            ]),
+            ("Pupils in the same school are alike in ways the columns do not show. A mixed model allows "
+             "for that, and multiple imputation uses the rows with empty cells.", [
+                ("import simplydata as sdata", "Load simplydata."),
+                ('table = sdata.table(sdata.example("school"))', "The school table."),
+                ('table.explain("marks", using=["hours", "breakfast"], grouped_by="school")',
+                 "A mixed model: each school gets its own starting level (a random intercept). About 39 % "
+                 "of the differences the columns do not explain lie between schools (the ICC)."),
+                ('table.explain("marks", using=["hours", "sleep", "breakfast"], '
+                 'empty_cells="multiple imputation")',
+                 "19 pupils did not say how long they slept. Instead of leaving them out, multiple "
+                 "imputation fills the empty cells 20 times, fits the model to each filled-in table and "
+                 "pools the 20 answers (Rubin's rules), so the extra uncertainty is counted."),
+            ]),
+        ],
+        notes=[
+            "Each effect in explain() holds the other columns fixed: the effect of sleep is the effect "
+            "for pupils who study the same number of hours and have the same breakfast.",
+            "A text column such as breakfast is compared with its first group in A to Z order (here "
+            '"no"); the answer says which group is the baseline.',
+            "An odds ratio above 1 means higher odds of yes; a rate ratio above 1 means more counts. "
+            "1 means no difference.",
+            "If counts vary much more than a Poisson model expects (overdispersion), simplydata says so "
+            'and suggests outcome="counts (overdispersed)"; it never switches by itself.',
+            "grouped_by= is for rows that come in groups: pupils in schools, measurements on the same "
+            "animal, samples from the same site. Without it, the p-values are too small.",
+            "Multiple imputation needs the empty cells to be explainable by the other columns (missing "
+            "at random). Say in your report how many cells were empty and how they were handled.",
+            "grouped_by= and multiple imputation need the statsmodels package: "
+            'pip install "simplydata[stats]".',
+        ],
+        task=[
+            'Explain "marks" using "hours" and "school" (school as a column of groups). Which schools '
+            "differ from School A, and is school as a whole important?",
+            'Explain "passed" using "hours" and "sleep" with outcome="yes or no".',
+            'Explain "days_absent" using "hours" and "breakfast" with outcome="counts". Does breakfast '
+            "matter?",
+        ],
+        solutions=[
+            (_sx("""\
+                import simplydata as sdata
+                table = sdata.table(sdata.example("school"))
+                table.explain("marks", using=["hours", "school"])"""),
+             "School as a whole matters a lot (F = 10.4, p < 0.0001); School D scores about 15 marks "
+             "more than School A for the same hours of study. grouped_by= would instead treat the "
+             "schools as a sample of many possible schools."),
+            (_sx("""\
+                import simplydata as sdata
+                table = sdata.table(sdata.example("school"))
+                table.explain("passed", using=["hours", "sleep"], outcome="yes or no")"""),
+             "Each extra hour of study multiplies the odds of passing by 1.69 and each extra hour of "
+             "sleep by 1.98; both are unlikely to be chance."),
+            (_sx("""\
+                import simplydata as sdata
+                table = sdata.table(sdata.example("school"))
+                table.explain("days_absent", using=["hours", "breakfast"], outcome="counts")"""),
+             "Breakfast could easily be chance (rate ratio 0.94, p = 0.45); study hours matter (rate "
+             "ratio 0.86 for each hour)."),
+        ],
+        words=["table.explain", "table.add_predicted_column", "table.show_first_rows"],
+    ),
+    dict(
+        title="Patterns across many columns",
+        learn=[
+            "how to sum up many columns in two new ones (principal components)",
+            "how to measure how different rows are (Bray-Curtis and other distances)",
+            "how to draw a map of the rows (NMDS) and test groups on all columns at once (PERMANOVA)",
+            "how to find groups of similar rows (clustering)",
+        ],
+        parts=[
+            ("Ten plant counts per plot are too many to look at one by one. Principal components "
+             "make a few new columns that hold most of the spread.", [
+                ("import simplydata as sdata", "Load simplydata."),
+                ('table = sdata.table(sdata.example("meadow"))', "Plants counted in 30 plots, half of them "
+                                                                 "grazed by sheep."),
+                ("table.add_principal_components(how_many=2)",
+                 "Principal component analysis (PCA): adds PC1 and PC2. PC1 holds 30 % of the spread, "
+                 "PC2 15 %. The printout says which plants weigh most in each."),
+                ("chart = table.chart()", "Start a chart."),
+                ('chart.dots(x="PC1", y="PC2", colour="grazed")', "Each plot is a dot; grazed and ungrazed "
+                                                                 "plots sit apart."),
+                ('chart.save("lesson17_pca.png")', "Save it."),
+            ]),
+            ("Ecologists compare plots by how different their make-up is. Bray-Curtis is the usual "
+             "distance for counts, and NMDS draws a map that keeps the order of the distances.", [
+                ("import simplydata as sdata", "Load simplydata."),
+                ('table = sdata.table(sdata.example("meadow"))', "The meadow table."),
+                ('distances = table.distances_between_rows(measure="bray-curtis", names="plot")',
+                 "A table of the Bray-Curtis distance between every pair of plots: 0 means the same "
+                 "plants in the same numbers, 1 means nothing in common."),
+                ("distances.show_first_rows(3)", "Look at the first rows."),
+                ('table.add_nmds(measure="bray-curtis")',
+                 "Non-metric multidimensional scaling (NMDS): adds NMDS1 and NMDS2. The stress (0.195) "
+                 "says how well the map keeps the distances: usable."),
+                ('table.compare_profiles(for_each="grazed")',
+                 "Do grazed and ungrazed plots differ in make-up? PERMANOVA tests all ten plants at "
+                 "once: grazing explains 25 % of the differences (p = 0.001)."),
+                ("chart = table.chart()", "Start a chart."),
+                ('chart.dots(x="NMDS1", y="NMDS2", colour="grazed")', "The NMDS map."),
+                ('chart.save("lesson17_nmds.png")', "Save it."),
+            ]),
+            ("Clustering finds groups of similar rows without being told the groups.", [
+                ("import simplydata as sdata", "Load simplydata."),
+                ('table = sdata.table(sdata.example("meadow"))', "The meadow table."),
+                ("table.add_clusters(how_many=2)", 'k-means clustering: adds a column "cluster" with 1 or 2.'),
+                ('table.count_rows(for_each="cluster", across="grazed")',
+                 "Did the clusters find the grazing? Cluster 1 is 14 grazed plots, cluster 2 is the 15 "
+                 "ungrazed plots and one grazed one."),
+            ]),
+        ],
+        notes=[
+            "same_scale=True (the normal choice for PCA and clusters) puts every column on the same "
+            "scale first, so a column with big numbers does not drown the others.",
+            "The signs and the rotation of PC and NMDS axes are arbitrary; only the distances between "
+            "the dots mean something.",
+            "Clarke's rule for NMDS stress: below 0.05 excellent, below 0.1 good, below 0.2 usable, "
+            "above 0.2 hard to trust. Try dimensions=3 if the stress is high.",
+            "PERMANOVA can mistake a difference in spread for a difference in make-up, so "
+            "compare_profiles also checks the spread of each group and says if it differs.",
+            "Clusters always appear, even in data without groups: check them against what you know.",
+            'method="hierarchical" clusters step by step (Ward linkage) instead of k-means.',
+        ],
+        task=[
+            'Add principal components of "hours", "sleep", "marks" and "days_absent" in '
+            'sdata.example("school"). Which columns weigh most in PC1?',
+            "Make an NMDS map of the meadow in 3 dimensions. Is the stress lower than in 2?",
+            'Do the three fields differ in make-up? Use compare_profiles with for_each="field".',
+            'Cluster the meadow plots with method="hierarchical". Do the clusters match the grazing?',
+        ],
+        solutions=[
+            (_sx("""\
+                import simplydata as sdata
+                table = sdata.table(sdata.example("school"))
+                table.add_principal_components(columns=["hours", "sleep", "marks", "days_absent"])"""),
+             "PC1 (50 % of the spread) is mostly hours, marks and, the other way, days absent: pupils "
+             "who study more get better marks and miss fewer days. PC2 is mostly sleep."),
+            (_sx("""\
+                import simplydata as sdata
+                table = sdata.table(sdata.example("meadow"))
+                table.add_nmds(measure="bray-curtis", dimensions=3)"""),
+             "Yes: the stress drops from 0.195 to 0.127. That is still in the usable band (good is below "
+             "0.1), but the map keeps the distances clearly better."),
+            (_sx("""\
+                import simplydata as sdata
+                table = sdata.table(sdata.example("meadow"))
+                table.compare_profiles(for_each="field")"""),
+             "The fields explain 12 % of the differences (p = 0.037), much less than grazing, and they "
+             "do not differ in spread (p = 0.54)."),
+            (_sx("""\
+                import simplydata as sdata
+                table = sdata.table(sdata.example("meadow"))
+                table.add_clusters(how_many=2, method="hierarchical")
+                table.count_rows(for_each="cluster", across="grazed")"""),
+             "Exactly: cluster 1 is the 15 grazed plots and cluster 2 the 15 ungrazed ones."),
+        ],
+        words=["table.add_principal_components", "table.principal_components_of", "table.add_clusters",
+               "table.distances_between_rows", "table.add_nmds", "table.compare_profiles", "dots"],
+    ),
+    dict(
+        title="Survival, and planning a study",
+        learn=[
+            "how to draw survival curves (Kaplan-Meier) and compare them (log-rank test)",
+            "how to explain the risk of an event from several columns (a Cox model)",
+            "how many values a study needs, before you collect them (power analysis)",
+        ],
+        parts=[
+            ("In a trial, some patients are still alive when the follow-up ends. Survival words use "
+             "their time too: they count as followed without the event (censored).", [
+                ("import simplydata as sdata", "Load simplydata."),
+                ('table = sdata.table(sdata.example("trial"))', "120 patients, a new medicine or usual "
+                                                                "care, followed for up to 3 years."),
+                ('table.survival_over_time(time="days", event="died", for_each="treatment")',
+                 "The Kaplan-Meier estimate: the share still alive at each time, and the median time "
+                 "(706 days with the new medicine, 545 with usual care)."),
+                ("chart = table.chart()", "Start a chart."),
+                ('chart.survival_curves(time="days", event="died", colour="treatment", '
+                 'confidence_band=True, at_risk_table=True)',
+                 "Survival curves with their 95 % bands, ticks where patients were censored, and the "
+                 "number still followed under the x-axis."),
+                ('chart.save("lesson18_survival.png")', "Save it."),
+            ]),
+            ("Is the difference real? And what else changes the risk?", [
+                ("import simplydata as sdata", "Load simplydata."),
+                ('table = sdata.table(sdata.example("trial"))', "The trial table."),
+                ('table.compare_survival(time="days", event="died", for_each="treatment")',
+                 "The log-rank test compares the whole curves: here the difference could easily be "
+                 "chance (p = 0.22)."),
+                ('table.explain_survival(time="days", event="died", using=["treatment", "age"])',
+                 "A Cox model: each year of age raises the risk of dying at any moment by about 5 % "
+                 "(hazard ratio 1.05), with the treatment held fixed."),
+            ]),
+            ("Was the trial big enough? Power analysis tells you how many values you need before you "
+             "collect them.", [
+                ("import simplydata as sdata", "Load simplydata."),
+                ("sdata.how_many_needed(effect_size=0.5, power=0.8)",
+                 "To find a medium difference between two averages (half a standard deviation) with an "
+                 "80 % chance, you need 64 values in each group."),
+                ("sdata.chance_to_find(effect_size=0.5, values_per_group=20)",
+                 "With only 20 values in each group, the chance to find it is just 34 %."),
+            ]),
+        ],
+        notes=[
+            "Never leave out the censored rows or count them as survivors: the survival words use the "
+            "time they were followed, which is what makes these methods right.",
+            "A hazard ratio above 1 means a higher risk of the event at any moment; 1 means no "
+            "difference. The Cox model assumes the ratio stays the same over time, and simplydata "
+            "checks this and says so if it does not.",
+            "A study that is too small often finds nothing even when there is something to find. Plan "
+            "the size before collecting data, not after.",
+            "effect_size= is Cohen's d for averages, f for 3 or more groups, w for counts and r for a "
+            "correlation. You can also give difference= and spread= in your own units.",
+        ],
+        task=[
+            'Explain the risk of dying from "age" alone with explain_survival.',
+            "How many pairs does a before/after study need to find a small change (effect_size=0.3)?",
+            "What is the chance to find a medium difference (effect_size=0.25) between 3 groups with "
+            "30 values in each?",
+        ],
+        solutions=[
+            (_sx("""\
+                import simplydata as sdata
+                table = sdata.table(sdata.example("trial"))
+                table.explain_survival(time="days", event="died", using="age")"""),
+             "Each year of age multiplies the risk by 1.05 (95 % CI 1.03 to 1.08), p < 0.0001."),
+            (_sx("""\
+                import simplydata as sdata
+                sdata.how_many_needed(test="compare_before_after", effect_size=0.3)"""),
+             "90 pairs, each with a before and an after value."),
+            (_sx("""\
+                import simplydata as sdata
+                sdata.chance_to_find(test="compare_averages", effect_size=0.25, groups=3, values_per_group=30)"""),
+             "Only 54 %: too small. how_many_needed with groups=3 tells you how many to aim for."),
+        ],
+        words=["table.survival_over_time", "survival_curves", "table.compare_survival",
+               "table.explain_survival", "sdata.how_many_needed", "sdata.chance_to_find"],
+    ),
 ]
 
 def _wrap(text: str, indent: str = "", width: int = WIDTH) -> str:
@@ -2677,7 +3094,8 @@ def _list_lessons() -> None:
     print(f"Learn simplydata in one day: {len(LESSONS)} lessons of about 30 minutes.")
     print("Lessons 1 to 8 teach charts, lessons 9 to 12 teach tables, lesson 13 teaches numbers,")
     print("lesson 14 teaches statistical tests and lesson 15 puts it all together, from a question")
-    print("to a figure.\n")
+    print("to a figure. Lessons 16 to 18 go further: models, patterns across many columns,")
+    print("survival, and planning how big a study must be.\n")
     for i, les in enumerate(LESSONS, start=1):
         print(f"  sdata.lesson({i}){' ' * (5 - len(str(i)))}{les['title']}")
     print("\nStart with sdata.lesson(1). Each lesson ends with a small task to try yourself.")

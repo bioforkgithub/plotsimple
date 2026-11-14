@@ -332,8 +332,7 @@ class Page(BaseChart):
                     cell.set_facecolor(matplotlib.rcParams["figure.facecolor"])
                     drawn = _draw_chart(chart, cell)
                     if self._letters and drawn:  # A, B, C ... at the top left, as in papers
-                        drawn[0].set_title(_letter(number), loc="left", fontweight="bold",
-                                           fontsize=matplotlib.rcParams["axes.titlesize"] * 1.2)
+                        _put_letter(cell, drawn, _letter(number))
                     panels.extend(ax for ax in drawn if ax.name == "rectilinear")
             if self._same_x:
                 _share(panels, "x")
@@ -343,7 +342,7 @@ class Page(BaseChart):
                 fig.suptitle(s["title"], fontweight="bold", fontsize=matplotlib.rcParams["axes.titlesize"] * 1.15)
         return fig  # not cached: the charts on the page may still change
 
-    def _save_animation(self, path):
+    def _save_animation(self, path, resolution=100):
         raise SimplydataError("A page of charts cannot be saved as .gif. Save it as .png or .pdf instead.")
 
     def __repr__(self):
@@ -358,6 +357,26 @@ def _share(axes, which):
     low, high = min(min(lim) for lim in lims), max(max(lim) for lim in lims)
     for ax, lim in zip(axes, lims):  # a flipped axis stays flipped
         (ax.set_xlim if which == "x" else ax.set_ylim)(*((low, high) if lim[0] <= lim[1] else (high, low)))
+
+
+def _put_letter(cell, panels, letter):
+    """Write the panel letter at the top left of one chart on a page.
+
+    A chart with one panel gets it as the panel's left title. A chart split into panels
+    (one_chart_per) already has a title centred on each panel, so the letter goes on its own
+    line above the panels, at the left of the chart, where it cannot cover a panel title.
+    """
+    size = matplotlib.rcParams["axes.titlesize"] * 1.2
+    if len(panels) == 1:
+        panels[0].set_title(letter, loc="left", fontweight="bold", fontsize=size)
+        return
+    sup = getattr(cell, "_suptitle", None)
+    if sup is not None and sup.get_visible() and sup.get_text():  # title_top of the chart: same line
+        x, y = sup.get_position()
+        cell.text(0.01, y, letter, ha="left", va=sup.get_va(), fontweight="bold", fontsize=size,
+                  transform=cell.transSubfigure)
+    else:
+        cell.suptitle(letter, x=0.01, ha="left", fontweight="bold", fontsize=size)
 
 
 def _letter(number):

@@ -41,6 +41,7 @@ import numpy as np
 
 from .._errors import SimplydataError, choice_error, friendly
 from .._stats import _plain_name
+from .conditions import _empty_in
 from .rows import _NOT_GIVEN
 
 # word -> (start of the result column name, narwhals calculation)
@@ -65,9 +66,20 @@ EVERY_EXAMPLE = ('table.make_dates("year")\n'
 
 # summary_of(show=[...]): the measure names, the same as the _of words and chart show=/error=
 MEASURES = ("count", "average", "median", "total", "smallest", "biggest", "standard deviation", "variance",
-            "standard error", "confidence interval", "range", "interquartile range", "empty cells")
+            "standard error", "confidence interval", "range", "interquartile range", "empty cells",
+            "geometric mean", "skewness", "kurtosis", "coefficient of variation", "median absolute deviation",
+            "trimmed average", "most common", "percentile")
 MEASURE_ALIASES = {"mean": "average", "sum": "total", "sd": "standard deviation", "se": "standard error",
-                   "ci": "confidence interval", "iqr": "interquartile range"}
+                   "ci": "confidence interval", "iqr": "interquartile range", "geometric average": "geometric mean",
+                   "gmean": "geometric mean", "skew": "skewness", "cv": "coefficient of variation",
+                   "mad": "median absolute deviation", "trimmed mean": "trimmed average", "mode": "most common",
+                   "quantile": "percentile"}
+# measures worked out with NumPy / SciPy on each group's numbers (the others come from narwhals)
+ARRAY_MEASURES = ("geometric mean", "skewness", "kurtosis", "coefficient of variation", "median absolute deviation",
+                  "trimmed average", "most common", "percentile")
+TRIM_PERCENT = 10  # "trimmed average": 10 % cut from each end, unless another percent is given
+MAD_CONSTANT = 1.4826  # R mad(): makes the median absolute deviation match the sd for bell-shaped values
+LEAST_VALUES = {"skewness": 3, "kurtosis": 4}  # fewer values than this give an empty cell
 DEFAULT_MEASURES = ("count", "average", "standard deviation", "smallest", "median", "biggest")
 SUMMARY_LINES = 12  # summary_of prints at most this many rows; the table has them all
 
@@ -251,6 +263,116 @@ def _share(hits: int, rows: int):
 
     low, high = stats.binomtest(hits, rows).proportion_ci(confidence_level=0.95, method="exact")
     return (hits * 100.0 / rows, float(low) * 100.0, float(high) * 100.0)
+
+
+def _ordinal(number: float) -> str:
+    """90 -> "90th", 1 -> "1st", 2.5 -> "2.5th"."""
+    text = f"{number:g}"
+    if not float(number).is_integer():
+        return text + "th"
+    whole = int(number)
+    if 10 <= whole % 100 <= 20:
+        return text + "th"
+    return text + {1: "st", 2: "nd", 3: "rd"}.get(whole % 10, "th")
+
+
+def _check_percent(step: str, percent, option="percent", example=None) -> float:
+    example = example or f'table.{step}("marks", 90, for_each="class")   (with sdata.example("marks"))'
+    if not isinstance(percent, (int, float)) or isinstance(percent, bool) or not math.isfinite(percent):
+        raise SimplydataError(f"{step}() needs the {option} as a number from 0 to 100.\nFor example:  {example}")
+    if not 0 <= percent <= 100:
+        raise SimplydataError(f"The {option} should be from 0 to 100 (it is {percent:g}).\nFor example:  {example}")
+    return float(percent)
+
+
+def _measure_name(step: str, item):
+    """The measure a show= item names: "percentile 90" and "90th percentile" both give
+    "percentile 90"; "trimmed average" gives "trimmed average 10 %" (R mean(trim = 0.1))."""
+    import re
+
+    name = _plain_name(item)
+    if not isinstance(name, str):
+        raise choice_error(step, "show", item, list(MEASURES))
+    example = f'table.{step}("marks", show=["percentile 90", "trimmed average 20"])   (with sdata.example("marks"))'
+    found = re.fullmatch(r"(?:(\d+(?:\.\d+)?)\s*(?:st|nd|rd|th)?\s*(?:percentile|quantile)"
+                         r"|(?:percentile|quantile)\s*(\d+(?:\.\d+)?))", name)
+    if found:
+        number = float(found.group(1) or found.group(2))
+        if number > 100:
+            raise SimplydataError(f"A percentile goes from 0 to 100, but show= asks for {number:g}.\n"
+                                  f"For example:  {example}")
+        return f"percentile {number:g}"
+    found = re.fullmatch(r"trimmed (?:average|mean)\s*(\d+(?:\.\d+)?)?\s*%?", name)
+    if found:
+        number = float(found.group(1)) if found.group(1) else float(TRIM_PERCENT)
+        if number >= 50:
+            raise SimplydataError(
+                f"A trimmed average leaves out a percent from each end, so it must be below 50 (it is {number:g}).\n"
+                f"For example:  {example}"
+            )
+        return f"trimmed average {number:g} %"
+    name = MEASURE_ALIASES.get(name, name)
+    if name == "percentile":
+        raise SimplydataError(f'show="percentile" needs the percent, for example "percentile 90".\nFor example:  {example}')
+    if name not in MEASURES:
+        raise choice_error(step, "show", item, list(MEASURES))
+    return name
+
+
+def _is_array_measure(name) -> bool:
+    return isinstance(name, str) and (name in ARRAY_MEASURES or name.startswith(("percentile ", "trimmed average ")))
+
+
+def _array_measure(name: str, values):
+    """One group's value of a NumPy / SciPy measure: (value, why it is empty, values as common).
+
+    Definitions (as R, so results can be checked there):
+      geometric mean            exp(mean(log(x))); only for numbers above 0
+      skewness                  bias-corrected sample skewness G1 (SciPy skew(bias=False),
+                                e1071 skewness(type = 2), SAS, SPSS, Excel SKEW)
+      kurtosis                  bias-corrected excess kurtosis G2, 0 for a bell shape (SciPy
+                                kurtosis(bias=False), e1071 kurtosis(type = 2), Excel KURT)
+      coefficient of variation  sd / average, sd with n - 1 (SciPy variation(ddof=1)); a ratio
+      median absolute deviation 1.4826 * median(|x - median(x)|), as R mad()
+      trimmed average p %       floor(n * p / 100) values cut from each end, as R mean(trim =)
+      most common               the value that turns up most often; the smallest when tied
+      percentile p              the usual linear rule (R quantile type 7, NumPy default)
+    """
+    from scipy import stats
+
+    n = len(values)
+    if n == 0:
+        return None, None, None
+    if name == "geometric mean":
+        if (values <= 0).any():
+            return None, "needs numbers above 0", None
+        return float(np.exp(np.mean(np.log(values)))), None, None
+    if name in LEAST_VALUES and n < LEAST_VALUES[name]:
+        return None, f"needs at least {LEAST_VALUES[name]} values", None
+    if name in ("skewness", "kurtosis") and np.ptp(values) == 0:
+        return None, "has no spread (every value is the same)", None
+    if name == "skewness":
+        return float(stats.skew(values, bias=False)), None, None
+    if name == "kurtosis":
+        return float(stats.kurtosis(values, fisher=True, bias=False)), None, None
+    if name == "coefficient of variation":
+        if n < 2:
+            return None, "needs at least 2 values", None
+        mean = float(values.mean())
+        if mean == 0:
+            return None, "is not defined when the average is 0", None
+        return float(values.std(ddof=1)) / mean, None, None
+    if name == "median absolute deviation":
+        return MAD_CONSTANT * float(np.median(np.abs(values - np.median(values)))), None, None
+    if name == "most common":
+        found, counts = np.unique(values, return_counts=True)
+        top = counts.max()
+        return float(found[counts == top][0]), None, found[counts == top]
+    number = float(name.split()[-2] if name.endswith("%") else name.split()[-1])
+    if name.startswith("percentile"):
+        return float(np.percentile(values, number)), None, None
+    cut = math.floor(n * number / 100)
+    return float(np.sort(values)[cut:n - cut].mean()), None, None
 
 
 def _measure_values(names, raw: dict) -> dict:
@@ -445,8 +567,10 @@ class SummaryWords:
                 f"For example:  {example}"
             )
 
-    def _summary(self, step: str, column, for_each, every=None, across=None):
-        start, make = _SUMMARIES[step]
+    def _summary(self, step: str, column, for_each, every=None, across=None, measure=None):
+        """measure=(start of the column name, calculation, words for sentences) for words not in _SUMMARIES."""
+        start, make = _SUMMARIES[step] if measure is None else measure[:2]
+        said = start if measure is None else measure[2]
         columns = _as_list(step, "the column", column)
         groups = self._group_columns(step, for_each, columns) if for_each is not None else None
         if across is not None:
@@ -463,7 +587,7 @@ class SummaryWords:
         if across is not None:
             result, labels = self._cross(frame, groups, across, make(columns[0]), periods=periods)
             self._note_empty(frame, columns)
-            print(f'The {start} of "{columns[0]}" for each {_each(groups, periods)} (rows) and each "{across}" '
+            print(f'The {said} of "{columns[0]}" for each {_each(groups, periods)} (rows) and each "{across}" '
                   f"(columns): a new table with {len(result)} rows and {len(labels)} columns of numbers.")
             self._say_cross(result, groups, labels, periods=periods)
             _period_note(periods)
@@ -472,7 +596,7 @@ class SummaryWords:
             result = frame.select(*exprs)
             self._note_empty(frame, columns)
             counts = frame.select(nw.col(c).count().alias(c) for c in columns).row(0)
-            sentence = "; ".join(f'the {start} of "{c}" is {_say_number(v)} ({n} values)'
+            sentence = "; ".join(f'the {said} of "{c}" is {_say_number(v)} ({n} values)'
                                  for c, v, n in zip(columns, result.row(0), counts))
             print(sentence[0].upper() + sentence[1:] + ".")
             if isinstance(column, str):
@@ -483,9 +607,9 @@ class SummaryWords:
         each = _each(groups, periods)
         if len(columns) == 1:
             values = _say_groups(result._frame, groups, f"{start} of {columns[0]}", periods)
-            print(f'The {start} of "{columns[0]}" for each {each}: {values}.')
+            print(f'The {said} of "{columns[0]}" for each {each}: {values}.')
         else:
-            print(f"The {start} of {_names(columns)} for each {each}: a new table with {len(result)} rows.")
+            print(f"The {said} of {_names(columns)} for each {each}: a new table with {len(result)} rows.")
         _period_note(periods)
         return result
 
@@ -550,6 +674,100 @@ class SummaryWords:
         across= and every= work as in average_of.
         """
         return self._summary("standard_deviation_of", column, for_each, every, across)
+
+    @friendly
+    def percentile_of(self, column=None, percent=None, for_each=None, every=None, across=None):
+        """The value below which a given percent of the numbers lie; empty cells are skipped.
+
+        table.percentile_of("marks", 90, for_each="class")   (with sdata.example("marks"))
+        percentile_of("marks", 50) is the median, 25 and 75 the quartiles. Between two
+        numbers it uses the usual linear rule (R quantile(type = 7), NumPy and pandas
+        default). across= and every= work as in average_of.
+        """
+        step = "percentile_of"
+        if column is None:
+            raise SimplydataError(f"{step}() needs the column first, then the percent.\n"
+                                  f'For example:  table.{step}("marks", 90, for_each="class")   (with sdata.example("marks"))')
+        number = _check_percent(step, percent)
+        share = number / 100
+        measure = (f"percentile {number:g}", lambda c: nw.col(c).quantile(share, interpolation="linear"),
+                   f"{_ordinal(number)} percentile")
+        return self._summary(step, column, for_each, every, across, measure=measure)
+
+    @friendly
+    def most_common_of(self, column=None, for_each=None, every=None):
+        """The value that turns up most often (the mode), for numbers or text; empty cells are skipped.
+
+        table.most_common_of("days_absent", for_each="school")   (with sdata.example("school"))
+        When values are tied, the smallest (first in order) is given and a note names the
+        others. Without for_each= you get the value; with it a new table with, for each
+        group, the most common value, how many rows have it, its percent of the group's
+        filled cells, and how many values share the top count.
+        """
+        step = "most_common_of"
+        example = 'table.most_common_of("days_absent", for_each="school")   (with sdata.example("school"))'
+        if not isinstance(column, str):
+            raise SimplydataError(f"{step}() needs one column name in quotes.\nFor example:  {example}")
+        self._need_columns(column)
+        groups = self._group_columns(step, for_each, [column]) if for_each is not None else []
+        frame = self._frame
+        empty = self._empty(column)
+        n_empty = int(frame.select(empty.cast(nw.Int64).sum()).item())
+        frame, periods = self._periods(step, frame, groups or None, every)
+        kept = frame.filter(~_empty_in(frame, column)) if n_empty else frame
+        if n_empty:
+            print(f'Note: {n_empty} empty cell{"" if n_empty == 1 else "s"} in "{column}" '
+                  f'{"was" if n_empty == 1 else "were"} skipped.')
+        values = [_plain(_as_datetime(v)) for v in kept[column].to_list()]
+        keys = [_key(r) for r in kept.select(groups).rows()] if groups else [()] * len(values)
+        by_group: dict = {}
+        for key, v in zip(keys, values):
+            counts = by_group.setdefault(key, {})
+            counts[v] = counts.get(v, 0) + 1
+        if not by_group:
+            raise SimplydataError(f'"{column}" has no values to count: every cell is empty.')
+        found = {}
+        for key, counts in by_group.items():
+            top = max(counts.values())
+            tied = sorted((v for v, c in counts.items() if c == top), key=_order)
+            found[key] = (tied, top, sum(counts.values()))
+        order = sorted(found, key=lambda k: tuple(_order(v) for v in k))
+        ties = []
+        for key in order:
+            tied, top, total = found[key]
+            if len(tied) > 1:
+                where = " / ".join(_say_label(v, periods.get(g)) for g, v in zip(groups, key)) or f'"{column}"'
+                ties.append(f"{where} ({', '.join(_say_label(t) for t in tied[:6])}{' ...' if len(tied) > 6 else ''})")
+        if not groups:
+            tied, top, total = found[()]
+            share = top * 100.0 / total
+            if len(tied) > 1:
+                listed = ", ".join(f'"{_say_label(t)}"' for t in tied[:6])
+                print(f'The most common values of "{column}" are {listed}: each turns up {top} times of {total} '
+                      f"({_say_percent(share)}). The first, {_say_label(tied[0])!r}, is given back.")
+            else:
+                print(f'The most common value of "{column}" is "{_say_label(tied[0])}": {top} of {total} filled cells '
+                      f"({_say_percent(share)}).")
+            return tied[0]
+        name = f"most common {column}"
+        data = {g: [k[i] for k in order] for i, g in enumerate(groups)}
+        if name in data or any(c in data for c in ("count", "percent", "values with that count")):
+            raise SimplydataError(f'A for_each= column has the name of a result column ("{name}", "count" or '
+                                  '"percent"). Rename it first.')
+        data[name] = [found[k][0][0] for k in order]
+        data["count"] = [found[k][1] for k in order]
+        data["percent"] = [found[k][1] * 100.0 / found[k][2] for k in order]
+        data["values with that count"] = [len(found[k][0]) for k in order]
+        result = self._new_table(nw.from_dict(data, backend=self._frame.implementation))
+        result = self._new_table(result._frame.with_columns(nw.col("count").cast(nw.Int64),
+                                                             nw.col("values with that count").cast(nw.Int64)))
+        shown = _say_groups(result._frame, groups, name, periods, say=_say_label)
+        print(f'The most common "{column}" for each {_each(groups, periods)}: {shown}.')
+        if ties:
+            print(f"Note: more than one value is the most common in {', '.join(ties[:GROUPS_IN_SENTENCE])}"
+                  f"{' ...' if len(ties) > GROUPS_IN_SENTENCE else ''}; the table shows the first of them.")
+        _period_note(periods)
+        return result
 
     # ------------------------------------------------------------------ counting words
     @friendly
@@ -827,9 +1045,7 @@ class SummaryWords:
             if callable(item):
                 measures.append(item)
                 continue
-            name = MEASURE_ALIASES.get(_plain_name(item), _plain_name(item))
-            if name not in MEASURES:
-                raise choice_error(step, "show", item, list(MEASURES))
+            name = _measure_name(step, item)
             if name not in measures:
                 measures.append(name)
         return measures
@@ -844,8 +1060,16 @@ class SummaryWords:
         "total", "smallest", "biggest", "standard deviation" (sample, n - 1), "variance"
         (sample, n - 1), "standard error" (of the average), "confidence interval" (95 % t
         interval of the average, as R t.test), "range" (biggest minus smallest),
-        "interquartile range" (upper quartile minus lower quartile, R type 7) and
-        "empty cells". Without show=: count, average, standard deviation, smallest, median,
+        "interquartile range" (upper quartile minus lower quartile, R type 7),
+        "empty cells", and these, with the definitions R uses:
+        "geometric mean" (numbers above 0), "skewness" and "kurtosis" (the bias-corrected
+        sample values G1 and G2, as SciPy skew/kurtosis(bias=False), R e1071 type 2 and
+        Excel; kurtosis is excess kurtosis, 0 for a bell shape), "coefficient of variation"
+        (standard deviation / average, a ratio), "median absolute deviation" (as R mad(),
+        times 1.4826), "trimmed average" (10 % cut from each end, as R mean(trim = 0.1);
+        "trimmed average 20" cuts 20 %), "most common" (the smallest if tied) and
+        "percentile 90" (any percent, R quantile type 7).
+        Without show=: count, average, standard deviation, smallest, median,
         biggest. A measure of your own also works: a function that gets one group's
         numbers (a NumPy array) and gives back one number, show=["average", my_measure].
         The new table has one row for each column (and each group), so it can be saved
@@ -870,8 +1094,10 @@ class SummaryWords:
         frame, periods = self._periods(step, frame, groups or None, every)
         frame = frame.with_columns(nw.col(c).is_null().cast(nw.Int64).alias(f"__empty {i}")
                                    for i, c in enumerate(columns))
-        names = [m for m in measures if isinstance(m, str)]
+        names = [m for m in measures if isinstance(m, str) and not _is_array_measure(m)]
+        arrays = [m for m in measures if _is_array_measure(m)]
         own = [m for m in measures if not isinstance(m, str)]
+        problems: dict = {}  # (measure, why) -> [where]
         data = {"column": [], **{g: [] for g in groups}}
         out_names, own_names = [], []
         for m in measures:
@@ -902,6 +1128,7 @@ class SummaryWords:
             else:
                 agg = frame.select(*exprs)
             own_values = self._own_measures(frame, groups, c, own, own_names) if own else {}
+            array_values = self._array_measures(frame, groups, c, arrays, problems, len(columns) > 1) if arrays else {}
             for row in agg.rows(named=True):
                 key = _key([row[g] for g in groups])
                 data["column"].append(c)
@@ -909,18 +1136,38 @@ class SummaryWords:
                     data[g].append(v)
                 values = _measure_values(names, {k: _plain(row[f"__{k}"]) for k in raw})
                 for name in out_names:
-                    data[name].append(values[name] if name in values else own_values.get((key, name)))
+                    if name in values:
+                        data[name].append(values[name])
+                    elif (key, name) in array_values:
+                        data[name].append(array_values[(key, name)])
+                    else:
+                        data[name].append(own_values.get((key, name)))
         result = nw.from_dict(data, backend=self._frame.implementation)
+        float_names = [n for n in out_names if _is_array_measure(n)]
+        if float_names:
+            result = result.with_columns(nw.col(n).cast(nw.Float64) for n in float_names)
         result = result.with_columns(nw.col(n).cast(nw.Int64) for n in ("count", "empty cells") if n in out_names)
         table = self._new_table(result)
         self._note_empty(frame, columns)
         self._say_summary(table, columns, groups, out_names, periods)
+        for (name, why), places in problems.items():
+            where = ", ".join(places[:GROUPS_IN_SENTENCE]) + (" ..." if len(places) > GROUPS_IN_SENTENCE else "")
+            if why.startswith("tied:"):
+                print(f"Note: more than one value is the most common in {where}; the table shows the smallest.")
+            else:
+                print(f"Note: the {name} {why}, so it is empty for {where}.")
+        for name in out_names:
+            if name.startswith("trimmed average "):
+                share = float(name.split()[-2])
+                place = " in each group" if groups else ""
+                print(f"Note: {name} leaves out the lowest and highest {share:g} % of the values{place}, "
+                      f"as R mean(x, trim = {share / 100:g}).")
         _period_note(periods)
         return table
 
     @staticmethod
-    def _own_measures(frame, groups, column, functions, labels):
-        """{(group key, label): value} for measures written by the user."""
+    def _group_arrays(frame, groups, column) -> dict:
+        """{group key: the group's numbers (empty cells left out)}, in the order the groups turn up."""
         values = frame.select(nw.col(column).cast(nw.Float64))[column].to_numpy()
         keys = [_key(r) for r in frame.select(groups).rows()] if groups else [()] * len(values)
         by_group: dict = {}
@@ -928,9 +1175,29 @@ class SummaryWords:
             by_group.setdefault(key, [])
             if not math.isnan(v):
                 by_group[key].append(v)
+        return {key: np.asarray(numbers, dtype=float) for key, numbers in by_group.items()}
+
+    def _array_measures(self, frame, groups, column, names, problems, several) -> dict:
+        """{(group key, measure): value} for the measures worked out with NumPy / SciPy."""
         out = {}
-        for key, numbers in by_group.items():
-            array = np.asarray(numbers, dtype=float)
+        for key, array in self._group_arrays(frame, groups, column).items():
+            label = [f'"{column}"'] if several or not groups else []
+            label += [_say_label(v) for v in key]
+            where = " / ".join(label) if groups else f'"{column}"'
+            for name in names:
+                value, why, tied = _array_measure(name, array)
+                out[(key, name)] = value
+                if why:
+                    problems.setdefault((name, why), []).append(where)
+                if tied is not None and len(tied) > 1:
+                    problems.setdefault((name, "tied:"), []).append(
+                        f"{where} ({', '.join(_say_number(t) for t in tied[:6])})")
+        return out
+
+    def _own_measures(self, frame, groups, column, functions, labels):
+        """{(group key, label): value} for measures written by the user."""
+        out = {}
+        for key, array in self._group_arrays(frame, groups, column).items():
             for function, label in zip(functions, labels):
                 where = f'"{column}"' + (f" in group {' / '.join(_say_label(v) for v in key)}" if groups else "")
                 try:

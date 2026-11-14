@@ -66,6 +66,47 @@ EXAMPLES = {
             "customers": "how many people bought something; empty on days nobody counted",
         },
     ),
+    "school": (
+        "Made-up pupils in 12 schools: study, sleep and test marks. Some sleep cells are empty.",
+        {
+            "school": "School A to School L (15 pupils in each)",
+            "pupil": "P001 to P180",
+            "hours": "hours spent studying for the test",
+            "sleep": "hours of sleep the night before; empty when the pupil did not say",
+            "breakfast": "yes or no: did the pupil eat breakfast that morning",
+            "marks": "marks in the test, out of 100",
+            "passed": "yes (50 marks or more) or no",
+            "days_absent": "days the pupil missed school that term",
+        },
+    ),
+    "meadow": (
+        "Plants counted in 30 made-up plots of three fields, half of them grazed by sheep.",
+        {
+            "plot": "a short name for the plot, such as NG1",
+            "field": "North field, South field or River field",
+            "grazed": "yes or no: do sheep graze the plot",
+            "clover": "how many clover plants in the plot",
+            "daisy": "how many daisies",
+            "buttercup": "how many buttercups",
+            "dandelion": "how many dandelions",
+            "nettle": "how many nettles",
+            "thistle": "how many thistles",
+            "moss": "how many patches of moss",
+            "fern": "how many ferns",
+            "orchid": "how many orchids",
+            "yarrow": "how many yarrow plants",
+        },
+    ),
+    "trial": (
+        "120 made-up patients in a trial of a new medicine, followed for up to 3 years.",
+        {
+            "patient": "T001 to T120",
+            "treatment": "new medicine or usual care",
+            "age": "age in years when the patient joined",
+            "days": "days from joining until the patient died or the follow-up ended",
+            "died": "yes (died on that day) or no (still alive when the follow-up ended)",
+        },
+    ),
     "island": (
         "A map of a made-up island with two hills, on a 15 x 15 grid.",
         {
@@ -91,8 +132,8 @@ def example(name: str | None = None):
     """A small made-up table to practise with. sdata.example("marks")
 
     sdata.example() with no name lists every table and its columns.
-    The tables are: marks, weather, fruit, growth, shop, island.
-    Only "shop" has empty cells and a column of dates, to practise with.
+    The tables are: marks, weather, fruit, growth, shop, school, meadow, trial, island.
+    "shop" has empty cells and a column of dates to practise with; "school" has empty cells too.
     """
     if name is None:
         _list_examples()

@@ -233,7 +233,16 @@ statistics are checked against SciPy, seaborn and R on reference data.
 | v0.2 | Tables: plain-word layer over pandas and Polars (read, clean, keep, group, summarise), with automatic engine choice and `fast=True` |
 | v0.3 | Arrays: plain-word layer over NumPy; statistical tests in plain words (comparing averages, comparing counts, fitting formulas) over SciPy |
 | v0.4 | More statistics: regression with several predictors, mixed models, survival curves, multiple-testing correction, power analysis, PCA and ordination |
-| v0.5 | Curve fitting and optimisation: fit any formula, find minima and maxima, solve equations |
-| v0.6 | Signals and time series: smoothing, filtering, peaks, Fourier transforms, rolling averages, resampling dates |
+| v0.4.x | Charts and statistics polish: colour scales, transparency, line thickness, tick formats, histogram options, 1:1 lines, Q-Q plots, cumulative share (ECDF), comparing spreads, Tukey pairs, goodness of fit, more summary measures, special maths functions (erf, gamma ...) inside formulas |
+| v0.5 | Curve fitting and optimisation: fit any formula, find minima and maxima, solve equations; interpolation; probability distributions (`sdata.distribution`) |
+| v0.6 | Signals and time series: smoothing, filtering, peaks, Fourier transforms, rolling averages, resampling dates; control systems (transfer functions, step responses) |
 | v0.7 | Maths: areas under curves, differential equations, matrices and linear algebra |
+| v0.8 | Tables and data handling: the remaining pandas and Polars tasks (row summaries, ordered categories, date arithmetic, choosing columns by a rule ...); SQL queries on tables |
+| v0.9 | Numbers and arrays: the remaining NumPy tasks |
+| v0.10 | Charts II: page layouts, insets, polar and 3D in full, arrows, colour maps and norms, chart.undo |
+| v0.11 | Images and networks: image processing (filters, labelling, measuring shapes) and graphs (shortest paths, connected parts) |
+
+Goal: every task in pandas, Polars, NumPy, SciPy, matplotlib and seaborn has a simple simplydata word. Cells hold
+one value each (lists inside cells are split into rows instead). Machine learning, deep learning and language models
+belong to a separate future package.
 

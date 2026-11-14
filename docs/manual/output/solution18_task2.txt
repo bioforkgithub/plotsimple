@@ -1,0 +1,2 @@
+To find an average change of 0.3 standard deviations of the changes (Cohen's d) with an 80 % chance, using a two-sided test at 0.05, you need 90 pairs (a before and an after value each). Method: paired t-test power, as R power.t.test(type = "paired").
+Cohen's rough guide calls this a small effect (Cohen's d: 0.2 small, 0.5 medium, 0.8 large); it is only a hint, sizes from your own field are better.

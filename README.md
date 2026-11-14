@@ -35,6 +35,7 @@ one cleaned table can feed many charts, and charts go side by side with
 pip install simplydata            # needs Python 3.10 or newer
 pip install "simplydata[fast]"    # adds Polars, the fast engine for big data
 pip install "simplydata[files]"   # adds reading Word, SPSS and Stata files
+pip install "simplydata[stats]"   # adds statsmodels, for mixed models and multiple imputation
 ```
 
 ## Learn it in a day
@@ -46,11 +47,14 @@ import simplydata as sdata
 sdata.lesson(1)
 ```
 
-There are fifteen short lessons. Lessons 1 to 8 teach charts, from your first chart to
+There are eighteen short lessons. Lessons 1 to 8 teach charts, from your first chart to
 animations. Lessons 9 to 12 teach tables: looking at your data, choosing rows and columns,
 cleaning it, and summing it up. Lesson 13 teaches numbers (lists and grids of numbers), and
 lesson 14 the statistical tests: is a difference real, or could it be chance? Lesson 15 puts it
-all together, from a question and a file to a figure with panels A and B and a saved table. Each
+all together, from a question and a file to a figure with panels A and B and a saved table.
+Lessons 16 to 18 go further: models (multiple, logistic, Poisson and mixed regression, multiple
+imputation), patterns across many columns (PCA, clustering, Bray-Curtis distances, NMDS,
+PERMANOVA), survival curves and Cox models, and power analysis. Each
 lesson has an example you can run, says what every line does, explains the idea behind it
 (average or median, standard deviation or standard error, p-values) and ends with a small task
 to try yourself.
@@ -65,7 +69,7 @@ to try yourself.
 ## Manual
 
 **[The simplydata manual (PDF)](https://github.com/bioforkgithub/simplydata/blob/main/docs/manual/simplydata_manual.pdf)** has everything in one book:
-all fifteen lessons with the real charts and output they make, every word explained (its options,
+all eighteen lessons with the real charts and output they make, every word explained (its options,
 an example you can run and the library that does the work underneath), the data science ideas
 behind the numbers (average or median, standard deviation or standard error, confidence intervals,
 p-values, effect sizes, and which statistical test to use when), and a worked solution for every
@@ -102,6 +106,26 @@ nums.undo()                                # ... and can be taken back
 nums.average()
 grid = sdata.number_grid([[3, 5, 2], [8, 6, 4]])
 grid.total(for_each="row")
+```
+
+## More statistics
+
+Models, patterns across many columns, survival and planning a study, each checked against R:
+
+```python
+school = sdata.table(sdata.example("school"))
+school.explain("marks", using=["hours", "sleep", "breakfast"])          # multiple regression
+school.explain("passed", using=["hours"], outcome="yes or no")          # logistic regression
+school.explain("marks", using=["hours"], grouped_by="school")           # mixed model
+
+meadow = sdata.table(sdata.example("meadow"))
+meadow.add_principal_components(how_many=2)                             # PCA
+meadow.add_nmds(measure="bray-curtis")                                  # NMDS map
+meadow.compare_profiles(for_each="grazed")                              # PERMANOVA
+
+trial = sdata.table(sdata.example("trial"))
+trial.compare_survival(time="days", event="died", for_each="treatment") # log-rank test
+sdata.how_many_needed(effect_size=0.5)                                  # power analysis
 ```
 
 ## Ideas behind it

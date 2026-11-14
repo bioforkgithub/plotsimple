@@ -1,0 +1,10 @@
+The event is "died" = "yes" (59 of 120 rows); the other rows count as followed without the event until their "days" (censored).
+Events in each "treatment" group, observed vs expected if all groups were alike: new medicine 25 vs 29.7 and usual care 34 vs 29.3.
+Differences this big in the time until the event could easily be chance (p = 0.216); this does not show that there is no difference.
+Test: log-rank test (chi-square = 1.53, df = 1), as R survdiff(Surv(days, died == "yes") ~ treatment); it compares the whole curves, giving every event time the same weight.
+The event is "died" = "yes" (59 of 120 rows); the other rows count as followed without the event until their "days" (censored).
+Hazard ratios from 120 rows with 59 events (above 1: a higher risk of the event at any moment; below 1: a lower risk):
+  "treatment" usual care vs new medicine: hazard ratio 1.33 (95 % CI 0.795 to 2.24); could easily be chance (p = 0.275).
+  each 1 more "age": hazard ratio 1.05 (95 % CI 1.03 to 1.08); very unlikely to be chance (p < 0.0001).
+The model as a whole (likelihood-ratio test, chi-square = 21.6, df = 2) is very unlikely to be chance (p < 0.0001).
+Method: Cox proportional hazards model, Efron's method for tied times, as R coxph(Surv(days, died == "yes") ~ treatment + age).

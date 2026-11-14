@@ -1,0 +1,5 @@
+Principal components of 10 columns (clover, daisy, buttercup, dandelion, nettle, thistle, moss, fern, orchid, yarrow), each put on the same scale first (mean 0, standard deviation 1): PC1 29.9 % and PC2 15.2 % of the spread (45.1 % together).
+  PC1 weighs most on "thistle" (0.45), "orchid" (0.45) and "nettle" (0.41).
+  PC2 weighs most on "buttercup" (0.54), "dandelion" (-0.51) and "clover" (0.47).
+Method: principal component analysis by singular value decomposition, as R prcomp(scale. = TRUE). Added PC1 and PC2 (the scores of each row). The sign of each component is arbitrary: flipping it changes nothing.
+There are 10 components in all; table.principal_components_of() shows them all.

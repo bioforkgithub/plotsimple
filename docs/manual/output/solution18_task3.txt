@@ -1,0 +1,4 @@
+With 30 values in each group (90 in all), a study has a 54 % chance (power = 0.54) to find differences between the 3 group averages of Cohen's f = 0.25 (the spread of the group averages, in standard deviations), using the F test at 0.05. Method: one-way ANOVA power for groups of the same size, as R pwr::pwr.anova.test().
+Note: this is below the usual 80 %; how_many_needed() tells you how many values you need.
+Note: the calculation uses the usual equal-spread formula; compare_averages uses Welch's ANOVA, which is very close to it when the groups are the same size.
+Cohen's rough guide calls this a medium effect (Cohen's f: 0.1 small, 0.25 medium, 0.4 large); it is only a hint, sizes from your own field are better.

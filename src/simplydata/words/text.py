@@ -11,8 +11,34 @@ from matplotlib.text import Annotation
 
 from .._core import PHASES, chart_note
 from .._data import is_listlike
-from .._errors import SimplydataError, column_error, friendly
+from .._errors import SimplydataError, column_error, friendly, suggest
 from .axes import tick_position
+
+FONT_KINDS = ("serif", "sans-serif", "monospace", "cursive", "fantasy")
+
+
+def installed_font(name):
+    """The installed font's own name for `name` (any capitals), or a friendly error with close names."""
+    from matplotlib import font_manager
+
+    if name.lower() in FONT_KINDS:
+        return name.lower()
+    fonts = sorted({f.name for f in font_manager.fontManager.ttflist})
+    by_lower = {f.lower(): f for f in fonts}
+    if name.lower() in by_lower:
+        return by_lower[name.lower()]
+    lower = name.lower()
+    close = [f for f in fonts if lower in f.lower() or f.lower() in lower]
+    close += [by_lower[g] for g in suggest(lower, list(by_lower), n=5, cutoff=0.5) if by_lower[g] not in close]
+    lines = [f'.font_name() cannot find the font "{name}" on this computer.']
+    if close:
+        lines.append("Installed fonts with a similar name: " + ", ".join(f'"{f}"' for f in close[:8]))
+    else:
+        lines.append("Some installed fonts: " + ", ".join(f'"{f}"' for f in fonts[:8]))
+    lines.append('Or use a kind of font: "serif", "sans-serif" or "monospace". '
+                 "After installing a new font, restart Python.")
+    raise SimplydataError("\n".join(lines))
+
 
 ARROW_OFFSET = 40  # points between a note and the place its arrow points at
 
@@ -372,3 +398,17 @@ class TextWords:
                 f"Font size {size} is very {'small' if size < 4 else 'big'}. "
                 "Try a number between 8 and 24, for example chart.font_size(14).")
         return self._set(font_size=float(size))
+
+    @friendly
+    def font_name(self, name):
+        """The font for all the text on the chart. chart.font_name("DejaVu Serif")
+
+        Any font installed on your computer, such as "Arial" or "Times New Roman", or a
+        kind of font: "serif", "sans-serif" (normal) or "monospace". If the font is not
+        installed, the message lists the installed fonts with a similar name.
+        """
+        if not isinstance(name, str) or not name.strip():
+            raise SimplydataError(
+                f'.font_name() needs the name of a font, for example chart.font_name("Arial"), not {name!r}.')
+        return self._set(font_name=installed_font(name.strip()))
+
