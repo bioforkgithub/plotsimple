@@ -126,5 +126,19 @@ def test_unknown_sdata_names_get_did_you_mean():
     assert hasattr(sdata, "__version__") and hasattr(sdata, "__path__")
 
 
+def test_help_explains_other_names(capsys):
+    sdata.help("minimize")
+    out = capsys.readouterr().out
+    assert out.startswith('simplydata has no word called "minimize": it is a name from other tools.')
+    assert 'In simplydata this is sdata.find_smallest("x**2 - 4*x + 1", between=[0, 5]).' in out
+    assert 'sdata.help("find_smallest")' in out
+    sdata.help("plot")  # a name with a pointer on sdata, on tables and on charts
+    out = capsys.readouterr().out
+    assert "  table.plot: In simplydata this is table.chart()." in out
+    assert '  chart.plot: In simplydata this is chart.lines(x="year", y="population").' in out
+    sdata.help("table.groupby")
+    assert "table.average_of(" in capsys.readouterr().out
+
+
 def test_grid_numbers_keep_their_own_words():
     assert isinstance(sdata.number_grid([[1, 2]]), NumberGrid)

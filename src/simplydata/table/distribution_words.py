@@ -57,8 +57,8 @@ class DistributionTableWords:
     def fit_distribution(self, column=None, distribution="normal", for_each=None, fixed=None):
         """Fit a distribution to a column by maximum likelihood; gives back the fitted distribution.
 
-        fit = table.fit_distribution("days", "gamma")   (with sdata.example("trial"))
-        then fit.chance(above=365), fit.percentile(90), fit.chart(), and fit.table() for the
+        fit = table.fit_distribution("sales", "lognormal")   (with sdata.example("shop"))
+        then fit.chance(above=600), fit.percentile(90), fit.chart(), and fit.table() for the
         result table (values, standard errors, log-likelihood, AIC, BIC, rows). As R
         MASS::fitdistr(x, "gamma") (fitdistrplus::fitdist for beta and others); standard
         errors from the observed information. Families without a location in R (gamma,
@@ -102,7 +102,7 @@ class DistributionTableWords:
     def compare_distributions(self, column=None, distributions=DEFAULT_COMPARED, for_each=None):
         """Fit several distributions to a column and rank them by AIC (smaller is better).
 
-        table.compare_distributions("days")   (with sdata.example("trial"))
+        table.compare_distributions("sales")   (with sdata.example("shop"))
         distributions=("normal", "lognormal", "gamma", "weibull") by default. Each is fitted by
         maximum likelihood (as fit_distribution); the result table has one row per
         distribution with its values, log-likelihood, AIC, BIC, the AIC difference from the
