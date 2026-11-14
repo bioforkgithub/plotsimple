@@ -7,6 +7,77 @@ working for one release and prints a one-line note with its new name.
 
 More statistics, each checked against R.
 
+### Fitting
+
+- `table.fit_line(x=, y=)` is the main name of the straight-line fit, the same word as
+  `chart.fit_line`; `fit_straight_line` still works for one release, with a note.
+- `table.fit_curve(x=, y=, degree=2)` fits a polynomial by least squares (R
+  `lm(y ~ poly(x, 2, raw = TRUE))`), with an interval for each term; `weights=` and `for_each=`.
+- `table.fit_formula` takes `between=` (limits for the values to find, as R
+  `nls(algorithm = "port")`), `weights=`, `for_each=`, `search="whole range"` (differential
+  evolution, seed 1, then a least-squares polish) and `method=`, and gives standard errors,
+  t, p-values, 95 % intervals, the residual standard error and AIC, as R `nls()`.
+- `table.add_predicted_column("population = a * exp(b * (year - 2000))")` fits a formula and adds
+  its value for every row (or takes the values of a fit with `using=`).
+- On charts: `chart.fit_formula(...)` draws the fitted formula for each colour group and
+  `chart.curve(...)` draws any formula of x, or a distribution.
+
+### Finding and solving
+
+- `sdata.find_smallest` and `sdata.find_biggest` find where a formula is smallest or biggest:
+  on a range (Brent's method, R `optimize()`), from a start (Nelder-Mead, R `optim()`), with limits
+  (L-BFGS-B), under rules (SLSQP; linear programming with HiGHS when everything is a straight line,
+  with the value of one more of each rule; `whole_numbers=True` for mixed-integer programming), or
+  over the whole range (differential evolution). The method is always printed, never switched
+  silently.
+- `sdata.solve` finds every solution of an equation in a range (R `uniroot()` on each sign change),
+  all roots of a polynomial, complex ones too (R `polyroot()`), and solves sets of equations
+  (R `nleqslv`), exactly when they are linear.
+- `known=` takes the values of a `fit_formula` result, so a fitted curve can be solved or
+  searched straight away.
+
+### Values between points
+
+- `table.values_at(column, at={"year": [2001, 2003]})` estimates a column between the known
+  points: `joined_by="straight lines"` (R `approx()`), `"smooth curve"` (natural cubic spline),
+  `"curve without overshoot"` (PCHIP), `"steps"` or `"nearest"`, or `smoothness="auto"` for a
+  smoothing spline (R `smooth.spline()`); in two or more directions (bilinear on a full grid,
+  triangles or a thin-plate spline for scattered points). `outside=` says what happens beyond the
+  known points.
+- `table.map_of(column, across=["east", "north"])` fills an evenly spaced map, ready for a contour
+  map or heatmap.
+- `fill_empty_cells(with_the="curve between neighbours")` and `"curve without overshoot"`;
+  `chart.lines(joined_by=...)` and `chart.smooth_line(method="spline")`.
+
+### Distributions
+
+- `sdata.distribution("normal", average=50, standard_deviation=10)` for 26 named distributions
+  (R's parameters with plain names; R's own names work too) and any other SciPy distribution.
+  Its words: `chance` (above=, below=, at_most=, at_least=, between=, or exactly a count),
+  `density_at`, `percentile`, `cut_off`, `middle_range`, `average`, `median`,
+  `standard_deviation`, `variance`, `summary`, `random_numbers`, `chart`, `table` and
+  `parameters`. Each sentence prints the R call that gives the same answer.
+- `table.fit_distribution` and `nums.fit_distribution` fit by maximum likelihood (as R
+  `MASS::fitdistr`) and give back the fitted distribution; `table.compare_distributions` ranks
+  several by AIC, with the goodness-of-fit statistics of R `fitdistrplus::gofstat()`.
+- `table.compare_shape_to(column, "gamma")` checks any smooth shape: the Anderson-Darling test with
+  a Monte Carlo p-value that allows for the fitting (seed 1). `"normal"` keeps Shapiro-Wilk.
+- On charts: `chart.fit_distribution("gamma")` over a histogram or density, and
+  `chart.qq_dots(column, distribution="gamma")`.
+
+### Names from other tools
+
+- Names that people bring from pandas, NumPy, SciPy, R, matplotlib and ggplot2 (`sdata.minimize`,
+  `sdata.curve_fit`, `sdata.pnorm`, `table.groupby`, `table.merge`, `chart.hist`, `chart.axhline`
+  and about 400 more) never run: each says "In simplydata this is ..." with the word to use.
+  `sdata.help("minimize")` explains them too.
+
+### Not in this release
+
+Robust (outlier-resistant) curve fitting, gradients given by hand, profile-likelihood intervals
+for formula fits, mixtures and truncated distributions, distributions of several variables, and
+slopes and areas under splines.
+
 ### Models
 
 - `table.explain(column, using=[...])` explains one column from several others: a linear model
@@ -61,8 +132,9 @@ More statistics, each checked against R.
 
 ### Also
 
-- Example tables `school`, `meadow` and `trial`; lessons 16 to 18; the new words are also taught
-  in lessons 3, 5, 6, 11, 12 and 14.
+- Example tables `school`, `meadow` and `trial`; lessons 16 to 20; the new words are also taught
+  in lessons 3, 5, 6, 11, 12 and 14. Lessons 19 and 20 end with a task that asks you to recall
+  the words without looking back.
 - The optional extra `stats` (statsmodels), needed only for mixed models and multiple
   imputation.
 - Panel letters on a page no longer cover the panel titles of a chart made with

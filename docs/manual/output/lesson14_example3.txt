@@ -1,5 +1,5 @@
 "marks" goes up by 5.20 for each 1 more "hours" (95 % CI 4.24 to 6.17); this slope is very unlikely to be chance (p < 0.0001). R squared = 0.69: "hours" explains about 69 % of the differences in "marks".
 Line: marks = 5.20 * hours + 37.2, by least squares over 54 rows. A link does not show that one thing causes the other.
 Kept 13 of 52 rows.
-Fitted "population = a * exp(b * (year - 2000))" to 13 rows: a = 12.0 +/- 0.0787, b = 0.0297 +/- 0.000392 (value +/- standard error). R squared = 1.00 (only a rough guide for a curve).
-Values found: a, b. Data: year. Method: nonlinear least squares, as R nls().
+Fitted "population = a * exp(b * (year - 2000))" to 13 rows: a = 12.0 (95 % CI 11.8 to 12.2), b = 0.0297 (95 % CI 0.0289 to 0.0306). Residual standard error 0.179 on 11 degrees of freedom; R squared = 1.00 (only a rough guide for a curve).
+Values found: a, b. Data: year. Method: nonlinear least squares (Levenberg-Marquardt), as R nls(); intervals are estimate +/- t x standard error (R confint() on nls profiles the likelihood and can differ a little).

@@ -2234,7 +2234,7 @@ A fit finds the line or formula that follows the data best, and says how sure it
 \begin{lstlisting}[style=py]
 import simplydata as sdata
 table = sdata.table(sdata.example("marks"))
-table.fit_straight_line(x="hours", y="marks")
+table.fit_line(x="hours", y="marks")
 growth = sdata.table(sdata.example("growth"))
 growth.keep_rows("country", equal_to="Applia")
 growth.fit_formula("population = a * exp(b * (year - 2000))")
@@ -2313,7 +2313,7 @@ school.compare_percent_to("passed", value="yes", percent=50)
 \end{enumerate}
 Worked solutions: page~\pageref{solutions:14}, or type \code{sdata.\allowbreak{}lesson(14,\allowbreak{} solutions=True)}.
 \end{tryit}
-\par\noindent{\small\sffamily\textbf{Words in this lesson:} \hyperref[word:table.compare-averages]{\code{table.\allowbreak{}compare\_\allowbreak{}averages()}}, \hyperref[word:table.compare-each-pair]{\code{table.\allowbreak{}compare\_\allowbreak{}each\_\allowbreak{}pair()}}, \hyperref[word:table.compare-counts]{\code{table.\allowbreak{}compare\_\allowbreak{}counts()}}, \hyperref[word:table.fit-straight-line]{\code{table.\allowbreak{}fit\_\allowbreak{}straight\_\allowbreak{}line()}}, \hyperref[word:table.fit-formula]{\code{table.\allowbreak{}fit\_\allowbreak{}formula()}}, \hyperref[word:table.add-group-column]{\code{table.\allowbreak{}add\_\allowbreak{}group\_\allowbreak{}column()}}, \hyperref[word:table.compare-shape-to]{\code{table.\allowbreak{}compare\_\allowbreak{}shape\_\allowbreak{}to()}}, \hyperref[word:table.show-rows-with-outliers]{\code{table.\allowbreak{}show\_\allowbreak{}rows\_\allowbreak{}with\_\allowbreak{}outliers()}}, \hyperref[word:table.add-adjusted-p-value-column]{\code{table.\allowbreak{}add\_\allowbreak{}adjusted\_\allowbreak{}p\_\allowbreak{}value\_\allowbreak{}column()}}, \hyperref[word:table.remove-rows-with-outliers]{\code{table.\allowbreak{}remove\_\allowbreak{}rows\_\allowbreak{}with\_\allowbreak{}outliers()}}, \hyperref[word:table.compare-spreads]{\code{table.\allowbreak{}compare\_\allowbreak{}spreads()}}, \hyperref[word:table.compare-counts-to]{\code{table.\allowbreak{}compare\_\allowbreak{}counts\_\allowbreak{}to()}}, \hyperref[word:table.compare-percent-to]{\code{table.\allowbreak{}compare\_\allowbreak{}percent\_\allowbreak{}to()}}.\par}
+\par\noindent{\small\sffamily\textbf{Words in this lesson:} \hyperref[word:table.compare-averages]{\code{table.\allowbreak{}compare\_\allowbreak{}averages()}}, \hyperref[word:table.compare-each-pair]{\code{table.\allowbreak{}compare\_\allowbreak{}each\_\allowbreak{}pair()}}, \hyperref[word:table.compare-counts]{\code{table.\allowbreak{}compare\_\allowbreak{}counts()}}, \hyperref[word:table.fit-line]{\code{table.\allowbreak{}fit\_\allowbreak{}line()}}, \hyperref[word:table.fit-formula]{\code{table.\allowbreak{}fit\_\allowbreak{}formula()}}, \hyperref[word:table.add-group-column]{\code{table.\allowbreak{}add\_\allowbreak{}group\_\allowbreak{}column()}}, \hyperref[word:table.compare-shape-to]{\code{table.\allowbreak{}compare\_\allowbreak{}shape\_\allowbreak{}to()}}, \hyperref[word:table.show-rows-with-outliers]{\code{table.\allowbreak{}show\_\allowbreak{}rows\_\allowbreak{}with\_\allowbreak{}outliers()}}, \hyperref[word:table.add-adjusted-p-value-column]{\code{table.\allowbreak{}add\_\allowbreak{}adjusted\_\allowbreak{}p\_\allowbreak{}value\_\allowbreak{}column()}}, \hyperref[word:table.remove-rows-with-outliers]{\code{table.\allowbreak{}remove\_\allowbreak{}rows\_\allowbreak{}with\_\allowbreak{}outliers()}}, \hyperref[word:table.compare-spreads]{\code{table.\allowbreak{}compare\_\allowbreak{}spreads()}}, \hyperref[word:table.compare-counts-to]{\code{table.\allowbreak{}compare\_\allowbreak{}counts\_\allowbreak{}to()}}, \hyperref[word:table.compare-percent-to]{\code{table.\allowbreak{}compare\_\allowbreak{}percent\_\allowbreak{}to()}}.\par}
 
 \chapter{A whole analysis: from a question to a figure}\label{lesson:15}
 \begin{learnbox}
@@ -2727,6 +2727,228 @@ Worked solutions: page~\pageref{solutions:18}, or type \code{sdata.\allowbreak{}
 \end{tryit}
 \par\noindent{\small\sffamily\textbf{Words in this lesson:} \hyperref[word:table.survival-over-time]{\code{table.\allowbreak{}survival\_\allowbreak{}over\_\allowbreak{}time()}}, \hyperref[word:survival-curves]{\code{chart.\allowbreak{}survival\_\allowbreak{}curves()}}, \hyperref[word:table.compare-survival]{\code{table.\allowbreak{}compare\_\allowbreak{}survival()}}, \hyperref[word:table.explain-survival]{\code{table.\allowbreak{}explain\_\allowbreak{}survival()}}, \hyperref[word:sdata.how-many-needed]{\code{sdata.\allowbreak{}how\_\allowbreak{}many\_\allowbreak{}needed()}}, \hyperref[word:sdata.chance-to-find]{\code{sdata.\allowbreak{}chance\_\allowbreak{}to\_\allowbreak{}find()}}.\par}
 
+\chapter{Fitting curves, finding the best value and solving}\label{lesson:19}
+\begin{learnbox}
+\begin{itemize}
+  \item how to fit a straight line, a curve or any formula to your data, on a table and on a chart
+  \item how to find where a formula is smallest or biggest
+  \item how to solve an equation, also one made from a fitted formula
+\end{itemize}
+\end{learnbox}
+\section*{Example 1}
+Start with something you know: a straight line through the dots. \code{fit\_\allowbreak{}line}, \code{fit\_\allowbreak{}curve} and \code{fit\_\allowbreak{}formula} are the same words on a table (the numbers) and on a chart (the picture).
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+table = sdata.table(sdata.example("marks"))
+table.fit_line(x="hours", y="marks")
+table.fit_curve(x="hours", y="marks", degree=2)
+chart = table.chart()
+chart.dots(x="hours", y="marks")
+chart.fit_line()
+chart.fit_curve(degree=2)
+chart.save("lesson19_line_and_curve.png")
+\end{lstlisting}
+\whateachline
+\begin{lineexplain}
+  \item[1] Load simplydata.
+  \item[2] The marks table: hours of study and marks.
+  \item[3] The straight line: about 5.2 marks more for each hour of study, and R squared 0.69.
+  \item[4] A curve with one bend (hours and hours**2). R squared only goes from 0.69 to 0.70, so the bend adds little: the straight line is enough here.
+  \item[5] Start a chart of the same table.
+  \item[6] The dots.
+  \item[7] The same straight line, drawn.
+  \item[8] And the curve, to see how close they are.
+  \item[9] Save it.
+\end{lineexplain}
+\printedoutput{output/lesson19_example1.txt}
+\begin{center}\begin{minipage}{\linewidth}\centering
+\includegraphics[width=0.72\textwidth,height=0.36\textheight,keepaspectratio]{figures/lesson19_example1_lesson19_line_and_curve.pdf}
+\captionof{figure}{Lesson 19, example 1: \code{lesson19\_\allowbreak{}line\_\allowbreak{}and\_\allowbreak{}curve.\allowbreak{}png}.}
+\end{minipage}\end{center}
+\section*{Example 2}
+A research question: how fast does each country grow? Growth by a fixed share each year is the formula population = a * \code{exp(b * (year - 2000))}. Names that are columns (population, year) are data; the other names (a, b) are the values to find.
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+table = sdata.table(sdata.example("growth"))
+table.fit_formula("population = a * exp(b * (year - 2000))", for_each="country")
+chart = table.chart()
+chart.dots(x="year", y="population", colour="country")
+chart.fit_formula("population = a * exp(b * (year - 2000))")
+chart.save("lesson19_growth.png")
+\end{lstlisting}
+\whateachline
+\begin{lineexplain}
+  \item[1] Load simplydata.
+  \item[2] Four countries, every two years.
+  \item[3] One fit for each country, by nonlinear least squares (as R \code{nls()}). a is the population in 2000 and b the growth rate: Cherria grows fastest, b = 0.0443, about 4.5 \% a year.
+  \item[4] Start a chart.
+  \item[5] The data, one colour per country.
+  \item[6] The fitted curve of each country, with the same values as the table word.
+  \item[7] Save it.
+\end{lineexplain}
+\printedoutput{output/lesson19_example2.txt}
+\begin{center}\begin{minipage}{\linewidth}\centering
+\includegraphics[width=0.72\textwidth,height=0.36\textheight,keepaspectratio]{figures/lesson19_example2_lesson19_growth.pdf}
+\captionof{figure}{Lesson 19, example 2: \code{lesson19\_\allowbreak{}growth.\allowbreak{}png}.}
+\end{minipage}\end{center}
+\section*{Example 3}
+Finding and solving: \code{sdata.\allowbreak{}find\_\allowbreak{}smallest}, \code{sdata.\allowbreak{}find\_\allowbreak{}biggest} and \code{sdata.\allowbreak{}solve} work on a formula. The names in it are what to find; \code{between=} says where to look.
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+sdata.find_smallest("x**2 - 4*x + 1", between=[0, 5])
+sdata.find_biggest("3*x + 2*y", rules=["x + y <= 4", "x + 3*y <= 6", "x >= 0", "y >= 0"])
+sdata.solve("x**3 - 2*x = 5", between=[0, 3])
+table = sdata.table(sdata.example("growth"))
+table.keep_rows("country", equal_to="Applia")
+fit = table.fit_formula("population = a * exp(b * (year - 2000))")
+sdata.solve("a * exp(b * (year - 2000)) = 20", between=[2000, 2050], known=fit)
+\end{lstlisting}
+\whateachline
+\begin{lineexplain}
+  \item[1] Load simplydata.
+  \item[2] The smallest value is -3, at x = 2. The method and its R name are printed (R \code{optimize()}).
+  \item[3] The biggest value under rules: 12, at x = 4 and y = 0. Everything is a straight line, so simplydata uses linear programming and says which rules are reached exactly.
+  \item[4] The value of x that makes both sides equal: 2.09455. Every solution in the range is found.
+  \item[5] Back to the growth table.
+  \item[6] Keep one country.
+  \item[7] Fit the growth formula and keep the result, a one-row table with a and b.
+  \item[8] \code{known=fit} puts the fitted a and b into the equation: Applia reaches 20 million in about 2017 (year = 2017.24). A fitted curve answers questions, not only draws a line.
+\end{lineexplain}
+\printedoutput{output/lesson19_example3.txt}
+\begin{goodtoknow}
+\begin{itemize}
+  \item Fitting is the same idea every time: a line, a curve or a formula is moved until it is as close to the points as it can be (least squares). The printed sentence says how sure each value is (its 95 \% confidence interval).
+  \item A curve with a high \code{degree=} can wiggle through every point and still say nothing true. Choose the simplest line or formula that follows the data, and a formula whose values mean something (here b is a growth rate).
+  \item If a formula fit fails, give start values near the answer: \code{start=}\{\code{\textquotedbl{}a\textquotedbl{}}: 10, \code{\textquotedbl{}b\textquotedbl{}}: 0.03\}.
+  \item \code{find\_\allowbreak{}smallest} with \code{between=} finds one lowest point; when the curve has several dips it says so, and \code{search=\textquotedbl{}whole range\textquotedbl{}} looks everywhere. solve with \code{between=} finds every crossing.
+  \item Names from other tools point to these words: minimize, optimise and argmin to \code{find\_\allowbreak{}smallest}, fsolve, brentq and uniroot to solve, \code{curve\_\allowbreak{}fit} and nls to \code{fit\_\allowbreak{}formula}, polyfit to \code{fit\_\allowbreak{}curve}.
+\end{itemize}
+\end{goodtoknow}
+\begin{tryit}
+\begin{enumerate}
+  \item Fit a curve of degree 3 to \code{\textquotedbl{}marks\textquotedbl{}} against \code{\textquotedbl{}hours\textquotedbl{}}. Does R squared go up much from the straight line?
+  \item With the weather table, keep the city Sunnyvale and fit \code{\textquotedbl{}temperature = a + b * cos(2 * pi * (month\_\allowbreak{}number - c) / 12)\textquotedbl{}} with \code{start=}\{\code{\textquotedbl{}a\textquotedbl{}}: 15, \code{\textquotedbl{}b\textquotedbl{}}: 8, \code{\textquotedbl{}c\textquotedbl{}}: 7\}. In which month is it warmest (c)?
+  \item Try to remember without looking back: which word finds where a formula is biggest, and which word finds where the two sides of an equation are equal? Use them on \code{\textquotedbl{}x * (10 - x)\textquotedbl{}} between 0 and 10, and on \code{\textquotedbl{}x**2 = 2\textquotedbl{}} between 0 and 2.
+\end{enumerate}
+Worked solutions: page~\pageref{solutions:19}, or type \code{sdata.\allowbreak{}lesson(19,\allowbreak{} solutions=True)}.
+\end{tryit}
+\par\noindent{\small\sffamily\textbf{Words in this lesson:} \hyperref[word:table.fit-line]{\code{table.\allowbreak{}fit\_\allowbreak{}line()}}, \hyperref[word:table.fit-curve]{\code{table.\allowbreak{}fit\_\allowbreak{}curve()}}, \hyperref[word:table.fit-formula]{\code{table.\allowbreak{}fit\_\allowbreak{}formula()}}, \hyperref[word:fit-line]{\code{chart.\allowbreak{}fit\_\allowbreak{}line()}}, \hyperref[word:fit-curve]{\code{chart.\allowbreak{}fit\_\allowbreak{}curve()}}, \hyperref[word:fit-formula]{\code{chart.\allowbreak{}fit\_\allowbreak{}formula()}}, \hyperref[word:sdata.find-smallest]{\code{sdata.\allowbreak{}find\_\allowbreak{}smallest()}}, \hyperref[word:sdata.find-biggest]{\code{sdata.\allowbreak{}find\_\allowbreak{}biggest()}}, \hyperref[word:sdata.solve]{\code{sdata.\allowbreak{}solve()}}.\par}
+
+\chapter{Distributions, chances and values between points}\label{lesson:20}
+\begin{learnbox}
+\begin{itemize}
+  \item how to ask a distribution for chances, percentiles and cut-offs
+  \item how to find which distribution fits your data, and check it
+  \item how to estimate values between the points you measured
+\end{itemize}
+\end{learnbox}
+\section*{Example 1}
+A distribution says how likely each value is. Start with the bell curve (normal): marks with an average of 50 and a standard deviation of 10.
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+dist = sdata.distribution("normal", average=50, standard_deviation=10)
+dist.chance(above=80)
+dist.chance(between=[40, 60])
+dist.percentile(95)
+dist.cut_off(above=0.025)
+chart = dist.chart()
+chart.save("lesson20_normal.png")
+\end{lstlisting}
+\whateachline
+\begin{lineexplain}
+  \item[1] Load simplydata.
+  \item[2] Make the distribution. R's names (\code{mean=}, \code{sd=}) work too.
+  \item[3] The chance of a mark above 80: 0.135 \%. The R code that gives the same answer is printed too: \code{pnorm(80,\allowbreak{} .\allowbreak{}.\allowbreak{}.\allowbreak{})}.
+  \item[4] 68.3 \%: about two in three are within one standard deviation of the average.
+  \item[5] 95 \% of marks are below 66.4.
+  \item[6] The cut-off with a 2.5 \% chance above it: 69.6. Tests use such cut-offs (critical values).
+  \item[7] A chart of the bell curve.
+  \item[8] Save it.
+\end{lineexplain}
+\printedoutput{output/lesson20_example1.txt}
+\begin{center}\begin{minipage}{\linewidth}\centering
+\includegraphics[width=0.72\textwidth,height=0.36\textheight,keepaspectratio]{figures/lesson20_example1_lesson20_normal.pdf}
+\captionof{figure}{Lesson 20, example 1: \code{lesson20\_\allowbreak{}normal.\allowbreak{}png}.}
+\end{minipage}\end{center}
+\section*{Example 2}
+A research question: pupils' days absent are counts (0, 1, 2 ...). Do they vary as a Poisson distribution expects, or more? The words that fit are \code{fit\_\allowbreak{}distribution} and \code{compare\_\allowbreak{}distributions}.
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+table = sdata.table(sdata.example("school"))
+table.compare_distributions("days_absent", distributions=("poisson", "negative binomial"))
+fit = table.fit_distribution("days_absent", "negative binomial")
+fit.chance(at_least=10)
+chart = table.chart()
+chart.histogram(x="days_absent", show="density")
+chart.fit_distribution("negative binomial")
+chart.save("lesson20_absent.png")
+\end{lstlisting}
+\whateachline
+\begin{lineexplain}
+  \item[1] Load simplydata.
+  \item[2] 180 pupils and their days absent.
+  \item[3] Both are fitted by maximum likelihood and ranked by AIC: the negative binomial wins by 7, so the counts vary more than Poisson allows.
+  \item[4] Fit it and keep the fitted distribution.
+  \item[5] The chance a pupil misses 10 days or more: 0.66 \%.
+  \item[6] Start a chart.
+  \item[7] The counts, as shares.
+  \item[8] The fitted chance of each count, on top.
+  \item[9] Save it.
+\end{lineexplain}
+\printedoutput{output/lesson20_example2.txt}
+\begin{center}\begin{minipage}{\linewidth}\centering
+\includegraphics[width=0.72\textwidth,height=0.36\textheight,keepaspectratio]{figures/lesson20_example2_lesson20_absent.pdf}
+\captionof{figure}{Lesson 20, example 2: \code{lesson20\_\allowbreak{}absent.\allowbreak{}png}.}
+\end{minipage}\end{center}
+\section*{Example 3}
+Values between points: you measured every two years, but you need 2001. \code{values\_\allowbreak{}at} joins the dots (straight lines, or a smooth curve) and reads off the value; \code{map\_\allowbreak{}of} does it across a whole map.
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+table = sdata.table(sdata.example("growth"))
+estimates = table.values_at("population", at={"year": [2001, 2011]}, for_each="country")
+estimates.show()
+island = sdata.table(sdata.example("island"))
+heights = island.map_of("height", across=["east", "north"], steps=60, joined_by="smooth surface")
+chart = heights.chart()
+chart.contour(x="east", y="north", z="height")
+chart.save("lesson20_map.png")
+\end{lstlisting}
+\whateachline
+\begin{lineexplain}
+  \item[1] Load simplydata.
+  \item[2] Population every two years.
+  \item[3] Straight lines between the known points (linear interpolation, as R \code{approx()}), for each country.
+  \item[4] A new table with the estimates.
+  \item[5] Heights measured on a 15 x 15 grid.
+  \item[6] A finer 60 x 60 map, with a smooth surface through every point (a thin-plate spline).
+  \item[7] A chart of the new map.
+  \item[8] Its contour map.
+  \item[9] Save it.
+\end{lineexplain}
+\printedoutput{output/lesson20_example3.txt}
+\begin{center}\begin{minipage}{\linewidth}\centering
+\includegraphics[width=0.72\textwidth,height=0.36\textheight,keepaspectratio]{figures/lesson20_example3_lesson20_map.pdf}
+\captionof{figure}{Lesson 20, example 3: \code{lesson20\_\allowbreak{}map.\allowbreak{}png}.}
+\end{minipage}\end{center}
+\begin{goodtoknow}
+\begin{itemize}
+  \item \code{chance()} gives back a share from 0 to 1 and prints it as a percent. \code{above=} and \code{below=} leave the value itself out, \code{at\_\allowbreak{}least=} and \code{at\_\allowbreak{}most=} keep it in, as in \code{keep\_\allowbreak{}rows}. For counts that matters: \code{at\_\allowbreak{}most=3} means 3 or fewer.
+  \item \code{density\_\allowbreak{}at()} is the height of the curve, not a chance: a chance is an area under the curve, so ask \code{chance(between=[.\allowbreak{}.\allowbreak{}.\allowbreak{}])}.
+  \item A fitted distribution is only as good as its fit. Compare a few with \code{compare\_\allowbreak{}distributions}, and test the shape with \code{table.\allowbreak{}compare\_\allowbreak{}shape\_\allowbreak{}to(\textquotedbl{}column\textquotedbl{},\allowbreak{} \textquotedbl{}gamma\textquotedbl{})}.
+  \item Values between points are estimates. Straight lines are the safe choice; a smooth curve can swing above or below the points (\code{joined\_\allowbreak{}by=\textquotedbl{}curve without overshoot\textquotedbl{}} never does). Outside the measured range the cells stay empty unless you ask for \code{outside=}.
+  \item Names from other tools point to these words: pnorm and cdf to chance, qnorm and ppf to percentile, dnorm and pdf to \code{density\_\allowbreak{}at}, interpolate and approx to \code{values\_\allowbreak{}at}.
+\end{itemize}
+\end{goodtoknow}
+\begin{tryit}
+\begin{enumerate}
+  \item Ten coins are thrown. With \code{sdata.\allowbreak{}distribution(\textquotedbl{}binomial\textquotedbl{},\allowbreak{} tries=10,\allowbreak{} chance=0.\allowbreak{}5)}, what is the chance of 8 heads or more?
+  \item Which fits the daily \code{\textquotedbl{}sales\textquotedbl{}} of the shop table best: normal, lognormal, gamma or weibull? Then check the best one with \code{compare\_\allowbreak{}shape\_\allowbreak{}to}.
+  \item Try to remember without looking back: which word estimates a value between the points you measured? Use it to estimate the temperature of each city at \code{month\_\allowbreak{}number} 6.5, joined by a smooth curve.
+\end{enumerate}
+Worked solutions: page~\pageref{solutions:20}, or type \code{sdata.\allowbreak{}lesson(20,\allowbreak{} solutions=True)}.
+\end{tryit}
+\par\noindent{\small\sffamily\textbf{Words in this lesson:} \hyperref[word:sdata.distribution]{\code{sdata.\allowbreak{}distribution()}}, \hyperref[word:dist.chance]{\code{dist.\allowbreak{}chance()}}, \hyperref[word:dist.percentile]{\code{dist.\allowbreak{}percentile()}}, \hyperref[word:dist.cut-off]{\code{dist.\allowbreak{}cut\_\allowbreak{}off()}}, \hyperref[word:dist.chart]{\code{dist.\allowbreak{}chart()}}, \hyperref[word:table.compare-distributions]{\code{table.\allowbreak{}compare\_\allowbreak{}distributions()}}, \hyperref[word:table.fit-distribution]{\code{table.\allowbreak{}fit\_\allowbreak{}distribution()}}, \hyperref[word:fit-distribution]{\code{chart.\allowbreak{}fit\_\allowbreak{}distribution()}}, \hyperref[word:table.values-at]{\code{table.\allowbreak{}values\_\allowbreak{}at()}}, \hyperref[word:table.map-of]{\code{table.\allowbreak{}map\_\allowbreak{}of()}}, \hyperref[word:curve]{\code{chart.\allowbreak{}curve()}}.\par}
+
 \otherchapters
 
 \part{Dictionary of words}\label{part:dictionary}
@@ -2860,7 +3082,7 @@ chart.save("bars.png")
 \wordfield{Also written}{\code{chart.\allowbreak{}line()}}
 Lines. \code{chart.\allowbreak{}lines(x=\textquotedbl{}month\textquotedbl{},\allowbreak{} y=\textquotedbl{}temperature\textquotedbl{},\allowbreak{} colour=\textquotedbl{}city\textquotedbl{})} (with \code{sdata.\allowbreak{}example(\textquotedbl{}weather\textquotedbl{})})
 
-\code{colour=\textquotedbl{}city\textquotedbl{}} draws one line per group. \code{dots=True} marks each point. \code{dashed=True} draws a dashed line. \code{show=} works as in bars (not \code{\textquotedbl{}count\textquotedbl{}}). \code{error=\textquotedbl{}standard deviation\textquotedbl{}}, \code{\textquotedbl{}standard error\textquotedbl{}} or \code{\textquotedbl{}confidence interval\textquotedbl{}} adds a shaded band; a line says which one was drawn. \code{thickness=3} draws thicker lines (normal is 2, in points); \code{transparency=0.\allowbreak{}5} makes them half see-through (0 is solid).
+\code{colour=\textquotedbl{}city\textquotedbl{}} draws one line per group. \code{dots=True} marks each point. \code{dashed=True} draws a dashed line. \code{show=} works as in bars (not \code{\textquotedbl{}count\textquotedbl{}}). \code{error=\textquotedbl{}standard deviation\textquotedbl{}}, \code{\textquotedbl{}standard error\textquotedbl{}} or \code{\textquotedbl{}confidence interval\textquotedbl{}} adds a shaded band; a line says which one was drawn. \code{thickness=3} draws thicker lines (normal is 2, in points); \code{transparency=0.\allowbreak{}5} makes them half see-through (0 is solid). \code{joined\_\allowbreak{}by=} says how the points are joined, as in \code{table.\allowbreak{}values\_\allowbreak{}at()}: \code{\textquotedbl{}straight lines\textquotedbl{}} (normal), \code{\textquotedbl{}smooth curve\textquotedbl{}} (natural cubic spline), \code{\textquotedbl{}curve without overshoot\textquotedbl{}} (PCHIP), \code{\textquotedbl{}steps\textquotedbl{}} (each value stays until the next point), \code{\textquotedbl{}nearest\textquotedbl{}}; experts: \code{\textquotedbl{}akima\textquotedbl{}}, \code{\textquotedbl{}makima\textquotedbl{}}, \code{\textquotedbl{}not-a-knot\textquotedbl{}}, \code{\textquotedbl{}periodic\textquotedbl{}}. Curves need numbers on x and y.
 
 \wordfield{Options}{}\par\nopagebreak
 \begin{optiontable}
@@ -2873,9 +3095,10 @@ Lines. \code{chart.\allowbreak{}lines(x=\textquotedbl{}month\textquotedbl{},\all
 \code{dashed=} & normally \code{False}\\
 \code{thickness=} & \\
 \code{transparency=} & \\
+\code{joined\_\allowbreak{}by=} & normally \code{\textquotedbl{}straight lines\textquotedbl{}}\\
 \end{optiontable}
 
-\wordfield{Underneath}{seaborn (lineplot)}
+\wordfield{Underneath}{seaborn (lineplot); SciPy (interpolate) for \code{joined\_\allowbreak{}by=} curves}
 \wordfield{Example you can run}{(it uses the practice table \code{weather})}\par\nopagebreak
 \begin{lstlisting}[style=py]
 import simplydata as sdata
@@ -3307,18 +3530,101 @@ chart.dots(x="month_number", y="temperature", colour="city")
 chart.fit_curve(degree=2)
 chart.save("fit_curve.png")
 \end{lstlisting}
+\wordentry{chart.fit\_formula()}{word:fit-formula}
+The curve of a formula fitted to the dots. \code{chart.\allowbreak{}fit\_\allowbreak{}formula(\textquotedbl{}population = a * exp(b * (year - 2000))\textquotedbl{})}
+
+After dots, for example \code{chart.\allowbreak{}dots(x=\textquotedbl{}year\textquotedbl{},\allowbreak{} y=\textquotedbl{}population\textquotedbl{},\allowbreak{} colour=\textquotedbl{}country\textquotedbl{})} (with\\
+\codeline{sdata.example(\textquotedbl{}growth\textquotedbl{})).}
+
+The same fit as \code{table.\allowbreak{}fit\_\allowbreak{}formula} (nonlinear least squares, as R \code{nls()}): names that are columns are data, other names (a, b) are the values to find. \code{start=} and \code{between=} work as there. Each colour group gets its own curve, and the values found are printed (once). \code{show\_\allowbreak{}equation=True} writes the formula with the values found on the chart. \code{colour=\textquotedbl{}red\textquotedbl{}} makes every curve red; \code{thickness=3} draws thicker curves.
+
+\wordfield{Options}{}\par\nopagebreak
+\begin{optiontable}
+\code{formula=} & \\
+\code{start=} & \\
+\code{between=} & \\
+\code{show\_\allowbreak{}equation=} & normally \code{False}\\
+\code{colour=} & \\
+\code{thickness=} & \\
+\end{optiontable}
+
+\wordfield{Underneath}{SciPy (optimize.curve\_fit, as \code{table.\allowbreak{}fit\_\allowbreak{}formula}), drawn with matplotlib}
+\wordfield{Example you can run}{(it uses the practice table \code{growth})}\par\nopagebreak
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+growth = sdata.example("growth")
+chart = sdata.chart(growth)
+chart.dots(x="year", y="population", colour="country")
+chart.fit_formula("population = a * exp(b * (year - 2000))")
+chart.save("fit_formula.png")
+\end{lstlisting}
+\wordentry{chart.fit\_distribution()}{word:fit-distribution}
+The best-fitting distribution's curve over a histogram or density chart. \code{chart.\allowbreak{}fit\_\allowbreak{}distribution(\textquotedbl{}normal\textquotedbl{})}
+
+After a histogram or density, for example \code{chart.\allowbreak{}histogram(x=\textquotedbl{}marks\textquotedbl{},\allowbreak{} show=\textquotedbl{}density\textquotedbl{})} (with \code{sdata.\allowbreak{}example(\textquotedbl{}marks\textquotedbl{})}).
+
+The parameters are found by maximum likelihood, as \code{table.\allowbreak{}fit\_\allowbreak{}distribution} (R MASS::\code{fitdistr()}), and printed (once). Each colour group gets its own curve. Over a histogram the curve is scaled to what the bars show (count, percent or density). \code{distribution=} is any name of \code{sdata.\allowbreak{}distribution}, such as \code{\textquotedbl{}gamma\textquotedbl{}} or \code{\textquotedbl{}lognormal\textquotedbl{}}. \code{colour=\textquotedbl{}red\textquotedbl{}} makes every curve red; \code{thickness=3} draws thicker curves.
+
+\wordfield{Options}{}\par\nopagebreak
+\begin{optiontable}
+\code{distribution=} & normally \code{\textquotedbl{}normal\textquotedbl{}}\\
+\code{colour=} & \\
+\code{thickness=} & \\
+\end{optiontable}
+
+\wordfield{Underneath}{SciPy (scipy.stats, maximum likelihood as \code{table.\allowbreak{}fit\_\allowbreak{}distribution}), drawn with matplotlib}
+\wordfield{Example you can run}{(it uses the practice table \code{marks})}\par\nopagebreak
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+marks = sdata.example("marks")
+chart = sdata.chart(marks)
+chart.histogram(x="marks", show="density")
+chart.fit_distribution("normal")
+chart.save("fit_distribution.png")
+\end{lstlisting}
+\wordentry{chart.curve()}{word:curve}
+Draw a formula, or a distribution, as a curve. \code{chart.\allowbreak{}curve(\textquotedbl{}y = 100 * exp(-0.\allowbreak{}3 * x)\textquotedbl{},\allowbreak{} between=[0,\allowbreak{} 10])}
+
+The formula uses one name (x, or any other) and the functions of \code{table.\allowbreak{}add\_\allowbreak{}column}; \code{between=[low,\allowbreak{} high]} says where along x (normally the x range of the chart).\\
+\codeline{chart.curve(sdata.distribution(\textquotedbl{}normal\textquotedbl{}, average=50, standard\_deviation=10)) draws a}\\
+distribution: its density curve, or for whole-number distributions (binomial, poisson ...) the chance of each value. Over a histogram the curve is scaled to the bars (count, percent or density), with a note. \code{show=\textquotedbl{}cumulative\textquotedbl{}} draws the chance of a value at or below x instead (on a cumulative histogram it is scaled the same way). \code{steps=} is how many points make the curve (normally 200); \code{dashed=True}, \code{colour=\textquotedbl{}red\textquotedbl{}}, \code{thickness=3} and \code{label=\textquotedbl{}model\textquotedbl{}} (shown in the legend) change how it looks.
+
+\wordfield{Options}{}\par\nopagebreak
+\begin{optiontable}
+\code{formula\_\allowbreak{}or\_\allowbreak{}distribution=} & \\
+\code{between=} & \\
+\code{steps=} & normally \code{200}\\
+\code{dashed=} & normally \code{False}\\
+\code{colour=} & \\
+\code{label=} & \\
+\code{thickness=} & \\
+\code{show=} & normally \code{\textquotedbl{}density\textquotedbl{}}\\
+\end{optiontable}
+
+\wordfield{Underneath}{NumPy (the formula on a grid of x values) or scipy.stats (a distribution), drawn with matplotlib}
+\wordfield{Example you can run}{(it uses the practice table \code{marks})}\par\nopagebreak
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+marks = sdata.example("marks")
+chart = sdata.chart(marks)
+chart.histogram(x="marks", show="density")
+chart.curve(sdata.distribution("normal", average=60, standard_deviation=15), label="a bell curve")
+chart.save("curve.png")
+\end{lstlisting}
 \wordentry{chart.smooth\_line()}{word:smooth-line}
 A smooth line that follows the dots (LOWESS). \code{chart.\allowbreak{}smooth\_\allowbreak{}line()}
 
-Good for seeing a trend that is not straight. Each colour group gets its own line. \code{thickness=3} draws a thicker line (normal is 2).
+Good for seeing a trend that is not straight. Each colour group gets its own line. \code{thickness=3} draws a thicker line (normal is 2). \code{method=\textquotedbl{}spline\textquotedbl{}} draws a smoothing spline instead (as \code{table.\allowbreak{}values\_\allowbreak{}at(.\allowbreak{}.\allowbreak{}.\allowbreak{},\allowbreak{} smoothness=)} and R \code{smooth.\allowbreak{}spline()}): \code{smoothness=\textquotedbl{}auto\textquotedbl{}} chooses how smooth by generalised cross-validation; a number is R's \code{lambda=} (bigger is smoother).
 
 \wordfield{Options}{}\par\nopagebreak
 \begin{optiontable}
 \code{colour=} & \\
 \code{thickness=} & \\
+\code{method=} & normally \code{\textquotedbl{}lowess\textquotedbl{}}\\
+\code{smoothness=} & normally \code{\textquotedbl{}auto\textquotedbl{}}\\
 \end{optiontable}
 
-\wordfield{Underneath}{NumPy (LOWESS, written out in simplydata as in R's \code{lowess()}), drawn with matplotlib}
+\wordfield{Underneath}{NumPy (LOWESS, written out in simplydata as in R's \code{lowess()}) or SciPy (\code{make\_\allowbreak{}smoothing\_\allowbreak{}spline}, for \code{method=\textquotedbl{}spline\textquotedbl{}}), drawn with matplotlib}
 \wordfield{Example you can run}{(it uses the practice table \code{weather})}\par\nopagebreak
 \begin{lstlisting}[style=py]
 import simplydata as sdata
@@ -3415,7 +3721,7 @@ chart.save("side_histograms.png")
 Dots that lie on a straight line when the values follow a normal (bell) curve.\\
 \codeline{chart.qq\_dots(\textquotedbl{}marks\textquotedbl{})} (with \code{sdata.\allowbreak{}example(\textquotedbl{}marks\textquotedbl{})})
 
-Each value, smallest to biggest, is drawn against where it would be if the values were normal (a normal Q-Q plot, scipy.stats.probplot), with the straight line that fits the dots best. Dots that bend away from the line at the ends mean long or short tails; a curve means the values lean to one side. Good for checking residuals. \code{for\_\allowbreak{}each=\textquotedbl{}class\textquotedbl{}} draws each group in its own colour, with its own line. SciPy places the dots at Filliben's positions; R's \code{qqnorm()} uses slightly different ones, and R's \code{qqline()} draws its line through the quartiles instead.
+Each value, smallest to biggest, is drawn against where it would be if the values were normal (a normal Q-Q plot, scipy.stats.probplot), with the straight line that fits the dots best. Dots that bend away from the line at the ends mean long or short tails; a curve means the values lean to one side. Good for checking residuals. \code{for\_\allowbreak{}each=\textquotedbl{}class\textquotedbl{}} draws each group in its own colour, with its own line. SciPy places the dots at Filliben's positions; R's \code{qqnorm()} uses slightly different ones, and R's \code{qqline()} draws its line through the quartiles instead. \code{distribution=\textquotedbl{}gamma\textquotedbl{}} (any name of \code{sdata.\allowbreak{}distribution}) compares with that distribution instead, its parameters fitted to each group by maximum likelihood (printed once).
 
 \wordfield{Options}{}\par\nopagebreak
 \begin{optiontable}
@@ -3423,9 +3729,10 @@ Each value, smallest to biggest, is drawn against where it would be if the value
 \code{for\_\allowbreak{}each=} & \\
 \code{transparency=} & \\
 \code{thickness=} & \\
+\code{distribution=} & normally \code{\textquotedbl{}normal\textquotedbl{}}\\
 \end{optiontable}
 
-\wordfield{Underneath}{SciPy (stats.probplot) for the points and the line; matplotlib draws them}
+\wordfield{Underneath}{SciPy (stats.probplot, against a fitted scipy.stats distribution for \code{distribution=}) for the points and the line; matplotlib draws them}
 \wordfield{Example you can run}{(it uses the practice table \code{marks})}\par\nopagebreak
 \begin{lstlisting}[style=py]
 import simplydata as sdata
@@ -4520,7 +4827,7 @@ chart.animate(over="year")
 chart.save("growth.gif")
 \end{lstlisting}
 \unchapter{Table words}{family:table}
-Steps on a table: \code{table = sdata.table(...)}, then \code{table.keep\_rows(...)}. Table words work the same on pandas and Polars tables.
+Steps on a table: \code{table = sdata.table(...)}, then \code{table.keep\_rows(...)}. Table words work the same on pandas and Polars tables. Words that start with \code{sdata.} (finding and solving, planning a study) are called on simplydata itself, and words that start with \code{dist.} are steps on a distribution: \code{dist = sdata.distribution("normal")}.
 \unsection{Tables: start and look}{group:Tables-start-and-look}
 \wordentry{sdata.table()}{word:sdata.table}
 Start a table.
@@ -4978,7 +5285,8 @@ Fill the empty cells of a column with a value, or with the average, median, valu
 
 \codeline{table.fill\_empty\_cells(\textquotedbl{}customers\textquotedbl{}, with\_the=\textquotedbl{}median\textquotedbl{})} (with \code{sdata.\allowbreak{}example(\textquotedbl{}shop\textquotedbl{})})\\
 \code{with\_\allowbreak{}the=\textquotedbl{}line between neighbours\textquotedbl{}} fills each gap on the straight line between the filled cells just before and just after it (linear interpolation). It follows the rows in table order, or \code{sorted\_\allowbreak{}by=} a column of numbers or dates (then the line is spaced by those values, so a missing day counts as one day); \code{for\_\allowbreak{}each=} fills each group on its own. Empty cells at the start or end have only one neighbour, so they stay empty.\\
-\codeline{table.fill\_empty\_cells(\textquotedbl{}sales\textquotedbl{}, with\_the=\textquotedbl{}line between neighbours\textquotedbl{}, sorted\_by=\textquotedbl{}date\textquotedbl{}, for\_each=\textquotedbl{}shop\textquotedbl{})}
+\codeline{table.fill\_empty\_cells(\textquotedbl{}sales\textquotedbl{}, with\_the=\textquotedbl{}line between neighbours\textquotedbl{}, sorted\_by=\textquotedbl{}date\textquotedbl{}, for\_each=\textquotedbl{}shop\textquotedbl{})}\\
+\code{with\_\allowbreak{}the=\textquotedbl{}curve between neighbours\textquotedbl{}} fills them on a smooth curve through the filled cells instead (a natural cubic spline, as R zoo::\code{na.\allowbreak{}spline(method = \textquotedbl{}natural\textquotedbl{})}), and \code{with\_\allowbreak{}the=\textquotedbl{}curve without overshoot\textquotedbl{}} on a smooth curve that never goes above or below its neighbours (PCHIP); both take \code{sorted\_\allowbreak{}by=} and \code{for\_\allowbreak{}each=} the same way.
 
 \wordfield{Options}{}\par\nopagebreak
 \begin{optiontable}
@@ -4989,7 +5297,7 @@ Fill the empty cells of a column with a value, or with the average, median, valu
 \code{for\_\allowbreak{}each=} & \\
 \end{optiontable}
 
-\wordfield{Underneath}{narwhals; NumPy (interp) for the line between neighbours}
+\wordfield{Underneath}{narwhals; NumPy (interp) for the line between neighbours; SciPy (CubicSpline, PchipInterpolator) for the curves}
 \wordfield{Example you can run}{(it uses the practice table \code{shop})}\par\nopagebreak
 \begin{lstlisting}[style=py]
 import simplydata as sdata
@@ -5932,59 +6240,23 @@ table = sdata.table(sdata.example("marks"))
 table.add_group_column("result", from_column="marks", cut_at=[60], names=["below 60", "60 or more"])
 table.compare_counts("result", for_each="class")
 \end{lstlisting}
-\wordentry{table.fit\_straight\_line()}{word:table.fit-straight-line}
-Fit the straight line y = slope * x + intercept that best follows the points.
-
-\codeline{table.fit\_straight\_line(x=\textquotedbl{}hours\textquotedbl{}, y=\textquotedbl{}marks\textquotedbl{})} (with \code{sdata.\allowbreak{}example(\textquotedbl{}marks\textquotedbl{})})\\
-Ordinary least squares (the same as R \code{lm(y \textasciitilde{} x)}). Prints how much y goes up for each 1 more of x, with its 95 \% confidence interval and p-value, and R squared: the share of the differences in y that the line explains. Rows with an empty cell in x or y are skipped. A link does not show that x causes y. Gives back a one-row table.
-
-\wordfield{Options}{}\par\nopagebreak
-\begin{optiontable}
-\code{x=} & \\
-\code{y=} & \\
-\end{optiontable}
-
-\wordfield{Underneath}{SciPy (stats.linregress)}
-\wordfield{Example you can run}{(it uses the practice table \code{marks})}\par\nopagebreak
-\begin{lstlisting}[style=py]
-import simplydata as sdata
-table = sdata.table(sdata.example("marks"))
-table.fit_straight_line(x="hours", y="marks")
-\end{lstlisting}
-\wordentry{table.fit\_formula()}{word:table.fit-formula}
-Find the values in a formula that make it follow the data best.
-
-\codeline{table.fit\_formula(\textquotedbl{}population = a * exp(b * (year - 2000))\textquotedbl{})} (with \code{sdata.\allowbreak{}example(\textquotedbl{}growth\textquotedbl{})})\\
-Write the column to fit on the left of =. On the right, names that are columns are data; any other name (such as a, b or rate) is a value to find. Uses nonlinear least squares (SciPy \code{curve\_\allowbreak{}fit}; standard errors as in R \code{nls()}). Every value to find starts at 1; give better start values with \code{start=}\{\code{\textquotedbl{}a\textquotedbl{}}: 10, \code{\textquotedbl{}b\textquotedbl{}}: 0.03\} if the fit fails. Prints each value with its standard error, and R squared (only a rough guide for a curve). Rows with an empty cell are skipped. Gives back a one-row table.
-
-\wordfield{Options}{}\par\nopagebreak
-\begin{optiontable}
-\code{formula=} & \\
-\code{start=} & \\
-\end{optiontable}
-
-\wordfield{Underneath}{SciPy (optimize.curve\_fit)}
-\wordfield{Example you can run}{(it uses the practice table \code{growth})}\par\nopagebreak
-\begin{lstlisting}[style=py]
-import simplydata as sdata
-table = sdata.table(sdata.example("growth"))
-table.keep_rows("country", equal_to="Applia")
-table.fit_formula("population = a * exp(b * (year - 2000))")
-\end{lstlisting}
 \wordentry{table.compare\_shape\_to()}{word:table.compare-shape-to}
 Do the values look bell-shaped (normal), or are they too far from it to be chance?
 
 \codeline{table.compare\_shape\_to(\textquotedbl{}marks\textquotedbl{}, \textquotedbl{}normal\textquotedbl{}, for\_each=\textquotedbl{}class\textquotedbl{})} (with \code{sdata.\allowbreak{}example(\textquotedbl{}marks\textquotedbl{})})\\
 Uses the Shapiro-Wilk test (as R \code{shapiro.\allowbreak{}test()}), for 3 to 5000 values in each group; empty cells are skipped. A small p-value says the shape is too far from a bell shape to be chance. A large p-value does not prove the values are normal: with few values the test can miss a different shape, and with many values (30 or more) it flags even tiny, harmless differences, while tests on averages are then usually fine anyway (the central limit theorem). Gives back a table with one row per group.
 
+Any other smooth shape works too: \code{table.\allowbreak{}compare\_\allowbreak{}shape\_\allowbreak{}to(\textquotedbl{}days\textquotedbl{},\allowbreak{} \textquotedbl{}gamma\textquotedbl{})} fits the distribution (as \code{table.\allowbreak{}fit\_\allowbreak{}distribution}) and runs the Anderson-Darling test, with a p-value from 9999 simulated samples that are each fitted again (\code{seed=1}, printed).
+
 \wordfield{Options}{}\par\nopagebreak
 \begin{optiontable}
 \code{column=} & \\
 \code{shape=} & normally \code{\textquotedbl{}normal\textquotedbl{}}\\
 \code{for\_\allowbreak{}each=} & \\
+\code{seed=} & normally \code{1}\\
 \end{optiontable}
 
-\wordfield{Underneath}{SciPy (stats.shapiro)}
+\wordfield{Underneath}{SciPy (stats.shapiro for normal; stats.goodness\_of\_fit, Anderson-Darling with a Monte Carlo p-value, for other shapes)}
 \wordfield{Example you can run}{(it uses the practice table \code{marks})}\par\nopagebreak
 \begin{lstlisting}[style=py]
 import simplydata as sdata
@@ -6073,6 +6345,520 @@ import simplydata as sdata
 table = sdata.table(sdata.example("school"))
 table.compare_percent_to("passed", value="yes", percent=50)
 \end{lstlisting}
+\unsection{Fitting}{group:Fitting}
+\wordentry{table.fit\_line()}{word:table.fit-line}
+Fit the straight line y = slope * x + intercept that best follows the points.
+
+\codeline{table.fit\_line(x=\textquotedbl{}hours\textquotedbl{}, y=\textquotedbl{}marks\textquotedbl{})} (with \code{sdata.\allowbreak{}example(\textquotedbl{}marks\textquotedbl{})})\\
+Ordinary least squares (the same as R \code{lm(y \textasciitilde{} x)}). Prints how much y goes up for each 1 more of x, with its 95 \% confidence interval and p-value, and R squared: the share of the differences in y that the line explains. Rows with an empty cell in x or y are skipped. A link does not show that x causes y. Gives back a one-row table. The same line as \code{chart.\allowbreak{}fit\_\allowbreak{}line()}; its old name \code{fit\_\allowbreak{}straight\_\allowbreak{}line} still works. For a curve use \code{fit\_\allowbreak{}curve()}, for any formula \code{fit\_\allowbreak{}formula()}.
+
+\wordfield{Options}{}\par\nopagebreak
+\begin{optiontable}
+\code{x=} & \\
+\code{y=} & \\
+\end{optiontable}
+
+\wordfield{Underneath}{SciPy (stats.linregress)}
+\wordfield{Example you can run}{(it uses the practice table \code{marks})}\par\nopagebreak
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+table = sdata.table(sdata.example("marks"))
+table.fit_line(x="hours", y="marks")
+\end{lstlisting}
+\wordentry{table.fit\_curve()}{word:table.fit-curve}
+Fit a curve y = b0 + b1 * x + b2 * x**2 ... that best follows the points.
+
+\codeline{table.fit\_curve(x=\textquotedbl{}hours\textquotedbl{}, y=\textquotedbl{}marks\textquotedbl{}, degree=2)} (with \code{sdata.\allowbreak{}example(\textquotedbl{}marks\textquotedbl{})})\\
+\code{degree=2} is a curve with one bend, \code{degree=3} can bend twice, and so on (up to 10), the same curve as \code{chart.\allowbreak{}fit\_\allowbreak{}curve(degree=)}. Least squares on the powers of x, as R \code{lm(y \textasciitilde{} poly(x,\allowbreak{} 2,\allowbreak{} raw = TRUE))}. Prints the curve and R squared; gives back one row per term (the intercept, x, x**2 ...) with its estimate, standard error, t, p-value and 95 \% confidence interval. \code{weights=\textquotedbl{}column\textquotedbl{}} counts some rows more (as R \code{lm(weights =)}); \code{for\_\allowbreak{}each=\textquotedbl{}column\textquotedbl{}} fits each group on its own. Rows with an empty cell are skipped.
+
+\wordfield{Options}{}\par\nopagebreak
+\begin{optiontable}
+\code{x=} & \\
+\code{y=} & \\
+\code{degree=} & normally \code{2}\\
+\code{weights=} & \\
+\code{for\_\allowbreak{}each=} & \\
+\end{optiontable}
+
+\wordfield{Underneath}{NumPy (least squares by QR on the powers of x)}
+\wordfield{Example you can run}{(it uses the practice table \code{marks})}\par\nopagebreak
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+table = sdata.table(sdata.example("marks"))
+table.fit_curve(x="hours", y="marks", degree=2)
+\end{lstlisting}
+\wordentry{table.fit\_formula()}{word:table.fit-formula}
+Find the values in a formula that make it follow the data best.
+
+\codeline{table.fit\_formula(\textquotedbl{}population = a * exp(b * (year - 2000))\textquotedbl{})} (with \code{sdata.\allowbreak{}example(\textquotedbl{}growth\textquotedbl{})})\\
+Write the column to fit on the left of =. On the right, names that are columns are data; any other name (such as a, b or rate) is a value to find. Uses nonlinear least squares, as R \code{nls()} (Levenberg-Marquardt). Every value to find starts at 1; give better start values with \code{start=}\{\code{\textquotedbl{}a\textquotedbl{}}: 10, \code{\textquotedbl{}b\textquotedbl{}}: 0.03\} if the fit fails. \code{between=}\{\code{\textquotedbl{}b\textquotedbl{}}: [0, None]\} keeps a value between limits (None: no limit), as R \code{nls(algorithm = \textquotedbl{}port\textquotedbl{})}; \code{search=\textquotedbl{}whole range\textquotedbl{}} searches the whole range of \code{between=} before fitting (differential evolution, seed 1), for when start values are hard to guess. \code{weights=\textquotedbl{}column\textquotedbl{}} counts some rows more (as R \code{nls(weights =)}). \code{for\_\allowbreak{}each=\textquotedbl{}column\textquotedbl{}} fits each group on its own. \code{method=} lets an expert choose \code{\textquotedbl{}levenberg-marquardt\textquotedbl{}}, \code{\textquotedbl{}trust region\textquotedbl{}} or \code{\textquotedbl{}dogbox\textquotedbl{}}. Prints each value with its 95 \% confidence interval, the residual standard error and R squared (only a rough guide for a curve). Gives back one row (one per group) with each value, its standard error, t, p-value and 95 \% CI, the residual standard error, degrees of freedom, R squared, AIC, rows and whether the fit converged. Residuals: \code{add\_\allowbreak{}predicted\_\allowbreak{}column} with the same formula, then \code{add\_\allowbreak{}column(\textquotedbl{}y - predicted y\textquotedbl{})}. Rows with an empty cell are skipped.
+
+\wordfield{Options}{}\par\nopagebreak
+\begin{optiontable}
+\code{formula=} & \\
+\code{start=} & \\
+\code{between=} & \\
+\code{weights=} & \\
+\code{for\_\allowbreak{}each=} & \\
+\code{search=} & normally \code{\textquotedbl{}from start\textquotedbl{}}\\
+\code{method=} & \\
+\end{optiontable}
+
+\wordfield{Underneath}{SciPy (optimize.curve\_fit; optimize.differential\_evolution for \code{search=\textquotedbl{}whole range\textquotedbl{}})}
+\wordfield{Example you can run}{(it uses the practice table \code{growth})}\par\nopagebreak
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+table = sdata.table(sdata.example("growth"))
+table.fit_formula("population = a * exp(b * (year - 2000))", for_each="country")
+table.keep_rows("country", equal_to="Applia")
+table.fit_formula("population = a * exp(b * (year - 2000))")
+\end{lstlisting}
+\unsection{Finding and solving}{group:Finding-and-solving}
+\wordentry{sdata.find\_smallest()}{word:sdata.find-smallest}
+Find where a formula is smallest, and its value there.
+
+\codeline{sdata.find\_smallest(\textquotedbl{}x**2 - 4*x + 1\textquotedbl{}, between=[0, 5])}\enspace (the smallest value is -3, at x = 2)\\
+The names in the formula (x, y, a, rate) are what to find. Give a range with \code{between=} ([0, 5] for one name; \{\code{\textquotedbl{}x\textquotedbl{}}: [0, 5], \code{\textquotedbl{}y\textquotedbl{}}: [0, None]\} for several, None = no limit) or starting guesses with \code{start=} (a number, or \{\code{\textquotedbl{}x\textquotedbl{}}: 1, \code{\textquotedbl{}y\textquotedbl{}}: 2\}). \code{rules=[\textquotedbl{}x + y \textless{}= 4\textquotedbl{},\allowbreak{} \textquotedbl{}x \textgreater{}= 0\textquotedbl{}]} adds rules the answer must keep (=, \textless{}= or \textgreater{}=); \code{whole\_\allowbreak{}numbers=True} asks for whole numbers (with a straight-line formula and rules). \code{search=\textquotedbl{}whole range\textquotedbl{}} looks everywhere in \code{between=} instead of near the start. \code{known=}\{\code{\textquotedbl{}a\textquotedbl{}}: 2.1\} (or a one-row result table from \code{table.\allowbreak{}fit\_\allowbreak{}formula}) fixes some names. The method is decided by what you give and printed (R \code{optimize()}, \code{optim()}, lpSolve::\code{lp()}; see the module notes); \code{method=} lets experts choose (\code{\textquotedbl{}nelder-mead\textquotedbl{}}, \code{\textquotedbl{}bfgs\textquotedbl{}}, \code{\textquotedbl{}l-bfgs-b\textquotedbl{}}, \code{\textquotedbl{}conjugate gradient\textquotedbl{}}, \code{\textquotedbl{}powell\textquotedbl{}}, \code{\textquotedbl{}trust region\textquotedbl{}}, \code{\textquotedbl{}slsqp\textquotedbl{}}, \code{\textquotedbl{}cobyla\textquotedbl{}}; with \code{search=\textquotedbl{}whole range\textquotedbl{}}: \code{\textquotedbl{}differential evolution\textquotedbl{}}, \code{\textquotedbl{}dual annealing\textquotedbl{}}, \code{\textquotedbl{}shgo\textquotedbl{}}, \code{\textquotedbl{}basin hopping\textquotedbl{}}, \code{\textquotedbl{}direct\textquotedbl{}}). Gives back a one-row table: the value of each name, the smallest value, the method, whether the search settled, and for linear programs the value of one more on the right of each rule (shadow price, R \code{lp(compute.\allowbreak{}sens = TRUE)}\$duals). \code{fast=True} gives the table on the fast engine (Polars).
+
+\wordfield{Options}{}\par\nopagebreak
+\begin{optiontable}
+\code{formula=} & \\
+\code{between=} & \\
+\code{start=} & \\
+\code{rules=} & \\
+\code{whole\_\allowbreak{}numbers=} & normally \code{False}\\
+\code{search=} & normally \code{\textquotedbl{}from start\textquotedbl{}}\\
+\code{method=} & \\
+\code{known=} & \\
+\code{fast=} & normally \code{False}\\
+\end{optiontable}
+
+\wordfield{Underneath}{SciPy (optimize.minimize\_scalar, minimize, linprog and milp with HiGHS, \code{differential\_\allowbreak{}evolution} and other global searches)}
+\wordfield{Example you can run}{}\par\nopagebreak
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+sdata.find_smallest("x**2 - 4*x + 1", between=[0, 5])
+sdata.find_smallest("(x - 1)**2 + (y - 2)**2", start={"x": 0, "y": 0})
+\end{lstlisting}
+\wordentry{sdata.find\_biggest()}{word:sdata.find-biggest}
+Find where a formula is biggest, and its value there.
+
+\codeline{sdata.find\_biggest(\textquotedbl{}3*x + 2*y\textquotedbl{}, rules=[\textquotedbl{}x + y \textless{}= 4\textquotedbl{}, \textquotedbl{}x + 3*y \textless{}= 6\textquotedbl{}, \textquotedbl{}x \textgreater{}= 0\textquotedbl{}, \textquotedbl{}y \textgreater{}= 0\textquotedbl{}])}\enspace (12, at x = 4, y = 0)\\
+The same options as \code{find\_\allowbreak{}smallest()}: \code{between=}, \code{start=}, \code{rules=}, \code{whole\_\allowbreak{}numbers=}, \code{search=\textquotedbl{}whole range\textquotedbl{}}, \code{method=}, \code{known=} (a dict, or a one-row result table from \code{table.\allowbreak{}fit\_\allowbreak{}formula}, so a fitted curve can be handed straight over). It works by finding the smallest value of minus the formula, and prints the biggest. Gives back a one-row table: each name, the biggest value, the method, whether it settled, and for linear programs the value of one more on the right of each rule (shadow price).
+
+\wordfield{Options}{}\par\nopagebreak
+\begin{optiontable}
+\code{formula=} & \\
+\code{between=} & \\
+\code{start=} & \\
+\code{rules=} & \\
+\code{whole\_\allowbreak{}numbers=} & normally \code{False}\\
+\code{search=} & normally \code{\textquotedbl{}from start\textquotedbl{}}\\
+\code{method=} & \\
+\code{known=} & \\
+\code{fast=} & normally \code{False}\\
+\end{optiontable}
+
+\wordfield{Underneath}{SciPy (the same as \code{find\_\allowbreak{}smallest}, on minus the formula)}
+\wordfield{Example you can run}{}\par\nopagebreak
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+sdata.find_biggest("x * (10 - x)", between=[0, 10])
+sdata.find_biggest("3*x + 2*y", rules=["x + y <= 4", "x + 3*y <= 6", "x >= 0", "y >= 0"])
+\end{lstlisting}
+\wordentry{sdata.solve()}{word:sdata.solve}
+Find the values that make an equation true.
+
+\codeline{sdata.solve(\textquotedbl{}x**3 - 2*x = 5\textquotedbl{}, between=[0, 3])}\enspace (x = 2.09455)\\
+One equation with one name: \code{between=[low,\allowbreak{} high]} finds every solution in the range where the two sides cross (Brent's method, R \code{uniroot()} on each sign change, as rootSolve::\code{uniroot.\allowbreak{}all()}); \code{start=} finds one solution by searching from the start (secant method); a polynomial (only + - * and whole powers) needs neither and gives all its solutions, complex ones too (R \code{polyroot()}). Several equations in a list:\\
+\codeline{sdata.solve([\textquotedbl{}x + y = 3\textquotedbl{}, \textquotedbl{}x * y = 2\textquotedbl{}], start=\{\textquotedbl{}x\textquotedbl{}: 0, \textquotedbl{}y\textquotedbl{}: 1\}) (Powell's hybrid method, as}\\
+R nleqslv::\code{nleqslv()}); straight-line equations are solved exactly (R \code{solve()}). \code{known=} fixes some names (a dict, or a one-row result table from \code{table.\allowbreak{}fit\_\allowbreak{}formula}). Gives back a table with one row per solution: each name, \code{\textquotedbl{}left minus right\textquotedbl{}} at the solution (the check: close to 0) and the method. \code{fast=True} gives a Polars table.
+
+\wordfield{Options}{}\par\nopagebreak
+\begin{optiontable}
+\code{equations=} & \\
+\code{between=} & \\
+\code{start=} & \\
+\code{method=} & \\
+\code{known=} & \\
+\code{fast=} & normally \code{False}\\
+\end{optiontable}
+
+\wordfield{Underneath}{SciPy (optimize.brentq, \code{root\_\allowbreak{}scalar}, root) and NumPy (polynomial roots, linalg.solve)}
+\wordfield{Example you can run}{}\par\nopagebreak
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+sdata.solve("x**3 - 2*x = 5", between=[0, 3])
+sdata.solve("x**2 - 2*x + 5 = 0")
+sdata.solve(["x + y = 3", "x * y = 2"], start={"x": 0, "y": 1})
+\end{lstlisting}
+\unsection{Values between points}{group:Values-between-points}
+\wordentry{table.values\_at()}{word:table.values-at}
+Estimate a column at places between the known points, by joining the dots.
+
+\codeline{table.values\_at(\textquotedbl{}population\textquotedbl{}, at=\{\textquotedbl{}year\textquotedbl{}: [2001, 2003, 2011]\}, for\_each=\textquotedbl{}country\textquotedbl{})} (with \code{sdata.\allowbreak{}example(\textquotedbl{}growth\textquotedbl{})})\\
+\code{at=} names the \code{column(s)} that place the points and the places wanted. One column joins the points along a line; two or more (\code{at=}\{\code{\textquotedbl{}east\textquotedbl{}}: [1.5, 2.5], \code{\textquotedbl{}north\textquotedbl{}}: [3, 4.5]\},\\
+\codeline{sdata.example(\textquotedbl{}island\textquotedbl{})) join them across a surface: the lists are read as pairs,}\\
+(1.5, 3) and (2.5, 4.5); \code{table.\allowbreak{}map\_\allowbreak{}of()} gives every combination. \code{joined\_\allowbreak{}by=} says how the points are joined (one column): \code{\textquotedbl{}straight lines\textquotedbl{}} (default, linear interpolation, R \code{approx()}), \code{\textquotedbl{}smooth curve\textquotedbl{}} (natural cubic spline, R \code{splinefun(method = \textquotedbl{}natural\textquotedbl{})}), \code{\textquotedbl{}curve without overshoot\textquotedbl{}} (PCHIP), \code{\textquotedbl{}steps\textquotedbl{}}, \code{\textquotedbl{}nearest\textquotedbl{}}; experts: \code{\textquotedbl{}akima\textquotedbl{}}, \code{\textquotedbl{}makima\textquotedbl{}}, \code{\textquotedbl{}not-a-knot\textquotedbl{}}, \code{\textquotedbl{}periodic\textquotedbl{}}. Two or more columns: \code{\textquotedbl{}straight lines\textquotedbl{}} (bilinear on a full grid, triangles otherwise), \code{\textquotedbl{}smooth surface\textquotedbl{}} (thin-plate spline), \code{\textquotedbl{}nearest\textquotedbl{}}; on a full grid also \code{\textquotedbl{}cubic\textquotedbl{}}, \code{\textquotedbl{}quintic\textquotedbl{}}, \code{\textquotedbl{}pchip\textquotedbl{}}. \code{smoothness=\textquotedbl{}auto\textquotedbl{}} or a number gives a smoothing spline that passes near, not through, the points (R \code{smooth.\allowbreak{}spline()}; a number is R's \code{lambda=}); 0 passes through every point. \code{outside=} is what happens beyond the known points: \code{\textquotedbl{}empty\textquotedbl{}} (default), \code{\textquotedbl{}nearest end\textquotedbl{}} or \code{\textquotedbl{}extend\textquotedbl{}} (curves only; guesswork). \code{for\_\allowbreak{}each=\textquotedbl{}country\textquotedbl{}} joins each group on its own. Rows with an empty cell are skipped. Gives back a new table: the \code{at=} columns, the \code{for\_\allowbreak{}each=} columns and the estimated column.
+
+\wordfield{Options}{}\par\nopagebreak
+\begin{optiontable}
+\code{column=} & \\
+\code{at=} & \\
+\code{joined\_\allowbreak{}by=} & normally \code{\textquotedbl{}straight lines\textquotedbl{}}\\
+\code{smoothness=} & normally \code{0}\\
+\code{for\_\allowbreak{}each=} & \\
+\code{outside=} & normally \code{\textquotedbl{}empty\textquotedbl{}}\\
+\end{optiontable}
+
+\wordfield{Underneath}{NumPy (interp) and SciPy (interpolate: CubicSpline, PchipInterpolator, Akima1DInterpolator, \code{make\_\allowbreak{}smoothing\_\allowbreak{}spline}, griddata, RegularGridInterpolator, RBFInterpolator)}
+\wordfield{Example you can run}{(it uses the practice table \code{growth})}\par\nopagebreak
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+table = sdata.table(sdata.example("growth"))
+estimates = table.values_at("population", at={"year": [2001, 2003, 2011]}, for_each="country")
+estimates.show()
+table.values_at("population", at={"year": [2001, 2003, 2011]}, joined_by="smooth curve", for_each="country")
+\end{lstlisting}
+\wordentry{table.map\_of()}{word:table.map-of}
+Estimate a column at evenly spaced places across one or more columns (a map), ready for a contour or heatmap.
+
+\codeline{table.map\_of(\textquotedbl{}height\textquotedbl{}, across=[\textquotedbl{}east\textquotedbl{}, \textquotedbl{}north\textquotedbl{}], steps=100)} (with \code{sdata.\allowbreak{}example(\textquotedbl{}island\textquotedbl{})})\\
+The map runs from the smallest to the biggest known value of each \code{across=} column, with \code{steps=} places along each (a number, or one per column). The points are joined as in \code{table.\allowbreak{}values\_\allowbreak{}at()} (same \code{joined\_\allowbreak{}by=} and \code{smoothness=}). Places outside the outline of the known points stay empty, with a note. Gives back a new long table: one row per place, with the \code{across=} columns and the estimated column.
+
+\wordfield{Options}{}\par\nopagebreak
+\begin{optiontable}
+\code{column=} & \\
+\code{across=} & \\
+\code{steps=} & normally \code{50}\\
+\code{joined\_\allowbreak{}by=} & normally \code{\textquotedbl{}straight lines\textquotedbl{}}\\
+\code{smoothness=} & normally \code{0}\\
+\end{optiontable}
+
+\wordfield{Underneath}{SciPy (interpolate: RegularGridInterpolator, griddata, RBFInterpolator)}
+\wordfield{Example you can run}{(it uses the practice table \code{island})}\par\nopagebreak
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+table = sdata.table(sdata.example("island"))
+heights = table.map_of("height", across=["east", "north"], steps=60, joined_by="smooth surface")
+chart = heights.chart()
+chart.contour(x="east", y="north", z="height")
+chart.save("map_of.png")
+\end{lstlisting}
+\unsection{Distributions}{group:Distributions}
+\wordentry{sdata.distribution()}{word:sdata.distribution}
+Make a distribution to ask chances, percentiles and random numbers of.
+
+\codeline{dist = sdata.distribution(\textquotedbl{}normal\textquotedbl{}, average=50, standard\_deviation=10)}\\
+then \code{dist.\allowbreak{}chance(above=80)}, \code{dist.\allowbreak{}percentile(95)}, \code{dist.\allowbreak{}random\_\allowbreak{}numbers(how\_\allowbreak{}many=100,\allowbreak{} seed=1)}. Names: normal, lognormal, exponential, gamma, beta, uniform, t, chi-square, F, weibull, cauchy, logistic, laplace, gumbel, pareto, triangular, half-normal, inverse gaussian, von mises; for counts binomial, bernoulli, poisson, negative binomial, geometric, hypergeometric, whole number uniform. Parameters are R's with plain names; R's names (\code{mean=}, \code{sd=}, \code{prob=}, \code{size=}, \code{df=}, ...) work too. Any other SciPy distribution by its SciPy name and SciPy's parameters: \code{sdata.\allowbreak{}distribution(\textquotedbl{}burr12\textquotedbl{},\allowbreak{} c=2,\allowbreak{} d=3)}.
+
+\wordfield{Options}{}\par\nopagebreak
+\begin{optiontable}
+\code{name=} & \\
+\code{values.\allowbreak{}.\allowbreak{}.\allowbreak{}} & as many as you like, separated by commas\\
+\end{optiontable}
+
+\wordfield{Underneath}{SciPy (scipy.stats frozen distributions)}
+\wordfield{Example you can run}{}\par\nopagebreak
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+dist = sdata.distribution("normal", average=50, standard_deviation=10)
+print(dist)
+dist.chance(above=80)
+coins = sdata.distribution("binomial", tries=10, chance=0.5)
+coins.chance(at_most=3)
+\end{lstlisting}
+\wordentry{table.fit\_distribution()}{word:table.fit-distribution}
+Fit a distribution to a column by maximum likelihood; gives back the fitted distribution.
+
+\codeline{fit = table.fit\_distribution(\textquotedbl{}sales\textquotedbl{}, \textquotedbl{}lognormal\textquotedbl{})} (with \code{sdata.\allowbreak{}example(\textquotedbl{}shop\textquotedbl{})})\\
+then \code{fit.\allowbreak{}chance(above=600)}, \code{fit.\allowbreak{}percentile(90)}, \code{fit.\allowbreak{}chart()}, and \code{fit.\allowbreak{}table()} for the result table (values, standard errors, log-likelihood, AIC, BIC, rows). As R MASS::\code{fitdistr(x,\allowbreak{} \textquotedbl{}gamma\textquotedbl{})} (fitdistrplus::fitdist for beta and others); standard errors from the observed information. Families without a location in R (gamma, weibull, lognormal, exponential, beta) keep it at 0, as R. \code{fixed=}\{\code{\textquotedbl{}shape\textquotedbl{}}: 2\} holds a parameter. With \code{for\_\allowbreak{}each=} it gives back a result table, one row per group. Empty cells are skipped.
+
+\wordfield{Options}{}\par\nopagebreak
+\begin{optiontable}
+\code{column=} & \\
+\code{distribution=} & normally \code{\textquotedbl{}normal\textquotedbl{}}\\
+\code{for\_\allowbreak{}each=} & \\
+\code{fixed=} & \\
+\end{optiontable}
+
+\wordfield{Underneath}{SciPy (scipy.stats and optimize, maximum likelihood; closed forms where they exist)}
+\wordfield{Example you can run}{(it uses the practice table \code{shop})}\par\nopagebreak
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+table = sdata.table(sdata.example("shop"))
+fit = table.fit_distribution("sales", "lognormal")
+fit.chance(above=600)
+fit.table()
+\end{lstlisting}
+\wordentry{table.compare\_distributions()}{word:table.compare-distributions}
+Fit several distributions to a column and rank them by AIC (smaller is better).
+
+\codeline{table.compare\_distributions(\textquotedbl{}sales\textquotedbl{})} (with \code{sdata.\allowbreak{}example(\textquotedbl{}shop\textquotedbl{})})\\
+\code{distributions=}(\code{\textquotedbl{}normal\textquotedbl{}}, \code{\textquotedbl{}lognormal\textquotedbl{}}, \code{\textquotedbl{}gamma\textquotedbl{}}, \code{\textquotedbl{}weibull\textquotedbl{}}) by default. Each is fitted by maximum likelihood (as \code{fit\_\allowbreak{}distribution}); the result table has one row per distribution with its values, log-likelihood, AIC, BIC, the AIC difference from the best, and the Anderson-Darling, Kolmogorov-Smirnov and Cramer-von Mises statistics, as R fitdistrplus::\code{gofstat()}. An AIC difference below 2 is too small to choose between them.
+
+\wordfield{Options}{}\par\nopagebreak
+\begin{optiontable}
+\code{column=} & \\
+\code{distributions=} & normally \code{('normal',\allowbreak{} 'lognormal',\allowbreak{} 'gamma',\allowbreak{} 'weibull')}\\
+\code{for\_\allowbreak{}each=} & \\
+\end{optiontable}
+
+\wordfield{Underneath}{SciPy (scipy.stats, maximum likelihood; Anderson-Darling, Kolmogorov-Smirnov and Cramer-von Mises statistics)}
+\wordfield{Example you can run}{(it uses the practice table \code{shop})}\par\nopagebreak
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+table = sdata.table(sdata.example("shop"))
+table.compare_distributions("sales")
+\end{lstlisting}
+\wordentry{nums.fit\_distribution()}{word:nums.fit-distribution}
+Fit a distribution to the numbers by maximum likelihood; gives back the fitted distribution.
+
+\codeline{fit = nums.fit\_distribution(\textquotedbl{}gamma\textquotedbl{})}\enspace then \code{fit.\allowbreak{}chance(above=10)}, \code{fit.\allowbreak{}table()}\\
+As R MASS::\code{fitdistr(x,\allowbreak{} \textquotedbl{}gamma\textquotedbl{})}; see \code{table.\allowbreak{}fit\_\allowbreak{}distribution}. Empty values are skipped.
+
+\wordfield{Options}{}\par\nopagebreak
+\begin{optiontable}
+\code{distribution=} & normally \code{\textquotedbl{}normal\textquotedbl{}}\\
+\code{fixed=} & \\
+\end{optiontable}
+
+\wordfield{Underneath}{SciPy (scipy.stats and optimize, as \code{table.\allowbreak{}fit\_\allowbreak{}distribution})}
+\wordfield{Example you can run}{}\par\nopagebreak
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+nums = sdata.numbers([12, 15, 9, 20, 14])
+fit = nums.fit_distribution("gamma")
+fit.chance(above=18)
+\end{lstlisting}
+\wordentry{dist.chance()}{word:dist.chance}
+The chance of a value in a range, as a share from 0 to 1 (printed as a percent).
+
+\codeline{dist.chance(above=80)}\enspace \code{dist.\allowbreak{}chance(below=60)} \code{dist.\allowbreak{}chance(between=[40,\allowbreak{} 60])}\\
+\code{at\_\allowbreak{}most=} and \code{at\_\allowbreak{}least=} include the number itself; \code{above=} and \code{below=} do not (as \code{keep\_\allowbreak{}rows}). For counts, \code{dist.\allowbreak{}chance(3)} is the chance of exactly 3; \code{below=3} means 0, 1 or 2 and \code{at\_\allowbreak{}most=3} means 3 or fewer (R \code{pbinom(3)}). One lower option (\code{above=}, \code{at\_\allowbreak{}least=}) and one upper option (\code{below=}, \code{at\_\allowbreak{}most=}) can go together. A list gives Numbers. R: \code{pnorm(q,\allowbreak{} lower.\allowbreak{}tail = )}, dbinom.
+
+\wordfield{Options}{}\par\nopagebreak
+\begin{optiontable}
+\code{value=} & \\
+\code{above=} & \\
+\code{below=} & \\
+\code{at\_\allowbreak{}most=} & \\
+\code{at\_\allowbreak{}least=} & \\
+\code{between=} & \\
+\end{optiontable}
+
+\wordfield{Underneath}{SciPy (scipy.stats frozen distributions: cdf, sf, ppf, isf, pdf, pmf, stats, rvs)}
+\wordfield{Example you can run}{}\par\nopagebreak
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+dist = sdata.distribution("normal", average=50, standard_deviation=10)
+dist.chance(above=80)
+dist.chance(between=[40, 60])
+dice = sdata.distribution("whole number uniform", between=[1, 6])
+dice.chance(6)
+\end{lstlisting}
+\wordentry{dist.density\_at()}{word:dist.density-at}
+The height of the density curve at a value (continuous distributions).
+
+\codeline{dist.density\_at(60)}\enspace (R \code{dnorm(60,\allowbreak{} mean = 50,\allowbreak{} sd = 10)}). A list gives Numbers.\\
+It is not a chance: a chance is an area under the curve (\code{dist.\allowbreak{}chance(between=[.\allowbreak{}.\allowbreak{}.\allowbreak{}])}).
+
+\wordfield{Options}{}\par\nopagebreak
+\begin{optiontable}
+\code{value=} & \\
+\end{optiontable}
+
+\wordfield{Underneath}{SciPy (scipy.stats frozen distributions: cdf, sf, ppf, isf, pdf, pmf, stats, rvs)}
+\wordfield{Example you can run}{}\par\nopagebreak
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+dist = sdata.distribution("normal", average=50, standard_deviation=10)
+dist.density_at(60)
+\end{lstlisting}
+\wordentry{dist.percentile()}{word:dist.percentile}
+The value that this percent of the distribution is below: \code{percentile(95)}.
+
+\codeline{dist.percentile(95)}\enspace (R \code{qnorm(0.\allowbreak{}95,\allowbreak{} mean = 50,\allowbreak{} sd = 10)}). \code{percentile(50)} is the median.\\
+For counts: the smallest count with at least that percent at or below it (R qbinom). A list of percents gives Numbers.
+
+\wordfield{Options}{}\par\nopagebreak
+\begin{optiontable}
+\code{percent=} & \\
+\end{optiontable}
+
+\wordfield{Underneath}{SciPy (scipy.stats frozen distributions: cdf, sf, ppf, isf, pdf, pmf, stats, rvs)}
+\wordfield{Example you can run}{}\par\nopagebreak
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+dist = sdata.distribution("normal", average=50, standard_deviation=10)
+dist.percentile(95)
+dist.percentile([5, 50, 95])
+\end{lstlisting}
+\wordentry{dist.cut\_off()}{word:dist.cut-off}
+The value with this chance above it (or below it): critical values.
+
+\codeline{dist.cut\_off(above=0.025)}\enspace the value with a 2.5 \% chance above it (R \code{qnorm(0.\allowbreak{}025,\allowbreak{} lower.\allowbreak{}tail = FALSE)})\\
+\codeline{dist.cut\_off(below=0.05)}\enspace the value with a 5 \% chance below it\\
+Chances are shares from 0 to 1. A list gives Numbers.
+
+\wordfield{Options}{}\par\nopagebreak
+\begin{optiontable}
+\code{above=} & \\
+\code{below=} & \\
+\end{optiontable}
+
+\wordfield{Underneath}{SciPy (scipy.stats frozen distributions: cdf, sf, ppf, isf, pdf, pmf, stats, rvs)}
+\wordfield{Example you can run}{}\par\nopagebreak
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+dist = sdata.distribution("normal", average=50, standard_deviation=10)
+dist.cut_off(above=0.025)
+dist.cut_off(below=0.05)
+\end{lstlisting}
+\wordentry{dist.middle\_range()}{word:dist.middle-range}
+The range that holds the middle percent of the distribution, as Numbers [low, high].
+
+\codeline{dist.middle\_range(95)}\enspace (R \code{qnorm(c(0.\allowbreak{}025,\allowbreak{} 0.\allowbreak{}975),\allowbreak{} mean = 50,\allowbreak{} sd = 10)})
+
+\wordfield{Options}{}\par\nopagebreak
+\begin{optiontable}
+\code{percent=} & normally \code{95}\\
+\end{optiontable}
+
+\wordfield{Underneath}{SciPy (scipy.stats frozen distributions: cdf, sf, ppf, isf, pdf, pmf, stats, rvs)}
+\wordfield{Example you can run}{}\par\nopagebreak
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+dist = sdata.distribution("normal", average=50, standard_deviation=10)
+dist.middle_range(95)
+\end{lstlisting}
+\wordentry{dist.average()}{word:dist.average}
+The average (mean) of the distribution. \code{dist.\allowbreak{}average()}
+
+\wordfield{Options}{none: just write the empty brackets.}
+
+\wordfield{Underneath}{SciPy (scipy.stats frozen distributions: cdf, sf, ppf, isf, pdf, pmf, stats, rvs)}
+\wordfield{Example you can run}{}\par\nopagebreak
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+dist = sdata.distribution("normal", average=50, standard_deviation=10)
+dist.average()
+\end{lstlisting}
+\wordentry{dist.median()}{word:dist.median}
+The median: half of the distribution is below it. \code{dist.\allowbreak{}median()}
+
+\wordfield{Options}{none: just write the empty brackets.}
+
+\wordfield{Underneath}{SciPy (scipy.stats frozen distributions: cdf, sf, ppf, isf, pdf, pmf, stats, rvs)}
+\wordfield{Example you can run}{}\par\nopagebreak
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+dist = sdata.distribution("normal", average=50, standard_deviation=10)
+dist.median()
+\end{lstlisting}
+\wordentry{dist.standard\_deviation()}{word:dist.standard-deviation}
+The standard deviation of the distribution. \code{dist.\allowbreak{}standard\_\allowbreak{}deviation()}
+
+\wordfield{Options}{none: just write the empty brackets.}
+
+\wordfield{Underneath}{SciPy (scipy.stats frozen distributions: cdf, sf, ppf, isf, pdf, pmf, stats, rvs)}
+\wordfield{Example you can run}{}\par\nopagebreak
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+dist = sdata.distribution("normal", average=50, standard_deviation=10)
+dist.standard_deviation()
+\end{lstlisting}
+\wordentry{dist.variance()}{word:dist.variance}
+The variance (the standard deviation squared). \code{dist.\allowbreak{}variance()}
+
+\wordfield{Options}{none: just write the empty brackets.}
+
+\wordfield{Underneath}{SciPy (scipy.stats frozen distributions: cdf, sf, ppf, isf, pdf, pmf, stats, rvs)}
+\wordfield{Example you can run}{}\par\nopagebreak
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+dist = sdata.distribution("normal", average=50, standard_deviation=10)
+dist.variance()
+\end{lstlisting}
+\wordentry{dist.summary()}{word:dist.summary}
+A one-row table: average, median, standard deviation, variance, skewness, excess kurtosis, entropy and the lowest and highest possible values. \code{dist.\allowbreak{}summary()}
+
+\wordfield{Options}{none: just write the empty brackets.}
+
+\wordfield{Underneath}{SciPy (scipy.stats frozen distributions: cdf, sf, ppf, isf, pdf, pmf, stats, rvs)}
+\wordfield{Example you can run}{}\par\nopagebreak
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+dist = sdata.distribution("normal", average=50, standard_deviation=10)
+dist.summary()
+\end{lstlisting}
+\wordentry{dist.random\_numbers()}{word:dist.random-numbers}
+Numbers drawn at random from the distribution; the same seed gives the same numbers.
+
+\codeline{dist.random\_numbers(how\_many=100, seed=1)}\enspace (\code{rows=} and \code{columns=} give a grid)\\
+R's \code{rnorm()} and friends use another random number generator, so their numbers differ.
+
+\wordfield{Options}{}\par\nopagebreak
+\begin{optiontable}
+\code{how\_\allowbreak{}many=} & \\
+\code{seed=} & normally \code{1}\\
+\code{rows=} & \\
+\code{columns=} & \\
+\end{optiontable}
+
+\wordfield{Underneath}{SciPy (scipy.stats frozen distributions: cdf, sf, ppf, isf, pdf, pmf, stats, rvs)}
+\wordfield{Example you can run}{}\par\nopagebreak
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+dist = sdata.distribution("normal", average=50, standard_deviation=10)
+nums = dist.random_numbers(how_many=100, seed=1)
+nums.average()
+\end{lstlisting}
+\wordentry{dist.chart()}{word:dist.chart}
+A chart of the distribution: its density curve (or bars for counts).
+
+\codeline{dist.chart()}\enspace or \code{dist.\allowbreak{}chart(show=\textquotedbl{}cumulative\textquotedbl{})} for the chance of a value at or below x.
+
+\wordfield{Options}{}\par\nopagebreak
+\begin{optiontable}
+\code{show=} & normally \code{\textquotedbl{}density\textquotedbl{}}\\
+\code{between=} & \\
+\end{optiontable}
+
+\wordfield{Underneath}{SciPy (scipy.stats frozen distributions: cdf, sf, ppf, isf, pdf, pmf, stats, rvs)}
+\wordfield{Example you can run}{}\par\nopagebreak
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+dist = sdata.distribution("normal", average=50, standard_deviation=10)
+chart = dist.chart()
+chart.title_top("Normal, average 50, standard deviation 10")
+chart.save("distribution.png")
+\end{lstlisting}
+\wordentry{dist.table()}{word:dist.table}
+A one-row table: the distribution, its parameters and, for a fit, the standard errors, log-likelihood, AIC and BIC. \code{dist.\allowbreak{}table()}
+
+\wordfield{Options}{none: just write the empty brackets.}
+
+\wordfield{Underneath}{SciPy (scipy.stats frozen distributions: cdf, sf, ppf, isf, pdf, pmf, stats, rvs)}
+\wordfield{Example you can run}{}\par\nopagebreak
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+dist = sdata.distribution("normal", average=50, standard_deviation=10)
+result = dist.table()
+result.show()
+\end{lstlisting}
+\wordentry{dist.parameters()}{word:dist.parameters}
+The parameters as a dictionary of plain names: \{\code{\textquotedbl{}average\textquotedbl{}}: 50, \code{\textquotedbl{}standard\_\allowbreak{}deviation\textquotedbl{}}: 10\}. \code{dist.\allowbreak{}parameters()}
+
+\wordfield{Options}{none: just write the empty brackets.}
+
+\wordfield{Underneath}{SciPy (scipy.stats frozen distributions: cdf, sf, ppf, isf, pdf, pmf, stats, rvs)}
+\wordfield{Example you can run}{}\par\nopagebreak
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+dist = sdata.distribution("normal", average=50, standard_deviation=10)
+print(dist.parameters())
+\end{lstlisting}
 \unsection{Models}{group:Models}
 \wordentry{table.explain()}{word:table.explain}
 Explain one column from several others with a model, and say how big each effect is.
@@ -6105,6 +6891,10 @@ Add a column with the value the model predicts for each row.
 \codeline{table.add\_predicted\_column(\textquotedbl{}marks\textquotedbl{}, using=[\textquotedbl{}hours\textquotedbl{}, \textquotedbl{}breakfast\textquotedbl{}])} (with \code{sdata.\allowbreak{}example(\textquotedbl{}school\textquotedbl{})})\\
 The same model as \code{explain()} with the same options: \code{outcome=\textquotedbl{}numbers\textquotedbl{}} gives the fitted value (R \code{fitted(lm(.\allowbreak{}.\allowbreak{}.\allowbreak{}))}), \code{outcome=\textquotedbl{}yes or no\textquotedbl{}} the chance of yes from 0 to 1 and \code{outcome=\textquotedbl{}counts\textquotedbl{}} the expected count (R \code{fitted(glm(.\allowbreak{}.\allowbreak{}.\allowbreak{}))}). With \code{grouped\_\allowbreak{}by=} the prediction includes each group's own level (R \code{fitted(lmer(.\allowbreak{}.\allowbreak{}.\allowbreak{}))}). Rows with an empty cell in a column used stay empty. Undo with \code{table.\allowbreak{}undo()}.
 
+A formula with one = sign is fitted as \code{table.\allowbreak{}fit\_\allowbreak{}formula()} (with its options \code{start=}, \code{between=}, \code{weights=} and \code{for\_\allowbreak{}each=}) and its value is added for every row, also rows whose left-hand column is empty (as R \code{predict(nls(.\allowbreak{}.\allowbreak{}.\allowbreak{}),\allowbreak{} newdata)}):\\
+\codeline{table.add\_predicted\_column(\textquotedbl{}population = a * exp(b * (year - 2000))\textquotedbl{}, for\_each=\textquotedbl{}country\textquotedbl{})}\\
+\code{using=} a \code{fit\_\allowbreak{}formula()} result takes its values instead of fitting again.
+
 \wordfield{Options}{}\par\nopagebreak
 \begin{optiontable}
 \code{column=} & \\
@@ -6112,6 +6902,10 @@ The same model as \code{explain()} with the same options: \code{outcome=\textquo
 \code{outcome=} & normally \code{\textquotedbl{}numbers\textquotedbl{}}\\
 \code{name=} & \\
 \code{grouped\_\allowbreak{}by=} & \\
+\code{start=} & \\
+\code{between=} & \\
+\code{weights=} & \\
+\code{for\_\allowbreak{}each=} & \\
 \end{optiontable}
 
 \wordfield{Underneath}{NumPy (the same model as \code{table.\allowbreak{}explain}); statsmodels for \code{grouped\_\allowbreak{}by=}}
@@ -6259,8 +7053,6 @@ import simplydata as sdata
 table = sdata.table(sdata.example("meadow"))
 table.compare_profiles(for_each="grazed")
 \end{lstlisting}
-\unchapter{Chart words}{family:chart}
-Steps on a chart: \code{chart = sdata.chart(table)}, then \code{chart.bars(...)}. Words that start with \code{sdata.} are called on simplydata itself, and words that end in \code{=} are options inside a chart step.
 \unsection{Survival}{group:Survival}
 \wordentry{table.survival\_over\_time()}{word:table.survival-over-time}
 The share still without the event over time (Kaplan-Meier), with the median time.
@@ -6350,8 +7142,6 @@ chart = sdata.chart(trial)
 chart.survival_curves(time="days", event="died", colour="treatment", confidence_band=True)
 chart.save("survival_curves.png")
 \end{lstlisting}
-\unchapter{Help words}{family:help}
-Words that teach simplydata.
 \unsection{Planning a study}{group:Planning-a-study}
 \wordentry{sdata.how\_many\_needed()}{word:sdata.how-many-needed}
 How many values (in each group) does a study need to find a real difference?
@@ -6403,8 +7193,6 @@ The same options as \code{how\_\allowbreak{}many\_\allowbreak{}needed()}, with \
 import simplydata as sdata
 sdata.chance_to_find(effect_size=0.5, values_per_group=20)
 \end{lstlisting}
-\unchapter{Table words}{family:table}
-Steps on a table: \code{table = sdata.table(...)}, then \code{table.keep\_rows(...)}. Table words work the same on pandas and Polars tables.
 \unsection{Combine and reshape}{group:Combine-and-reshape}
 \wordentry{table.join\_with()}{word:table.join-with}
 Bring in the columns of another table, matching rows on a column such as a name.
@@ -8188,7 +8976,7 @@ table.compare_each_pair("temperature", for_each="city")
 import simplydata as sdata
 table = sdata.table(sdata.example("growth"))
 table.keep_rows("country", equal_to="Applia")
-table.fit_straight_line(x="year", y="forest")
+table.fit_line(x="year", y="forest")
 \end{lstlisting}
 \printedoutput{output/solution14_task3.txt}
 \solutionanswer{In Applia the forest shrinks by about 0.57 percentage points a year (95 \% CI 0.48 to 0.67), and the line explains 94 \% of the differences.}
@@ -8340,6 +9128,63 @@ sdata.chance_to_find(test="compare_averages", effect_size=0.25, groups=3, values
 \printedoutput{output/solution18_task3.txt}
 \solutionanswer{Only 54 \%: too small. \code{how\_\allowbreak{}many\_\allowbreak{}needed} with \code{groups=3} tells you how many to aim for.}
 \par\noindent{\small\sffamily\hyperref[lesson:18]{Back to lesson 18}}
+\unsection{Lesson 19: Fitting curves, finding the best value and solving}{solutions:19}
+\solutiontask{1}{Fit a curve of degree 3 to \code{\textquotedbl{}marks\textquotedbl{}} against \code{\textquotedbl{}hours\textquotedbl{}}. Does R squared go up much from the straight line?}
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+table = sdata.table(sdata.example("marks"))
+table.fit_curve(x="hours", y="marks", degree=3)
+\end{lstlisting}
+\printedoutput{output/solution19_task1.txt}
+\solutionanswer{R squared is 0.71, against 0.69 for the straight line: the extra bends add very little.}
+\solutiontask{2}{With the weather table, keep the city Sunnyvale and fit \code{\textquotedbl{}temperature = a + b * cos(2 * pi * (month\_\allowbreak{}number - c) / 12)\textquotedbl{}} with \code{start=}\{\code{\textquotedbl{}a\textquotedbl{}}: 15, \code{\textquotedbl{}b\textquotedbl{}}: 8, \code{\textquotedbl{}c\textquotedbl{}}: 7\}. In which month is it warmest (c)?}
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+table = sdata.table(sdata.example("weather"))
+table.keep_rows("city", equal_to="Sunnyvale")
+table.fit_formula("temperature = a + b * cos(2 * pi * (month_number - c) / 12)",
+                  start={"a": 15, "b": 8, "c": 7})
+\end{lstlisting}
+\printedoutput{output/solution19_task2.txt}
+\solutionanswer{c = 7.19: the warmest time is in July; a = 17.0 is the average and b = 8.18 how far it swings.}
+\solutiontask{3}{Try to remember without looking back: which word finds where a formula is biggest, and which word finds where the two sides of an equation are equal? Use them on \code{\textquotedbl{}x * (10 - x)\textquotedbl{}} between 0 and 10, and on \code{\textquotedbl{}x**2 = 2\textquotedbl{}} between 0 and 2.}
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+sdata.find_biggest("x * (10 - x)", between=[0, 10])
+sdata.solve("x**2 = 2", between=[0, 2])
+\end{lstlisting}
+\printedoutput{output/solution19_task3.txt}
+\solutionanswer{\code{find\_\allowbreak{}biggest} gives 25 at x = 5, and solve gives x = 1.41421, the square root of 2.}
+\par\noindent{\small\sffamily\hyperref[lesson:19]{Back to lesson 19}}
+\unsection{Lesson 20: Distributions, chances and values between points}{solutions:20}
+\solutiontask{1}{Ten coins are thrown. With \code{sdata.\allowbreak{}distribution(\textquotedbl{}binomial\textquotedbl{},\allowbreak{} tries=10,\allowbreak{} chance=0.\allowbreak{}5)}, what is the chance of 8 heads or more?}
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+coins = sdata.distribution("binomial", tries=10, chance=0.5)
+coins.chance(at_least=8)
+\end{lstlisting}
+\printedoutput{output/solution20_task1.txt}
+\solutionanswer{5.47 \%: 8, 9 or 10 heads happen about once in 18 tries.}
+\solutiontask{2}{Which fits the daily \code{\textquotedbl{}sales\textquotedbl{}} of the shop table best: normal, lognormal, gamma or weibull? Then check the best one with \code{compare\_\allowbreak{}shape\_\allowbreak{}to}.}
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+table = sdata.table(sdata.example("shop"))
+table.compare_distributions("sales")
+table.compare_shape_to("sales", "lognormal")
+\end{lstlisting}
+\printedoutput{output/solution20_task2.txt}
+\solutionanswer{Lognormal has the smallest AIC, and its shape could well fit (p = 0.65).}
+\solutiontask{3}{Try to remember without looking back: which word estimates a value between the points you measured? Use it to estimate the temperature of each city at \code{month\_\allowbreak{}number} 6.5, joined by a smooth curve.}
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+table = sdata.table(sdata.example("weather"))
+estimates = table.values_at("temperature", at={"month_number": [6.5]},
+                            joined_by="smooth curve", for_each="city")
+estimates.show()
+\end{lstlisting}
+\printedoutput{output/solution20_task3.txt}
+\solutionanswer{\code{values\_\allowbreak{}at} joins the months with a smooth curve and reads off each city at 6.5.}
+\par\noindent{\small\sffamily\hyperref[lesson:20]{Back to lesson 20}}
 
 \backmatter
 
@@ -8369,6 +9214,7 @@ Every word and option, A to Z, with the page of its dictionary entry. Other spel
 \indexline{word:nums.as-numpy}{nums.as\_numpy()}
 \indexline{word:table.as-pandas}{table.as\_pandas()}
 \indexline{word:table.as-polars}{table.as\_polars()}
+\indexline{word:dist.average}{dist.average()}
 \indexline{word:nums.average}{nums.average()}
 \indexline{word:table.average-of}{table.average\_of()}
 \indexline{word:band}{chart.band()}
@@ -8379,8 +9225,10 @@ Every word and option, A to Z, with the page of its dictionary entry. Other spel
 \indexline{word:boxes}{chart.box()}
 \indexline{word:boxes}{chart.boxes()}
 \indexline{word:caption-bottom}{chart.caption\_bottom()}
+\indexline{word:dist.chance}{dist.chance()}
 \indexline{word:sdata.chance-to-find}{sdata.chance\_to\_find()}
 \indexline{word:table.change-column}{table.change\_column()}
+\indexline{word:dist.chart}{dist.chart()}
 \indexline{word:nums.chart}{nums.chart()}
 \indexline{word:sdata.chart}{sdata.chart()}
 \indexline{word:table.chart}{table.chart()}
@@ -8398,6 +9246,7 @@ Every word and option, A to Z, with the page of its dictionary entry. Other spel
 \indexline{word:table.compare-before-after}{table.compare\_before\_after()}
 \indexline{word:table.compare-counts}{table.compare\_counts()}
 \indexline{word:table.compare-counts-to}{table.compare\_counts\_to()}
+\indexline{word:table.compare-distributions}{table.compare\_distributions()}
 \indexline{word:table.compare-each-pair}{table.compare\_each\_pair()}
 \indexline{word:table.compare-percent-to}{table.compare\_percent\_to()}
 \indexline{word:table.compare-profiles}{table.compare\_profiles()}
@@ -8417,9 +9266,13 @@ Every word and option, A to Z, with the page of its dictionary entry. Other spel
 \indexline{word:grid.count-rows}{grid.count\_rows()}
 \indexline{word:table.count-rows}{table.count\_rows()}
 \indexline{word:cumulative-share}{chart.cumulative\_share()}
+\indexline{word:curve}{chart.curve()}
+\indexline{word:dist.cut-off}{dist.cut\_off()}
 \indexline{word:density}{chart.density()}
+\indexline{word:dist.density-at}{dist.density\_at()}
 \indexline{word:table.describe-columns}{table.describe\_columns()}
 \indexline{word:table.distances-between-rows}{table.distances\_between\_rows()}
+\indexline{word:sdata.distribution}{sdata.distribution()}
 \indexline{word:nums.divide-by}{nums.divide\_by()}
 \indexline{word:dots}{chart.dots()}
 \indexline{word:dots-3d}{chart.dots\_3d()}
@@ -8432,10 +9285,17 @@ Every word and option, A to Z, with the page of its dictionary entry. Other spel
 \indexline{word:table.explain-survival}{table.explain\_survival()}
 \indexline{word:table.fill-empty-cells}{table.fill\_empty\_cells()}
 \indexline{word:nums.fill-empty-numbers}{nums.fill\_empty\_numbers()}
+\indexline{word:sdata.find-biggest}{sdata.find\_biggest()}
+\indexline{word:sdata.find-smallest}{sdata.find\_smallest()}
 \indexline{word:fit-curve}{chart.fit\_curve()}
+\indexline{word:table.fit-curve}{table.fit\_curve()}
+\indexline{word:fit-distribution}{chart.fit\_distribution()}
+\indexline{word:nums.fit-distribution}{nums.fit\_distribution()}
+\indexline{word:table.fit-distribution}{table.fit\_distribution()}
+\indexline{word:fit-formula}{chart.fit\_formula()}
 \indexline{word:table.fit-formula}{table.fit\_formula()}
 \indexline{word:fit-line}{chart.fit\_line()}
-\indexline{word:table.fit-straight-line}{table.fit\_straight\_line()}
+\indexline{word:table.fit-line}{table.fit\_line()}
 \indexline{word:flip-x}{chart.flip\_x()}
 \indexline{word:flip-y}{chart.flip\_y()}
 \indexline{word:font-name}{chart.font\_name()}
@@ -8482,8 +9342,11 @@ Every word and option, A to Z, with the page of its dictionary entry. Other spel
 \indexline{word:table.make-numbers}{table.make\_numbers()}
 \indexline{word:table.make-text}{table.make\_text()}
 \indexline{word:table.make-uppercase}{table.make\_uppercase()}
+\indexline{word:table.map-of}{table.map\_of()}
+\indexline{word:dist.median}{dist.median()}
 \indexline{word:nums.median}{nums.median()}
 \indexline{word:table.median-of}{table.median\_of()}
+\indexline{word:dist.middle-range}{dist.middle\_range()}
 \indexline{word:table.most-common-of}{table.most\_common\_of()}
 \indexline{word:names-on-dots}{chart.names\_on\_dots()}
 \indexline{word:note}{chart.note()}
@@ -8500,7 +9363,9 @@ Every word and option, A to Z, with the page of its dictionary entry. Other spel
 \indexline{word:order-x}{chart.order\_x()}
 \indexline{word:order-y}{chart.order\_y()}
 \indexline{word:sdata.pairs}{sdata.pairs()}
+\indexline{word:dist.parameters}{dist.parameters()}
 \indexline{word:table.percent-of}{table.percent\_of()}
+\indexline{word:dist.percentile}{dist.percentile()}
 \indexline{word:nums.percentile}{nums.percentile()}
 \indexline{word:table.percentile-of}{table.percentile\_of()}
 \indexline{word:pie}{chart.pie()}
@@ -8508,6 +9373,7 @@ Every word and option, A to Z, with the page of its dictionary entry. Other spel
 \indexline{word:nums.power}{nums.power()}
 \indexline{word:table.principal-components-of}{table.principal\_components\_of()}
 \indexline{word:qq-dots}{chart.qq\_dots()}
+\indexline{word:dist.random-numbers}{dist.random\_numbers()}
 \indexline{word:sdata.random-numbers}{sdata.random\_numbers()}
 \indexline{word:range-x}{chart.range\_x()}
 \indexline{word:range-y}{chart.range\_y()}
@@ -8557,10 +9423,12 @@ Every word and option, A to Z, with the page of its dictionary entry. Other spel
 \indexline{word:nums.smallest}{nums.smallest()}
 \indexline{word:table.smallest-of}{table.smallest\_of()}
 \indexline{word:smooth-line}{chart.smooth\_line()}
+\indexline{word:sdata.solve}{sdata.solve()}
 \indexline{word:nums.sort}{nums.sort()}
 \indexline{word:table.sort-by}{table.sort\_by()}
 \indexline{word:table.split-column}{table.split\_column()}
 \indexline{word:nums.square-root}{nums.square\_root()}
+\indexline{word:dist.standard-deviation}{dist.standard\_deviation()}
 \indexline{word:nums.standard-deviation}{nums.standard\_deviation()}
 \indexline{word:table.standard-deviation-of}{table.standard\_deviation\_of()}
 \indexline{word:nums.start-again}{nums.start\_again()}
@@ -8569,11 +9437,13 @@ Every word and option, A to Z, with the page of its dictionary entry. Other spel
 \indexline{word:table.steps}{table.steps()}
 \indexline{word:style}{chart.style()}
 \indexline{word:nums.subtract}{nums.subtract()}
+\indexline{word:dist.summary}{dist.summary()}
 \indexline{word:table.summary-of}{table.summary\_of()}
 \indexline{word:surface}{chart.surface()}
 \indexline{word:survival-curves}{chart.survival\_curves()}
 \indexline{word:table.survival-over-time}{table.survival\_over\_time()}
 \indexline{word:grid.swap-rows-and-columns}{grid.swap\_rows\_and\_columns()}
+\indexline{word:dist.table}{dist.table()}
 \indexline{word:nums.table}{nums.table()}
 \indexline{word:sdata.table}{sdata.table()}
 \indexline{word:tick-format-x}{chart.tick\_format\_x()}
@@ -8588,6 +9458,8 @@ Every word and option, A to Z, with the page of its dictionary entry. Other spel
 \indexline{word:table.turn-rows-into-columns}{table.turn\_rows\_into\_columns()}
 \indexline{word:nums.undo}{nums.undo()}
 \indexline{word:table.undo}{table.undo()}
+\indexline{word:table.values-at}{table.values\_at()}
+\indexline{word:dist.variance}{dist.variance()}
 \indexline{word:violins}{chart.violin()}
 \indexline{word:violins}{chart.violins()}
 \indexline{word:sdata.words}{sdata.words()}

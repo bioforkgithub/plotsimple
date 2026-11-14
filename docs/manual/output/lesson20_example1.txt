@@ -1,0 +1,4 @@
+The chance of a value above 80 is 0.135 % (normal, average 50, standard deviation 10; R: pnorm(80, mean = 50, sd = 10, lower.tail = FALSE)).
+The chance of a value between 40 and 60 is 68.3 % (normal, average 50, standard deviation 10; R: pnorm(60, mean = 50, sd = 10) - pnorm(40, mean = 50, sd = 10)).
+95 % of the distribution is below 66.4 (normal, average 50, standard deviation 10; R: qnorm(0.95, mean = 50, sd = 10)).
+The cut-off with a 2.5 % chance above it is 69.6 (normal, average 50, standard deviation 10; R: qnorm(0.025, mean = 50, sd = 10, lower.tail = FALSE)).

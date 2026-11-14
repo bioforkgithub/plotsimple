@@ -1,0 +1,4 @@
+"marks" goes up by 5.20 for each 1 more "hours" (95 % CI 4.24 to 6.17); this slope is very unlikely to be chance (p < 0.0001). R squared = 0.69: "hours" explains about 69 % of the differences in "marks".
+Line: marks = 5.20 * hours + 37.2, by least squares over 54 rows. A link does not show that one thing causes the other.
+Curve: marks = 31.0 + 8.26 * hours - 0.297 * hours**2 (each with its 95 % CI in the table); R squared = 0.70, adjusted 0.69.
+Method: least squares on powers of hours, as R lm(marks ~ poly(hours, 2, raw = TRUE)).

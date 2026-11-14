@@ -1,0 +1,11 @@
+Estimated "population" at 2 values of "year" for each of the 4 groups in "country", joined by straight lines between the known points (linear interpolation, as R approx()).
+   year     country  population
+0  2001      Applia       12.30
+1  2011      Applia       16.60
+2  2001  Bananaland       30.40
+3  2011  Bananaland       34.60
+4  2001     Cherria        5.25
+5  2011     Cherria        8.20
+6  2001    Dateland       44.80
+7  2011    Dateland       46.85
+Estimated "height" at 60 x 60 evenly spaced places across "east" and "north", joined by a smooth surface (a thin-plate spline, passing through every point).

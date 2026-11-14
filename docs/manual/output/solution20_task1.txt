@@ -1,0 +1,1 @@
+The chance of 8 or more is 5.47 % (binomial, 10 tries, chance 0.5; R: pbinom(7, size = 10, prob = 0.5, lower.tail = FALSE)).

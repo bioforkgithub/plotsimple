@@ -58,6 +58,7 @@ GROUP_UNDERNEATH = {
     "Choose columns": "narwhals, which runs the step in pandas or Polars (whichever holds the table)",
     "Choose rows": "narwhals, which runs the step in pandas or Polars (whichever holds the table)",
     "Empty cells": "narwhals, which runs the step in pandas or Polars (whichever holds the table)",
+    "Distributions": "SciPy (scipy.stats frozen distributions: cdf, sf, ppf, isf, pdf, pmf, stats, rvs)",
     "Fix columns": "narwhals, which runs the step in pandas or Polars (whichever holds the table)",
     "Sort and new columns": "narwhals, which runs the step in pandas or Polars (whichever holds the table)",
     "Dates and text": "narwhals, which runs the step in pandas or Polars (whichever holds the table)",
@@ -81,7 +82,7 @@ UNDERNEATH = {
     "save": "matplotlib (Figure.savefig); Pillow writes .gif animations",
     # chart types
     "bars": "seaborn (barplot; countplot for show=\"count\")",
-    "lines": "seaborn (lineplot)",
+    "lines": "seaborn (lineplot); SciPy (interpolate) for joined_by= curves",
     "dots": "seaborn (scatterplot)",
     "area": "matplotlib (fill_between, or stackplot with stacked=True)",
     "histogram": "seaborn (histplot)",
@@ -102,9 +103,11 @@ UNDERNEATH = {
     "error_bars": "pandas (group averages) and matplotlib (errorbar); SciPy for the t-based confidence interval",
     "fit_line": "SciPy (stats.linregress), drawn with matplotlib",
     "fit_curve": "NumPy (polyfit), drawn with matplotlib",
-    "smooth_line": "NumPy (LOWESS, written out in simplydata as in R's lowess()), drawn with matplotlib",
+    "smooth_line": "NumPy (LOWESS, written out in simplydata as in R's lowess()) or SciPy (make_smoothing_spline, for "
+                   "method=\"spline\"), drawn with matplotlib",
     "density": "seaborn (kdeplot)",
-    "qq_dots": "SciPy (stats.probplot) for the points and the line; matplotlib draws them",
+    "qq_dots": "SciPy (stats.probplot, against a fitted scipy.stats distribution for distribution=) for the points "
+               "and the line; matplotlib draws them",
     "cumulative_share": "seaborn (ecdfplot)",
     "count_bars": "seaborn (countplot)",
     "all_dots": "seaborn (swarmplot; stripplot for groups of more than 100 dots)",
@@ -121,14 +124,14 @@ UNDERNEATH = {
     "sdata.table": "pandas or Polars read the file; narwhals lets every table word run on both",
     "table.show": "pandas or Polars (printing the table)",
     "table.column": "NumPy (a column of numbers becomes sdata.numbers)",
-    "table.fill_empty_cells": "narwhals; NumPy (interp) for the line between neighbours",
+    "table.fill_empty_cells": "narwhals; NumPy (interp) for the line between neighbours; SciPy (CubicSpline, "
+                              "PchipInterpolator) for the curves",
     "table.make_dates": "pandas (to_datetime) or Polars (str.strptime), trying the date formats in a fixed order",
     "table.split_column": "pandas (str.split) or Polars (str.splitn), whichever holds the table",
     "table.add_rolling_column": "narwhals (rolling_mean, rolling_sum, rolling_std with over(order_by=)); "
                                 "pandas or Polars rolling for median, smallest and biggest",
     "table.summary_of": "narwhals (group summaries); SciPy (the t distribution) for the confidence interval",
     "table.percent_of": "narwhals; SciPy (stats.binomtest, the Clopper-Pearson exact interval)",
-    "table.compare_shape_to": "SciPy (stats.shapiro)",
     "table.compare_spreads": "SciPy (stats.levene with center=\"median\", stats.bartlett, stats.fligner)",
     "table.compare_counts_to": "SciPy (stats.chisquare)",
     "table.compare_percent_to": "SciPy (stats.binomtest, the Clopper-Pearson exact interval)",
@@ -144,8 +147,30 @@ UNDERNEATH = {
     "table.compare_before_after": "SciPy (stats.ttest_rel or stats.wilcoxon)",
     "table.compare_average_to": "SciPy (stats.ttest_1samp or stats.wilcoxon)",
     "table.compare_counts": "SciPy (stats.chi2_contingency, or fisher_exact with test=\"fisher\")",
-    "table.fit_straight_line": "SciPy (stats.linregress)",
-    "table.fit_formula": "SciPy (optimize.curve_fit)",
+    "table.compare_shape_to": "SciPy (stats.shapiro for normal; stats.goodness_of_fit, Anderson-Darling with a "
+                              "Monte Carlo p-value, for other shapes)",
+    # fitting
+    "table.fit_line": "SciPy (stats.linregress)",
+    "table.fit_curve": "NumPy (least squares by QR on the powers of x)",
+    "table.fit_formula": "SciPy (optimize.curve_fit; optimize.differential_evolution for search=\"whole range\")",
+    "fit_formula": "SciPy (optimize.curve_fit, as table.fit_formula), drawn with matplotlib",
+    "fit_distribution": "SciPy (scipy.stats, maximum likelihood as table.fit_distribution), drawn with matplotlib",
+    "curve": "NumPy (the formula on a grid of x values) or scipy.stats (a distribution), drawn with matplotlib",
+    # finding and solving
+    "sdata.find_smallest": "SciPy (optimize.minimize_scalar, minimize, linprog and milp with HiGHS, "
+                           "differential_evolution and other global searches)",
+    "sdata.find_biggest": "SciPy (the same as find_smallest, on minus the formula)",
+    "sdata.solve": "SciPy (optimize.brentq, root_scalar, root) and NumPy (polynomial roots, linalg.solve)",
+    # values between points
+    "table.values_at": "NumPy (interp) and SciPy (interpolate: CubicSpline, PchipInterpolator, Akima1DInterpolator, "
+                       "make_smoothing_spline, griddata, RegularGridInterpolator, RBFInterpolator)",
+    "table.map_of": "SciPy (interpolate: RegularGridInterpolator, griddata, RBFInterpolator)",
+    # distributions
+    "sdata.distribution": "SciPy (scipy.stats frozen distributions)",
+    "table.fit_distribution": "SciPy (scipy.stats and optimize, maximum likelihood; closed forms where they exist)",
+    "table.compare_distributions": "SciPy (scipy.stats, maximum likelihood; Anderson-Darling, Kolmogorov-Smirnov and "
+                                   "Cramer-von Mises statistics)",
+    "nums.fit_distribution": "SciPy (scipy.stats and optimize, as table.fit_distribution)",
     # models
     "table.explain": "NumPy (least squares, and iteratively reweighted least squares as R glm); "
                      "statsmodels for grouped_by= (MixedLM) and multiple imputation (MICEData)",
@@ -321,7 +346,10 @@ FAMILY_TITLES = {
                              "\\code{chart.bars(...)}. Words that start with \\code{sdata.} are called on "
                              "simplydata itself, and words that end in \\code{=} are options inside a chart step."),
     "table": ("Table words", "Steps on a table: \\code{table = sdata.table(...)}, then "
-                             "\\code{table.keep\\_rows(...)}. Table words work the same on pandas and Polars tables."),
+                             "\\code{table.keep\\_rows(...)}. Table words work the same on pandas and Polars tables. "
+                             "Words that start with \\code{sdata.} (finding and solving, planning a study) are "
+                             "called on simplydata itself, and words that start with \\code{dist.} are steps on "
+                             "a distribution: \\code{dist = sdata.distribution(\"normal\")}."),
     "numbers": ("Number words", "Steps on numbers, \\code{nums = sdata.numbers([12, 15, 9, 20, 14])}, "
                                 "and on grids of numbers, \\code{grid = sdata.number\\_grid([[3, 5, 2], [8, 6, 4]])}."),
     "help": ("Help words", "Words that teach simplydata."),
@@ -717,14 +745,17 @@ def _word_entry(key: str, aliases: dict) -> str:
     return "\n".join(out)
 
 
-def _family(keys: list[str]) -> str:
+def _family(keys: list[str]) -> str | None:
+    """Which chapter a group belongs to. A group with table words is a table group even when it has
+    a chart word too (survival_curves); a group of sdata words only (finding and solving, planning
+    a study) stays in the chapter before it, so no chapter starts twice."""
     kinds = {learn._kind(k) for k in keys} - {"sdata"}
     if not kinds:
-        return "help"
-    if kinds & {"chart", "option"}:
-        return "chart"
+        return "help" if "sdata.help" in keys else None
     if "table" in kinds:
         return "table"
+    if kinds & {"chart", "option"}:
+        return "chart"
     return "numbers"
 
 
@@ -733,7 +764,7 @@ def _dictionary(aliases: dict) -> str:
     current = None
     for group, keys in learn.GROUPS:
         family = _family(keys)
-        if family != current:
+        if family is not None and family != current:
             current = family
             title, intro = FAMILY_TITLES[family]
             out.append(f"\\unchapter{{{title}}}{{family:{family}}}")
