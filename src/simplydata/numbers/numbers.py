@@ -8,11 +8,12 @@ import sys
 
 import numpy as np
 
-from .._errors import SimplydataError, friendly
+from .._errors import SimplydataError, friendly, option_error
+from .._positions import read_positions
 from ._base import BaseNumbers, amount, check_seed, check_whole, is_number, plain, to_array
 from .distribution_words import DistributionNumberWords
 from .maths import MathsWords
-from .picking import PickingWords
+from .picking import PickingWords, ReplacingWords
 from .summaries import GridSummaryWords, SummaryWords
 
 
@@ -36,8 +37,9 @@ class Numbers(PickingWords, MathsWords, SummaryWords, DistributionNumberWords, B
         return (
             "Numbers are picked with words, and positions count from 1:\n"
             "    nums.number_at(1)              the first number\n"
-            "    nums.number_at(nums.count())   the last number\n"
+            '    nums.number_at("last")         the last number\n'
             "    nums.keep_first_numbers(3)     keep only the first 3\n"
+            "    nums.keep_numbers_by_position(3, to=8)   the numbers at positions 3 to 8\n"
             "Python's [ ] counts from 0, so simplydata does not use it. "
             "For a NumPy array, use nums.as_numpy()."
         )
@@ -47,13 +49,31 @@ class Numbers(PickingWords, MathsWords, SummaryWords, DistributionNumberWords, B
         return f"simplydata numbers: {amount(self._values.size)}\n{body}"
 
 
-class NumberGrid(GridSummaryWords, MathsWords, BaseNumbers):
+_GRID_KEEP_NUMBERS = (
+    "A grid keeps its rows and columns, so it cannot drop single numbers (the rows would end up with "
+    "different lengths; that is why NumPy's g[g > 5] gives a flat list).\n"
+    "For the numbers above 5 as a list:  grid.numbers().keep_numbers(above=5)\n"
+    "To change them where they are:      grid.replace_numbers(above=5, with_value=0)\n"
+    "To keep whole rows or columns:      grid.keep_rows_by_position(1, to=2)"
+)
+
+
+class NumberGrid(ReplacingWords, GridSummaryWords, MathsWords, BaseNumbers):
     """A grid of numbers in rows and columns. Make one with sdata.number_grid([[1, 2], [3, 4]])."""
 
     _is_simplydata_grid = True
     _name = "grid"
     _noun = "grid"
     _OLD_WORDS = {**BaseNumbers._OLD_WORDS, "show_first": "show_first_rows", "show_last": "show_last_rows"}
+    # Names people may try on a grid -> the grid word (they never run).
+    _HINTS = {"keep_rows": "keep_rows_by_position", "remove_rows": "remove_rows_by_position",
+              "keep_columns": "keep_columns_by_position", "remove_columns": "remove_columns_by_position",
+              "where": "replace_numbers", "clip": "replace_numbers", "replace": "replace_numbers",
+              "replace_values": "replace_numbers", "putmask": "replace_numbers", "delete": "remove_rows_by_position",
+              "take": "keep_rows_by_position", "slice": "keep_rows_by_position",
+              "keep_first_rows": "keep_rows_by_position", "keep_last_rows": "keep_rows_by_position"}
+    # Words that cannot work on a grid, with the reason and what to write instead.
+    _POINTERS = {"keep_numbers": _GRID_KEEP_NUMBERS, "remove_numbers": _GRID_KEEP_NUMBERS}
 
     def _as_pandas(self, name=None, for_chart=False):
         """A table with columns called "1", "2", ...; for charts the rows are numbered from 1 too."""
@@ -71,6 +91,7 @@ class NumberGrid(GridSummaryWords, MathsWords, BaseNumbers):
             "    grid.number_at(row=1, column=2)   one number\n"
             "    grid.row(1)                       the first row, as numbers\n"
             "    grid.column(2)                    the second column, as numbers\n"
+            "    grid.keep_rows_by_position(2, to=5).keep_columns_by_position(1, to=3)   a block\n"
             "Python's [ ] counts from 0, so simplydata does not use it. "
             "For a NumPy array, use grid.as_numpy()."
         )
@@ -117,33 +138,126 @@ class NumberGrid(GridSummaryWords, MathsWords, BaseNumbers):
     def _position(self, step, value, option):
         n = self._values.shape[0 if option == "row" else 1]
         example = f"{step}(row=1, column=2)" if step == "number_at" else f"{step}(1)"
+        if isinstance(value, str) and value.strip().lower() == "last" and n:
+            return n - 1
         if not isinstance(value, (int, np.integer)) or isinstance(value, bool) or not 1 <= value <= n:
             raise SimplydataError(
-                f"{option}= needs a whole number from 1 to {n} (this grid has {amount(n, option)}); "
-                f"positions count from 1, so 1 is the first." + self._example(example)
+                f"{option}= needs a whole number from 1 to {n}, or \"last\" (this grid has {amount(n, option)}); "
+                f"positions count from 1, so 1 is the first and {n} is the last." + self._example(example)
             )
         return int(value) - 1
 
     @friendly
     def number_at(self, row=None, column=None):
-        """The number at a row and column, counting from 1. grid.number_at(row=1, column=2)"""
+        """The number at a row and column, counting from 1. grid.number_at(row=1, column=2)
+
+        "last" is the last row or column: grid.number_at(row="last", column="last").
+        """
         return plain(self._values[self._position("number_at", row, "row"),
                                   self._position("number_at", column, "column")])
 
     @friendly
     def row(self, position=None):
-        """One row of the grid as new numbers, counting from 1: row(1) is the top row. grid.row(1)"""
+        """One row of the grid as new numbers, counting from 1: row(1) is the top row. grid.row(1)
+
+        grid.row("last") is the bottom row.
+        """
         return Numbers(self._values[self._position("row", position, "row")].copy())
 
     @friendly
     def column(self, position=None):
-        """One column of the grid as new numbers, counting from 1: column(1) is the left one. grid.column(1)"""
+        """One column of the grid as new numbers, counting from 1: column(1) is the left one. grid.column(1)
+
+        grid.column("last") is the right one.
+        """
         return Numbers(self._values[:, self._position("column", position, "column")].copy())
 
     @friendly
     def numbers(self):
         """All the numbers of the grid as a list, row by row (flatten). nums = grid.numbers()"""
         return Numbers(self._values.ravel().copy())
+
+    # ------------------------------------------------------------------ rows and columns by position
+    def _grid_picked(self, step: str, positions, to, step_size, conditions: dict, axis: int):
+        noun = "row" if axis == 0 else "column"
+        example = f"grid.{step}(1, to=2)"
+        if conditions:
+            key = next(iter(conditions))
+            if key in ("above", "below", "at_least", "at_most", "equal_to", "not_equal_to", "between",
+                       "one_of", "is_empty"):
+                raise SimplydataError(f".{step}() chooses {noun}s by their place, not by their values.\n"
+                                      + _GRID_KEEP_NUMBERS)
+            raise option_error(step, key, ["positions", "to", "step"])
+        return read_positions(
+            step, positions, to, step_size, self._values.shape[axis], noun=noun, count_noun=f"{noun}s",
+            owner="The grid has", example=example, last_hint=f'grid.{step}("last")',
+            after_hint=f"for another order list them, like [3, 2, 1]", name="grid",
+        )
+
+    def _grid_step(self, step: str, picked, axis: int, keep: bool):
+        noun = "row" if axis == 0 else "column"
+        total = self._values.shape[axis]
+        if keep:
+            chosen = picked.array()
+        else:
+            if len(picked) == total:
+                raise SimplydataError(f"That would remove every {noun}. Keep at least one.\n"
+                                      f"For example:  grid.{step}(1)")
+            chosen = picked.kept_positions(total)
+        new = np.take(self._values, chosen, axis=axis).copy()
+        rows, columns = new.shape
+        size = f"the grid is now {amount(rows, 'row')} by {amount(columns, 'column')}"
+        if keep:
+            said = f"Kept {picked.words()}{picked.in_order()} ({len(chosen)} of {amount(total, noun)}); {size}."
+        else:
+            said = f"Removed {picked.words()} ({len(picked)} of {amount(total, noun)}); {size}."
+        print(said)
+        if picked.note:
+            print(picked.note.format(verb="kept" if keep else "removed"))
+        if new.shape[axis] == 1:
+            print(f"One {noun} is left, so this is still a grid; grid.{noun}(1) gives it as numbers.")
+        verb = "keep" if keep else "remove"
+        return self._change(f"{verb} {picked.short_words()}", new)
+
+    @friendly
+    def keep_rows_by_position(self, positions=None, to=None, step=None, **conditions):
+        """Keep rows of the grid by their position, counting from 1: a run, every n-th row, or a list.
+
+        grid.keep_rows_by_position(1, to=2)
+        Both ends are included; to="last" goes to the bottom; step=2 keeps every 2nd row; a list
+        such as [2, 1] keeps those rows in that order. A block is two steps:
+        grid.keep_rows_by_position(2, to=5).keep_columns_by_position(1, to=3), as NumPy g[1:5, 0:3].
+        """
+        picked = self._grid_picked("keep_rows_by_position", positions, to, step, conditions, 0)
+        return self._grid_step("keep_rows_by_position", picked, 0, keep=True)
+
+    @friendly
+    def remove_rows_by_position(self, positions=None, to=None, step=None, **conditions):
+        """Remove rows of the grid by their position, counting from 1. grid.remove_rows_by_position(1)
+
+        The same positions as keep_rows_by_position. As NumPy np.delete(g, 0, axis=0).
+        """
+        picked = self._grid_picked("remove_rows_by_position", positions, to, step, conditions, 0)
+        return self._grid_step("remove_rows_by_position", picked, 0, keep=False)
+
+    @friendly
+    def keep_columns_by_position(self, positions=None, to=None, step=None, **conditions):
+        """Keep columns of the grid by their position, counting from 1 at the left. grid.keep_columns_by_position(2, to=3)
+
+        The same positions as keep_rows_by_position: a run (to=), every n-th (step=) or a list.
+        As NumPy g[:, 1:3].
+        """
+        picked = self._grid_picked("keep_columns_by_position", positions, to, step, conditions, 1)
+        return self._grid_step("keep_columns_by_position", picked, 1, keep=True)
+
+    @friendly
+    def remove_columns_by_position(self, positions=None, to=None, step=None, **conditions):
+        """Remove columns of the grid by their position, counting from 1 at the left. grid.remove_columns_by_position(1)
+
+        The same positions as keep_columns_by_position. As NumPy np.delete(g, 0, axis=1).
+        """
+        picked = self._grid_picked("remove_columns_by_position", positions, to, step, conditions, 1)
+        return self._grid_step("remove_columns_by_position", picked, 1, keep=False)
 
     # ------------------------------------------------------------------ changing the grid
     @friendly
