@@ -6246,7 +6246,7 @@ Do the values look bell-shaped (normal), or are they too far from it to be chanc
 \codeline{table.compare\_shape\_to(\textquotedbl{}marks\textquotedbl{}, \textquotedbl{}normal\textquotedbl{}, for\_each=\textquotedbl{}class\textquotedbl{})} (with \code{sdata.\allowbreak{}example(\textquotedbl{}marks\textquotedbl{})})\\
 Uses the Shapiro-Wilk test (as R \code{shapiro.\allowbreak{}test()}), for 3 to 5000 values in each group; empty cells are skipped. A small p-value says the shape is too far from a bell shape to be chance. A large p-value does not prove the values are normal: with few values the test can miss a different shape, and with many values (30 or more) it flags even tiny, harmless differences, while tests on averages are then usually fine anyway (the central limit theorem). Gives back a table with one row per group.
 
-Any other smooth shape works too: \code{table.\allowbreak{}compare\_\allowbreak{}shape\_\allowbreak{}to(\textquotedbl{}days\textquotedbl{},\allowbreak{} \textquotedbl{}gamma\textquotedbl{})} fits the distribution (as \code{table.\allowbreak{}fit\_\allowbreak{}distribution}) and runs the Anderson-Darling test, with a p-value from 9999 simulated samples that are each fitted again (\code{seed=1}, printed).
+Any other smooth shape works too: \code{table.\allowbreak{}compare\_\allowbreak{}shape\_\allowbreak{}to(\textquotedbl{}days\textquotedbl{},\allowbreak{} \textquotedbl{}gamma\textquotedbl{})} fits the distribution (as \code{table.\allowbreak{}fit\_\allowbreak{}distribution}) and runs the Anderson-Darling test, with a p-value from \code{samples=9999} simulated samples that are each fitted again (\code{seed=1}, printed; the same seed gives the same p-value). Most shapes take a second or two; t, Cauchy and F take minutes, and a note says so before a long run. \code{samples=999} is ten times quicker and gives a rougher p-value.
 
 \wordfield{Options}{}\par\nopagebreak
 \begin{optiontable}
@@ -6254,9 +6254,10 @@ Any other smooth shape works too: \code{table.\allowbreak{}compare\_\allowbreak{
 \code{shape=} & normally \code{\textquotedbl{}normal\textquotedbl{}}\\
 \code{for\_\allowbreak{}each=} & \\
 \code{seed=} & normally \code{1}\\
+\code{samples=} & normally \code{9999}\\
 \end{optiontable}
 
-\wordfield{Underneath}{SciPy (stats.shapiro for normal; stats.goodness\_of\_fit, Anderson-Darling with a Monte Carlo p-value, for other shapes)}
+\wordfield{Underneath}{SciPy (stats.shapiro for normal; for other shapes the method of stats.goodness\_of\_fit, Anderson-Darling with a Monte Carlo p-value, with the simulated samples refitted all at once in NumPy)}
 \wordfield{Example you can run}{(it uses the practice table \code{marks})}\par\nopagebreak
 \begin{lstlisting}[style=py]
 import simplydata as sdata

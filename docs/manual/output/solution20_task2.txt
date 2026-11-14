@@ -3,4 +3,4 @@ Best by AIC: lognormal (AIC 2111.1), then gamma (+3.1), normal (+21.0), weibull 
 A difference below 2 is too small to choose between them. Method: maximum likelihood for each, ranked by AIC, as R fitdistrplus::gofstat().
 Note: 10 rows with an empty cell in "sales" were skipped.
 The values of "sales" could well follow a lognormal distribution (Anderson-Darling A = 0.283, p = 0.652, 170 values; fitted log average 6.08, log standard deviation 0.273). This does not prove that they do.
-Test: Anderson-Darling test of a fitted lognormal shape, with a Monte Carlo p-value from 9999 simulated samples that are each fitted again (SciPy goodness_of_fit, seed=1); the statistic is R goftest::ad.test(x, "plnorm", ...) with the fitted values.
+Test: Anderson-Darling test of a fitted lognormal shape, with a Monte Carlo p-value from 9999 simulated samples that are each fitted again (as SciPy goodness_of_fit, seed=1); the statistic is R goftest::ad.test(x, "plnorm", ...) with the fitted values.

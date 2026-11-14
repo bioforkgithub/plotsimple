@@ -1328,7 +1328,7 @@ class StatTestWords:
 
     # ------------------------------------------------------------------ compare_shape_to
     @friendly
-    def compare_shape_to(self, column=None, shape="normal", for_each=None, seed=1):
+    def compare_shape_to(self, column=None, shape="normal", for_each=None, seed=1, samples=9999):
         """Do the values look bell-shaped (normal), or are they too far from it to be chance?
 
         table.compare_shape_to("marks", "normal", for_each="class")   (with sdata.example("marks"))
@@ -1341,7 +1341,10 @@ class StatTestWords:
 
         Any other smooth shape works too: table.compare_shape_to("days", "gamma") fits the
         distribution (as table.fit_distribution) and runs the Anderson-Darling test, with a
-        p-value from 9999 simulated samples that are each fitted again (seed=1, printed).
+        p-value from samples=9999 simulated samples that are each fitted again (seed=1,
+        printed; the same seed gives the same p-value). Most shapes take a second or two; t,
+        Cauchy and F take minutes, and a note says so before a long run. samples=999 is ten
+        times quicker and gives a rougher p-value.
         """
         step = "compare_shape_to"
         example = 'with sdata.example("marks"): table.compare_shape_to("marks", "normal", for_each="class")'
@@ -1350,7 +1353,7 @@ class StatTestWords:
         if not isinstance(name, str) or not name:
             raise SimplydataError(f'{step}() needs a shape in quotes, such as "normal" or "gamma".\nFor example, {example}')
         if name not in SHAPES:
-            return self._compare_other_shape(step, column, shape, for_each, seed)
+            return self._compare_other_shape(step, column, shape, for_each, seed, samples)
         groups = self._group_columns(step, for_each, [column]) if for_each is not None else []
         frame = self._number_frame(step, [column])
         values = frame.select(nw.col(column).cast(nw.Float64))[column].to_numpy()
@@ -1419,17 +1422,18 @@ class StatTestWords:
         data = {k: [r[k] for r in rows] for k in rows[0]}
         return self._new_table(nw.from_dict(data, backend=self._frame.implementation))
 
-    def _compare_other_shape(self, step, column, shape, for_each, seed):
-        """compare_shape_to() for any shape but normal: the engine is table/distribution_words.shape_test."""
-        from ..distributions import _find_family
-        from .distribution_words import shape_test
+    def _compare_other_shape(self, step, column, shape, for_each, seed, samples):
+        """compare_shape_to() for any shape but normal: the engine is distributions.shape_test."""
+        from .._shape_monte_carlo import time_note
+        from ..distributions import _find_family, _shape_test_start, check_samples, shape_test
 
         try:
             _find_family(shape, step)
         except SimplydataError as error:  # the option here is shape=: say so in the did-you-mean
             raise SimplydataError(str(error).replace('Did you mean "', 'Did you mean shape="')) from None
-        if isinstance(seed, bool) or not isinstance(seed, int):
+        if isinstance(seed, bool) or not isinstance(seed, (int, np.integer)):
             raise SimplydataError("seed= needs a whole number, such as seed=1 (the same seed gives the same p-value).")
+        check_samples(samples, step)
         groups = self._group_columns(step, for_each, [column]) if for_each is not None else []
         frame = self._number_frame(step, [column])
         values = frame.select(nw.col(column).cast(nw.Float64))[column].to_numpy()
@@ -1441,10 +1445,15 @@ class StatTestWords:
                 by_group[key].append(v)
         order = sorted(by_group, key=lambda k: tuple(_order(v) for v in k))
         _skipped_note(int(np.isnan(values).sum()), [column])
+        started = [_shape_test_start(np.asarray(by_group[key], dtype=float), shape, seed, samples, column)
+                   for key in order]
+        note = time_note(sum(run[3].pilot() for run in started), samples, groups=len(started))
+        if note:
+            print(note)
         rows, method = [], None
-        for key in order:
+        for key, ready in zip(order, started):
             label = " / ".join(_say_label(x) for x in key)
-            result = shape_test(np.asarray(by_group[key], dtype=float), shape, seed=seed, column=column)
+            result = shape_test(None, shape, seed=seed, samples=samples, column=column, _started=ready)
             sentence = result["sentence"]
             print(f"  {label}: {sentence}" if groups else sentence)
             method = result["method"]

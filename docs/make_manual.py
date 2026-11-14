@@ -147,8 +147,9 @@ UNDERNEATH = {
     "table.compare_before_after": "SciPy (stats.ttest_rel or stats.wilcoxon)",
     "table.compare_average_to": "SciPy (stats.ttest_1samp or stats.wilcoxon)",
     "table.compare_counts": "SciPy (stats.chi2_contingency, or fisher_exact with test=\"fisher\")",
-    "table.compare_shape_to": "SciPy (stats.shapiro for normal; stats.goodness_of_fit, Anderson-Darling with a "
-                              "Monte Carlo p-value, for other shapes)",
+    "table.compare_shape_to": "SciPy (stats.shapiro for normal; for other shapes the method of "
+                              "stats.goodness_of_fit, Anderson-Darling with a Monte Carlo p-value, with the "
+                              "simulated samples refitted all at once in NumPy)",
     # fitting
     "table.fit_line": "SciPy (stats.linregress)",
     "table.fit_curve": "NumPy (least squares by QR on the powers of x)",

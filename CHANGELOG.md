@@ -62,6 +62,10 @@ More statistics, each checked against R.
   several by AIC, with the goodness-of-fit statistics of R `fitdistrplus::gofstat()`.
 - `table.compare_shape_to(column, "gamma")` checks any smooth shape: the Anderson-Darling test with
   a Monte Carlo p-value that allows for the fitting (seed 1). `"normal"` keeps Shapiro-Wilk.
+  `samples=` (9999 by default) sets how many simulated samples are refitted. They are refitted
+  all at once with the exact likelihood equations, so most shapes take a second or two (Weibull
+  went from about a minute to under a second, with the same p-value); t, Cauchy and F are still
+  refitted one by one, and a short note says so before a run expected to take more than 10 seconds.
 - On charts: `chart.fit_distribution("gamma")` over a histogram or density, and
   `chart.qq_dots(column, distribution="gamma")`.
 

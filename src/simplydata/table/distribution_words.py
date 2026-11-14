@@ -18,9 +18,9 @@ from .summaries import GROUPS_IN_SENTENCE, _key, _order, _say_label
 DEFAULT_COMPARED = ("normal", "lognormal", "gamma", "weibull")
 
 
-def shape_test(values, name, seed=_d.SEED, n_mc_samples=9999, column=None) -> dict:
+def shape_test(values, name, seed=_d.SEED, samples=_d.SHAPE_TEST_SAMPLES, column=None) -> dict:
     """compare_shape_to(column, shape) for any shape but "normal": see distributions.shape_test."""
-    return _d.shape_test(values, name, seed=seed, n_mc_samples=n_mc_samples, column=column)
+    return _d.shape_test(values, name, seed=seed, samples=samples, column=column)
 
 
 class DistributionTableWords:
