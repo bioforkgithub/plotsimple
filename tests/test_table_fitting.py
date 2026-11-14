@@ -281,6 +281,24 @@ def test_values_the_data_cannot_pin_down_get_a_note(capsys):
     got = rows(make_table(data).fit_formula("y = a + b * c * x"))[0]
     assert got["b"] * got["c"] == pytest.approx(float(np.polyfit(data.x, data.y, 1)[0]), rel=1e-8)
     assert "Note: the standard errors could not be worked out well" in capsys.readouterr().out
+    assert not math.isfinite(got["standard error of b"])
+
+
+def test_the_gradient_rank_check_does_not_depend_on_scipy_noticing():
+    # SciPy's own check depends on rounding (it missed b * c on macOS); this one uses R qr()'s tolerance
+    from simplydata.table.fitting import _not_pinned_down
+
+    x, w = np.arange(1.0, 9.0), np.ones(8)
+    assert _not_pinned_down(lambda _, a, b, c: a + b * c * x, [0.1, 1.3, 0.75], w)
+    assert _not_pinned_down(lambda _, a, b: a + 0 * b * x, [0.1, 1.3], w)  # b does nothing
+    assert not _not_pinned_down(lambda _, a, b: a * np.exp(b * x), [2.0, 0.1], w)
+    assert not _not_pinned_down(lambda _, a, b: a + b * x, [1e6, 1e-6], w)
+
+
+def test_a_start_that_overflows_is_explained_before_the_search():
+    data = pd.DataFrame({"x": [1.0, 2, 3, 4, 5, 6, 7, 8], "y": [1.0, 2, 3, 4, 5, 6, 7, 8]})
+    with pytest.raises(SimplydataError, match=r'With the start values \(start=\{.*"b": 50.*too big to work with'):
+        make_table(data).fit_formula("y = a * exp(b * x) + c * exp(d * x) + e", start={"b": 50})
 
 
 def test_a_single_number_start_and_between_list_for_one_value(capsys):

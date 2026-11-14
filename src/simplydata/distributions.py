@@ -1195,6 +1195,7 @@ class Distribution:
             if self.is_discrete:
                 return np.asarray(f.isf(shares) if upper else f.ppf(shares), dtype=float)
             out = np.where(shares > 0.5, f.isf(1 - shares), f.ppf(shares)) if not upper else f.isf(shares)
+            out = _polish_quantile(f, np.asarray(out, dtype=float), np.asarray(shares, dtype=float), upper)
         return np.asarray(out, dtype=float)
 
     @friendly
@@ -1741,6 +1742,29 @@ def _numeric_start(family, x):
         return {"degrees_of_freedom_1": 5.0, "degrees_of_freedom_2": min(max(d2, 4.5), 200)}
     return None
 
+
+
+def _polish_quantile(frozen, x, shares, upper):
+    """One Newton step on the smaller tail, kept only where it brings the chance closer.
+
+    SciPy's inverse functions are not always as exact as its chances: before SciPy 1.16, t
+    quantiles were off by about 1e-11 (R qt() is exact to rounding). A Newton step on the cdf
+    (or sf, for the upper half) fixes that; where the quantile is already exact the step is
+    nothing, and a step that does not help is not taken.
+    """
+    use_sf = np.broadcast_to(np.asarray(upper) | (shares > 0.5), x.shape)
+    target = np.where(use_sf, 1 - shares if not upper else shares, shares)
+
+    def miss(at):
+        return np.where(use_sf, frozen.sf(at), frozen.cdf(at)) - target
+
+    with np.errstate(all="ignore"):
+        before = miss(x)
+        slope = np.where(use_sf, -1.0, 1.0) * frozen.pdf(x)
+        stepped = x - before / slope
+        after = miss(stepped)
+        better = np.isfinite(x) & np.isfinite(stepped) & (slope != 0) & (np.abs(after) < np.abs(before))
+    return np.where(better, stepped, x)
 
 @dataclass
 class _Fit:
