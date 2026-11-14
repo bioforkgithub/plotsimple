@@ -64,6 +64,28 @@ to try yourself.
 - `sdata.example()` lists the made-up tables to practise with (marks, weather, fruit, growth, shop, school, meadow, trial, island; shop has dates and empty cells)
 - `sdata.lesson(3, solutions=True)` adds a worked solution to each "Try it yourself" task
 
+## Or learn it in 30 days
+
+Rather learn an hour a day? simplydata has a 30-day course built in:
+
+```python
+import simplydata as sdata
+sdata.start_30_days()                    # you already write some Python
+sdata.start_30_days(track="beginner")    # you have never programmed: starts with just enough Python
+sdata.today()                            # every day: the day to do next
+```
+
+Each day starts with a 5-minute warm-up of questions on earlier days (answered from memory, which
+fixes words better than reading them again), then the lesson to work through, and ends with a task
+to do without looking back. Review days mix the whole course, the last week is a project of your
+own, and day 29 is a final test from memory. Missed a day? `sdata.today()` carries on where you
+stopped. `sdata.answers()` gives the answers, `sdata.day()` the whole calendar, and `sdata.next_day()`
+goes on now. Your progress is kept only on your computer, in `~/.simplydata/progress.json`.
+
+**[30 days of simplydata (PDF)](https://github.com/bioforkgithub/simplydata/blob/main/docs/manual/simplydata_30_days.pdf)**
+is the same course on paper: a calendar to tick for each track, one page per day with the page of
+the manual for each lesson and word, and the answers at the back.
+
 ## Manual
 
 **[The simplydata manual (PDF)](https://github.com/bioforkgithub/simplydata/blob/main/docs/manual/simplydata_manual.pdf)** has everything in one book:
@@ -77,8 +99,8 @@ task.
 
 The manual is made from the code by `python docs/make_manual.py` (it needs a LaTeX system with
 `pdflatex`), so it never goes out of date: a test fails if
-[docs/manual/simplydata_manual.tex](https://github.com/bioforkgithub/simplydata/blob/main/docs/manual/simplydata_manual.tex) no longer matches the code. The same command builds the dictionary, with the page numbers of the
-manual it has just compiled.
+[docs/manual/simplydata_manual.tex](https://github.com/bioforkgithub/simplydata/blob/main/docs/manual/simplydata_manual.tex) no longer matches the code. The same command builds the dictionary and the 30-day guide,
+with the page numbers of the manual it has just compiled.
 
 ## Tables
 

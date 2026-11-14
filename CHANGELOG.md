@@ -83,6 +83,31 @@ More statistics, each checked against R.
   manual (`python docs/make_manual.py`) builds the dictionary too, with the manual's page numbers,
   and a test fails if a word has no page or the pages come from an older manual.
 
+### 30 days of simplydata
+
+- `sdata.start_30_days(track="python")` starts a course of 30 days of about an hour each:
+  `track="python"` for people who already write some Python (about two lessons a day, review days
+  on days 7, 14, 21 and 28, then an eight-day project of their own), `track="beginner"` for people
+  who have never programmed (three days of just enough Python first, then about one lesson a day
+  and a small project). Both cover all 20 lessons and end with a final test from memory.
+- `sdata.today()` shows the day to do next: a 5-minute warm-up of questions on earlier days
+  (yesterday, about three days ago, about a week ago; review days mix the whole course), what to do
+  (the lesson, the manual's sections and the words to look up) and a task to do without looking
+  back. A missed day is never lost: `today()` carries on where you stopped, says so kindly if you
+  have fallen behind the calendar, and `today(follow_calendar=True)` jumps to the calendar's day.
+- `sdata.day(5)` shows any day (`sdata.day()` lists all 30 with ticks), `sdata.answers(5)` gives
+  the warm-up answers and a worked answer to the task, and `sdata.next_day()` goes on now.
+- The progress (track, start date and the date each day was opened) is kept only in a small file
+  on your computer, `~/.simplydata/progress.json` (`SIMPLYDATA_PROGRESS_FILE` chooses another);
+  nothing is sent anywhere.
+- `docs/manual/simplydata_30_days.pdf`: the same days on paper, with a calendar to tick for each
+  track, one page per day (warm-up questions with lines for the answers, the manual's page for each
+  lesson, section and word, and the task) and the answers at the back. It is made by
+  `docs/make_30_days.py` from the same source as `sdata.today()` (`simplydata/learn_days.py`), and
+  building the manual builds it too. Every piece of code in the days runs in the tests.
+- Lesson 1, `sdata.lesson()` and `sdata.help()` say that the 30 days exist; `sdata.help("course")`
+  and `sdata.help("tutorial")` point to `start_30_days`.
+
 ### Not in this release
 
 Robust (outlier-resistant) curve fitting, gradients given by hand, profile-likelihood intervals
