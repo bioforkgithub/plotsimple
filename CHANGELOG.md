@@ -72,6 +72,17 @@ More statistics, each checked against R.
   and about 400 more) never run: each says "In simplydata this is ..." with the word to use.
   `sdata.help("minimize")` explains them too.
 
+### Dictionary
+
+- `docs/manual/simplydataDictionary.pdf`: every word A to Z (one entry per word, with a part for
+  each object that has it, such as `fit_line` on tables and charts), each with its meaning, a short
+  example, its main options, the names other tools use for it, related words and the page of the
+  manual that explains it (a link that opens the manual there), plus the lesson that teaches it.
+  Its last part, "Coming from another tool?", turns every name from other tools and every old name
+  into the simplydata word. It is made from the code by `docs/make_dictionary.py`; building the
+  manual (`python docs/make_manual.py`) builds the dictionary too, with the manual's page numbers,
+  and a test fails if a word has no page or the pages come from an older manual.
+
 ### Not in this release
 
 Robust (outlier-resistant) curve fitting, gradients given by hand, profile-likelihood intervals

@@ -426,6 +426,72 @@ def test_manual_has_every_figure_and_word():
         assert re.search(rf"^\\unsection\{{Lesson {number}: .*\}}\{{solutions:{number}\}}$", tex, flags=re.M), number
 
 
+# ---------------------------------------------------------------- the dictionary
+DICTIONARY = ROOT / "docs" / "manual" / "simplydataDictionary.tex"
+
+
+def _make_dictionary():
+    spec = importlib.util.spec_from_file_location("make_dictionary", ROOT / "docs" / "make_dictionary.py")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def test_dictionary_is_up_to_date():
+    """The dictionary's LaTeX is made from the code (with the manual's page numbers written in it)."""
+    dictionary = _make_dictionary()
+    written = DICTIONARY.read_text(encoding="utf-8")
+    pages = dictionary.pages_in(written)
+    assert written == dictionary.make(pages, dictionary.fingerprint_in(written)), \
+        "Run: python docs/make_manual.py --no-run"
+    assert (ROOT / "docs" / "manual" / "simplydataDictionary.pdf").is_file()
+
+
+def test_dictionary_pages_come_from_this_manual():
+    """The page numbers were read from the manual as it is now, so they match its pages."""
+    dictionary = _make_dictionary()
+    written = DICTIONARY.read_text(encoding="utf-8")
+    assert dictionary.fingerprint_in(written) == dictionary.manual_fingerprint(), \
+        "The manual changed: run python docs/make_manual.py --no-run to rebuild both"
+
+
+def test_dictionary_has_every_word_with_a_page():
+    dictionary, manual = _make_dictionary(), _make_manual()
+    written = DICTIONARY.read_text(encoding="utf-8")
+    pages = dictionary.pages_in(written)
+    heads = set(re.findall(r"^\\headword\{.*\}\{(dict:[^}]+)\}$", written, flags=re.M))
+    for key in KEYS:
+        assert dictionary.dict_label(dictionary.headword(key)) in heads, f"{key} has no entry"
+        page, anchor = pages.get(manual.label(key), ("", ""))
+        assert page.isdigit() and anchor, f"{key} has no manual page"
+    for number in LESSON_NUMBERS:
+        assert pages[f"lesson:{number}"][0].isdigit(), f"lesson {number} has no page"
+    # each part of an entry ends with its manual page
+    entries = re.split(r"^\\headword", written, flags=re.M)[1:]
+    assert len(entries) == len(dictionary.entries())
+    for entry in entries:
+        assert entry.count(r"\sense{") == entry.count(r"\where{Manual \manualpage{word:")
+    lesson = next(n for n in LESSON_NUMBERS if "table.keep_rows" in learn.LESSONS[n - 1]["words"])
+    assert re.search(r"\\where\{Manual \\manualpage\{word:table\.keep-rows\}\{\d+\}\{[^}]+\}; "
+                     rf"lesson {lesson} ", written)
+
+
+def test_dictionary_lists_every_other_name_and_old_name():
+    from simplydata._other_names import OTHER_NAMES
+
+    dictionary = _make_dictionary()
+    written = DICTIONARY.read_text(encoding="utf-8")
+    listed = {re.sub(r"\\(.)", r"\1", name) for name in re.findall(r"^\\othername\{(.*?)\}\{", written, flags=re.M)}
+    for kind, names in OTHER_NAMES.items():
+        prefix = {"numbers": "nums"}.get(kind, kind)
+        for name in names:
+            assert name in listed or f"{prefix}.{name}" in listed, name
+    for old, _, _ in dictionary.old_names():
+        assert old in listed, old
+    for old in ("fit_straight_line", "all_points", "band=", "big_data="):
+        assert old in listed, old
+
+
 @pytest.mark.parametrize("text, expected", [
     ("50 % & $5 #1 {a} ~ ^ \\ _", r"50 \% \& \$5 \#1 \{a\} \textasciitilde{} \textasciicircum{} \textbackslash{} \_"),
     ("20 °C, R²", r"20 \textdegree{}C, R\textsuperscript{2}"),

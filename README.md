@@ -73,9 +73,12 @@ behind the numbers (average or median, standard deviation or standard error, con
 p-values, effect sizes, and which statistical test to use when), and a worked solution for every
 task.
 
+**[The simplydata dictionary (PDF)](https://github.com/bioforkgithub/simplydata/blob/main/docs/manual/simplydataDictionary.pdf)** lists every word A to Z, with its meaning, an example and the page of the manual that explains it, and turns names from other tools (`groupby`, `iloc`, `hist`, `curve_fit` ...) into simplydata words.
+
 The manual is made from the code by `python docs/make_manual.py` (it needs a LaTeX system with
 `pdflatex`), so it never goes out of date: a test fails if
-[docs/manual/simplydata_manual.tex](https://github.com/bioforkgithub/simplydata/blob/main/docs/manual/simplydata_manual.tex) no longer matches the code.
+[docs/manual/simplydata_manual.tex](https://github.com/bioforkgithub/simplydata/blob/main/docs/manual/simplydata_manual.tex) no longer matches the code. The same command builds the dictionary, with the page numbers of the
+manual it has just compiled.
 
 ## Tables
 
