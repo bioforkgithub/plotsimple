@@ -11,7 +11,8 @@ library each word uses) and docs/manual/ideas.tex (the data science ideas).
     python docs/make_manual.py --no-run   # write the .tex and compile, without running the examples again
 
 Compiling the manual also builds the dictionary (docs/manual/simplydataDictionary.pdf, made by
-docs/make_dictionary.py), so its page numbers always match the manual. The LaTeX build files go
+docs/make_dictionary.py) and the guide "30 days of simplydata" (docs/manual/simplydata_30_days.pdf,
+made by docs/make_30_days.py), so their page numbers always match the manual. The LaTeX build files go
 to a scratch folder; set SIMPLYDATA_LATEX_DIR to choose another one.
 
 Building the PDF needs a LaTeX system with pdflatex (MiKTeX or TeX Live). It runs every
@@ -77,6 +78,8 @@ GROUP_UNDERNEATH = {
     "Grids of numbers": "NumPy (a two-dimensional array)",
     "Numbers: undo and finish": "simplydata itself: it keeps every version of the numbers",
     "Help": "plain Python: simplydata reads its own word list and docstrings",
+    "30 days of simplydata": "plain Python: the days are in simplydata/learn_days.py, and the progress is a small "
+                             "JSON file on your computer (json, pathlib)",
 }
 UNDERNEATH = {
     # start, show and save
@@ -284,7 +287,13 @@ sdata.lesson(1, solutions=True)     # the first lesson, with worked solutions to
 sdata.words()                       # every word, with a short example
 sdata.help("bars")                  # one word: what it does, its options and an example
 sdata.example()                     # the made-up tables you can practise with
+sdata.start_30_days()               # or learn it in 30 days of about an hour,
+sdata.today()                       # ... with sdata.today() each day
 \end{lstlisting}
+Rather learn an hour a day? \code{sdata.start\_30\_days()} spreads the lessons over 30 days, each with
+a warm-up of questions on earlier days and a task, and a project of your own at the end
+(\code{track="beginner"} starts with just enough Python). The printable guide,
+\href{simplydata_30_days.pdf}{\code{simplydata\_30\_days.pdf}}, has the same days on paper.
 
 \section*{Your own data}
 \code{sdata.table("my\_file.xlsx")} and \code{sdata.chart("my\_file.xlsx")} read Excel, CSV, TSV,
@@ -972,6 +981,9 @@ def main(argv: list[str]) -> None:
     import make_dictionary  # the dictionary takes its page numbers from the manual just compiled
 
     make_dictionary.build(build)
+    import make_30_days  # and so does the 30-day guide
+
+    make_30_days.build(build)
 
 
 if __name__ == "__main__":

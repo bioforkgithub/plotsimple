@@ -168,11 +168,11 @@ def _braced(text: str, i: int) -> tuple[str, int]:
     raise ValueError("unbalanced braces in the .aux file")
 
 
-def read_aux(aux: Path) -> dict[str, tuple[str, str]]:
-    """{label: (page, anchor)} for the word and lesson labels in the manual's .aux file."""
+def read_aux(aux: Path, kinds: tuple[str, ...] = ("word", "lesson")) -> dict[str, tuple[str, str]]:
+    """{label: (page, anchor)} for the labels of these kinds (word:..., lesson:...) in the manual's .aux file."""
     pages = {}
     text = aux.read_text(encoding="utf-8", errors="replace")
-    for m in re.finditer(r"\\newlabel\{((?:word|lesson):[^}]*)\}", text):
+    for m in re.finditer(r"\\newlabel\{((?:" + "|".join(kinds) + r"):[^}]*)\}", text):
         body, _ = _braced(text, m.end())
         parts, i = [], 0
         while i < len(body) and len(parts) < 4:

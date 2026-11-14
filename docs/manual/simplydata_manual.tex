@@ -290,7 +290,13 @@ sdata.lesson(1, solutions=True)     # the first lesson, with worked solutions to
 sdata.words()                       # every word, with a short example
 sdata.help("bars")                  # one word: what it does, its options and an example
 sdata.example()                     # the made-up tables you can practise with
+sdata.start_30_days()               # or learn it in 30 days of about an hour,
+sdata.today()                       # ... with sdata.today() each day
 \end{lstlisting}
+Rather learn an hour a day? \code{sdata.start\_30\_days()} spreads the lessons over 30 days, each with
+a warm-up of questions on earlier days and a task, and a project of your own at the end
+(\code{track="beginner"} starts with just enough Python). The printable guide,
+\href{simplydata_30_days.pdf}{\code{simplydata\_30\_days.pdf}}, has the same days on paper.
 
 \section*{Your own data}
 \code{sdata.table("my\_file.xlsx")} and \code{sdata.chart("my\_file.xlsx")} read Excel, CSV, TSV,
@@ -506,6 +512,7 @@ chart.save("lesson1.png")
   \item \code{chart.\allowbreak{}save(\textquotedbl{}lesson1.\allowbreak{}pdf\textquotedbl{})} saves a PDF instead: the end of the name decides the type.
   \item In Jupyter, VS Code or Spyder, write chart on the last line of a cell and the chart appears by itself. In a script, \code{chart.\allowbreak{}show()} opens it in a window.
   \item Are the names under the bars bumping into each other? Lesson 2 shows how to turn them.
+  \item Learning on your own? \code{sdata.\allowbreak{}start\_\allowbreak{}30\_\allowbreak{}days()} turns the lessons into 30 days of about an hour: each day starts with a few questions on earlier days and ends with a task. Then type \code{sdata.\allowbreak{}today()} each day (or \code{sdata.\allowbreak{}start\_\allowbreak{}30\_\allowbreak{}days(track=\textquotedbl{}beginner\textquotedbl{})} if you have never programmed).
 \end{itemize}
 \end{goodtoknow}
 \begin{tryit}
@@ -516,7 +523,7 @@ chart.save("lesson1.png")
 \end{enumerate}
 Worked solutions: page~\pageref{solutions:1}, or type \code{sdata.\allowbreak{}lesson(1,\allowbreak{} solutions=True)}.
 \end{tryit}
-\par\noindent{\small\sffamily\textbf{Words in this lesson:} \hyperref[word:sdata.example]{\code{sdata.\allowbreak{}example()}}, \hyperref[word:sdata.chart]{\code{sdata.\allowbreak{}chart()}}, \hyperref[word:bars]{\code{chart.\allowbreak{}bars()}}, \hyperref[word:save]{\code{chart.\allowbreak{}save()}}, \hyperref[word:show]{\code{chart.\allowbreak{}show()}}.\par}
+\par\noindent{\small\sffamily\textbf{Words in this lesson:} \hyperref[word:sdata.example]{\code{sdata.\allowbreak{}example()}}, \hyperref[word:sdata.chart]{\code{sdata.\allowbreak{}chart()}}, \hyperref[word:bars]{\code{chart.\allowbreak{}bars()}}, \hyperref[word:save]{\code{chart.\allowbreak{}save()}}, \hyperref[word:show]{\code{chart.\allowbreak{}show()}}, \hyperref[word:sdata.start-30-days]{\code{sdata.\allowbreak{}start\_\allowbreak{}30\_\allowbreak{}days()}}, \hyperref[word:sdata.today]{\code{sdata.\allowbreak{}today()}}.\par}
 
 \chapter{Titles and labels}\label{lesson:2}
 \begin{learnbox}
@@ -8776,6 +8783,95 @@ import simplydata as sdata
 sdata.lesson()
 sdata.lesson(1)
 \end{lstlisting}
+\unsection{30 days of simplydata}{group:30-days-of-simplydata}
+\wordentry{sdata.start\_30\_days()}{word:sdata.start-30-days}
+Start 30 days of simplydata: an hour a day of warm-up questions, lessons and tasks. \code{sdata.\allowbreak{}start\_\allowbreak{}30\_\allowbreak{}days()}
+
+\code{track=\textquotedbl{}python\textquotedbl{}} (the normal choice) is for people who already write some Python; \code{track=\textquotedbl{}beginner\textquotedbl{}} starts with three days of just enough Python. The day you start is kept in a small file on this computer (nothing is sent anywhere), so that \code{sdata.\allowbreak{}today()} knows which day comes next. If you have started already, it says so and changes nothing; \code{start\_\allowbreak{}again=True} starts again from day 1:\\
+\codeline{sdata.start\_30\_days(track=\textquotedbl{}beginner\textquotedbl{}, start\_again=True).}
+
+\wordfield{Options}{}\par\nopagebreak
+\begin{optiontable}
+\code{track=} & normally \code{\textquotedbl{}python\textquotedbl{}}\\
+\code{start\_\allowbreak{}again=} & normally \code{False}\\
+\end{optiontable}
+
+\wordfield{Underneath}{plain Python: the days are in simplydata/\code{learn\_\allowbreak{}days}.py, and the progress is a small JSON file on your computer (json, pathlib)}
+\wordfield{Example you can run}{}\par\nopagebreak
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+sdata.start_30_days(track="python")
+\end{lstlisting}
+\wordentry{sdata.today()}{word:sdata.today}
+Show today's day of the 30 days of simplydata: warm-up questions, what to do and a task. \code{sdata.\allowbreak{}today()}
+
+The day after the one you last opened comes next, so a day you miss is never lost: \code{today()} carries on where you stopped (on the same date it shows the same day again). If you have fallen more than a day behind the calendar it says so; \code{follow\_\allowbreak{}calendar=True} jumps to the calendar's day instead:\\
+\codeline{sdata.today(follow\_calendar=True). Not started yet? It shows how to start, and day 1.}
+
+\wordfield{Options}{}\par\nopagebreak
+\begin{optiontable}
+\code{follow\_\allowbreak{}calendar=} & normally \code{False}\\
+\end{optiontable}
+
+\wordfield{Underneath}{plain Python: the days are in simplydata/\code{learn\_\allowbreak{}days}.py, and the progress is a small JSON file on your computer (json, pathlib)}
+\wordfield{Example you can run}{}\par\nopagebreak
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+sdata.today()
+\end{lstlisting}
+\wordentry{sdata.day()}{word:sdata.day}
+Show any day of the 30 days, without changing where you are. \code{sdata.\allowbreak{}day(5)}
+
+\codeline{sdata.day() on its own lists all 30 days, with a tick for each day you have opened. The track is}\\
+the one you started, else \code{\textquotedbl{}python\textquotedbl{}}: \code{sdata.\allowbreak{}day(1,\allowbreak{} track=\textquotedbl{}beginner\textquotedbl{})} shows the other one.
+
+\wordfield{Options}{}\par\nopagebreak
+\begin{optiontable}
+\code{number=} & \\
+\code{track=} & \\
+\end{optiontable}
+
+\wordfield{Underneath}{plain Python: the days are in simplydata/\code{learn\_\allowbreak{}days}.py, and the progress is a small JSON file on your computer (json, pathlib)}
+\wordfield{Example you can run}{}\par\nopagebreak
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+sdata.day()
+sdata.day(5)
+sdata.day(1, track="beginner")
+\end{lstlisting}
+\wordentry{sdata.answers()}{word:sdata.answers}
+The answers to a day's warm-up questions, and a worked answer to its task. \code{sdata.\allowbreak{}answers(5)}
+
+\codeline{sdata.answers() on its own gives the answers to the day you opened last. The track is the one you}\\
+started, else \code{\textquotedbl{}python\textquotedbl{}}: \code{sdata.\allowbreak{}answers(5,\allowbreak{} track=\textquotedbl{}beginner\textquotedbl{})}.
+
+\wordfield{Options}{}\par\nopagebreak
+\begin{optiontable}
+\code{number=} & \\
+\code{track=} & \\
+\end{optiontable}
+
+\wordfield{Underneath}{plain Python: the days are in simplydata/\code{learn\_\allowbreak{}days}.py, and the progress is a small JSON file on your computer (json, pathlib)}
+\wordfield{Example you can run}{}\par\nopagebreak
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+sdata.answers(5)
+\end{lstlisting}
+\wordentry{sdata.next\_day()}{word:sdata.next-day}
+Go on to the next day now, without waiting for tomorrow. \code{sdata.\allowbreak{}next\_\allowbreak{}day()}
+
+It opens the day after the last one you opened, so two days can be done in one go. Tomorrow,\\
+\codeline{sdata.today() carries on from there.}
+
+\wordfield{Options}{none: just write the empty brackets.}
+
+\wordfield{Underneath}{plain Python: the days are in simplydata/\code{learn\_\allowbreak{}days}.py, and the progress is a small JSON file on your computer (json, pathlib)}
+\wordfield{Example you can run}{}\par\nopagebreak
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+sdata.start_30_days()
+sdata.next_day()
+\end{lstlisting}
 
 \part{Data science ideas}\label{part:ideas}
 
@@ -9629,6 +9725,7 @@ Every word and option, A to Z, with the page of its dictionary entry. Other spel
 \indexline{word:table.add-text-part-column}{table.add\_text\_part\_column()}
 \indexline{word:all-dots}{chart.all\_dots()}
 \indexline{word:animate}{chart.animate()}
+\indexline{word:sdata.answers}{sdata.answers()}
 \indexline{word:area}{chart.area()}
 \indexline{word:nums.as-numpy}{nums.as\_numpy()}
 \indexline{word:table.as-pandas}{table.as\_pandas()}
@@ -9688,6 +9785,7 @@ Every word and option, A to Z, with the page of its dictionary entry. Other spel
 \indexline{word:cumulative-share}{chart.cumulative\_share()}
 \indexline{word:curve}{chart.curve()}
 \indexline{word:dist.cut-off}{dist.cut\_off()}
+\indexline{word:sdata.day}{sdata.day()}
 \indexline{word:density}{chart.density()}
 \indexline{word:dist.density-at}{dist.density\_at()}
 \indexline{word:table.describe-columns}{table.describe\_columns()}
@@ -9774,6 +9872,7 @@ Every word and option, A to Z, with the page of its dictionary entry. Other spel
 \indexline{word:dist.middle-range}{dist.middle\_range()}
 \indexline{word:table.most-common-of}{table.most\_common\_of()}
 \indexline{word:names-on-dots}{chart.names\_on\_dots()}
+\indexline{word:sdata.next-day}{sdata.next\_day()}
 \indexline{word:note}{chart.note()}
 \indexline{word:grid.number-at}{grid.number\_at()}
 \indexline{word:nums.number-at}{nums.number\_at()}
@@ -9865,6 +9964,7 @@ Every word and option, A to Z, with the page of its dictionary entry. Other spel
 \indexline{word:dist.standard-deviation}{dist.standard\_deviation()}
 \indexline{word:nums.standard-deviation}{nums.standard\_deviation()}
 \indexline{word:table.standard-deviation-of}{table.standard\_deviation\_of()}
+\indexline{word:sdata.start-30-days}{sdata.start\_30\_days()}
 \indexline{word:nums.start-again}{nums.start\_again()}
 \indexline{word:table.start-again}{table.start\_again()}
 \indexline{word:nums.steps}{nums.steps()}
@@ -9886,6 +9986,7 @@ Every word and option, A to Z, with the page of its dictionary entry. Other spel
 \indexline{word:ticks-y}{chart.ticks\_y()}
 \indexline{word:nums.times}{nums.times()}
 \indexline{word:title-top}{chart.title\_top()}
+\indexline{word:sdata.today}{sdata.today()}
 \indexline{word:nums.total}{nums.total()}
 \indexline{word:table.total-of}{table.total\_of()}
 \indexline{word:table.turn-columns-into-rows}{table.turn\_columns\_into\_rows()}
