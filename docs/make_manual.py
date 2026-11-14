@@ -10,6 +10,10 @@ library each word uses) and docs/manual/ideas.tex (the data science ideas).
     python docs/make_manual.py --tex      # only write the .tex (fast; no LaTeX needed)
     python docs/make_manual.py --no-run   # write the .tex and compile, without running the examples again
 
+Compiling the manual also builds the dictionary (docs/manual/simplydataDictionary.pdf, made by
+docs/make_dictionary.py), so its page numbers always match the manual. The LaTeX build files go
+to a scratch folder; set SIMPLYDATA_LATEX_DIR to choose another one.
+
 Building the PDF needs a LaTeX system with pdflatex (MiKTeX or TeX Live). It runs every
 lesson example and every solution, saves their charts in docs/manual/figures/ and what they
 print in docs/manual/output/, then compiles the PDF three times (for the page numbers).
@@ -931,9 +935,15 @@ def run_examples() -> None:
         print(f"  ran {prefix}")
 
 
-def compile_pdf() -> None:
-    build = _work_folder() / "latex"
+def latex_folder() -> Path:
+    """Where LaTeX writes its build files (.aux, .log ...): SIMPLYDATA_LATEX_DIR, else the scratch space."""
+    build = Path(os.environ.get("SIMPLYDATA_LATEX_DIR") or _work_folder() / "latex")
     build.mkdir(parents=True, exist_ok=True)
+    return build
+
+
+def compile_pdf() -> Path:
+    build = latex_folder()
     env = dict(os.environ, SOURCE_DATE_EPOCH="0", FORCE_SOURCE_DATE="1")
     for run in range(3):
         result = subprocess.run(
@@ -944,6 +954,7 @@ def compile_pdf() -> None:
             print(log[-4000:])
             raise SystemExit(f"pdflatex failed (run {run + 1}); the full log is in {build}")
     shutil.copyfile(build / "simplydata_manual.pdf", PDF)
+    return build
 
 
 def main(argv: list[str]) -> None:
@@ -956,9 +967,13 @@ def main(argv: list[str]) -> None:
         print("Running every lesson example and solution ...")
         run_examples()
     print("Compiling the PDF ...")
-    compile_pdf()
+    build = compile_pdf()
     print(f"Wrote {PDF}")
+    import make_dictionary  # the dictionary takes its page numbers from the manual just compiled
+
+    make_dictionary.build(build)
 
 
 if __name__ == "__main__":
+    sys.path.insert(0, str(HERE))
     main(sys.argv[1:])
