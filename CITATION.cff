@@ -11,6 +11,7 @@ authors:
     family-names: Victor
     orcid: "https://orcid.org/0000-0002-1409-5894"
 version: 0.1.0
+doi: "10.5281/zenodo.24210045"
 date-released: "2026-11-14"
 license: MIT
 repository-code: "https://github.com/bioforkgithub/simplydata"
