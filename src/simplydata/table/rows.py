@@ -22,7 +22,8 @@ import re
 
 import narwhals as nw
 
-from .._errors import SimplydataError, friendly
+from .._errors import SimplydataError, choice_error, friendly
+from ._base import numbered, numbered_at
 from ._base import show as _show_native
 from .conditions import (
     _NOT_GIVEN, _ConditionReader, _condition_error, _count_in, _empty_in, _is_number, _kind,
@@ -96,6 +97,47 @@ def _nice(value) -> str:
         return _say(value)
     return str(value)
 
+
+
+# keep_columns() / remove_columns(): the kinds describe_columns() prints, and other ways people write them.
+COLUMN_KINDS = ("number", "text", "date", "true/false", "mixed")
+COLUMN_OPTIONS = ("to", "kind", "starts_with", "ends_with", "contains", "pattern")
+_KIND_SPELLINGS = {
+    "numbers": "number", "numeric": "number", "numerical": "number", "num": "number",
+    "texts": "text", "string": "text", "strings": "text", "str": "text", "character": "text",
+    "dates": "date", "datetime": "date", "datetimes": "date", "temporal": "date", "date/time": "date",
+    "true or false": "true/false", "bool": "true/false", "boolean": "true/false",
+    "booleans": "true/false", "logical": "true/false", "yes/no": "true/false",
+}
+
+
+def _kind_choice(step: str, kind) -> str:
+    """kind= in its plain form ("numbers", "numeric" -> "number"), or a friendly error."""
+    text = str(kind).strip().lower() if isinstance(kind, str) else ""
+    text = _KIND_SPELLINGS.get(text, text)
+    if text not in COLUMN_KINDS:
+        raise choice_error(step, "kind", kind, COLUMN_KINDS[:4])
+    return text
+
+
+def _past(words: str, n: int) -> str:
+    """keep_rows condition words in the past: "is above 100" -> "were above 100", "contains" -> "contained"."""
+    if words.startswith("is "):
+        return ("was " if n == 1 else "were ") + words[3:]
+    for now, then in (("contains", "contained"), ("starts with", "started with"), ("ends with", "ended with")):
+        if words.startswith(now):
+            return then + words[len(now):]
+    return words
+
+
+def _columns_count(n: int) -> str:
+    return f"{n} column" if n == 1 else f"{n} columns"
+
+
+def _list_code(values) -> str:
+    """[12, 40] for a list of positions, or just 12 for one."""
+    values = list(values)
+    return str(values[0]) if len(values) == 1 else "[" + ", ".join(str(v) for v in values) + "]"
 
 
 def _cells(n: int) -> str:
@@ -175,6 +217,12 @@ class RowWords:
 
     def _count(self, expr) -> int:
         return _count_in(self._frame, expr)
+
+    def _is_in(self, column, values):
+        """column is one of values; whole numbers are checked as decimals in a decimal column (Polars needs it)."""
+        if self._frame.schema[column].is_float():
+            values = [float(v) if _is_number(v) else v for v in values]
+        return nw.col(column).is_in(values)
 
     def _need_one_column(self, step: str, column, example: str):
         if not isinstance(column, str):
@@ -363,7 +411,7 @@ class RowWords:
                     "one_of= needs at least one value in the list."
                     + _example(f'table.{step}("subject", one_of=["Maths", "Science"])')
                 )
-            cond, words = col.is_in(values), "is one of " + ", ".join(_say(v) for v in values)
+            cond, words = self._is_in(column, values), "is one of " + ", ".join(_say(v) for v in values)
         else:  # equal_to, not_equal_to
             value = self._value_for(option, column, value, f'table.{step}("class", equal_to="A")')
             if option == "equal_to":
@@ -443,39 +491,148 @@ class RowWords:
         return None
 
     # ================================================================== choosing columns
+    def _columns_chosen(self, step: str, names: tuple, to, kind, starts_with, ends_with, contains, pattern):
+        """The columns keep_columns()/remove_columns() mean, in table order or the order given.
+
+        Gives (names, words for steps(), plain): plain is True for a list of names (the old way).
+        """
+        verb = step.split("_")[0]
+        example = f'table.{step}("height")' if verb == "remove" else f'table.{step}("name", "marks")'
+        run_example = f'table.{step}("temperature", to="wind_speed")'
+        names = list(dict.fromkeys(_as_list(names)))
+        ways = {"names": bool(names), "kind=": kind is not None, "starts_with=": starts_with is not None,
+                "ends_with=": ends_with is not None, "contains=": contains is not None,
+                "pattern=": pattern is not None}
+        given = [w for w, on in ways.items() if on]
+        if to is not None and not names:
+            raise SimplydataError(
+                f"to= needs the first column's name before it, like {run_example}." + _example(run_example, "weather")
+            )
+        if not given:
+            raise SimplydataError(
+                f".{step}() needs the names of the columns to {verb}, or one of kind=, starts_with=, "
+                "ends_with=, contains= or pattern=." + _example(example)
+                + _example(f'table.{step}(kind="number")')
+            )
+        if len(given) > 1:
+            shown = " and ".join("column names" if w == "names" else w for w in given)
+            raise SimplydataError(
+                f".{step}() chooses columns one way at a time, but you gave {shown}. Write two steps: "
+                "the second step works on what the first one left, so you get the columns that meet both."
+                + _example(f'table.{step}(kind="number")   then   table.{step}(starts_with="wind")', "weather")
+            )
+        columns = self._columns
+        if names:
+            if not all(isinstance(n, str) for n in names):
+                bad = next(n for n in names if not isinstance(n, str))
+                hint = (f" For columns by their place use table.{verb}_columns_by_position({bad!r})."
+                        if isinstance(bad, int) and not isinstance(bad, bool) else "")
+                raise SimplydataError(f".{step}() needs column names in quotes (you gave {bad!r}).{hint}"
+                                      + _example(example))
+            if to is None:
+                self._need_columns(*names)
+                return names, ", ".join(names), True
+            if len(names) != 1:
+                raise SimplydataError(
+                    "to= goes with one column name before it: the first column of the run, like "
+                    f"{run_example}." + _example(run_example, "weather")
+                )
+            if not isinstance(to, str):
+                raise SimplydataError(
+                    f"to= takes the name of the last column of the run, in quotes (you gave {to!r}). "
+                    f"For columns by their place use table.{verb}_columns_by_position(1, to=3)."
+                    + _example(run_example, "weather")
+                )
+            first = names[0]
+            self._need_columns(first, to)
+            a, b = columns.index(first), columns.index(to)
+            if b < a:
+                raise SimplydataError(
+                    f'"{to}" comes before "{first}" in the table. Write the column on the left first: '
+                    f'table.{step}("{to}", to="{first}").\nColumns in order: ' + ", ".join(columns)
+                )
+            return columns[a:b + 1], f"{first} to {to}", False
+        if kind is not None:
+            wanted = _kind_choice(step, kind)
+            chosen = [c for c in columns if self._kind_of(c) == wanted]
+            if not chosen:
+                there = {}
+                for c in columns:
+                    there.setdefault(self._kind_of(c), []).append(c)
+                raise SimplydataError(
+                    f"This table has no {wanted} columns. The kinds it has: "
+                    + "; ".join(f'{k} ({", ".join(v)})' for k, v in there.items())
+                    + f'\nFor example:  table.{step}(kind="{next(iter(there))}")'
+                )
+            return chosen, f"of kind {wanted}", False
+        option, value = next((o, v) for o, v in (("starts_with", starts_with), ("ends_with", ends_with),
+                                                 ("contains", contains), ("pattern", pattern)) if v is not None)
+        if not isinstance(value, str) or not value:
+            raise SimplydataError(f'{option}= needs some text in quotes, like {option}="wind".'
+                                  + _example(f'table.{step}({option}="wind")', "weather"))
+        if option == "pattern":
+            try:
+                found = re.compile(value)
+            except re.error as error:
+                raise SimplydataError(
+                    f'pattern= is a regular expression, and "{value}" is not one that works ({error}). '
+                    "For plain text use contains=, starts_with= or ends_with="
+                    + _example(f'table.{step}(pattern="^wind_")', "weather")
+                ) from None
+            chosen = [c for c in columns if found.search(str(c))]
+            words, none = f'whose names match the pattern "{value}"', f'matches the pattern "{value}"'
+        elif option == "starts_with":
+            chosen = [c for c in columns if str(c).startswith(value)]
+            words, none = f'whose names start with "{value}"', f'starts with "{value}"'
+        elif option == "ends_with":
+            chosen = [c for c in columns if str(c).endswith(value)]
+            words, none = f'whose names end with "{value}"', f'ends with "{value}"'
+        else:
+            chosen = [c for c in columns if value in str(c)]
+            words, none = f'whose names contain "{value}"', f'contains "{value}"'
+        if not chosen:
+            raise SimplydataError(
+                f"No column name {none} (capital letters matter).\nColumns you have: " + ", ".join(columns)
+            )
+        return chosen, words, False
+
     @friendly
-    def keep_columns(self, *names):
-        """Keep only these columns, in the order you list them.
+    def keep_columns(self, *names, to=None, kind=None, starts_with=None, ends_with=None, contains=None,
+                     pattern=None):
+        """Keep only these columns: by name (in the order you list them), a run of names, or by kind.
 
         table.keep_columns("name", "marks")   (with sdata.example("marks"))
+        table.keep_columns("hours", to="height") keeps a run of columns, both ends included;
+        kind="number" (or "text", "date", "true/false", the kinds describe_columns() prints)
+        keeps every column of that kind; starts_with=, ends_with=, contains= (plain text, capital
+        letters matter) and pattern= (a regular expression) choose by the column names.
+        One way at a time; two steps one after the other keep the columns that meet both.
         """
-        names = list(dict.fromkeys(_as_list(names)))
-        if not names:
-            raise SimplydataError(
-                ".keep_columns() needs the names of the columns to keep."
-                + _example('table.keep_columns("name", "marks")')
-            )
-        self._need_columns(*names)
-        return self._change("keep columns " + ", ".join(names), self._frame.select(names))
+        chosen, words, plain_names = self._columns_chosen("keep_columns", names, to, kind, starts_with, ends_with,
+                                                          contains, pattern)
+        if not plain_names:
+            print(f"Kept {_columns_count(len(chosen))}: {', '.join(chosen)}.")
+        return self._change("keep columns " + words, self._frame.select(chosen))
 
     @friendly
-    def remove_columns(self, *names):
-        """Remove these columns.
+    def remove_columns(self, *names, to=None, kind=None, starts_with=None, ends_with=None, contains=None,
+                       pattern=None):
+        """Remove these columns: by name, a run of names, or by kind.
 
         table.remove_columns("height")   (with sdata.example("marks"))
+        The same ways as keep_columns: remove_columns("hours", to="marks"), remove_columns(kind="text"),
+        remove_columns(starts_with="wind"), remove_columns(pattern="^wind_").
         """
-        names = list(dict.fromkeys(_as_list(names)))
-        if not names:
-            raise SimplydataError(
-                ".remove_columns() needs the names of the columns to remove."
-                + _example('table.remove_columns("height")')
-            )
-        self._need_columns(*names)
-        if len(names) == len(self._columns):
+        chosen, words, plain_names = self._columns_chosen("remove_columns", names, to, kind, starts_with,
+                                                          ends_with, contains, pattern)
+        if len(chosen) == len(self._columns):
             raise SimplydataError(
                 "That would remove every column. Keep at least one." + _example('table.remove_columns("height")')
             )
-        return self._change("remove columns " + ", ".join(names), self._frame.drop(names))
+        if not plain_names:
+            left = len(self._columns) - len(chosen)
+            print(f"Removed {_columns_count(len(chosen))}: {', '.join(chosen)}. {_columns_count(left)} left.")
+        return self._change("remove columns " + words, self._frame.drop(chosen))
 
     @friendly
     def rename_column(self, old=None, to=None):
@@ -936,16 +1093,28 @@ class RowWords:
         )
 
     @friendly
-    def replace_values(self, column=None, old=_NOT_GIVEN, with_value=_NOT_GIVEN):
+    def replace_values(self, column=None, old=_NOT_GIVEN, with_value=_NOT_GIVEN, *, above=_NOT_GIVEN,
+                       below=_NOT_GIVEN, at_least=_NOT_GIVEN, at_most=_NOT_GIVEN, equal_to=_NOT_GIVEN,
+                       not_equal_to=_NOT_GIVEN, between=_NOT_GIVEN, one_of=_NOT_GIVEN, contains=_NOT_GIVEN,
+                       starts_with=_NOT_GIVEN, ends_with=_NOT_GIVEN, after=_NOT_GIVEN, before=_NOT_GIVEN):
         """Replace a value (or a list of values) in a column; with_value=None makes those cells empty.
 
         table.replace_values("subject", "Maths", with_value="Math")   (with sdata.example("marks"))
         table.replace_values("class", {"A": "Class A", "B": "Class B"})   several at once, old: new
+        table.replace_values("marks", above=90, with_value=90)   every value that meets a condition
         With {old: new}, every cell is looked up once in the original column, so
         {"A": "B", "B": "A"} swaps A and B. A new value of None makes those cells empty.
+        The conditions are the keep_rows ones, one at a time: above, below, at_least, at_most,
+        equal_to, not_equal_to, between, one_of, contains, starts_with, ends_with, after, before.
+        Empty cells never match (fill them with fill_empty_cells).
         """
         example = 'table.replace_values("subject", "Maths", with_value="Math")'
         self._need_one_column("replace_values", column, example)
+        options = dict(above=above, below=below, at_least=at_least, at_most=at_most, equal_to=equal_to,
+                       not_equal_to=not_equal_to, between=between, one_of=one_of, contains=contains,
+                       starts_with=starts_with, ends_with=ends_with, after=after, before=before)
+        if any(v is not _NOT_GIVEN for v in options.values()):
+            return self._replace_where(column, old, with_value, options)
         if isinstance(old, dict):
             return self._replace_many(column, old, with_value)
         if old is _NOT_GIVEN or with_value is _NOT_GIVEN:
@@ -957,7 +1126,7 @@ class RowWords:
         olds = list(old) if isinstance(old, (list, tuple, set)) else [old]
         olds = [self._value_for("old value", column, v, example) for v in olds]
         col = nw.col(column)
-        match = col.is_in(olds).fill_null(False)
+        match = self._is_in(column, olds).fill_null(False)
         if with_value is None:
             new_col = nw.when(~match).then(col)
         else:
@@ -968,6 +1137,35 @@ class RowWords:
         print(f"Replaced {_cells(n)} in {column}.")
         olds_words = " or ".join(_say(v) for v in olds)
         return self._change(f"replace {olds_words} in {column} with {_say(with_value)}", new)
+
+    def _replace_where(self, column, old, with_value, options: dict):
+        """replace_values(column, above=100, with_value=100): the cells that meet one keep_rows condition."""
+        given = [k for k, v in options.items() if v is not _NOT_GIVEN]
+        example = f'table.replace_values("marks", above=90, with_value=90)'
+        if old is not _NOT_GIVEN:
+            raise SimplydataError(
+                f".replace_values() takes either the old value or one condition ({given[0]}=), not both."
+                + _example('table.replace_values("subject", "Maths", with_value="Math")') + _example(example)
+            )
+        if with_value is _NOT_GIVEN:
+            raise SimplydataError(
+                ".replace_values() needs with_value=, the new value (None makes the cells empty)." + _example(example)
+            )
+        cond, words = self._condition("replace_values", column, options, ())
+        col = nw.col(column)
+        if with_value is None:
+            new_col, said = nw.when(~cond).then(col), "empty"
+        else:
+            new_value = self._value_for("with_value", column, with_value, example)
+            new_col, said = nw.when(cond).then(nw.lit(new_value)).otherwise(col), _say(new_value)
+        n = self._count(cond)
+        new = self._frame.with_columns(new_col.alias(column))
+        values = "1 value" if n == 1 else f"{n} values"
+        if with_value is None:
+            print(f'Made {values} in "{column}" empty: the ones that {_past(words, n)}.')
+        else:
+            print(f'Replaced {values} in "{column}" that {_past(words, n)} with {said}.')
+        return self._change(f"replace values in {column} where {column} {words} with {said}", new)
 
     def _replace_many(self, column, pairs: dict, with_value):
         example = 'table.replace_values("class", {"A": "Class A", "B": "Class B"})'
@@ -1000,7 +1198,7 @@ class RowWords:
                 new_col = nw.when((col == old_value).fill_null(False)).then(nw.lit(new_value)).otherwise(new_col)
         to_empty = [o for o, n in checked if n is None]
         if to_empty:
-            new_col = nw.when(~col.is_in(to_empty).fill_null(False)).then(new_col)
+            new_col = nw.when(~self._is_in(column, to_empty).fill_null(False)).then(new_col)
         counts = [self._count((col == o).fill_null(False)) for o, _ in checked]
         new = self._frame.with_columns(new_col.alias(column))
         said = ", ".join(f"{_say(o)} became {_say(n)} ({_cells(k)})" for (o, n), k in zip(checked, counts) if k)
@@ -1074,6 +1272,7 @@ class RowWords:
 
         table.show()   table.show(rows=10)   (with sdata.example("marks"))
         A table with more than 1,000 rows shows its first 1,000; choose another number with rows=.
+        Rows are numbered from 1, the numbers keep_rows_by_position() takes.
         """
         import pandas as pd
 
@@ -1082,7 +1281,7 @@ class RowWords:
         total = len(self._frame)
         part = self._frame.head(SHOW_LIMIT if rows is None else rows)
         with pd.option_context("display.max_rows", None, "display.max_columns", None, "display.width", None):
-            _show_native(part.to_pandas())
+            _show_native(numbered(part))
         if len(part) < total:
             print(f"(the first {_rows(len(part))} of {total}; table.show(rows={total}) shows them all)")
         return None
@@ -1242,13 +1441,19 @@ class RowWords:
         table.show_rows_with_outliers("marks", for_each="subject")   (with sdata.example("marks"))
         rule="1.5 IQR" (the default) is Tukey's rule, the one box plots use: below Q1 - 1.5 x IQR
         or above Q3 + 1.5 x IQR. Also rule="3 IQR" or rule="3 standard deviations".
-        Empty cells are never outliers.
+        Empty cells are never outliers. Each row is shown with its number in the whole table
+        (counting from 1), so remove_rows_by_position() can follow.
         """
         frame, helpers, _ = self._outliers("show_rows_with_outliers", column, for_each, rule)
-        found = frame.filter(nw.col(_NEW)).drop(helpers)
+        place = _NEW + "place"
+        found = frame.with_row_index(place).filter(nw.col(_NEW))
+        positions = found[place].to_list()
+        found = found.drop([place, *helpers])
         print(f"Found {_rows(len(found))} with an outlier, of {_rows(len(frame))}.")
         if len(found):
-            _show_native(nw.maybe_reset_index(found).to_native())
+            _show_native(numbered_at(nw.maybe_reset_index(found), positions))
+            print("The numbers on the left are the rows' places in the whole table, so "
+                  f"table.remove_rows_by_position({_list_code(p + 1 for p in positions)}) would remove them.")
         return None
 
     @friendly
