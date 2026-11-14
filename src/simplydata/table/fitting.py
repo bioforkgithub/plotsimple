@@ -378,6 +378,15 @@ def fit_formula_core(formula, data, columns, start=None, between=None, weights=N
             "negative number or a division by 0.\nGive start values close to what you expect, for example "
             f"table.{step}(\"{parsed.text}\", {start_hint})."
         )
+    else:
+        with np.errstate(all="ignore"):
+            start_rss = float(np.sum(weight * (y - curve(None, *p0)) ** 2))
+        if not math.isfinite(start_rss):  # a search from overflow ends in a different place on each computer
+            raise SimplydataError(
+                f"With the start values ({start_text}) the formula gives impossible numbers (too big to work "
+                f"with).\nGive start values close to what you expect, for example table.{step}(\"{parsed.text}\", "
+                f"{start_hint}), or limits with between=."
+            )
 
     options = {"p0": p0, "method": key, "full_output": True}
     if w is not None:
@@ -403,6 +412,9 @@ def fit_formula_core(formula, data, columns, start=None, between=None, weights=N
     if not np.all(np.isfinite(fitted)):
         raise SimplydataError("The fit ended on values that give impossible numbers. Try other start values.")
     cov = np.asarray(cov, dtype=float) if cov is not None else np.full((p, p), np.inf)
+    if not uncertain and _not_pinned_down(curve, found, weight):
+        uncertain = True  # as SciPy does when it notices: no standard errors
+        cov = np.full((p, p), np.inf)
     with np.errstate(invalid="ignore"):
         errors = np.sqrt(np.diag(cov))
     residuals = y - fitted
@@ -434,6 +446,35 @@ def fit_formula_core(formula, data, columns, start=None, between=None, weights=N
     name = "differential evolution, then " + METHOD_WORDS[key] if search == "whole range" else METHOD_WORDS[key]
     return FitResult(parsed, found, errors, cov, n, df, sigma, rss, r2, aic, converged, sentence, name, notes,
                      skipped)
+
+
+
+def _not_pinned_down(curve, found, weight) -> bool:
+    """True when the data cannot pin down every value: the gradient has lower rank (R nls(): "singular gradient").
+
+    SciPy only notices this when the columns of its numerical gradient come out exactly in
+    proportion, which depends on the computer's rounding. Here the gradient is worked out by
+    central differences, each column scaled to length 1, and the rank checked with R qr()'s
+    tolerance (1e-7).
+    """
+    theta = np.asarray(found, dtype=float)
+    root_w = np.sqrt(np.asarray(weight, dtype=float))
+    columns = []
+    with np.errstate(all="ignore"):
+        for j in range(len(theta)):
+            h = np.finfo(float).eps ** (1 / 3) * max(abs(theta[j]), 1.0)
+            up, down = theta.copy(), theta.copy()
+            up[j] += h
+            down[j] -= h
+            columns.append(root_w * (curve(None, *up) - curve(None, *down)) / (2 * h))
+    jac = np.column_stack(columns)
+    if not np.all(np.isfinite(jac)):
+        return False
+    norms = np.linalg.norm(jac, axis=0)
+    if np.any(norms == 0):
+        return True
+    singular = np.linalg.svd(jac / norms, compute_uv=False)
+    return bool(singular[-1] < 1e-7 * singular[0])
 
 
 # ---------------------------------------------------------------------------- polynomial

@@ -588,7 +588,7 @@ def test_compare_distributions_leaves_out_what_cannot_fit(capsys):
 def test_shape_test_statistic_matches_goftest_and_p_value_the_r_bootstrap(days):
     # goftest::ad.test(d, "pgamma", shape = 2.12734096971, rate = 0.00446623248479)$statistic = 1.05483345026.
     # p-value: parametric bootstrap in R, 20000 gamma samples each refitted exactly (ref_boot.R): 0.0103.
-    result = shape_test(days, "gamma", column="days")  # 9999 samples, seed 1 (about 2 s)
+    result = shape_test(days, "gamma", column="days")  # 9999 samples, seed 1 (about 1 s)
     assert result["statistic"] == pytest.approx(1.05483345026, rel=1e-8)
     assert result["p-value"] == pytest.approx(0.0103, abs=0.02)
     assert result["distribution"].parameters()["shape"] == pytest.approx(GAMMA["shape"], rel=1e-10)
@@ -597,17 +597,160 @@ def test_shape_test_statistic_matches_goftest_and_p_value_the_r_bootstrap(days):
 
 
 def test_shape_test_other_shapes_and_errors(days):
-    weibull = shape_test(days, "weibull", n_mc_samples=19)
+    weibull = shape_test(days, "weibull", samples=99)
     # goftest::ad.test(d, "pweibull", shape = 1.68720733202, scale = 531.396176566)
     assert weibull["statistic"] == pytest.approx(0.656369498, rel=1e-6)
-    lognormal = shape_test(days, "lognormal", n_mc_samples=19)
+    lognormal = shape_test(days, "lognormal", samples=99)
     assert lognormal["statistic"] == pytest.approx(2.96302269146, rel=1e-8)  # ad.test(d, "plnorm", ...)
-    again = shape_test(days, "lognormal", n_mc_samples=19)
+    again = shape_test(days, "lognormal", samples=99)
     assert again["p-value"] == lognormal["p-value"]  # the seed repeats
     with pytest.raises(SimplydataError, match="count distribution"):
         shape_test(COUNTS, "poisson")
     with pytest.raises(SimplydataError, match="does not know"):
         shape_test(days, "gamm")
+
+
+# ====================================================================== the shape test's Monte Carlo (fast refits)
+def _scipy_gof(x, name, samples):
+    import warnings
+
+    from simplydata.distributions import _find_family
+
+    family = _find_family(name)
+    scipy_name, known, fitted = family.goodness(fit(x, name)._params)
+    with np.errstate(all="ignore"), warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        return stats.goodness_of_fit(getattr(stats, scipy_name), x, known_params=known or None, fit_params=fitted,
+                                     statistic="ad", n_mc_samples=samples, rng=np.random.default_rng(1))
+
+
+SAMPLE_OF = {  # data drawn from each shape, so that the p-values are not all at their smallest
+    "weibull": stats.weibull_min(1.6, scale=40), "gamma": stats.gamma(2.5, scale=7), "lognormal": stats.lognorm(0.5),
+    "half-normal": stats.halfnorm(scale=3), "gumbel": stats.gumbel_r(5, 2), "logistic": stats.logistic(5, 2),
+    "chi-square": stats.chi2(5), "beta": stats.beta(2, 3), "von mises": stats.vonmises(2.0, loc=0.3),
+    "cauchy": stats.cauchy(10, 2), "t": stats.t(5, loc=3, scale=2),
+}
+
+
+@pytest.mark.parametrize("name", list(SAMPLE_OF))
+def test_shape_test_gives_the_p_value_of_scipy_goodness_of_fit(name):
+    # The same simulated samples (seed 1) as SciPy goodness_of_fit, which refits one sample at a time
+    # (Nelder-Mead for weibull, half-normal, gumbel, chi-square, beta and von mises); here they are refitted
+    # all at once to the exact maximum (t and cauchy one by one, as SciPy), and the p-value is the same.
+    from simplydata._shape_monte_carlo import VECTOR_FITS
+
+    x = SAMPLE_OF[name].rvs(size=50, random_state=np.random.default_rng(11))
+    samples = 99 if name in ("von mises", "t") else 199  # SciPy takes long on these two
+    ours = shape_test(x, name, samples=samples)
+    scipy_result = _scipy_gof(x, name, samples)
+    # The data's own A uses simplydata's fit (R's exact maximum); SciPy refits the data its own way.
+    assert ours["statistic"] == pytest.approx(float(scipy_result.statistic), rel=1e-6)
+    assert ours["p-value"] == pytest.approx(float(scipy_result.pvalue), abs=1e-12)
+    assert 0.01 < ours["p-value"] and ((name in ("cauchy", "t")) == (SAMPLE_OF[name].dist.name not in VECTOR_FITS))
+
+
+def test_all_at_once_refits_reach_the_exact_maximum():
+    from scipy import special
+
+    from simplydata import distributions as d
+    from simplydata._shape_monte_carlo import VECTOR_FITS
+
+    rng = np.random.default_rng(7)
+    samples = {
+        "weibull_min": stats.weibull_min(1.7, scale=500).rvs(size=(40, 60), random_state=rng),
+        "gamma": stats.gamma(2.1, scale=200).rvs(size=(40, 60), random_state=rng),
+        "gumbel_r": stats.gumbel_r(10, 3).rvs(size=(40, 60), random_state=rng),
+        "vonmises": stats.vonmises(2.0, loc=0.5).rvs(size=(40, 60), random_state=rng),
+        "chi2": stats.chi2(4.5).rvs(size=(40, 60), random_state=rng),
+        "logistic": stats.logistic(5, 2).rvs(size=(40, 60), random_state=rng),
+        "beta": stats.beta(2, 5).rvs(size=(40, 60), random_state=rng),
+    }
+    for name, x in samples.items():
+        params, settled = VECTOR_FITS[name][1](x)
+        assert settled is None or settled.all(), name
+        for i in range(0, 40, 7):
+            one = x[i]
+            got = {k: float(v[i]) for k, v in params.items()}
+            if name == "weibull_min":  # simplydata's own solver: brentq on the same score equation (as R uniroot)
+                k, scale = d._weibull_shape(one)
+                assert got["c"] == pytest.approx(k, rel=1e-12) and got["scale"] == pytest.approx(scale, rel=1e-12)
+            elif name == "gamma":
+                a = d._gamma_shape(one)
+                assert got["a"] == pytest.approx(a, rel=1e-12)
+                assert got["scale"] == pytest.approx(one.mean() / a, rel=1e-12)
+            elif name == "gumbel_r":
+                loc, b = d._gumbel_scale(one)
+                assert got["loc"] == pytest.approx(loc, rel=1e-12) and got["scale"] == pytest.approx(b, rel=1e-12)
+            elif name == "vonmises":
+                mu, kappa = d._vonmises_fit(one)
+                assert got["loc"] == pytest.approx(mu, rel=1e-12) and got["kappa"] == pytest.approx(kappa, rel=1e-10)
+            elif name == "chi2":  # the score equation digamma(k/2) = mean(log x) - log 2
+                assert special.digamma(got["df"] / 2) == pytest.approx(np.log(one).mean() - math.log(2), abs=1e-13)
+            else:  # logistic and beta: SciPy's fit agrees, and ours is at least as high a likelihood
+                dist = getattr(stats, name)
+                held = {"floc": 0, "fscale": 1} if name == "beta" else {}
+                scipy_fit = dist.fit(one, **held)
+                ours = [got[k] for k in (("a", "b") if name == "beta" else ("loc", "scale"))]
+                assert ours == pytest.approx(list(scipy_fit[:2]), rel=1e-6)
+                frozen = dist(**got, **({"loc": 0, "scale": 1} if name == "beta" else {}))
+                assert frozen.logpdf(one).sum() >= dist(*scipy_fit).logpdf(one).sum() - 1e-9
+
+
+def test_shape_test_does_not_depend_on_the_batch_size(days, monkeypatch):
+    import simplydata._shape_monte_carlo as mc
+
+    whole = shape_test(days, "weibull", samples=299)
+    monkeypatch.setattr(mc, "BATCH_VALUES", len(days) * 7)  # 7 samples at a time
+    monkeypatch.setattr(mc, "PILOT_ROWS_VECTOR", 3)
+    pieces = shape_test(days, "weibull", samples=299)
+    assert pieces["p-value"] == whole["p-value"] and pieces["statistic"] == whole["statistic"]
+
+
+def test_samples_option_of_compare_shape_to(capsys):
+    t = make(sdata.example("trial"), "pandas")
+    result = row(t.compare_shape_to("days", "weibull", samples=999))
+    out = capsys.readouterr().out
+    assert result["Monte Carlo samples"] == 999 and result["seed"] == 1
+    assert "from 999 simulated samples" in out and "This takes" not in out  # quick, so no note
+    assert result["statistic"] == pytest.approx(0.656369498, rel=1e-6)
+    again = row(t.compare_shape_to("days", "weibull", samples=999))
+    assert again["p-value"] == result["p-value"]
+    other_seed = row(t.compare_shape_to("days", "weibull", samples=999, seed=2))
+    assert other_seed["seed"] == 2
+    for bad in ("many", 9.5, True, None):
+        with pytest.raises(SimplydataError, match="samples= as a whole number"):
+            t.compare_shape_to("days", "gamma", samples=bad)
+    for bad in (10, 0, -5, 2_000_000):
+        with pytest.raises(SimplydataError, match="samples= from 99 to 1,000,000"):
+            t.compare_shape_to("days", "gamma", samples=bad)
+    assert row(t.compare_shape_to("days", "gamma", samples=np.int64(99)))["Monte Carlo samples"] == 99
+
+
+def test_a_long_run_gets_a_note_before_it_starts(capsys, monkeypatch):
+    import simplydata._shape_monte_carlo as mc
+
+    t = make(sdata.example("trial"), "pandas")
+    monkeypatch.setattr(mc.MonteCarlo, "pilot", lambda self: 75.0)  # as if a minute and a bit were left
+    t.compare_shape_to("days", "gamma", samples=99)
+    out = capsys.readouterr().out
+    assert out.startswith("This takes about a minute: 99 simulated samples are refitted. "
+                          "Use samples= for a quicker, rougher answer.\n")
+    t.compare_shape_to("days", "gamma", samples=99, for_each="treatment")
+    out = capsys.readouterr().out  # one note for all groups, before the first group
+    assert out.count("This takes") == 1
+    assert out.startswith("This takes about 3 minutes: 99 simulated samples are refitted for each group.")
+    shape_test(sdata.example("trial")["days"].to_numpy(float), "gamma", samples=99)
+    assert capsys.readouterr().out.startswith("This takes about a minute")
+
+
+def test_time_words():
+    from simplydata._shape_monte_carlo import time_note, time_words
+
+    assert time_words(12) == "about 10 seconds" and time_words(26) == "about 30 seconds"
+    assert time_words(50) == "about a minute" and time_words(200) == "about 3 minutes"
+    assert time_words(3 * 3600) == "about 3 hours"
+    assert time_note(9.9, 9999) is None
+    assert time_note(11, 9999).startswith("This takes about 10 seconds: 9999 simulated samples")
 
 
 # ====================================================================== compare_shape_to with any shape
