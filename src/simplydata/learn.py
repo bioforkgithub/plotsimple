@@ -45,10 +45,13 @@ GROUPS = [
                         "zoom_box", "animate"]),
     # Table words: "table.name" is a step on a table (table.name(...)).
     ("Tables: start and look", ["sdata.table", "table.show_first_rows", "table.show_last_rows",
-                                "table.show", "table.column_names", "table.describe_columns", "table.column"]),
-    ("Choose columns", ["table.keep_columns", "table.remove_columns", "table.rename_column"]),
+                                "table.show", "table.column_names", "table.describe_columns", "table.column",
+                                "table.row", "table.cell_at"]),
+    ("Choose columns", ["table.keep_columns", "table.remove_columns", "table.keep_columns_by_position",
+                        "table.remove_columns_by_position", "table.rename_column"]),
     ("Choose rows", ["table.keep_rows", "table.remove_rows", "table.keep_first_rows",
-                     "table.keep_last_rows", "table.keep_random_rows", "table.remove_duplicate_rows",
+                     "table.keep_last_rows", "table.keep_rows_by_position", "table.remove_rows_by_position",
+                     "table.reverse_rows", "table.keep_random_rows", "table.remove_duplicate_rows",
                      "table.keep_biggest_rows", "table.keep_smallest_rows", "table.show_rows_with_outliers",
                      "table.remove_rows_with_outliers"]),
     ("Empty cells", ["table.count_empty_cells", "table.remove_rows_with_empty_cells",
@@ -100,12 +103,16 @@ GROUPS = [
     ("Numbers: choose, sort and fill", ["nums.keep_numbers", "nums.remove_numbers", "nums.keep_first_numbers",
                                         "nums.keep_last_numbers", "nums.keep_random_numbers",
                                         "nums.remove_duplicate_numbers", "nums.remove_empty_numbers",
-                                        "nums.fill_empty_numbers", "nums.sort", "nums.reverse"]),
+                                        "nums.keep_numbers_by_position", "nums.remove_numbers_by_position",
+                                        "nums.replace_numbers", "nums.fill_empty_numbers", "nums.sort",
+                                        "nums.reverse"]),
     ("Numbers: summaries", ["nums.average", "nums.median", "nums.total", "nums.smallest", "nums.biggest",
                             "nums.standard_deviation", "nums.percentile", "nums.count_each"]),
     ("Grids of numbers", ["sdata.number_grid", "nums.number_grid", "grid.count_rows", "grid.count_columns",
                           "grid.shape", "grid.show_first_rows", "grid.show_last_rows", "grid.number_at",
-                          "grid.row", "grid.column", "grid.numbers", "grid.swap_rows_and_columns"]),
+                          "grid.row", "grid.column", "grid.numbers", "grid.keep_rows_by_position",
+                          "grid.keep_columns_by_position", "grid.remove_rows_by_position",
+                          "grid.remove_columns_by_position", "grid.replace_numbers", "grid.swap_rows_and_columns"]),
     ("Numbers: undo and finish", ["nums.undo", "nums.steps", "nums.start_again", "nums.table", "nums.chart",
                                   "nums.save", "nums.as_numpy"]),
     ("Help", ["sdata.words", "sdata.help", "sdata.lesson"]),
@@ -206,6 +213,13 @@ def _dx(body: str) -> str:
 def _gx(body: str) -> str:
     """A runnable grid example: make a grid of numbers, then the steps."""
     lines = ["import simplydata as sdata", "grid = sdata.number_grid([[3, 5, 2], [8, 6, 4]])"]
+    lines += textwrap.dedent(body).strip().splitlines()
+    return "\n".join(lines)
+
+
+def _bx(body: str) -> str:
+    """A runnable example on a bigger grid (4 rows, 6 columns), for choosing parts of it."""
+    lines = ["import simplydata as sdata", "grid = sdata.numbers(1, to=24).number_grid(columns=6)"]
     lines += textwrap.dedent(body).strip().splitlines()
     return "\n".join(lines)
 
@@ -386,9 +400,20 @@ HELP_EXAMPLES = {
     "table.column_names": _tx("marks", "print(table.column_names())"),
     "table.column": _tx("marks", 'marks = table.column("marks")\nmarks.average()\nmarks.percentile(90)'),
     "table.describe_columns": _tx("marks", "table.describe_columns()"),
+    "table.row": _tx("marks", 'print(table.row(3))\nprint(table.row("last"))'),
+    "table.cell_at": _tx("marks", 'print(table.cell_at(row=3, column="marks"))\n'
+                                  'print(table.cell_at(row="last", column="name"))'),
     # choose columns
-    "table.keep_columns": _tx("marks", 'table.keep_columns("name", "marks")\ntable.show_first_rows()'),
-    "table.remove_columns": _tx("marks", 'table.remove_columns("height")\nprint(table.column_names())'),
+    "table.keep_columns": _tx("marks", 'table.keep_columns("name", "marks")\ntable.show_first_rows()\n'
+                                       'table.start_again()\ntable.keep_columns("hours", to="height")\n'
+                                       'table.start_again()\ntable.keep_columns(kind="number")\n'
+                                       'table.show_first_rows()'),
+    "table.remove_columns": _tx("marks", 'table.remove_columns("height")\nprint(table.column_names())\n'
+                                         'table.remove_columns(kind="text")\nprint(table.column_names())'),
+    "table.keep_columns_by_position": _tx("marks", "table.keep_columns_by_position(1, to=3)\n"
+                                                   "table.show_first_rows()"),
+    "table.remove_columns_by_position": _tx("marks", "table.remove_columns_by_position(1)\n"
+                                                     "print(table.column_names())"),
     "table.rename_column": _tx("marks", 'table.rename_column("marks", to="score")\ntable.show_first_rows()'),
     # choose rows
     "table.keep_rows": _tx("marks", 'table.keep_rows("marks", above=50)\n'
@@ -397,6 +422,12 @@ HELP_EXAMPLES = {
     "table.remove_rows": _tx("marks", 'table.remove_rows("subject", equal_to="English")\ntable.show_first_rows()'),
     "table.keep_first_rows": _tx("marks", "table.keep_first_rows(10)\nprint(table)"),
     "table.keep_last_rows": _tx("marks", "table.keep_last_rows(10)\nprint(table)"),
+    "table.keep_rows_by_position": _tx("marks", "table.show_last_rows(3)\n"
+                                                "table.keep_rows_by_position(10, to=20)\n"
+                                                "table.keep_rows_by_position(1, step=2)\ntable.show()"),
+    "table.remove_rows_by_position": _tx("marks", "table.remove_rows_by_position([12, 40])\n"
+                                                  "table.remove_rows_by_position(1, step=2)\ntable.count_rows()"),
+    "table.reverse_rows": _tx("marks", "table.reverse_rows()\ntable.show_first_rows(3)"),
     "table.keep_random_rows": _tx("marks", "table.keep_random_rows(10, seed=1)\nprint(table)"),
     "table.remove_duplicate_rows": _tx("marks", 'table.remove_duplicate_rows(columns=["name"])\nprint(table)'),
     "table.keep_biggest_rows": _tx("marks", 'table.keep_biggest_rows(3, by="marks", for_each="subject")\ntable.show()'),
@@ -422,7 +453,9 @@ HELP_EXAMPLES = {
     "table.make_uppercase": _tx("marks", 'table.make_uppercase("name")\ntable.show_first_rows()'),
     "table.remove_extra_spaces": _tx("marks", 'table.remove_extra_spaces("name")\ntable.show_first_rows()'),
     "table.replace_values": _tx("marks", 'table.replace_values("subject", "Maths", with_value="Math")\n'
-                                         'table.count_each("subject")'),
+                                         'table.count_each("subject")\n'
+                                         'table.replace_values("marks", above=90, with_value=90)\n'
+                                         'table.biggest_of("marks")'),
     "table.round_to": _tx("marks", 'table.round_to("hours", 0)\ntable.show_first_rows()'),
     "table.change_column": _tx("marks", 'table.change_column("marks", "marks / 10")\ntable.show_first_rows()'),
     # sort and new columns
@@ -630,7 +663,7 @@ HELP_EXAMPLES = {
     "nums.show": _nx("nums.show()"),
     "nums.show_first_numbers": _nx("nums.show_first_numbers(3)"),
     "nums.show_last_numbers": _nx("nums.show_last_numbers(2)"),
-    "nums.number_at": _nx("print(nums.number_at(1))\nprint(nums.number_at(nums.count()))"),
+    "nums.number_at": _nx('print(nums.number_at(1))\nprint(nums.number_at("last"))'),
     "nums.count": _nx("print(nums.count())"),
     "nums.count_empty_numbers": _nx("print(nums.count_empty_numbers())", "[12, None, 9, None, 14]"),
     # numbers: maths in words
@@ -657,6 +690,11 @@ HELP_EXAMPLES = {
                                    "[12, None, 9, None, 14]"),
     "nums.sort": _nx("nums.sort(biggest_first=True)\nnums.show()"),
     "nums.reverse": _nx("nums.reverse()\nnums.show()"),
+    "nums.keep_numbers_by_position": _nx("nums.keep_numbers_by_position(2, to=4)\nnums.show()"),
+    "nums.remove_numbers_by_position": _nx('nums.remove_numbers_by_position("last")\nnums.show()'),
+    "nums.replace_numbers": _nx("nums.replace_numbers(-999, with_value=None)\n"
+                                "nums.replace_numbers(above=14, with_value=14)\nnums.show()",
+                                "[12, -999, 9, 20, 14]"),
     # numbers: summaries
     "nums.average": _nx("nums.average()"),
     "nums.median": _nx("nums.median()"),
@@ -683,6 +721,12 @@ HELP_EXAMPLES = {
     "grid.column": _gx("left = grid.column(1)\nleft.show()"),
     "grid.numbers": _gx("nums = grid.numbers()\nnums.show()"),
     "grid.swap_rows_and_columns": _gx("grid.swap_rows_and_columns()\nprint(grid)"),
+    "grid.keep_rows_by_position": _bx("grid.keep_rows_by_position(2, to=3)\nprint(grid)"),
+    "grid.keep_columns_by_position": _bx("grid.keep_rows_by_position(2, to=3)\n"
+                                         "grid.keep_columns_by_position(1, to=3)\nprint(grid)"),
+    "grid.remove_rows_by_position": _bx("grid.remove_rows_by_position(1)\nprint(grid)"),
+    "grid.remove_columns_by_position": _bx("grid.remove_columns_by_position(1, step=2)\nprint(grid)"),
+    "grid.replace_numbers": _gx("grid.replace_numbers(below=4, with_value=0)\nprint(grid)"),
     # numbers: undo and finish
     "nums.undo": _nx("nums.add(5)\nnums.undo()\nnums.show()"),
     "nums.steps": _nx("nums.add(5)\nnums.keep_numbers(above=15)\nnums.steps()"),
@@ -2029,7 +2073,8 @@ LESSONS = [
             "nice table.",
             "sdata.table reads the same files as sdata.chart: .xlsx, .csv, .tsv, .parquet and .json. "
             'For one sheet of an Excel file: sdata.table("results.xlsx", sheet="2026").',
-            "The row numbers on the left start at 0, as everywhere in Python.",
+            "The row numbers on the left start at 1, the way people count: the last row of a table of 54 "
+            "rows is row 54. Lesson 10 uses these numbers to choose rows by their place.",
             'A folder works too: sdata.table("data/") reads every table file in it. A web address '
             'works like a file name: sdata.table("https://example.org/data.csv").',
             'Files written in another way: separator=";", decimal_mark="," (3,5 is three and a half), '
@@ -2117,6 +2162,25 @@ LESSONS = [
                                                                               "each subject: 6 rows."),
                 ("table.show()", "Show the whole (small) table."),
             ]),
+            ("Rows and columns can also be chosen by their place in the table. Positions count from 1, "
+             "the numbers table.show() prints, and both ends are included.", [
+                ("import simplydata as sdata", "Load simplydata."),
+                ('table = sdata.table(sdata.example("marks"))', "Make a table of the marks."),
+                ("table.show_last_rows(3)", "The last three rows are numbered 52, 53 and 54: rows count "
+                                            "from 1."),
+                ("table.keep_rows_by_position(10, to=20)", "Keep rows 10 to 20. Both ends are included, so "
+                                                           "that is 11 rows."),
+                ("table.keep_rows_by_position(1, step=2)", "Of those, keep every 2nd row: the 1st, 3rd, 5th "
+                                                           "... 6 rows."),
+                ("table.keep_columns_by_position(1, to=3)", "Keep the first three columns. It says which "
+                                                            "columns they were."),
+                ("table.show()", "6 rows and 3 columns, numbered again from 1."),
+                ("table.start_again()", "Back to the whole table."),
+                ('print(table.cell_at(row=3, column="marks"))', "One cell: the mark in row 3. cell_at only "
+                                                                "looks; the table does not change."),
+                ("table.reverse_rows()", "Turn the table upside down: the last row comes first."),
+                ("table.show_first_rows(3)", "Rosa's marks are on top now."),
+            ]),
         ],
         notes=[
             "Conditions for keep_rows and remove_rows: above, below, at_least, at_most, equal_to, "
@@ -2131,6 +2195,17 @@ LESSONS = [
             "rows had an empty cell.",
             'Dates go in quotes as year-month-day: table.keep_rows("date > \'2026-03-01\'"), or '
             'table.keep_rows("date", after="2026-03-01").',
+            "keep_rows chooses rows by their values, keep_rows_by_position by their place. Positions count "
+            "from 1 and both ends are included, so rows 10 to 20 are 11 rows. to=\"last\" goes to the end, "
+            "and a list such as [1, 5, 9] keeps those rows in that order.",
+            "Coming from pandas or NumPy, which count from 0 and leave out the end: df.iloc[9:20] is "
+            "table.keep_rows_by_position(10, to=20), df.iloc[::2] is keep_rows_by_position(1, step=2), "
+            "df.iloc[[0, 4]] is keep_rows_by_position([1, 5]), df.iloc[:, 0:3] is "
+            "keep_columns_by_position(1, to=3), df.loc[:, \"hours\":\"height\"] is "
+            "keep_columns(\"hours\", to=\"height\"), df.select_dtypes(\"number\") is "
+            "keep_columns(kind=\"number\"), df.at[2, \"marks\"] is cell_at(row=3, column=\"marks\") and "
+            "df.iloc[::-1] is reverse_rows(). For numbers, a[2:8] is nums.keep_numbers_by_position(3, to=8), "
+            "and for a grid, g[1:5, 0:3] is grid.keep_rows_by_position(2, to=5).keep_columns_by_position(1, to=3).",
         ],
         task=[
             'In the marks table, keep only class "B" and sort by "hours". Who studied the longest?',
@@ -2138,6 +2213,8 @@ LESSONS = [
             'Keep 5 random rows with table.keep_random_rows(5, seed=1) and save them as "five.csv".',
             "With one written condition, keep the rows with marks below 50 or hours above 8. How many "
             "rows are there?",
+            "From memory, without looking back: start again, keep rows 5 to 9, then remove the last row. "
+            "How many rows are left, and whose name is in row 1 now?",
         ],
         solutions=[
             (_sx("""\
@@ -2169,10 +2246,21 @@ LESSONS = [
                 table.keep_rows("marks < 50 or hours > 8")
                 table.count_rows()"""),
              "19 rows: or keeps a row when at least one of the two is true."),
+            (_sx("""\
+                import simplydata as sdata
+                table = sdata.table(sdata.example("marks"))
+                table.keep_rows_by_position(5, to=9)
+                table.remove_rows_by_position("last")
+                table.count_rows()
+                print(table.cell_at(row=1, column="name"))"""),
+             "4 rows: rows 5 to 9 are 5 rows (both ends count), and one is removed. Row 1 is now Ben's "
+             "Science mark, which was row 5 before: positions are always of the table as it is now."),
         ],
         words=["table.keep_columns", "table.keep_rows", "table.sort_by", "table.steps", "table.undo",
                "table.start_again", "table.remove_rows", "table.remove_columns", "table.rename_column",
-               "table.save", "table.keep_random_rows", "table.keep_biggest_rows"],
+               "table.save", "table.keep_random_rows", "table.keep_biggest_rows",
+               "table.keep_rows_by_position", "table.remove_rows_by_position", "table.keep_columns_by_position",
+               "table.cell_at", "table.reverse_rows"],
     ),
     dict(
         title="Tables: clean the data and add new columns",

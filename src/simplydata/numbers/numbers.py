@@ -260,6 +260,18 @@ class NumberGrid(ReplacingWords, GridSummaryWords, MathsWords, BaseNumbers):
         return self._grid_step("remove_columns_by_position", picked, 1, keep=False)
 
     # ------------------------------------------------------------------ changing the grid
+    def replace_numbers(self, *args, **kwargs):
+        """Replace a number, or every number that meets one condition; the grid keeps its rows and columns.
+
+        grid.replace_numbers(below=4, with_value=0)
+        The conditions are keep_numbers' (one at a time): above, below, at_least, at_most, equal_to,
+        not_equal_to, between, one_of, is_empty; with_value=None makes the numbers empty.
+        As NumPy np.where(g < 4, 0, g) or g[g < 4] = 0.
+        """
+        return ReplacingWords.replace_numbers(self, *args, **kwargs)
+
+    replace_numbers.__wrapped__ = ReplacingWords.replace_numbers  # the same options in sdata.help()
+
     @friendly
     def swap_rows_and_columns(self):
         """Turn rows into columns and columns into rows (the transpose in maths).
