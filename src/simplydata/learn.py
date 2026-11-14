@@ -1,4 +1,4 @@
-"""Learning simplydata: sdata.words(), sdata.help("bars") and sdata.lesson(1) ... sdata.lesson(18).
+"""Learning simplydata: sdata.words(), sdata.help("bars") and sdata.lesson(1) ... sdata.lesson(20).
 
 The word list is built from the real words and their docstrings, so it cannot go out of
 date. Only the grouping (GROUPS) and the runnable examples (HELP_EXAMPLES, LESSONS) are
@@ -27,7 +27,8 @@ GROUPS = [
     ("Start, show and save", ["sdata.chart", "sdata.example", "show", "save"]),
     ("Chart types", ["bars", "lines", "dots", "area", "histogram", "boxes", "violins",
                      "heatmap", "pie", "polar", "contour", "surface", "dots_3d", "band", "empty_cells"]),
-    ("Statistics", ["show=", "error=", "error_bars", "fit_line", "fit_curve", "smooth_line",
+    ("Statistics", ["show=", "error=", "error_bars", "fit_line", "fit_curve", "fit_formula", "fit_distribution",
+                    "curve", "smooth_line",
                     "density", "count_bars", "all_dots", "side_histograms", "qq_dots",
                     "cumulative_share", "sdata.pairs"]),
     ("Lines and shading", ["line_at_x", "line_at_y", "line_with_slope", "shade_between_x", "shade_between_y"]),
@@ -66,9 +67,18 @@ GROUPS = [
                    "table.count_different_values", "table.percentile_of", "table.most_common_of",
                    "table.correlation_between"]),
     ("Statistical tests", ["table.compare_averages", "table.compare_each_pair", "table.compare_before_after",
-                           "table.compare_average_to", "table.compare_counts", "table.fit_straight_line",
-                           "table.fit_formula", "table.compare_shape_to", "table.add_adjusted_p_value_column",
-                           "table.compare_spreads", "table.compare_counts_to", "table.compare_percent_to"]),
+                           "table.compare_average_to", "table.compare_counts", "table.compare_shape_to",
+                           "table.add_adjusted_p_value_column", "table.compare_spreads", "table.compare_counts_to",
+                           "table.compare_percent_to"]),
+    ("Fitting", ["table.fit_line", "table.fit_curve", "table.fit_formula"]),
+    ("Finding and solving", ["sdata.find_smallest", "sdata.find_biggest", "sdata.solve"]),
+    ("Values between points", ["table.values_at", "table.map_of"]),
+    # "dist.name" is a step on a distribution: dist = sdata.distribution("normal"), then dist.chance(...).
+    ("Distributions", ["sdata.distribution", "table.fit_distribution", "table.compare_distributions",
+                       "nums.fit_distribution", "dist.chance", "dist.density_at", "dist.percentile", "dist.cut_off",
+                       "dist.middle_range", "dist.average", "dist.median", "dist.standard_deviation",
+                       "dist.variance", "dist.summary", "dist.random_numbers", "dist.chart", "dist.table",
+                       "dist.parameters"]),
     ("Models", ["table.explain", "table.add_predicted_column"]),
     ("Patterns across columns", ["table.add_principal_components", "table.principal_components_of",
                                  "table.add_clusters", "table.distances_between_rows", "table.add_nmds",
@@ -186,6 +196,13 @@ def _nx(body: str, values: str = "[12, 15, 9, 20, 14]") -> str:
     return "\n".join(lines)
 
 
+def _dx(body: str) -> str:
+    """A runnable distribution example: make a distribution, then the steps."""
+    lines = ["import simplydata as sdata", 'dist = sdata.distribution("normal", average=50, standard_deviation=10)']
+    lines += textwrap.dedent(body).strip().splitlines()
+    return "\n".join(lines)
+
+
 def _gx(body: str) -> str:
     """A runnable grid example: make a grid of numbers, then the steps."""
     lines = ["import simplydata as sdata", "grid = sdata.number_grid([[3, 5, 2], [8, 6, 4]])"]
@@ -243,6 +260,13 @@ HELP_EXAMPLES = {
     "fit_line": _ex("marks", 'chart.dots(x="hours", y="marks")\n'
                     'chart.fit_line(confidence_band=True, show_equation=True)', "fit_line"),
     "fit_curve": _ex("weather", 'chart.dots(x="month_number", y="temperature", colour="city")\nchart.fit_curve(degree=2)', "fit_curve"),
+    "fit_formula": _ex("growth", 'chart.dots(x="year", y="population", colour="country")\n'
+                       'chart.fit_formula("population = a * exp(b * (year - 2000))")', "fit_formula"),
+    "fit_distribution": _ex("marks", 'chart.histogram(x="marks", show="density")\nchart.fit_distribution("normal")',
+                            "fit_distribution"),
+    "curve": _ex("marks", 'chart.histogram(x="marks", show="density")\n'
+                 'chart.curve(sdata.distribution("normal", average=60, standard_deviation=15), label="a bell curve")',
+                 "curve"),
     "smooth_line": _ex("weather", 'chart.dots(x="month_number", y="rain", colour="city")\nchart.smooth_line()', "smooth_line"),
     "density": _ex("marks", 'chart.density(x="marks", colour="class")', "density"),
     "qq_dots": _ex("marks", 'chart.qq_dots("marks")', "qq_dots"),
@@ -458,9 +482,63 @@ HELP_EXAMPLES = {
     "table.compare_counts": _tx("marks", 'table.add_group_column("result", from_column="marks", cut_at=[60], '
                                          'names=["below 60", "60 or more"])\n'
                                          'table.compare_counts("result", for_each="class")'),
-    "table.fit_straight_line": _tx("marks", 'table.fit_straight_line(x="hours", y="marks")'),
-    "table.fit_formula": _tx("growth", 'table.keep_rows("country", equal_to="Applia")\n'
+    # fitting
+    "table.fit_line": _tx("marks", 'table.fit_line(x="hours", y="marks")'),
+    "table.fit_curve": _tx("marks", 'table.fit_curve(x="hours", y="marks", degree=2)'),
+    "table.fit_formula": _tx("growth", 'table.fit_formula("population = a * exp(b * (year - 2000))", '
+                                       'for_each="country")\n'
+                                       'table.keep_rows("country", equal_to="Applia")\n'
                                        'table.fit_formula("population = a * exp(b * (year - 2000))")'),
+    # finding and solving
+    "sdata.find_smallest": textwrap.dedent("""\
+        import simplydata as sdata
+        sdata.find_smallest("x**2 - 4*x + 1", between=[0, 5])
+        sdata.find_smallest("(x - 1)**2 + (y - 2)**2", start={"x": 0, "y": 0})"""),
+    "sdata.find_biggest": textwrap.dedent("""\
+        import simplydata as sdata
+        sdata.find_biggest("x * (10 - x)", between=[0, 10])
+        sdata.find_biggest("3*x + 2*y", rules=["x + y <= 4", "x + 3*y <= 6", "x >= 0", "y >= 0"])"""),
+    "sdata.solve": textwrap.dedent("""\
+        import simplydata as sdata
+        sdata.solve("x**3 - 2*x = 5", between=[0, 3])
+        sdata.solve("x**2 - 2*x + 5 = 0")
+        sdata.solve(["x + y = 3", "x * y = 2"], start={"x": 0, "y": 1})"""),
+    # values between points
+    "table.values_at": _tx("growth", 'estimates = table.values_at("population", at={"year": [2001, 2003, 2011]}, '
+                                     'for_each="country")\nestimates.show()\n'
+                                     'table.values_at("population", at={"year": [2001, 2003, 2011]}, '
+                                     'joined_by="smooth curve", for_each="country")'),
+    "table.map_of": _tx("island", 'heights = table.map_of("height", across=["east", "north"], steps=60, '
+                                  'joined_by="smooth surface")\nchart = heights.chart()\n'
+                                  'chart.contour(x="east", y="north", z="height")\nchart.save("map_of.png")'),
+    # distributions
+    "sdata.distribution": textwrap.dedent("""\
+        import simplydata as sdata
+        dist = sdata.distribution("normal", average=50, standard_deviation=10)
+        print(dist)
+        dist.chance(above=80)
+        coins = sdata.distribution("binomial", tries=10, chance=0.5)
+        coins.chance(at_most=3)"""),
+    "table.fit_distribution": _tx("shop", 'fit = table.fit_distribution("sales", "lognormal")\n'
+                                          "fit.chance(above=600)\nfit.table()"),
+    "table.compare_distributions": _tx("shop", 'table.compare_distributions("sales")'),
+    "nums.fit_distribution": _nx('fit = nums.fit_distribution("gamma")\nfit.chance(above=18)'),
+    "dist.chance": _dx("dist.chance(above=80)\ndist.chance(between=[40, 60])\n"
+                       'dice = sdata.distribution("whole number uniform", between=[1, 6])\ndice.chance(6)'),
+    "dist.density_at": _dx("dist.density_at(60)"),
+    "dist.percentile": _dx("dist.percentile(95)\ndist.percentile([5, 50, 95])"),
+    "dist.cut_off": _dx("dist.cut_off(above=0.025)\ndist.cut_off(below=0.05)"),
+    "dist.middle_range": _dx("dist.middle_range(95)"),
+    "dist.average": _dx("dist.average()"),
+    "dist.median": _dx("dist.median()"),
+    "dist.standard_deviation": _dx("dist.standard_deviation()"),
+    "dist.variance": _dx("dist.variance()"),
+    "dist.summary": _dx("dist.summary()"),
+    "dist.random_numbers": _dx("nums = dist.random_numbers(how_many=100, seed=1)\nnums.average()"),
+    "dist.chart": _dx('chart = dist.chart()\nchart.title_top("Normal, average 50, standard deviation 10")\n'
+                      'chart.save("distribution.png")'),
+    "dist.table": _dx("result = dist.table()\nresult.show()"),
+    "dist.parameters": _dx("print(dist.parameters())"),
     "table.compare_spreads": _tx("marks", 'table.compare_spreads("marks", for_each="class")'),
     "table.compare_counts_to": _tx("school", 'table.compare_counts_to("breakfast", expected={"yes": 0.6, "no": 0.4})'),
     "table.compare_percent_to": _tx("school", 'table.compare_percent_to("passed", value="yes", percent=50)'),
@@ -653,13 +731,19 @@ def _grid_class():
 
 # The objects that have steps, and the name they go by in examples ("chart" has no prefix
 # in GROUPS: a plain name is a chart word).
-_PREFIX = {"table": "table", "numbers": "nums", "grid": "grid"}
+_PREFIX = {"table": "table", "numbers": "nums", "grid": "grid", "dist": "dist"}
+
+
+def _distribution_class():
+    from .distributions import Distribution
+
+    return Distribution
 
 
 def _classes():
     """(class, kind) for every object with steps."""
     return [(_chart_class(), "chart"), (_table_class(), "table"), (_numbers_class(), "numbers"),
-            (_grid_class(), "grid")]
+            (_grid_class(), "grid"), (_distribution_class(), "dist")]
 
 
 def _kind(key: str) -> str:
@@ -741,7 +825,7 @@ def _prefixes(key: str) -> str:
     return _PREFIX.get(_kind(key), "chart|sdata|page")
 
 
-def _find_call(text: str, prefix_word: str, prefixes: str = "chart|sdata|page|table|nums|grid") -> str | None:
+def _find_call(text: str, prefix_word: str, prefixes: str = "chart|sdata|page|table|nums|grid|dist") -> str | None:
     """Find the first call like chart.bars(...) in text, brackets and quotes included."""
     m = re.search(rf"(?:{prefixes})\.{re.escape(prefix_word)}\(", text)
     if not m:
@@ -815,6 +899,8 @@ def words() -> None:
     print("Table words are steps on a table: table = sdata.table(...), then table.keep_rows(...).")
     print("Number words are steps on numbers: nums = sdata.numbers([3, 5, 2]), then nums.average();")
     print("grid words are steps on a grid of numbers: grid = sdata.number_grid([[1, 2], [3, 4]]).")
+    print('Distribution words are steps on a distribution: dist = sdata.distribution("normal"), then '
+          "dist.chance(above=2).")
     print('The examples use the practice tables; sdata.help("word") shows which one, ready to run.')
     for group, keys in GROUPS:
         print()
@@ -832,7 +918,7 @@ def words() -> None:
 # ---------------------------------------------------------------- sdata.help()
 def _normalise(word: str) -> str:
     w = str(word).strip()
-    for start in ("sdata.", "chart.", "table.", "page.", "nums.", "grid.", "."):
+    for start in ("sdata.", "chart.", "table.", "page.", "nums.", "grid.", "dist.", "."):
         if w.startswith(start):
             w = w[len(start):]
     if w.endswith("()"):
@@ -977,7 +1063,7 @@ def _print_one(key: str) -> None:
     print(f"Group: {_group_of(key)}")
     aliases = _aliases().get(key)
     if aliases:
-        start = "table" if _kind(key) == "table" else "chart"
+        start = _PREFIX.get(_kind(key), "chart")
         print("Same word, other spelling: " + ", ".join(f"{start}.{a}()" for a in aliases))
     print()
     if key in OPTIONS:
@@ -998,6 +1084,28 @@ def _print_one(key: str) -> None:
     print()
     print("Example you can run:")
     print(textwrap.indent(HELP_EXAMPLES[key], "    "))
+
+
+def _print_other_names(word) -> bool:
+    """sdata.help("minimize"): a name from another tool points to the simplydata word (it never runs).
+
+    Gives back True when something was printed."""
+    from ._errors import other_name_pointer, other_name_target
+
+    w = _normalise(str(word))
+    found = [(kind, other_name_pointer(kind, w)) for kind in ("sdata", "table", "chart", "numbers")]
+    found = [(kind, pointer) for kind, pointer in found if pointer is not None]
+    if not found:
+        return False
+    print(f'simplydata has no word called "{w}": it is a name from other tools.')
+    if len(found) == 1:
+        print(found[0][1])
+    else:
+        for kind, pointer in found:
+            print(f"  {_PREFIX.get(kind, kind)}.{w}: {pointer}")
+    targets = list(dict.fromkeys(other_name_target(pointer) for _, pointer in found))
+    print("To learn more, type " + " or ".join(f'sdata.help("{t}")' for t in targets) + ".")
+    return True
 
 
 def help(word=None) -> None:  # noqa: A001 - meant to be sdata.help
@@ -1027,6 +1135,8 @@ def help(word=None) -> None:  # noqa: A001 - meant to be sdata.help
                   "stop working in a later version.")
         print()
         keys = list(dict.fromkeys(key for _, _, key in old))
+    if not keys and _print_other_names(word):
+        return None
     if not keys:
         known = sorted({_normalise(k) for k in _all_keys()} | {a for v in _aliases().values() for a in v})
         lines = [f'simplydata has no word called "{word}".']
@@ -2569,7 +2679,7 @@ LESSONS = [
             ("A fit finds the line or formula that follows the data best, and says how sure it is.", [
                 ("import simplydata as sdata", "Load simplydata."),
                 ('table = sdata.table(sdata.example("marks"))', "Make a table of the marks."),
-                ('table.fit_straight_line(x="hours", y="marks")',
+                ('table.fit_line(x="hours", y="marks")',
                  "How much do the marks go up for each extra hour of study? This is linear regression "
                  "by least squares. R squared says how much of the differences in marks the line "
                  "explains."),
@@ -2655,7 +2765,7 @@ LESSONS = [
                 import simplydata as sdata
                 table = sdata.table(sdata.example("growth"))
                 table.keep_rows("country", equal_to="Applia")
-                table.fit_straight_line(x="year", y="forest")"""),
+                table.fit_line(x="year", y="forest")"""),
              "In Applia the forest shrinks by about 0.57 percentage points a year (95 % CI 0.48 to "
              "0.67), and the line explains 94 % of the differences."),
             (_sx("""\
@@ -2667,7 +2777,7 @@ LESSONS = [
              "the answer does not change. Say in a report that you checked, and how."),
         ],
         words=["table.compare_averages", "table.compare_each_pair", "table.compare_counts",
-               "table.fit_straight_line", "table.fit_formula", "table.add_group_column",
+               "table.fit_line", "table.fit_formula", "table.add_group_column",
                "table.compare_shape_to", "table.show_rows_with_outliers", "table.add_adjusted_p_value_column",
                "table.remove_rows_with_outliers", "table.compare_spreads", "table.compare_counts_to",
                "table.compare_percent_to"],
@@ -3079,6 +3189,210 @@ LESSONS = [
         words=["table.survival_over_time", "survival_curves", "table.compare_survival",
                "table.explain_survival", "sdata.how_many_needed", "sdata.chance_to_find"],
     ),
+    dict(
+        title="Fitting curves, finding the best value and solving",
+        learn=[
+            "how to fit a straight line, a curve or any formula to your data, on a table and on a chart",
+            "how to find where a formula is smallest or biggest",
+            "how to solve an equation, also one made from a fitted formula",
+        ],
+        parts=[
+            ("Start with something you know: a straight line through the dots. fit_line, fit_curve and "
+             "fit_formula are the same words on a table (the numbers) and on a chart (the picture).", [
+                ("import simplydata as sdata", "Load simplydata."),
+                ('table = sdata.table(sdata.example("marks"))', "The marks table: hours of study and marks."),
+                ('table.fit_line(x="hours", y="marks")',
+                 "The straight line: about 5.2 marks more for each hour of study, and R squared 0.69."),
+                ('table.fit_curve(x="hours", y="marks", degree=2)',
+                 "A curve with one bend (hours and hours**2). R squared only goes from 0.69 to 0.70, so the "
+                 "bend adds little: the straight line is enough here."),
+                ("chart = table.chart()", "Start a chart of the same table."),
+                ('chart.dots(x="hours", y="marks")', "The dots."),
+                ("chart.fit_line()", "The same straight line, drawn."),
+                ("chart.fit_curve(degree=2)", "And the curve, to see how close they are."),
+                ('chart.save("lesson19_line_and_curve.png")', "Save it."),
+            ]),
+            ("A research question: how fast does each country grow? Growth by a fixed share each year "
+             "is the formula population = a * exp(b * (year - 2000)). Names that are columns (population, "
+             "year) are data; the other names (a, b) are the values to find.", [
+                ("import simplydata as sdata", "Load simplydata."),
+                ('table = sdata.table(sdata.example("growth"))', "Four countries, every two years."),
+                ('table.fit_formula("population = a * exp(b * (year - 2000))", for_each="country")',
+                 "One fit for each country, by nonlinear least squares (as R nls()). a is the population in "
+                 "2000 and b the growth rate: Cherria grows fastest, b = 0.0443, about 4.5 % a year."),
+                ("chart = table.chart()", "Start a chart."),
+                ('chart.dots(x="year", y="population", colour="country")', "The data, one colour per country."),
+                ('chart.fit_formula("population = a * exp(b * (year - 2000))")',
+                 "The fitted curve of each country, with the same values as the table word."),
+                ('chart.save("lesson19_growth.png")', "Save it."),
+            ]),
+            ("Finding and solving: sdata.find_smallest, sdata.find_biggest and sdata.solve work on a "
+             "formula. The names in it are what to find; between= says where to look.", [
+                ("import simplydata as sdata", "Load simplydata."),
+                ('sdata.find_smallest("x**2 - 4*x + 1", between=[0, 5])',
+                 "The smallest value is -3, at x = 2. The method and its R name are printed (R optimize())."),
+                ('sdata.find_biggest("3*x + 2*y", rules=["x + y <= 4", "x + 3*y <= 6", "x >= 0", "y >= 0"])',
+                 "The biggest value under rules: 12, at x = 4 and y = 0. Everything is a straight line, so "
+                 "simplydata uses linear programming and says which rules are reached exactly."),
+                ('sdata.solve("x**3 - 2*x = 5", between=[0, 3])',
+                 "The value of x that makes both sides equal: 2.09455. Every solution in the range is found."),
+                ('table = sdata.table(sdata.example("growth"))', "Back to the growth table."),
+                ('table.keep_rows("country", equal_to="Applia")', "Keep one country."),
+                ('fit = table.fit_formula("population = a * exp(b * (year - 2000))")',
+                 "Fit the growth formula and keep the result, a one-row table with a and b."),
+                ('sdata.solve("a * exp(b * (year - 2000)) = 20", between=[2000, 2050], known=fit)',
+                 "known=fit puts the fitted a and b into the equation: Applia reaches 20 million in about "
+                 "2017 (year = 2017.24). A fitted curve answers questions, not only draws a line."),
+            ]),
+        ],
+        notes=[
+            "Fitting is the same idea every time: a line, a curve or a formula is moved until it is as "
+            "close to the points as it can be (least squares). The printed sentence says how sure each "
+            "value is (its 95 % confidence interval).",
+            "A curve with a high degree= can wiggle through every point and still say nothing true. Choose "
+            "the simplest line or formula that follows the data, and a formula whose values mean something "
+            "(here b is a growth rate).",
+            'If a formula fit fails, give start values near the answer: start={"a": 10, "b": 0.03}.',
+            "find_smallest with between= finds one lowest point; when the curve has several dips it says "
+            'so, and search="whole range" looks everywhere. solve with between= finds every crossing.',
+            "Names from other tools point to these words: minimize, optimise and argmin to find_smallest, "
+            "fsolve, brentq and uniroot to solve, curve_fit and nls to fit_formula, polyfit to fit_curve.",
+        ],
+        task=[
+            'Fit a curve of degree 3 to "marks" against "hours". Does R squared go up much from the straight '
+            "line?",
+            'With the weather table, keep the city Sunnyvale and fit "temperature = a + b * cos(2 * pi * '
+            '(month_number - c) / 12)" with start={"a": 15, "b": 8, "c": 7}. In which month is it warmest (c)?',
+            "Try to remember without looking back: which word finds where a formula is biggest, and which "
+            'word finds where the two sides of an equation are equal? Use them on "x * (10 - x)" between 0 '
+            'and 10, and on "x**2 = 2" between 0 and 2.',
+        ],
+        solutions=[
+            (_sx("""\
+                import simplydata as sdata
+                table = sdata.table(sdata.example("marks"))
+                table.fit_curve(x="hours", y="marks", degree=3)"""),
+             "R squared is 0.71, against 0.69 for the straight line: the extra bends add very little."),
+            (_sx("""\
+                import simplydata as sdata
+                table = sdata.table(sdata.example("weather"))
+                table.keep_rows("city", equal_to="Sunnyvale")
+                table.fit_formula("temperature = a + b * cos(2 * pi * (month_number - c) / 12)",
+                                  start={"a": 15, "b": 8, "c": 7})"""),
+             "c = 7.19: the warmest time is in July; a = 17.0 is the average and b = 8.18 how far it swings."),
+            (_sx("""\
+                import simplydata as sdata
+                sdata.find_biggest("x * (10 - x)", between=[0, 10])
+                sdata.solve("x**2 = 2", between=[0, 2])"""),
+             "find_biggest gives 25 at x = 5, and solve gives x = 1.41421, the square root of 2."),
+        ],
+        words=["table.fit_line", "table.fit_curve", "table.fit_formula", "fit_line", "fit_curve", "fit_formula",
+               "sdata.find_smallest", "sdata.find_biggest", "sdata.solve"],
+    ),
+    dict(
+        title="Distributions, chances and values between points",
+        learn=[
+            "how to ask a distribution for chances, percentiles and cut-offs",
+            "how to find which distribution fits your data, and check it",
+            "how to estimate values between the points you measured",
+        ],
+        parts=[
+            ("A distribution says how likely each value is. Start with the bell curve (normal): marks "
+             "with an average of 50 and a standard deviation of 10.", [
+                ("import simplydata as sdata", "Load simplydata."),
+                ('dist = sdata.distribution("normal", average=50, standard_deviation=10)',
+                 "Make the distribution. R's names (mean=, sd=) work too."),
+                ("dist.chance(above=80)", "The chance of a mark above 80: 0.135 %. The R code that gives "
+                                          "the same answer is printed too: pnorm(80, ...)."),
+                ("dist.chance(between=[40, 60])", "68.3 %: about two in three are within one standard "
+                                                  "deviation of the average."),
+                ("dist.percentile(95)", "95 % of marks are below 66.4."),
+                ("dist.cut_off(above=0.025)", "The cut-off with a 2.5 % chance above it: 69.6. Tests use "
+                                              "such cut-offs (critical values)."),
+                ("chart = dist.chart()", "A chart of the bell curve."),
+                ('chart.save("lesson20_normal.png")', "Save it."),
+            ]),
+            ("A research question: pupils' days absent are counts (0, 1, 2 ...). Do they vary as a "
+             "Poisson distribution expects, or more? The words that fit are fit_distribution and "
+             "compare_distributions.", [
+                ("import simplydata as sdata", "Load simplydata."),
+                ('table = sdata.table(sdata.example("school"))', "180 pupils and their days absent."),
+                ('table.compare_distributions("days_absent", distributions=("poisson", "negative binomial"))',
+                 "Both are fitted by maximum likelihood and ranked by AIC: the negative binomial wins by 7, "
+                 "so the counts vary more than Poisson allows."),
+                ('fit = table.fit_distribution("days_absent", "negative binomial")',
+                 "Fit it and keep the fitted distribution."),
+                ("fit.chance(at_least=10)", "The chance a pupil misses 10 days or more: 0.66 %."),
+                ("chart = table.chart()", "Start a chart."),
+                ('chart.histogram(x="days_absent", show="density")', "The counts, as shares."),
+                ('chart.fit_distribution("negative binomial")', "The fitted chance of each count, on top."),
+                ('chart.save("lesson20_absent.png")', "Save it."),
+            ]),
+            ("Values between points: you measured every two years, but you need 2001. values_at joins "
+             "the dots (straight lines, or a smooth curve) and reads off the value; map_of does it across "
+             "a whole map.", [
+                ("import simplydata as sdata", "Load simplydata."),
+                ('table = sdata.table(sdata.example("growth"))', "Population every two years."),
+                ('estimates = table.values_at("population", at={"year": [2001, 2011]}, for_each="country")',
+                 "Straight lines between the known points (linear interpolation, as R approx()), for "
+                 "each country."),
+                ("estimates.show()", "A new table with the estimates."),
+                ('island = sdata.table(sdata.example("island"))', "Heights measured on a 15 x 15 grid."),
+                ('heights = island.map_of("height", across=["east", "north"], steps=60, '
+                 'joined_by="smooth surface")', "A finer 60 x 60 map, with a smooth surface through every "
+                                                "point (a thin-plate spline)."),
+                ("chart = heights.chart()", "A chart of the new map."),
+                ('chart.contour(x="east", y="north", z="height")', "Its contour map."),
+                ('chart.save("lesson20_map.png")', "Save it."),
+            ]),
+        ],
+        notes=[
+            "chance() gives back a share from 0 to 1 and prints it as a percent. above= and below= leave "
+            "the value itself out, at_least= and at_most= keep it in, as in keep_rows. For counts that "
+            "matters: at_most=3 means 3 or fewer.",
+            "density_at() is the height of the curve, not a chance: a chance is an area under the curve, "
+            "so ask chance(between=[...]).",
+            "A fitted distribution is only as good as its fit. Compare a few with compare_distributions, "
+            'and test the shape with table.compare_shape_to("column", "gamma").',
+            "Values between points are estimates. Straight lines are the safe choice; a smooth curve can "
+            'swing above or below the points (joined_by="curve without overshoot" never does). Outside '
+            "the measured range the cells stay empty unless you ask for outside=.",
+            "Names from other tools point to these words: pnorm and cdf to chance, qnorm and ppf to "
+            "percentile, dnorm and pdf to density_at, interpolate and approx to values_at.",
+        ],
+        task=[
+            'Ten coins are thrown. With sdata.distribution("binomial", tries=10, chance=0.5), what is the '
+            "chance of 8 heads or more?",
+            'Which fits the daily "sales" of the shop table best: normal, lognormal, gamma or weibull? Then '
+            'check the best one with compare_shape_to.',
+            "Try to remember without looking back: which word estimates a value between the points you "
+            'measured? Use it to estimate the temperature of each city at month_number 6.5, joined by a '
+            "smooth curve.",
+        ],
+        solutions=[
+            (_sx("""\
+                import simplydata as sdata
+                coins = sdata.distribution("binomial", tries=10, chance=0.5)
+                coins.chance(at_least=8)"""),
+             "5.47 %: 8, 9 or 10 heads happen about once in 18 tries."),
+            (_sx("""\
+                import simplydata as sdata
+                table = sdata.table(sdata.example("shop"))
+                table.compare_distributions("sales")
+                table.compare_shape_to("sales", "lognormal")"""),
+             "Lognormal has the smallest AIC, and its shape could well fit (p = 0.65)."),
+            (_sx("""\
+                import simplydata as sdata
+                table = sdata.table(sdata.example("weather"))
+                estimates = table.values_at("temperature", at={"month_number": [6.5]},
+                                            joined_by="smooth curve", for_each="city")
+                estimates.show()"""),
+             "values_at joins the months with a smooth curve and reads off each city at 6.5."),
+        ],
+        words=["sdata.distribution", "dist.chance", "dist.percentile", "dist.cut_off", "dist.chart",
+               "table.compare_distributions", "table.fit_distribution", "fit_distribution", "table.values_at",
+               "table.map_of", "curve"],
+    ),
 ]
 
 def _wrap(text: str, indent: str = "", width: int = WIDTH) -> str:
@@ -3094,8 +3408,8 @@ def _list_lessons() -> None:
     print(f"Learn simplydata in one day: {len(LESSONS)} lessons of about 30 minutes.")
     print("Lessons 1 to 8 teach charts, lessons 9 to 12 teach tables, lesson 13 teaches numbers,")
     print("lesson 14 teaches statistical tests and lesson 15 puts it all together, from a question")
-    print("to a figure. Lessons 16 to 18 go further: models, patterns across many columns,")
-    print("survival, and planning how big a study must be.\n")
+    print("to a figure. Lessons 16 to 20 go further: models, patterns across many columns,")
+    print("survival and planning a study, fitting curves and finding answers, and distributions.\n")
     for i, les in enumerate(LESSONS, start=1):
         print(f"  sdata.lesson({i}){' ' * (5 - len(str(i)))}{les['title']}")
     print("\nStart with sdata.lesson(1). Each lesson ends with a small task to try yourself.")

@@ -1,0 +1,11 @@
+Fitted "population = a * exp(b * (year - 2000))" for each "country":
+  Applia (13 rows): a = 12.0 (95 % CI 11.8 to 12.2), b = 0.0297 (95 % CI 0.0289 to 0.0306). Residual standard error 0.179 on 11 degrees of freedom; R squared = 1.00 (only a rough guide for a curve).
+  Bananaland (13 rows): a = 29.9 (95 % CI 29.5 to 30.3), b = 0.0122 (95 % CI 0.0114 to 0.0131). Residual standard error 0.371 on 11 degrees of freedom; R squared = 0.99 (only a rough guide for a curve).
+  Cherria (13 rows): a = 4.99 (95 % CI 4.88 to 5.10), b = 0.0443 (95 % CI 0.0431 to 0.0456). Residual standard error 0.127 on 11 degrees of freedom; R squared = 1.00 (only a rough guide for a curve).
+  Dateland (13 rows): a = 44.7 (95 % CI 44.3 to 45.1), b = 0.00406 (95 % CI 0.00342 to 0.00470). Residual standard error 0.368 on 11 degrees of freedom; R squared = 0.95 (only a rough guide for a curve).
+Values found: a, b. Data: year. Method: nonlinear least squares (Levenberg-Marquardt), as R nls(); intervals are estimate +/- t x standard error (R confint() on nls profiles the likelihood and can differ a little).
+Fitted "population = a * exp(b * (year - 2000))" for "Applia" to 13 rows: a = 12.0 (95 % CI 11.8 to 12.2), b = 0.0297 (95 % CI 0.0289 to 0.0306). Residual standard error 0.179 on 11 degrees of freedom.
+Fitted "population = a * exp(b * (year - 2000))" for "Bananaland" to 13 rows: a = 29.9 (95 % CI 29.5 to 30.3), b = 0.0122 (95 % CI 0.0114 to 0.0131). Residual standard error 0.371 on 11 degrees of freedom.
+Fitted "population = a * exp(b * (year - 2000))" for "Cherria" to 13 rows: a = 4.99 (95 % CI 4.88 to 5.10), b = 0.0443 (95 % CI 0.0431 to 0.0456). Residual standard error 0.127 on 11 degrees of freedom.
+Fitted "population = a * exp(b * (year - 2000))" for "Dateland" to 13 rows: a = 44.7 (95 % CI 44.3 to 45.1), b = 0.00406 (95 % CI 0.00342 to 0.00470). Residual standard error 0.368 on 11 degrees of freedom.
+Method: nonlinear least squares (Levenberg-Marquardt), as R nls(); intervals are estimate +/- t x standard error (R confint() on nls profiles the likelihood and can differ a little).

@@ -16,6 +16,7 @@ import narwhals as nw
 
 from .._data import load_native
 from .._errors import (SimplydataError, choice_error, column_error, friendly, missing_word_error, old_word,
+                       other_name_error,
                        suggest)
 
 HISTORY_LIMIT = 30  # how many steps undo() can take back
@@ -65,6 +66,7 @@ class BaseTable:
         "remove_empty_rows": "remove_rows_with_empty_cells",
         "fill_empty": "fill_empty_cells",
         "done": ("as_pandas", "_done"),  # done() gave back Polars for Polars tables, so it still does
+        "fit_straight_line": "fit_line",  # the same word as chart.fit_line
     }
 
     def __init__(self, data=None, sheet=None, fast: bool = False, _frame=None, _reading=None):
@@ -280,7 +282,7 @@ class BaseTable:
             raise AttributeError(name)
         if name in self._OLD_WORDS:
             return old_word(self, name, self._OLD_WORDS)
-        raise missing_word_error(name, self._word_names())
+        raise other_name_error("table", name, self._word_names()) or missing_word_error(name, self._word_names())
 
     def __setattr__(self, name, value):
         if name.startswith("_"):

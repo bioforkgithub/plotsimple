@@ -1,0 +1,13 @@
+The smallest value of x**2 - 4*x + 1 between 0 and 5 is -3, at x = 2.
+Method: Brent's method on the range, as R optimize().
+The biggest value of 3*x + 2*y under the 4 rules is 12, at x = 4, y = 0.
+Method: linear programming (HiGHS), as R lpSolve::lp(), because the formula and every rule are straight-line (linear). Value of one more on the right of each rule that limits the answer (shadow price): x + y <= 4: 3; y >= 0: -1.
+x + y <= 4 and y >= 0 are reached exactly; the other rules have room to spare.
+x**3 - 2*x = 5 between 0 and 3 when x = 2.09455.
+Method: Brent's method, as R uniroot(); every sign change on 1000 steps across the range was searched, so all solutions that cross were found (one where the curve only touches, like x**2 = 0, can be missed).
+Kept 13 of 52 rows.
+Fitted "population = a * exp(b * (year - 2000))" to 13 rows: a = 12.0 (95 % CI 11.8 to 12.2), b = 0.0297 (95 % CI 0.0289 to 0.0306). Residual standard error 0.179 on 11 degrees of freedom; R squared = 1.00 (only a rough guide for a curve).
+Values found: a, b. Data: year. Method: nonlinear least squares (Levenberg-Marquardt), as R nls(); intervals are estimate +/- t x standard error (R confint() on nls profiles the likelihood and can differ a little).
+Using a = 11.9771, b = 0.0297362 from known=.
+a * exp(b * (year - 2000)) = 20 between 2000 and 2050 when year = 2017.24.
+Method: Brent's method, as R uniroot(); every sign change on 1000 steps across the range was searched, so all solutions that cross were found (one where the curve only touches, like x**2 = 0, can be missed).

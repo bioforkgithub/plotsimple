@@ -48,9 +48,7 @@ Choices (the same defaults as R, so results can be checked there):
   counted.
 * The groups column is for_each= in every test (between= was its old name and still works
   for one release, with a note).
-* fit_straight_line: ordinary least squares (R lm(y ~ x)), t-based 95 % intervals.
-* fit_formula: nonlinear least squares (scipy curve_fit, Levenberg-Marquardt), standard
-  errors as in R nls().
+* fit_line, fit_curve and fit_formula: see fitting.py (R lm() and nls()).
 
 Assumption checks are notes, never silent switches. For tests on averages, each group with
 3 to 5000 values is checked with the Shapiro-Wilk test. With fewer than 30 values a
@@ -68,7 +66,6 @@ from __future__ import annotations
 import ast
 import difflib
 import math
-import warnings
 
 import narwhals as nw
 import numpy as np
@@ -469,6 +466,7 @@ class _FitReader(_FormulaReader):
 
 
 # ---------------------------------------------------------------------------- the words
+# fit_line, fit_curve and fit_formula live in fitting.py (FittingWords, a word group of Table).
 class StatTestWords:
     # ------------------------------------------------------------------ helpers
     def _result_table(self, row: dict):
@@ -1330,7 +1328,7 @@ class StatTestWords:
 
     # ------------------------------------------------------------------ compare_shape_to
     @friendly
-    def compare_shape_to(self, column=None, shape="normal", for_each=None):
+    def compare_shape_to(self, column=None, shape="normal", for_each=None, seed=1, samples=9999):
         """Do the values look bell-shaped (normal), or are they too far from it to be chance?
 
         table.compare_shape_to("marks", "normal", for_each="class")   (with sdata.example("marks"))
@@ -1340,13 +1338,22 @@ class StatTestWords:
         few values the test can miss a different shape, and with many values (30 or more)
         it flags even tiny, harmless differences, while tests on averages are then usually
         fine anyway (the central limit theorem). Gives back a table with one row per group.
+
+        Any other smooth shape works too: table.compare_shape_to("days", "gamma") fits the
+        distribution (as table.fit_distribution) and runs the Anderson-Darling test, with a
+        p-value from samples=9999 simulated samples that are each fitted again (seed=1,
+        printed; the same seed gives the same p-value). Most shapes take a second or two; t,
+        Cauchy and F take minutes, and a note says so before a long run. samples=999 is ten
+        times quicker and gives a rougher p-value.
         """
         step = "compare_shape_to"
         example = 'with sdata.example("marks"): table.compare_shape_to("marks", "normal", for_each="class")'
         self._need_name(step, "the column", column, example)
         name = shape.strip().lower() if isinstance(shape, str) else shape
+        if not isinstance(name, str) or not name:
+            raise SimplydataError(f'{step}() needs a shape in quotes, such as "normal" or "gamma".\nFor example, {example}')
         if name not in SHAPES:
-            raise choice_error(step, "shape", shape, list(SHAPES))
+            return self._compare_other_shape(step, column, shape, for_each, seed, samples)
         groups = self._group_columns(step, for_each, [column]) if for_each is not None else []
         frame = self._number_frame(step, [column])
         values = frame.select(nw.col(column).cast(nw.Float64))[column].to_numpy()
@@ -1415,6 +1422,49 @@ class StatTestWords:
         data = {k: [r[k] for r in rows] for k in rows[0]}
         return self._new_table(nw.from_dict(data, backend=self._frame.implementation))
 
+    def _compare_other_shape(self, step, column, shape, for_each, seed, samples):
+        """compare_shape_to() for any shape but normal: the engine is distributions.shape_test."""
+        from .._shape_monte_carlo import time_note
+        from ..distributions import _find_family, _shape_test_start, check_samples, shape_test
+
+        try:
+            _find_family(shape, step)
+        except SimplydataError as error:  # the option here is shape=: say so in the did-you-mean
+            raise SimplydataError(str(error).replace('Did you mean "', 'Did you mean shape="')) from None
+        if isinstance(seed, bool) or not isinstance(seed, (int, np.integer)):
+            raise SimplydataError("seed= needs a whole number, such as seed=1 (the same seed gives the same p-value).")
+        check_samples(samples, step)
+        groups = self._group_columns(step, for_each, [column]) if for_each is not None else []
+        frame = self._number_frame(step, [column])
+        values = frame.select(nw.col(column).cast(nw.Float64))[column].to_numpy()
+        keys = [_key(r) for r in frame.select(groups).rows()] if groups else [()] * len(values)
+        by_group: dict = {}
+        for key, v in zip(keys, values):
+            by_group.setdefault(key, [])
+            if not math.isnan(v):
+                by_group[key].append(v)
+        order = sorted(by_group, key=lambda k: tuple(_order(v) for v in k))
+        _skipped_note(int(np.isnan(values).sum()), [column])
+        started = [_shape_test_start(np.asarray(by_group[key], dtype=float), shape, seed, samples, column)
+                   for key in order]
+        note = time_note(sum(run[3].pilot() for run in started), samples, groups=len(started))
+        if note:
+            print(note)
+        rows, method = [], None
+        for key, ready in zip(order, started):
+            label = " / ".join(_say_label(x) for x in key)
+            result = shape_test(None, shape, seed=seed, samples=samples, column=column, _started=ready)
+            sentence = result["sentence"]
+            print(f"  {label}: {sentence}" if groups else sentence)
+            method = result["method"]
+            row = {g: k for g, k in zip(groups, key)}
+            row.update({k: result[k] for k in ("test", "what it compares", "statistic name", "statistic", "p-value",
+                                               "rows", "Monte Carlo samples", "seed")})
+            rows.append(row)
+        print(method)
+        data = {k: [r[k] for r in rows] for k in rows[0]}
+        return self._new_table(nw.from_dict(data, backend=self._frame.implementation))
+
     # ------------------------------------------------------------------ many p-values at once
     @friendly
     def add_adjusted_p_value_column(self, name=None, from_column="p-value", method="holm"):
@@ -1478,156 +1528,3 @@ class StatTestWords:
                   "not counted.")
         return self._change(f'add adjusted p-value column "{name}" from {from_column} ({label})',
                             base.with_columns(new))
-
-    # ------------------------------------------------------------------ fitting
-    @friendly
-    def fit_straight_line(self, x=None, y=None):
-        """Fit the straight line y = slope * x + intercept that best follows the points.
-
-        table.fit_straight_line(x="hours", y="marks")   (with sdata.example("marks"))
-        Ordinary least squares (the same as R lm(y ~ x)). Prints how much y goes up for each
-        1 more of x, with its 95 % confidence interval and p-value, and R squared: the share
-        of the differences in y that the line explains. Rows with an empty cell in x or y
-        are skipped. A link does not show that x causes y. Gives back a one-row table.
-        """
-        step = "fit_straight_line"
-        example = 'with sdata.example("marks"): table.fit_straight_line(x="hours", y="marks")'
-        self._need_name(step, "x=", x, example)
-        self._need_name(step, "y=", y, example)
-        if x == y:
-            raise SimplydataError(f"{step}() needs two different columns, for example {example}.")
-        xs, ys = self._number_values(step, [x, y])
-        if len(xs) < 3:
-            raise SimplydataError(f'{step}() needs at least 3 rows with a number in both "{x}" and "{y}".')
-        if np.ptp(xs) == 0:
-            raise SimplydataError(f'Every number in "{x}" is the same, so no line can be fitted.')
-        from scipy import stats
-
-        fit = stats.linregress(xs, ys)
-        n = len(xs)
-        df = n - 2
-        tq = float(stats.t.ppf(0.975, df))
-        slope, intercept = float(fit.slope), float(fit.intercept)
-        se_s, se_i = float(fit.stderr), float(fit.intercept_stderr)
-        r2 = float(fit.rvalue) ** 2
-        p = float(fit.pvalue)
-        row = {"test": "straight-line fit (least squares)", "what it compares": f'"{y}" against "{x}"',
-               "slope": slope, "slope 95 % CI low": slope - tq * se_s, "slope 95 % CI high": slope + tq * se_s,
-               "slope standard error": se_s, "intercept": intercept,
-               "intercept 95 % CI low": intercept - tq * se_i, "intercept 95 % CI high": intercept + tq * se_i,
-               "intercept standard error": se_i, "statistic name": "t",
-               "statistic": slope / se_s if se_s > 0 else math.inf, "degrees of freedom": float(df),
-               "p-value": p, "R squared": r2, "rows": n}
-        direction = "up" if slope >= 0 else "down"
-        print(f'"{y}" goes {direction} by {_num(abs(slope))} for each 1 more "{x}" (95 % CI {_num(row["slope 95 % CI low"])} '
-              f'to {_num(row["slope 95 % CI high"])}); this slope {_chance(p)}. R squared = {r2:.2f}: "{x}" explains '
-              f'about {round(r2 * 100)} % of the differences in "{y}".')
-        print(f"Line: {y} = {_num(slope)} * {x} + {_num(intercept)}, by least squares over {n} rows. "
-              "A link does not show that one thing causes the other.")
-        residuals = ys - (intercept + slope * xs)
-        for note in _shape_notes([("the line", residuals)], what="the distances from the line"):
-            print(note.replace('a safer test here: based_on="ranks".',
-                               "the p-value and confidence intervals may be off."))
-        return self._result_table(row)
-
-    @friendly
-    def fit_formula(self, formula=None, start=None):
-        """Find the values in a formula that make it follow the data best.
-
-        table.fit_formula("population = a * exp(b * (year - 2000))")   (with sdata.example("growth"))
-        Write the column to fit on the left of =. On the right, names that are columns are
-        data; any other name (such as a, b or rate) is a value to find. Uses nonlinear least
-        squares (SciPy curve_fit; standard errors as in R nls()). Every value to find starts
-        at 1; give better start values with start={"a": 10, "b": 0.03} if the fit fails.
-        Prints each value with its standard error, and R squared (only a rough guide for a
-        curve). Rows with an empty cell are skipped. Gives back a one-row table.
-        """
-        step = "fit_formula"
-        if not isinstance(formula, str) or formula.count("=") != 1 or "==" in formula:
-            raise _fit_error(
-                'fit_formula() needs a formula with one = sign: the column to fit on the left, for example\n'
-                'table.fit_formula("marks = a * hours + b").'
-            )
-        left, right = (part.strip() for part in formula.split("="))
-        if left.startswith("`") and left.endswith("`"):
-            left = left[1:-1]
-        self._need_columns(left)
-        reader = _FitReader(right, self._columns)
-        try:
-            model = reader.read()
-        except SimplydataError as error:
-            if reader.finished and not reader.used:
-                raise _fit_error(
-                    f'The right side of the formula has no column in it, so there is nothing to fit "{left}" to.'
-                ) from None
-            raise SimplydataError(str(error).replace(FORMULA_HELP, FIT_HELP)) from None
-        names = reader.values_to_find
-        if not names:
-            raise _fit_error("The formula has no value to find. Use a name that is not a column, such as a or b.")
-        if left in reader.used:
-            raise _fit_error(f'"{left}" is on both sides of the formula.')
-        start = {} if start is None else start
-        if not isinstance(start, dict) or not all(_is_number(v) for v in start.values()):
-            raise SimplydataError('start= should look like {"a": 10, "b": 0.5}: a name and a number for each value.')
-        unknown = [k for k in start if k not in names]
-        if unknown:
-            raise SimplydataError(f"start= has {_list_words(repr(k) for k in unknown)}, which "
-                                  f"{'is' if len(unknown) == 1 else 'are'} not in the formula. "
-                                  f"Values to find: {', '.join(names)}.")
-        columns = [left] + list(reader.used)
-        arrays = self._number_values(step, columns)
-        ys = arrays[0]
-        data = dict(zip(columns[1:], arrays[1:]))
-        n = len(ys)
-        if n <= len(names):
-            raise SimplydataError(f"{step}() needs more rows ({n}) than values to find ({len(names)}).")
-        p0 = [float(start.get(k, 1.0)) for k in names]
-
-        def curve(_, *theta):
-            with np.errstate(all="ignore"):
-                out = model(dict(zip(names, theta)), data)
-            return np.broadcast_to(np.asarray(out, dtype=float), ys.shape)
-
-        start_text = "start={" + ", ".join(f'"{k}": {v:g}' for k, v in zip(names, p0)) + "}"
-        start_hint = "start={" + ", ".join(f'"{k}": ...' for k in names) + "}"
-        if not np.all(np.isfinite(curve(None, *p0))):
-            raise SimplydataError(
-                f"With the start values ({start_text}) the formula gives impossible numbers, such as the log of a "
-                "negative number or a division by 0.\nGive start values close to what you expect, for example "
-                f"table.fit_formula(\"{formula}\", {start_hint})."
-            )
-        from scipy import optimize
-
-        uncertain = False
-        with warnings.catch_warnings(record=True) as caught:
-            warnings.simplefilter("always")
-            try:
-                found, cov = optimize.curve_fit(curve, np.zeros(n), ys, p0=p0, maxfev=10000)
-            except (RuntimeError, ValueError, optimize.OptimizeWarning):
-                raise SimplydataError(
-                    f"simplydata could not fit the formula: the search for {_list_words(names)} did not settle "
-                    f"(it began at {start_text}).\nTry start values close to what you expect, for example "
-                    f"{start_hint}, or check the formula."
-                ) from None
-            uncertain = any(issubclass(w.category, optimize.OptimizeWarning) for w in caught)
-        errors = np.sqrt(np.diag(cov)) if cov is not None else np.full(len(names), np.inf)
-        fitted = curve(None, *found)
-        if not np.all(np.isfinite(fitted)):
-            raise SimplydataError("The fit ended on values that give impossible numbers. Try other start values.")
-        rss = float(((ys - fitted) ** 2).sum())
-        tss = float(((ys - ys.mean()) ** 2).sum())
-        r2 = 1 - rss / tss if tss > 0 else math.nan
-        row = {"test": "formula fit (nonlinear least squares)", "formula": formula}
-        for name, value, error in zip(names, found, errors):
-            row[name] = float(value)
-            row[f"standard error of {name}"] = float(error)
-        row.update({"R squared": r2, "rows": n})
-        parts = ", ".join(f"{k} = {_num(v)} +/- {_num(e)}" for k, v, e in zip(names, found, errors))
-        print(f'Fitted "{formula}" to {n} rows: {parts} (value +/- standard error). R squared = {r2:.2f} '
-              "(only a rough guide for a curve).")
-        print(f"Values found: {', '.join(names)}. Data: {', '.join(reader.used)}. "
-              "Method: nonlinear least squares, as R nls().")
-        if uncertain or not np.all(np.isfinite(errors)):
-            print("Note: the standard errors could not be worked out well: the data do not pin down every value. "
-                  "Try a simpler formula or more data.")
-        return self._result_table(row)

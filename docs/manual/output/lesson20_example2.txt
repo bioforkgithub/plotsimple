@@ -1,0 +1,7 @@
+Best by AIC: negative binomial (AIC 744.4), then poisson (+7.0).
+A difference below 2 is too small to choose between them. Method: maximum likelihood for each, ranked by AIC, as R fitdistrplus::gofstat().
+Fitted a negative binomial distribution to "days_absent" (180 values): size = 8.79 (standard error 3.64), average = 3.09 (0.152). Log-likelihood -370.2, AIC 744.4.
+Method: maximum likelihood, as R MASS::fitdistr(x, "negative binomial").
+The chance of 10 or more is 0.663 % (negative binomial, size 8.79286, average 3.09444; R: pnbinom(9, size = 8.792862164, mu = 3.094444444, lower.tail = FALSE)).
+Fitted a negative binomial distribution to "days_absent" (180 values): size = 8.79 (standard error 3.64), average = 3.09 (0.152). Log-likelihood -370.2, AIC 744.4.
+Method: maximum likelihood, as R MASS::fitdistr(x, "negative binomial").

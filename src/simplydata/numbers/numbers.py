@@ -10,12 +10,13 @@ import numpy as np
 
 from .._errors import SimplydataError, friendly
 from ._base import BaseNumbers, amount, check_seed, check_whole, is_number, plain, to_array
+from .distribution_words import DistributionNumberWords
 from .maths import MathsWords
 from .picking import PickingWords
 from .summaries import GridSummaryWords, SummaryWords
 
 
-class Numbers(PickingWords, MathsWords, SummaryWords, BaseNumbers):
+class Numbers(PickingWords, MathsWords, SummaryWords, DistributionNumberWords, BaseNumbers):
     """A list of numbers. Make one with sdata.numbers([3, 5, 2, 8]), then add steps: nums.add(5)."""
 
     _is_simplydata_numbers = True

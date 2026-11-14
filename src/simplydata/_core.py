@@ -25,7 +25,7 @@ from matplotlib.figure import Figure
 
 from . import _style
 from ._data import load
-from ._errors import SimplydataError, choice_error, missing_word_error, old_word, suggest
+from ._errors import SimplydataError, choice_error, missing_word_error, old_word, other_name_error, suggest
 from ._units import check_number
 
 # Phases decide drawing order, whatever order the user wrote the steps in.
@@ -414,7 +414,7 @@ class BaseChart:
             raise AttributeError(name)
         if self._OLD_WORDS.get(name) in self._word_names():
             return old_word(self, name, self._OLD_WORDS)
-        raise missing_word_error(name, self._word_names())
+        raise other_name_error("chart", name, self._word_names()) or missing_word_error(name, self._word_names())
 
     def __setattr__(self, name, value):
         # chart.title = "x" would silently do nothing; tell the user what to write instead.

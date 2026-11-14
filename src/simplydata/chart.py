@@ -6,6 +6,7 @@ from ._core import BaseChart
 from ._errors import SimplydataError, friendly
 from .words.axes import AxesWords
 from .words.charts import ChartWords
+from .words.curves import CurveWords
 from .words.layout import LayoutWords
 from .words.look import LookWords
 from .words.stats import StatsWords
@@ -13,7 +14,8 @@ from .words.survival import SurvivalChartWords
 from .words.text import TextWords
 
 
-class Chart(ChartWords, StatsWords, SurvivalChartWords, TextWords, AxesWords, LookWords, LayoutWords, BaseChart):
+class Chart(ChartWords, StatsWords, CurveWords, SurvivalChartWords, TextWords, AxesWords, LookWords, LayoutWords,
+            BaseChart):
     """A chart. Make one with sdata.chart(...), then add steps: chart.bars(...), chart.title_top(...)."""
 
 

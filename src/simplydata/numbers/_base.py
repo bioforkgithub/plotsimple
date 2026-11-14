@@ -27,7 +27,7 @@ import sys
 
 import numpy as np
 
-from .._errors import MissingWordError, SimplydataError, friendly, old_word, suggest
+from .._errors import MissingWordError, SimplydataError, friendly, old_word, other_name_error, suggest
 
 HISTORY_LIMIT = 30  # how many steps undo() can take back
 
@@ -501,6 +501,9 @@ class BaseNumbers:
         if name in self._OLD_WORDS:
             return old_word(self, name, self._OLD_WORDS)
         known = self._word_names()
+        pointer = other_name_error("numbers", name, known, prefix=self._name)
+        if pointer is not None:
+            raise pointer
         target = HINTS.get(name)
         if target is None and name.endswith("_of") and name[:-3] in known:
             target = name[:-3]

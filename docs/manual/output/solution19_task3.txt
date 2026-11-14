@@ -1,0 +1,4 @@
+The biggest value of x * (10 - x) between 0 and 10 is 25, at x = 5.
+Method: Brent's method on the range, as R optimize().
+x**2 = 2 between 0 and 2 when x = 1.41421.
+Method: Brent's method, as R uniroot(); every sign change on 1000 steps across the range was searched, so all solutions that cross were found (one where the curve only touches, like x**2 = 0, can be missed).

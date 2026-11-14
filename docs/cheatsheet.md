@@ -27,7 +27,8 @@ grid = sdata.number_grid([[3, 5, 2], [8, 6, 4]])
 
 In Python, `sdata.help("bars")` explains any word, `sdata.words()` prints this list and
 `sdata.lesson(1)` starts the one-day course (lessons 9 to 12 are about tables, lesson 13
-about numbers, lesson 14 about statistical tests and lesson 15 puts it all together).
+about numbers, lesson 14 about statistical tests, lesson 15 puts it all together, and lessons 16 to 20
+go further: models, patterns, survival, fitting curves, finding and solving, and distributions).
 
 Every example runs as written on the practice table in the *Table* column:
 for example `weather = sdata.example("weather")` then `chart = sdata.chart(weather)`,
@@ -77,6 +78,9 @@ and `a`, `b` in `sdata.side_by_side(a, b)` are charts you made first.
 | `error_bars` | `chart.error_bars("standard error")` | marks | Error bars on dots or lines. |
 | `fit_line` | `chart.fit_line()` | marks | A straight line that fits the dots best (linear regression). |
 | `fit_curve` | `chart.fit_curve(degree=2)` | weather | A curve that fits the dots best. |
+| `fit_formula` | `chart.fit_formula("population = a * exp(b * (year - 2000))")` | growth | The curve of a formula fitted to the dots. |
+| `fit_distribution` | `chart.fit_distribution("normal")` | marks | The best-fitting distribution's curve over a histogram or density chart. |
+| `curve` | `chart.curve("y = 100 * exp(-0.3 * x)", between=[0, 10])` | marks | Draw a formula, or a distribution, as a curve. |
 | `smooth_line` | `chart.smooth_line()` | weather | A smooth line that follows the dots (LOWESS). |
 | `density` | `chart.density(x="marks", colour="class")` | marks | A smooth curve that is high where many values are. |
 | `count_bars` | `chart.count_bars(x="fruit", colour="shop")` | fruit | Bars that count how many rows each group has. |
@@ -282,13 +286,57 @@ and `a`, `b` in `sdata.side_by_side(a, b)` are charts you made first.
 | `compare_before_after` | `table.compare_before_after("Maths", "Science")` | marks | Did the values change from one column to the other, row by row, more than chance? |
 | `compare_average_to` | `table.compare_average_to("marks", 60)` | marks | Is the average of a column different from a number you choose, or could it be chance? |
 | `compare_counts` | `table.compare_counts("result", for_each="class")` | marks | Does how often each value turns up differ between groups, more than chance? |
-| `fit_straight_line` | `table.fit_straight_line(x="hours", y="marks")` | marks | Fit the straight line y = slope * x + intercept that best follows the points. |
-| `fit_formula` | `table.fit_formula("population = a * exp(b * (year - 2000))")` | growth | Find the values in a formula that make it follow the data best. |
 | `compare_shape_to` | `table.compare_shape_to("marks", "normal", for_each="class")` | marks | Do the values look bell-shaped (normal), or are they too far from it to be chance? |
 | `add_adjusted_p_value_column` | `table.add_adjusted_p_value_column("q", method="benjamini-hochberg")` | marks | Adjust p-values for testing many things at once, in a new column. |
 | `compare_spreads` | `table.compare_spreads("marks", for_each="class")` | marks | Do the groups differ in how spread out their values are, more than chance? |
 | `compare_counts_to` | `table.compare_counts_to("breakfast", expected={"yes": 0.6, "no": 0.4})` | school | Does how often each value turns up match the shares you expect, more than chance? |
 | `compare_percent_to` | `table.compare_percent_to("passed", value="yes", percent=50)` | school | Is the percent of rows with one value different from a percent you choose, or could it be chance? |
+
+## Fitting
+
+| Word | Example | Table | What it does |
+|---|---|---|---|
+| `fit_line` | `table.fit_line(x="hours", y="marks")` | marks | Fit the straight line y = slope * x + intercept that best follows the points. |
+| `fit_curve` | `table.fit_curve(x="hours", y="marks", degree=2)` | marks | Fit a curve y = b0 + b1 * x + b2 * x**2 ... that best follows the points. |
+| `fit_formula` | `table.fit_formula("population = a * exp(b * (year - 2000))")` | growth | Find the values in a formula that make it follow the data best. |
+
+## Finding and solving
+
+| Word | Example | Table | What it does |
+|---|---|---|---|
+| `sdata.find_smallest` | `sdata.find_smallest("x**2 - 4*x + 1", between=[0, 5])` |  | Find where a formula is smallest, and its value there. |
+| `sdata.find_biggest` | `sdata.find_biggest("3*x + 2*y", rules=["x + y <= 4", "x + 3*y <= 6", "x >= 0", "y >= 0"])` |  | Find where a formula is biggest, and its value there. |
+| `sdata.solve` | `sdata.solve("x**3 - 2*x = 5", between=[0, 3])` |  | Find the values that make an equation true. |
+
+## Values between points
+
+| Word | Example | Table | What it does |
+|---|---|---|---|
+| `values_at` | `table.values_at("population", at={"year": [2001, 2003, 2011]}, for_each="country")` | growth | Estimate a column at places between the known points, by joining the dots. |
+| `map_of` | `table.map_of("height", across=["east", "north"], steps=100)` | island | Estimate a column at evenly spaced places across one or more columns (a map), ready for a contour or heatmap. |
+
+## Distributions
+
+| Word | Example | Table | What it does |
+|---|---|---|---|
+| `sdata.distribution` | `sdata.distribution("normal", average=50, standard_deviation=10)` |  | Make a distribution to ask chances, percentiles and random numbers of. |
+| `fit_distribution` | `table.fit_distribution("sales", "lognormal")` | shop | Fit a distribution to a column by maximum likelihood; gives back the fitted distribution. |
+| `compare_distributions` | `table.compare_distributions("sales")` | shop | Fit several distributions to a column and rank them by AIC (smaller is better). |
+| `fit_distribution` | `nums.fit_distribution("gamma")` |  | Fit a distribution to the numbers by maximum likelihood; gives back the fitted distribution. |
+| `chance` | `dist.chance(above=80)` |  | The chance of a value in a range, as a share from 0 to 1 (printed as a percent). |
+| `density_at` | `dist.density_at(60)` |  | The height of the density curve at a value (continuous distributions). |
+| `percentile` | `dist.percentile(95)` |  | The value that this percent of the distribution is below: percentile(95). |
+| `cut_off` | `dist.cut_off(above=0.025)` |  | The value with this chance above it (or below it): critical values. |
+| `middle_range` | `dist.middle_range(95)` |  | The range that holds the middle percent of the distribution, as Numbers [low, high]. |
+| `average` | `dist.average()` |  | The average (mean) of the distribution. |
+| `median` | `dist.median()` |  | The median: half of the distribution is below it. |
+| `standard_deviation` | `dist.standard_deviation()` |  | The standard deviation of the distribution. |
+| `variance` | `dist.variance()` |  | The variance (the standard deviation squared). |
+| `summary` | `dist.summary()` |  | A one-row table: average, median, standard deviation, variance, skewness, excess kurtosis, entropy and the lowest and highest possible values. |
+| `random_numbers` | `dist.random_numbers(how_many=100, seed=1)` |  | Numbers drawn at random from the distribution; the same seed gives the same numbers. |
+| `chart` | `dist.chart()` |  | A chart of the distribution: its density curve (or bars for counts). |
+| `table` | `dist.table()` |  | A one-row table: the distribution, its parameters and, for a fit, the standard errors, log-likelihood, AIC and BIC. |
+| `parameters` | `dist.parameters()` |  | The parameters as a dictionary of plain names: {"average": 50, "standard_deviation": 10}. |
 
 ## Models
 

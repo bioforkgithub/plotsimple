@@ -1,0 +1,5 @@
+Estimated "temperature" at 1 value of "month_number" for each of the 3 groups in "city", joined by a smooth curve through every known point (a natural cubic spline, as R splinefun(method = "natural")).
+   month_number        city  temperature
+0           6.5     Frostby    12.093466
+1           6.5  Rainbridge    15.900152
+2           6.5   Sunnyvale    25.966898

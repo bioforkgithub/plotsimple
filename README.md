@@ -6,7 +6,7 @@
 built on matplotlib, seaborn, pandas, Polars, NumPy and SciPy (with narwhals linking pandas and
 Polars), so you don't have to learn them first.
 
-> Status: early development (charts, tables, numbers and statistical tests ready). The word list may still change: an old word keeps working for one release and prints a one-line note with its new name.
+> Status: early development (charts, tables, numbers, statistical tests, fitting and distributions ready). The word list may still change: an old word keeps working for one release and prints a one-line note with its new name.
 
 Install: `pip install simplydata`
 
@@ -47,14 +47,16 @@ import simplydata as sdata
 sdata.lesson(1)
 ```
 
-There are eighteen short lessons. Lessons 1 to 8 teach charts, from your first chart to
+There are twenty short lessons. Lessons 1 to 8 teach charts, from your first chart to
 animations. Lessons 9 to 12 teach tables: looking at your data, choosing rows and columns,
 cleaning it, and summing it up. Lesson 13 teaches numbers (lists and grids of numbers), and
 lesson 14 the statistical tests: is a difference real, or could it be chance? Lesson 15 puts it
 all together, from a question and a file to a figure with panels A and B and a saved table.
-Lessons 16 to 18 go further: models (multiple, logistic, Poisson and mixed regression, multiple
+Lessons 16 to 20 go further: models (multiple, logistic, Poisson and mixed regression, multiple
 imputation), patterns across many columns (PCA, clustering, Bray-Curtis distances, NMDS,
-PERMANOVA), survival curves and Cox models, and power analysis. Each
+PERMANOVA), survival curves and Cox models, power analysis, fitting curves and formulas,
+finding the smallest or biggest value and solving equations, distributions and chances, and
+values between the points you measured. Each
 lesson has an example you can run, says what every line does, explains the idea behind it
 (average or median, standard deviation or standard error, p-values) and ends with a small task
 to try yourself.
@@ -63,13 +65,13 @@ to try yourself.
 - `sdata.words()` lists every word, with an example (also in [docs/cheatsheet.md](https://github.com/bioforkgithub/simplydata/blob/main/docs/cheatsheet.md))
 - `sdata.help("bars")` explains one word: what it does, its options and an example
   (table and number words too: `sdata.help("keep_rows")`, `sdata.help("average")`)
-- `sdata.example()` lists the made-up tables to practise with (marks, weather, fruit, growth, shop, island; shop has dates and empty cells)
+- `sdata.example()` lists the made-up tables to practise with (marks, weather, fruit, growth, shop, school, meadow, trial, island; shop has dates and empty cells)
 - `sdata.lesson(3, solutions=True)` adds a worked solution to each "Try it yourself" task
 
 ## Manual
 
 **[The simplydata manual (PDF)](https://github.com/bioforkgithub/simplydata/blob/main/docs/manual/simplydata_manual.pdf)** has everything in one book:
-all eighteen lessons with the real charts and output they make, every word explained (its options,
+all twenty lessons with the real charts and output they make, every word explained (its options,
 an example you can run and the library that does the work underneath), the data science ideas
 behind the numbers (average or median, standard deviation or standard error, confidence intervals,
 p-values, effect sizes, and which statistical test to use when), and a worked solution for every
@@ -128,6 +130,29 @@ trial.compare_survival(time="days", event="died", for_each="treatment") # log-ra
 sdata.how_many_needed(effect_size=0.5)                                  # power analysis
 ```
 
+## Fitting, finding and distributions
+
+Fit a line, a curve or your own formula; find the best value; solve an equation; ask a
+distribution for chances; estimate values between the points you measured:
+
+```python
+growth = sdata.table(sdata.example("growth"))
+growth.fit_formula("population = a * exp(b * (year - 2000))", for_each="country")  # as R nls()
+growth.values_at("population", at={"year": [2001, 2011]}, for_each="country")    # as R approx()
+
+sdata.find_smallest("x**2 - 4*x + 1", between=[0, 5])        # -3, at x = 2 (as R optimize())
+sdata.solve("x**3 - 2*x = 5", between=[0, 3])                # x = 2.09455 (as R uniroot())
+
+dist = sdata.distribution("normal", average=50, standard_deviation=10)
+dist.chance(above=80)                                         # 0.135 %, and the R call: pnorm(...)
+school = sdata.table(sdata.example("school"))
+school.compare_distributions("days_absent", distributions=("poisson", "negative binomial"))
+```
+
+Coming from another tool? Its names point to the simplydata word and never run:
+`sdata.minimize` says "In simplydata this is sdata.find_smallest(...)", `table.groupby` points to
+`for_each=`, `chart.hist` to `chart.histogram`.
+
 ## Ideas behind it
 
 - **Talk to the program.** Each step reads like a short sentence: `chart.title_top(...)`,
@@ -139,6 +164,8 @@ sdata.how_many_needed(effect_size=0.5)                                  # power 
   `compare_averages` (and the result says "Welch's t-test" for when you write it up).
 - **Order doesn't matter.** Write the steps in any order; simplydata draws them correctly.
 - **Friendly errors.** Misspell a column and simplydata tells you what you probably meant.
+- **Your old words still help.** Names from pandas, NumPy, SciPy, R and matplotlib (`groupby`,
+  `curve_fit`, `pnorm`, `hist`) point to the simplydata word, so the first guess is never a dead end.
 
 The full design is in [PLAN.md](https://github.com/bioforkgithub/simplydata/blob/main/PLAN.md).
 

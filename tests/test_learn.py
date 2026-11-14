@@ -97,6 +97,13 @@ def test_every_grid_word_is_in_a_group():
     assert not missing, f"Add these grid words to a group in learn.GROUPS: {missing}"
 
 
+def test_every_distribution_word_is_in_a_group():
+    from simplydata.distributions import Distribution
+
+    missing = [w for w in Distribution._word_names() if f"dist.{w}" not in KEYS]
+    assert not missing, f"Add these distribution words to a group in learn.GROUPS: {missing}"
+
+
 def test_every_ps_function_is_in_a_group():
     missing = [n for n in _public_ps_functions() if f"sdata.{n}" not in KEYS]
     assert not missing, f"Add these to a group in learn.GROUPS: {missing}"
@@ -291,14 +298,14 @@ def test_every_docstring_example_runs_and_draws(key, tmp_path, monkeypatch, caps
 
 
 # ---------------------------------------------------------------- sdata.lesson()
-LESSON_NUMBERS = range(1, 19)
+LESSON_NUMBERS = range(1, 21)
 
 
-def test_there_are_eighteen_lessons(capsys):
-    assert len(learn.LESSONS) == 18
+def test_there_are_twenty_lessons(capsys):
+    assert len(learn.LESSONS) == 20
     sdata.lesson()
     out = capsys.readouterr().out
-    assert "18 lessons" in out
+    assert "20 lessons" in out
     for i in LESSON_NUMBERS:
         assert f"sdata.lesson({i})" in out
 
@@ -346,9 +353,9 @@ def test_lessons_use_tables_and_charts(number):
         assert gone not in code, f"lesson {number} uses {gone}"
 
 
-@pytest.mark.parametrize("bad", [0, 19, "1", 1.0, True])
+@pytest.mark.parametrize("bad", [0, 21, "1", 1.0, True])
 def test_wrong_lesson_number_is_explained(bad):
-    with pytest.raises(sdata.SimplydataError, match="lessons 1 to 18"):
+    with pytest.raises(sdata.SimplydataError, match="lessons 1 to 20"):
         sdata.lesson(bad)
 
 
@@ -436,6 +443,7 @@ def test_readme_example_runs(tmp_path, monkeypatch):
 
 # ---------------------------------------------------------------- old names
 OLD_WORDS = {  # old name -> what sdata.help shows instead
+    "fit_straight_line": "table.fit_line()",
     "show_first": "table.show_first_rows()",
     "remove_empty_rows": "table.remove_rows_with_empty_cells()",
     "count_empty": "table.count_empty_cells()",
