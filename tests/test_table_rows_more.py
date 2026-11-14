@@ -551,7 +551,7 @@ def test_show_long_table(engine, capsys):
     t = _engine_table(pd.DataFrame({"x": range(1500)}), engine)
     t.show()
     out = capsys.readouterr().out
-    assert " 999" in out and "1000 " not in out.splitlines()[-2]
+    assert out.splitlines()[-2].split() == ["1000", "999"]  # row 1000 (counting from 1) holds the value 999
     assert "the first 1000 rows of 1500" in out
 
 

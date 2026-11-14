@@ -2,9 +2,9 @@ Kept 9 of 36 rows.
 Removed 3 of 9 rows. 6 rows left.
 simplydata table: 6 rows, 5 columns
   month  month_number        city  temp  rain
-0   Jun             6   Sunnyvale  24.0    40
-1   Jul             7   Sunnyvale  26.5    44
-2   Aug             8   Sunnyvale  22.8    36
-3   Jun             6  Rainbridge  15.3    72
-4   Jul             7  Rainbridge  16.2    58
-5   Aug             8  Rainbridge  15.3    76
+1   Jun             6   Sunnyvale  24.0    40
+2   Jul             7   Sunnyvale  26.5    44
+3   Aug             8   Sunnyvale  22.8    36
+4   Jun             6  Rainbridge  15.3    72
+5   Jul             7  Rainbridge  16.2    58
+6   Aug             8  Rainbridge  15.3    76

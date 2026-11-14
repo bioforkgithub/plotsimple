@@ -1,0 +1,4 @@
+Kept rows 5 to 9 (5 of 54 rows).
+Removed row 5 (1 of 5 rows). 4 rows left.
+The table has 4 rows.
+Ben

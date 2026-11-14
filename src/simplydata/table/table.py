@@ -11,13 +11,14 @@ from .distribution_words import DistributionTableWords
 from .fitting import FittingWords
 from .models import ModelWords
 from .patterns import PatternWords
+from .positions import PositionWords
 from .rows import RowWords
 from .stat_tests import StatTestWords
 from .summaries import SummaryWords
 from .survival import SurvivalWords
 
 
-class Table(RowWords, ColumnWords, SummaryWords, StatTestWords, FittingWords, ModelWords, PatternWords, SurvivalWords,
+class Table(PositionWords, RowWords, ColumnWords, SummaryWords, StatTestWords, FittingWords, ModelWords, PatternWords, SurvivalWords,
             BetweenWords, DistributionTableWords, BaseTable):
     """A table. Make one with sdata.table(...), then add steps: table.keep_rows(...), table.sort_by(...)."""
 

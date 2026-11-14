@@ -121,7 +121,7 @@ inside (that would be about $\bar{x} \pm 2\,\mathrm{SD}$ for a bell shape).
   \item A \textbf{narrow} interval means the data pin the value down well; a \textbf{wide} one
     means you need more data.
   \item An interval says more than a p-value: it gives the size of the effect \emph{and} how sure
-    you are of it. \code{table.fit\_straight\_line} prints the slope with its 95\,\% CI.
+    you are of it. \code{table.fit\_line} prints the slope with its 95\,\% CI.
   \item On charts: \code{error="confidence interval"} on bars and lines, and
     \code{fit\_line(confidence\_band=True)} for a fitted line.
 \end{itemize}
@@ -210,7 +210,7 @@ Cohen's $d$, Hedges' $g$ & the difference in standard deviations; $g$ corrects $
 Omega-squared $\omega^2$ & the share of all the differences that the groups explain (0 to 1) & \code{compare\_averages} (3+ groups)\\
 Cramér's $V$ & how strongly two categories are linked, 0 (none) to 1 & \code{compare\_counts}\\
 Correlation $r$ & how closely two columns go up and down together, $-1$ to $1$ & \code{correlation\_between}\\
-$R^2$ & the share of the differences in $y$ that a line or curve explains & \code{fit\_straight\_line}, \code{fit\_formula}\\
+$R^2$ & the share of the differences in $y$ that a line or curve explains & \code{fit\_line}, \code{fit\_formula}\\
 \bottomrule
 \end{tabularx}
 \end{center}
@@ -264,7 +264,7 @@ the dots, by making the sum of the squared vertical distances from the dots to t
 possible (\textbf{least squares}). The \textbf{slope} $b$ says how much $y$ changes for each 1 more
 of $x$; its p-value tests whether the slope could be 0, and its confidence interval gives a range of
 plausible slopes. $R^2$ says how much of the differences in $y$ the line explains.
-\code{table.fit\_straight\_line(x="hours", y="marks")} prints all of these;
+\code{table.fit\_line(x="hours", y="marks")} prints all of these;
 \code{chart.fit\_line()} draws the line.
 
 When the relation is curved, such as growth that multiplies by the same share each year, write the
@@ -299,7 +299,7 @@ column for what was measured (\code{marks}) and columns that say which child and
 
 \begin{itemize}
   \item \textbf{Long tables} suit charts, groups and tests: \code{chart.bars(x="subject", y="marks")}
-    and \code{compare\_averages("marks", between="subject")} need the subject as a column.
+    and \code{compare\_averages("marks", for\_each="subject")} need the subject as a column.
   \item \textbf{Wide tables} suit sums across columns (a total per child) and paired tests
     (\code{compare\_before\_after("Maths", "Science")}), and are how people often type data into
     a spreadsheet.
@@ -356,13 +356,13 @@ answer four questions:
 \textbf{Question} & \textbf{simplydata word} & \textbf{Test (the usual one)} & \textbf{With \code{based\_on="ranks"}}\\
 \midrule
 Is one average different from a number you choose? & \code{compare\_average\_to("marks", 60)} & one-sample $t$-test & Wilcoxon signed-rank test\\
-Do \textbf{two} groups differ in their average? & \code{compare\_averages("marks", between="group")} & Welch's $t$-test & Mann--Whitney $U$ test\\
-Do \textbf{three or more} groups differ? & \code{compare\_averages("marks", between="class")} & Welch's one-way ANOVA & Kruskal--Wallis test\\
-\emph{Which} groups differ? & \code{compare\_each\_pair("marks", between="class")} & pairwise Welch $t$-tests, Holm's correction & pairwise Mann--Whitney tests, Holm's correction\\
+Do \textbf{two} groups differ in their average? & \code{compare\_averages("marks", for\_each="group")} & Welch's $t$-test & Mann--Whitney $U$ test\\
+Do \textbf{three or more} groups differ? & \code{compare\_averages("marks", for\_each="class")} & Welch's one-way ANOVA & Kruskal--Wallis test\\
+\emph{Which} groups differ? & \code{compare\_each\_pair("marks", for\_each="class")} & pairwise Welch $t$-tests, Holm's correction & pairwise Mann--Whitney tests, Holm's correction\\
 Did the values change, in the \textbf{same} rows measured twice? & \code{compare\_before\_after("before", "after")} & paired $t$-test & Wilcoxon signed-rank test\\
-Do \textbf{counts} of categories differ between groups? & \code{compare\_counts("result", between="class")} & chi-square test of independence & --- (for a $2\times2$ table with small counts: \code{test="fisher"}, Fisher's exact test)\\
+Do \textbf{counts} of categories differ between groups? & \code{compare\_counts("result", for\_each="class")} & chi-square test of independence & --- (for a $2\times2$ table with small counts: \code{test="fisher"}, Fisher's exact test)\\
 Do two columns of numbers go up and down together? & \code{correlation\_between("hours", "marks")} & Pearson's $r$ & \code{method="spearman"}: Spearman's $\rho$\\
-How much does $y$ change with $x$? & \code{fit\_straight\_line(x="hours", y="marks")} & linear regression (least squares) & ---\\
+How much does $y$ change with $x$? & \code{fit\_line(x="hours", y="marks")} & linear regression (least squares) & ---\\
 Does the data follow a formula (growth, decay, saturation)? & \code{fit\_formula("y = a * exp(b * x)")} & nonlinear least squares & ---\\
 \bottomrule
 \end{tabularx}

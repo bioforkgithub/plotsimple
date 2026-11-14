@@ -3,7 +3,7 @@ Kept 12 of 36 rows.
 Read 2 files and stacked them: 24 rows. The column "file" says which file each row came from.
 How many rows have each "file" (2 different values): lesson9_part1.csv 12, lesson9_part2.csv 12.
                 file month  month_number       city  temperature  rain  wind_direction  wind_speed
-0  lesson9_part1.csv   Jan             1  Sunnyvale          8.3    18             221        21.0
-1  lesson9_part1.csv   Feb             2  Sunnyvale         10.3    25             191         8.7
-2  lesson9_part1.csv   Mar             3  Sunnyvale         11.0     9             224         6.7
+1  lesson9_part1.csv   Jan             1  Sunnyvale          8.3    18             221        21.0
+2  lesson9_part1.csv   Feb             2  Sunnyvale         10.3    25             191         8.7
+3  lesson9_part1.csv   Mar             3  Sunnyvale         11.0     9             224         6.7
 (the first 3 rows of 24; table.show(rows=24) shows them all)

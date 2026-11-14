@@ -253,7 +253,7 @@ can write it up in a report or a paper.
 
 \section*{How this manual is built}
 \begin{description}[style=nextline,leftmargin=1.2em]
-  \item[{\hyperref[part:lessons]{Part II: Lessons}}] Eighteen short lessons that teach the whole
+  \item[{\hyperref[part:lessons]{Part II: Lessons}}] Twenty short lessons that teach the whole
     of simplydata in a day. Each lesson shows code you can run, says what every line does, shows
     the real chart and output it makes, and ends with tasks to try yourself.
   \item[{\hyperref[part:dictionary]{Part III: Dictionary of words}}] Every word, with what it does,
@@ -290,7 +290,13 @@ sdata.lesson(1, solutions=True)     # the first lesson, with worked solutions to
 sdata.words()                       # every word, with a short example
 sdata.help("bars")                  # one word: what it does, its options and an example
 sdata.example()                     # the made-up tables you can practise with
+sdata.start_30_days()               # or learn it in 30 days of about an hour,
+sdata.today()                       # ... with sdata.today() each day
 \end{lstlisting}
+Rather learn an hour a day? \code{sdata.start\_30\_days()} spreads the lessons over 30 days, each with
+a warm-up of questions on earlier days and a task, and a project of your own at the end
+(\code{track="beginner"} starts with just enough Python). The printable guide,
+\href{simplydata_30_days.pdf}{\code{simplydata\_30\_days.pdf}}, has the same days on paper.
 
 \section*{Your own data}
 \code{sdata.table("my\_file.xlsx")} and \code{sdata.chart("my\_file.xlsx")} read Excel, CSV, TSV,
@@ -506,6 +512,7 @@ chart.save("lesson1.png")
   \item \code{chart.\allowbreak{}save(\textquotedbl{}lesson1.\allowbreak{}pdf\textquotedbl{})} saves a PDF instead: the end of the name decides the type.
   \item In Jupyter, VS Code or Spyder, write chart on the last line of a cell and the chart appears by itself. In a script, \code{chart.\allowbreak{}show()} opens it in a window.
   \item Are the names under the bars bumping into each other? Lesson 2 shows how to turn them.
+  \item Learning on your own? \code{sdata.\allowbreak{}start\_\allowbreak{}30\_\allowbreak{}days()} turns the lessons into 30 days of about an hour: each day starts with a few questions on earlier days and ends with a task. Then type \code{sdata.\allowbreak{}today()} each day (or \code{sdata.\allowbreak{}start\_\allowbreak{}30\_\allowbreak{}days(track=\textquotedbl{}beginner\textquotedbl{})} if you have never programmed).
 \end{itemize}
 \end{goodtoknow}
 \begin{tryit}
@@ -516,7 +523,7 @@ chart.save("lesson1.png")
 \end{enumerate}
 Worked solutions: page~\pageref{solutions:1}, or type \code{sdata.\allowbreak{}lesson(1,\allowbreak{} solutions=True)}.
 \end{tryit}
-\par\noindent{\small\sffamily\textbf{Words in this lesson:} \hyperref[word:sdata.example]{\code{sdata.\allowbreak{}example()}}, \hyperref[word:sdata.chart]{\code{sdata.\allowbreak{}chart()}}, \hyperref[word:bars]{\code{chart.\allowbreak{}bars()}}, \hyperref[word:save]{\code{chart.\allowbreak{}save()}}, \hyperref[word:show]{\code{chart.\allowbreak{}show()}}.\par}
+\par\noindent{\small\sffamily\textbf{Words in this lesson:} \hyperref[word:sdata.example]{\code{sdata.\allowbreak{}example()}}, \hyperref[word:sdata.chart]{\code{sdata.\allowbreak{}chart()}}, \hyperref[word:bars]{\code{chart.\allowbreak{}bars()}}, \hyperref[word:save]{\code{chart.\allowbreak{}save()}}, \hyperref[word:show]{\code{chart.\allowbreak{}show()}}, \hyperref[word:sdata.start-30-days]{\code{sdata.\allowbreak{}start\_\allowbreak{}30\_\allowbreak{}days()}}, \hyperref[word:sdata.today]{\code{sdata.\allowbreak{}today()}}.\par}
 
 \chapter{Titles and labels}\label{lesson:2}
 \begin{learnbox}
@@ -1538,7 +1545,7 @@ both.show(rows=3)
   \item Looking never changes the table. Only steps that say what they change (\code{keep\_\allowbreak{}rows}, \code{sort\_\allowbreak{}by} ...) do, and lesson 10 shows them.
   \item In Jupyter, VS Code or Spyder, write table on the last line of a cell to see it as a nice table.
   \item \code{sdata.\allowbreak{}table} reads the same files as \code{sdata.\allowbreak{}chart}: \code{.\allowbreak{}xlsx}, \code{.\allowbreak{}csv}, \code{.\allowbreak{}tsv}, \code{.\allowbreak{}parquet} and \code{.\allowbreak{}json}. For one sheet of an Excel file: \code{sdata.\allowbreak{}table(\textquotedbl{}results.\allowbreak{}xlsx\textquotedbl{},\allowbreak{} sheet=\textquotedbl{}2026\textquotedbl{})}.
-  \item The row numbers on the left start at 0, as everywhere in Python.
+  \item The row numbers on the left start at 1, the way people count: the last row of a table of 54 rows is row 54. Lesson 10 uses these numbers to choose rows by their place.
   \item A folder works too: \code{sdata.\allowbreak{}table(\textquotedbl{}data/\textquotedbl{})} reads every table file in it. A web address works like a file name: \code{sdata.\allowbreak{}table(\textquotedbl{}https://example.\allowbreak{}org/data.\allowbreak{}csv\textquotedbl{})}.
   \item Files written in another way: \code{separator=\textquotedbl{};\textquotedbl{}}, \code{decimal\_\allowbreak{}mark=\textquotedbl{},\allowbreak{}\textquotedbl{}} (3,5 is three and a half), \code{thousands\_\allowbreak{}mark=\textquotedbl{}.\allowbreak{}\textquotedbl{}}, \code{empty\_\allowbreak{}values=[\textquotedbl{}NA\textquotedbl{},\allowbreak{} \textquotedbl{}-\textquotedbl{}]}, \code{skip\_\allowbreak{}rows=2} and \code{encoding=\textquotedbl{}latin-1\textquotedbl{}}.
 \end{itemize}
@@ -1640,6 +1647,36 @@ table.show()
   \item[8] Show the whole (small) table.
 \end{lineexplain}
 \printedoutput{output/lesson10_example3.txt}
+\section*{Example 4}
+Rows and columns can also be chosen by their place in the table. Positions count from 1, the numbers \code{table.\allowbreak{}show()} prints, and both ends are included.
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+table = sdata.table(sdata.example("marks"))
+table.show_last_rows(3)
+table.keep_rows_by_position(10, to=20)
+table.keep_rows_by_position(1, step=2)
+table.keep_columns_by_position(1, to=3)
+table.show()
+table.start_again()
+print(table.cell_at(row=3, column="marks"))
+table.reverse_rows()
+table.show_first_rows(3)
+\end{lstlisting}
+\whateachline
+\begin{lineexplain}
+  \item[1] Load simplydata.
+  \item[2] Make a table of the marks.
+  \item[3] The last three rows are numbered 52, 53 and 54: rows count from 1.
+  \item[4] Keep rows 10 to 20. Both ends are included, so that is 11 rows.
+  \item[5] Of those, keep every 2nd row: the 1st, 3rd, 5th ... 6 rows.
+  \item[6] Keep the first three columns. It says which columns they were.
+  \item[7] 6 rows and 3 columns, numbered again from 1.
+  \item[8] Back to the whole table.
+  \item[9] One cell: the mark in row 3. \code{cell\_\allowbreak{}at} only looks; the table does not change.
+  \item[10] Turn the table upside down: the last row comes first.
+  \item[11] Rosa's marks are on top now.
+\end{lineexplain}
+\printedoutput{output/lesson10_example4.txt}
 \begin{goodtoknow}
 \begin{itemize}
   \item Conditions for \code{keep\_\allowbreak{}rows} and \code{remove\_\allowbreak{}rows}: above, below, \code{at\_\allowbreak{}least}, \code{at\_\allowbreak{}most}, \code{equal\_\allowbreak{}to}, \code{not\_\allowbreak{}equal\_\allowbreak{}to}, between, \code{one\_\allowbreak{}of}, contains, \code{starts\_\allowbreak{}with}, \code{ends\_\allowbreak{}with} and \code{is\_\allowbreak{}empty}.
@@ -1648,6 +1685,8 @@ table.show()
   \item Your file is never changed: only \code{table.\allowbreak{}save(.\allowbreak{}.\allowbreak{}.\allowbreak{})} writes a file.
   \item Written conditions use == != \textless{} \textless{}= \textgreater{} \textgreater{}=, and, or, not, brackets, in [...] and is empty. An empty cell never meets a condition, and not does not change that: \code{\textquotedbl{}not (marks \textgreater{} 50)\textquotedbl{}} leaves out empty marks too. To find them, write \code{\textquotedbl{}marks is empty\textquotedbl{}}. A note says how many rows had an empty cell.
   \item Dates go in quotes as year-month-day: \code{table.\allowbreak{}keep\_\allowbreak{}rows(\textquotedbl{}date \textgreater{} '2026-03-01'\textquotedbl{})}, or \code{table.\allowbreak{}keep\_\allowbreak{}rows(\textquotedbl{}date\textquotedbl{},\allowbreak{} after=\textquotedbl{}2026-03-01\textquotedbl{})}.
+  \item \code{keep\_\allowbreak{}rows} chooses rows by their values, \code{keep\_\allowbreak{}rows\_\allowbreak{}by\_\allowbreak{}position} by their place. Positions count from 1 and both ends are included, so rows 10 to 20 are 11 rows. \code{to=\textquotedbl{}last\textquotedbl{}} goes to the end, and a list such as [1, 5, 9] keeps those rows in that order.
+  \item Coming from pandas or NumPy, which count from 0 and leave out the end: df.iloc[9:20] is \code{table.\allowbreak{}keep\_\allowbreak{}rows\_\allowbreak{}by\_\allowbreak{}position(10,\allowbreak{} to=20)}, df.iloc[::2] is \code{keep\_\allowbreak{}rows\_\allowbreak{}by\_\allowbreak{}position(1,\allowbreak{} step=2)}, df.iloc[[0, 4]] is \code{keep\_\allowbreak{}rows\_\allowbreak{}by\_\allowbreak{}position([1,\allowbreak{} 5])}, df.iloc[:, 0:3] is \code{keep\_\allowbreak{}columns\_\allowbreak{}by\_\allowbreak{}position(1,\allowbreak{} to=3)}, df.loc[:, \code{\textquotedbl{}hours\textquotedbl{}}:\code{\textquotedbl{}height\textquotedbl{}}] is \code{keep\_\allowbreak{}columns(\textquotedbl{}hours\textquotedbl{},\allowbreak{} to=\textquotedbl{}height\textquotedbl{})}, \code{df.\allowbreak{}select\_\allowbreak{}dtypes(\textquotedbl{}number\textquotedbl{})} is \code{keep\_\allowbreak{}columns(kind=\textquotedbl{}number\textquotedbl{})}, df.at[2, \code{\textquotedbl{}marks\textquotedbl{}}] is \code{cell\_\allowbreak{}at(row=3,\allowbreak{} column=\textquotedbl{}marks\textquotedbl{})} and df.iloc[::-1] is \code{reverse\_\allowbreak{}rows()}. For numbers, a[2:8] is \code{nums.\allowbreak{}keep\_\allowbreak{}numbers\_\allowbreak{}by\_\allowbreak{}position(3,\allowbreak{} to=8)}, and for a grid, g[1:5, 0:3] is \code{grid.\allowbreak{}keep\_\allowbreak{}rows\_\allowbreak{}by\_\allowbreak{}position(2,\allowbreak{} to=5)}.keep\_columns\_by\_position(1, \code{to=3}).
 \end{itemize}
 \end{goodtoknow}
 \begin{tryit}
@@ -1656,10 +1695,11 @@ table.show()
   \item Undo the sorting, then sort by name instead.
   \item Keep 5 random rows with \code{table.\allowbreak{}keep\_\allowbreak{}random\_\allowbreak{}rows(5,\allowbreak{} seed=1)} and save them as \code{\textquotedbl{}five.\allowbreak{}csv\textquotedbl{}}.
   \item With one written condition, keep the rows with marks below 50 or hours above 8. How many rows are there?
+  \item From memory, without looking back: start again, keep rows 5 to 9, then remove the last row. How many rows are left, and whose name is in row 1 now?
 \end{enumerate}
 Worked solutions: page~\pageref{solutions:10}, or type \code{sdata.\allowbreak{}lesson(10,\allowbreak{} solutions=True)}.
 \end{tryit}
-\par\noindent{\small\sffamily\textbf{Words in this lesson:} \hyperref[word:table.keep-columns]{\code{table.\allowbreak{}keep\_\allowbreak{}columns()}}, \hyperref[word:table.keep-rows]{\code{table.\allowbreak{}keep\_\allowbreak{}rows()}}, \hyperref[word:table.sort-by]{\code{table.\allowbreak{}sort\_\allowbreak{}by()}}, \hyperref[word:table.steps]{\code{table.\allowbreak{}steps()}}, \hyperref[word:table.undo]{\code{table.\allowbreak{}undo()}}, \hyperref[word:table.start-again]{\code{table.\allowbreak{}start\_\allowbreak{}again()}}, \hyperref[word:table.remove-rows]{\code{table.\allowbreak{}remove\_\allowbreak{}rows()}}, \hyperref[word:table.remove-columns]{\code{table.\allowbreak{}remove\_\allowbreak{}columns()}}, \hyperref[word:table.rename-column]{\code{table.\allowbreak{}rename\_\allowbreak{}column()}}, \hyperref[word:table.save]{\code{table.\allowbreak{}save()}}, \hyperref[word:table.keep-random-rows]{\code{table.\allowbreak{}keep\_\allowbreak{}random\_\allowbreak{}rows()}}, \hyperref[word:table.keep-biggest-rows]{\code{table.\allowbreak{}keep\_\allowbreak{}biggest\_\allowbreak{}rows()}}.\par}
+\par\noindent{\small\sffamily\textbf{Words in this lesson:} \hyperref[word:table.keep-columns]{\code{table.\allowbreak{}keep\_\allowbreak{}columns()}}, \hyperref[word:table.keep-rows]{\code{table.\allowbreak{}keep\_\allowbreak{}rows()}}, \hyperref[word:table.sort-by]{\code{table.\allowbreak{}sort\_\allowbreak{}by()}}, \hyperref[word:table.steps]{\code{table.\allowbreak{}steps()}}, \hyperref[word:table.undo]{\code{table.\allowbreak{}undo()}}, \hyperref[word:table.start-again]{\code{table.\allowbreak{}start\_\allowbreak{}again()}}, \hyperref[word:table.remove-rows]{\code{table.\allowbreak{}remove\_\allowbreak{}rows()}}, \hyperref[word:table.remove-columns]{\code{table.\allowbreak{}remove\_\allowbreak{}columns()}}, \hyperref[word:table.rename-column]{\code{table.\allowbreak{}rename\_\allowbreak{}column()}}, \hyperref[word:table.save]{\code{table.\allowbreak{}save()}}, \hyperref[word:table.keep-random-rows]{\code{table.\allowbreak{}keep\_\allowbreak{}random\_\allowbreak{}rows()}}, \hyperref[word:table.keep-biggest-rows]{\code{table.\allowbreak{}keep\_\allowbreak{}biggest\_\allowbreak{}rows()}}, \hyperref[word:table.keep-rows-by-position]{\code{table.\allowbreak{}keep\_\allowbreak{}rows\_\allowbreak{}by\_\allowbreak{}position()}}, \hyperref[word:table.remove-rows-by-position]{\code{table.\allowbreak{}remove\_\allowbreak{}rows\_\allowbreak{}by\_\allowbreak{}position()}}, \hyperref[word:table.keep-columns-by-position]{\code{table.\allowbreak{}keep\_\allowbreak{}columns\_\allowbreak{}by\_\allowbreak{}position()}}, \hyperref[word:table.cell-at]{\code{table.\allowbreak{}cell\_\allowbreak{}at()}}, \hyperref[word:table.reverse-rows]{\code{table.\allowbreak{}reverse\_\allowbreak{}rows()}}.\par}
 
 \chapter{Tables: clean the data and add new columns}\label{lesson:11}
 \begin{learnbox}
@@ -3682,7 +3722,7 @@ chart.save("count_bars.png")
 Every value as a dot, spread out so no dot hides another.\\
 \codeline{chart.all\_dots(x=\textquotedbl{}class\textquotedbl{}, y=\textquotedbl{}marks\textquotedbl{})} (with \code{sdata.\allowbreak{}example(\textquotedbl{}marks\textquotedbl{})})
 
-Good on top of .boxes() or .violins(), to show each value as well. \code{transparency=0.\allowbreak{}5} makes them half see-through (0 is solid).
+Good on top of .boxes() or .violins(), to show each value as well; there the dots are dark grey, so they stand out (\code{colour=} still chooses your own). \code{transparency=0.\allowbreak{}5} makes them half see-through (0 is solid).
 
 \wordfield{Options}{}\par\nopagebreak
 \begin{optiontable}
@@ -4870,7 +4910,7 @@ table = sdata.table(sdata.example("marks"))
 table.show_first_rows()
 \end{lstlisting}
 \wordentry{table.show\_first\_rows()}{word:table.show-first-rows}
-Show the first rows. \code{table.\allowbreak{}show\_\allowbreak{}first\_\allowbreak{}rows(5)}
+Show the first rows, numbered from 1. \code{table.\allowbreak{}show\_\allowbreak{}first\_\allowbreak{}rows(5)}
 
 \wordfield{Options}{}\par\nopagebreak
 \begin{optiontable}
@@ -4885,7 +4925,10 @@ table = sdata.table(sdata.example("marks"))
 table.show_first_rows(10)
 \end{lstlisting}
 \wordentry{table.show\_last\_rows()}{word:table.show-last-rows}
-Show the last rows. \code{table.\allowbreak{}show\_\allowbreak{}last\_\allowbreak{}rows(5)}
+Show the last rows, with their row numbers in the whole table. \code{table.\allowbreak{}show\_\allowbreak{}last\_\allowbreak{}rows(5)}
+
+The last 3 rows of a table of 54 rows are numbered 52, 53 and 54, the numbers that\\
+\codeline{table.keep\_rows\_by\_position(52, to=54) takes.}
 
 \wordfield{Options}{}\par\nopagebreak
 \begin{optiontable}
@@ -4903,7 +4946,7 @@ table.show_last_rows(3)
 Show the table, every row and every column (or only the first \code{rows=}).
 
 \codeline{table.show()   table.show(rows=10)} (with \code{sdata.\allowbreak{}example(\textquotedbl{}marks\textquotedbl{})})\\
-A table with more than 1,000 rows shows its first 1,000; choose another number with \code{rows=}.
+A table with more than 1,000 rows shows its first 1,000; choose another number with \code{rows=}. Rows are numbered from 1, the numbers \code{keep\_\allowbreak{}rows\_\allowbreak{}by\_\allowbreak{}position()} takes.
 
 \wordfield{Options}{}\par\nopagebreak
 \begin{optiontable}
@@ -4964,15 +5007,63 @@ marks = table.column("marks")
 marks.average()
 marks.percentile(90)
 \end{lstlisting}
+\wordentry{table.row()}{word:table.row}
+One row as a plain dict of column: value, counting from 1. \code{table.\allowbreak{}row(3)}
+
+\codeline{table.row(3)} (with \code{sdata.\allowbreak{}example(\textquotedbl{}marks\textquotedbl{})})\\
+\codeline{table.row(\textquotedbl{}last\textquotedbl{}) is the last row. Empty cells become None. The table does not change.}\\
+As pandas df.iloc[2].to\_dict() and Polars \code{df.\allowbreak{}row(2,\allowbreak{} named=True)}.
+
+\wordfield{Options}{}\par\nopagebreak
+\begin{optiontable}
+\code{position=} & \\
+\end{optiontable}
+
+\wordfield{Underneath}{narwhals, which runs the step in pandas or Polars (whichever holds the table)}
+\wordfield{Example you can run}{(it uses the practice table \code{marks})}\par\nopagebreak
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+table = sdata.table(sdata.example("marks"))
+print(table.row(3))
+print(table.row("last"))
+\end{lstlisting}
+\wordentry{table.cell\_at()}{word:table.cell-at}
+The value in one cell: a row counting from 1 and a column by name. \code{table.\allowbreak{}cell\_\allowbreak{}at(row=3,\allowbreak{} column=\textquotedbl{}marks\textquotedbl{})}
+
+\codeline{table.cell\_at(row=3, column=\textquotedbl{}marks\textquotedbl{})} (with \code{sdata.\allowbreak{}example(\textquotedbl{}marks\textquotedbl{})})\\
+\code{row=\textquotedbl{}last\textquotedbl{}} is the last row. An empty cell gives None, with a note. The table does not change. As pandas df.at[2, \code{\textquotedbl{}marks\textquotedbl{}}] and Polars \code{df.\allowbreak{}item(2,\allowbreak{} \textquotedbl{}marks\textquotedbl{})}.
+
+\wordfield{Options}{}\par\nopagebreak
+\begin{optiontable}
+\code{row=} & \\
+\code{column=} & \\
+\end{optiontable}
+
+\wordfield{Underneath}{narwhals, which runs the step in pandas or Polars (whichever holds the table)}
+\wordfield{Example you can run}{(it uses the practice table \code{marks})}\par\nopagebreak
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+table = sdata.table(sdata.example("marks"))
+print(table.cell_at(row=3, column="marks"))
+print(table.cell_at(row="last", column="name"))
+\end{lstlisting}
 \unsection{Choose columns}{group:Choose-columns}
 \wordentry{table.keep\_columns()}{word:table.keep-columns}
-Keep only these columns, in the order you list them.
+Keep only these columns: by name (in the order you list them), a run of names, or by kind.
 
-\codeline{table.keep\_columns(\textquotedbl{}name\textquotedbl{}, \textquotedbl{}marks\textquotedbl{})} (with \code{sdata.\allowbreak{}example(\textquotedbl{}marks\textquotedbl{})})
+\codeline{table.keep\_columns(\textquotedbl{}name\textquotedbl{}, \textquotedbl{}marks\textquotedbl{})} (with \code{sdata.\allowbreak{}example(\textquotedbl{}marks\textquotedbl{})})\\
+\codeline{table.keep\_columns(\textquotedbl{}hours\textquotedbl{}, to=\textquotedbl{}height\textquotedbl{}) keeps a run of columns, both ends included;}\\
+\code{kind=\textquotedbl{}number\textquotedbl{}} (or \code{\textquotedbl{}text\textquotedbl{}}, \code{\textquotedbl{}date\textquotedbl{}}, \code{\textquotedbl{}true/false\textquotedbl{}}, the kinds \code{describe\_\allowbreak{}columns()} prints) keeps every column of that kind; \code{starts\_\allowbreak{}with=}, \code{ends\_\allowbreak{}with=}, \code{contains=} (plain text, capital letters matter) and \code{pattern=} (a regular expression) choose by the column names. One way at a time; two steps one after the other keep the columns that meet both.
 
 \wordfield{Options}{}\par\nopagebreak
 \begin{optiontable}
 \code{names.\allowbreak{}.\allowbreak{}.\allowbreak{}} & as many as you like, separated by commas\\
+\code{to=} & \\
+\code{kind=} & \\
+\code{starts\_\allowbreak{}with=} & \\
+\code{ends\_\allowbreak{}with=} & \\
+\code{contains=} & \\
+\code{pattern=} & \\
 \end{optiontable}
 
 \wordfield{Underneath}{narwhals, which runs the step in pandas or Polars (whichever holds the table)}
@@ -4982,15 +5073,27 @@ import simplydata as sdata
 table = sdata.table(sdata.example("marks"))
 table.keep_columns("name", "marks")
 table.show_first_rows()
+table.start_again()
+table.keep_columns("hours", to="height")
+table.start_again()
+table.keep_columns(kind="number")
+table.show_first_rows()
 \end{lstlisting}
 \wordentry{table.remove\_columns()}{word:table.remove-columns}
-Remove these columns.
+Remove these columns: by name, a run of names, or by kind.
 
-\codeline{table.remove\_columns(\textquotedbl{}height\textquotedbl{})} (with \code{sdata.\allowbreak{}example(\textquotedbl{}marks\textquotedbl{})})
+\codeline{table.remove\_columns(\textquotedbl{}height\textquotedbl{})} (with \code{sdata.\allowbreak{}example(\textquotedbl{}marks\textquotedbl{})})\\
+The same ways as \code{keep\_\allowbreak{}columns}: \code{remove\_\allowbreak{}columns(\textquotedbl{}hours\textquotedbl{},\allowbreak{} to=\textquotedbl{}marks\textquotedbl{})}, \code{remove\_\allowbreak{}columns(kind=\textquotedbl{}text\textquotedbl{})}, \code{remove\_\allowbreak{}columns(starts\_\allowbreak{}with=\textquotedbl{}wind\textquotedbl{})}, \code{remove\_\allowbreak{}columns(pattern=\textquotedbl{}\textasciicircum{}wind\_\allowbreak{}\textquotedbl{})}.
 
 \wordfield{Options}{}\par\nopagebreak
 \begin{optiontable}
 \code{names.\allowbreak{}.\allowbreak{}.\allowbreak{}} & as many as you like, separated by commas\\
+\code{to=} & \\
+\code{kind=} & \\
+\code{starts\_\allowbreak{}with=} & \\
+\code{ends\_\allowbreak{}with=} & \\
+\code{contains=} & \\
+\code{pattern=} & \\
 \end{optiontable}
 
 \wordfield{Underneath}{narwhals, which runs the step in pandas or Polars (whichever holds the table)}
@@ -4999,6 +5102,50 @@ Remove these columns.
 import simplydata as sdata
 table = sdata.table(sdata.example("marks"))
 table.remove_columns("height")
+print(table.column_names())
+table.remove_columns(kind="text")
+print(table.column_names())
+\end{lstlisting}
+\wordentry{table.keep\_columns\_by\_position()}{word:table.keep-columns-by-position}
+Keep columns by their position, counting from 1 at the left; it says which columns they were.
+
+\codeline{table.keep\_columns\_by\_position(1, to=3)} (with \code{sdata.\allowbreak{}example(\textquotedbl{}marks\textquotedbl{})})\\
+Both ends are included. \code{\textquotedbl{}last\textquotedbl{}} is the last column; \code{step=2} keeps every 2nd column; a list such as [3, 1] keeps those columns in that order. As pandas df.iloc[:, 0:3].
+
+\wordfield{Options}{}\par\nopagebreak
+\begin{optiontable}
+\code{positions=} & \\
+\code{to=} & \\
+\code{step=} & \\
+\end{optiontable}
+
+\wordfield{Underneath}{narwhals, which runs the step in pandas or Polars (whichever holds the table)}
+\wordfield{Example you can run}{(it uses the practice table \code{marks})}\par\nopagebreak
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+table = sdata.table(sdata.example("marks"))
+table.keep_columns_by_position(1, to=3)
+table.show_first_rows()
+\end{lstlisting}
+\wordentry{table.remove\_columns\_by\_position()}{word:table.remove-columns-by-position}
+Remove columns by their position, counting from 1 at the left; it says which columns they were.
+
+\codeline{table.remove\_columns\_by\_position(1)} (with \code{sdata.\allowbreak{}example(\textquotedbl{}marks\textquotedbl{})})\\
+Handy for the \code{\textquotedbl{}Unnamed: 0\textquotedbl{}} column a CSV file often brings. Same positions as \code{keep\_\allowbreak{}columns\_\allowbreak{}by\_\allowbreak{}position}.
+
+\wordfield{Options}{}\par\nopagebreak
+\begin{optiontable}
+\code{positions=} & \\
+\code{to=} & \\
+\code{step=} & \\
+\end{optiontable}
+
+\wordfield{Underneath}{narwhals, which runs the step in pandas or Polars (whichever holds the table)}
+\wordfield{Example you can run}{(it uses the practice table \code{marks})}\par\nopagebreak
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+table = sdata.table(sdata.example("marks"))
+table.remove_columns_by_position(1)
 print(table.column_names())
 \end{lstlisting}
 \wordentry{table.rename\_column()}{word:table.rename-column}
@@ -5127,6 +5274,67 @@ table = sdata.table(sdata.example("marks"))
 table.keep_last_rows(10)
 print(table)
 \end{lstlisting}
+\wordentry{table.keep\_rows\_by\_position()}{word:table.keep-rows-by-position}
+Keep rows by their position, counting from 1: a run, every n-th row, or a list.
+
+\codeline{table.keep\_rows\_by\_position(10, to=20)} (with \code{sdata.\allowbreak{}example(\textquotedbl{}marks\textquotedbl{})})\\
+Both ends are included, so rows 10 to 20 are 11 rows. \code{to=\textquotedbl{}last\textquotedbl{}} goes to the end; \code{step=10} keeps every 10th row (1, 11, 21 ...); a list such as [1, 5, 9] keeps those rows in that order. The numbers are the ones \code{table.\allowbreak{}show()} prints, as pandas df.iloc[9:20].
+
+\wordfield{Options}{}\par\nopagebreak
+\begin{optiontable}
+\code{positions=} & \\
+\code{to=} & \\
+\code{step=} & \\
+\end{optiontable}
+
+\wordfield{Underneath}{narwhals, which runs the step in pandas or Polars (whichever holds the table)}
+\wordfield{Example you can run}{(it uses the practice table \code{marks})}\par\nopagebreak
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+table = sdata.table(sdata.example("marks"))
+table.show_last_rows(3)
+table.keep_rows_by_position(10, to=20)
+table.keep_rows_by_position(1, step=2)
+table.show()
+\end{lstlisting}
+\wordentry{table.remove\_rows\_by\_position()}{word:table.remove-rows-by-position}
+Remove rows by their position, counting from 1: a run, every n-th row, or a list.
+
+\codeline{table.remove\_rows\_by\_position([12, 40])} (with \code{sdata.\allowbreak{}example(\textquotedbl{}marks\textquotedbl{})})\\
+The opposite of \code{keep\_\allowbreak{}rows\_\allowbreak{}by\_\allowbreak{}position}, with the same positions: \code{remove\_\allowbreak{}rows\_\allowbreak{}by\_\allowbreak{}position(1)} removes the first row (a second header read as data), (2, \code{step=2}) every 2nd row.
+
+\wordfield{Options}{}\par\nopagebreak
+\begin{optiontable}
+\code{positions=} & \\
+\code{to=} & \\
+\code{step=} & \\
+\end{optiontable}
+
+\wordfield{Underneath}{narwhals, which runs the step in pandas or Polars (whichever holds the table)}
+\wordfield{Example you can run}{(it uses the practice table \code{marks})}\par\nopagebreak
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+table = sdata.table(sdata.example("marks"))
+table.remove_rows_by_position([12, 40])
+table.remove_rows_by_position(1, step=2)
+table.count_rows()
+\end{lstlisting}
+\wordentry{table.reverse\_rows()}{word:table.reverse-rows}
+Turn the table upside down: the last row comes first. \code{table.\allowbreak{}reverse\_\allowbreak{}rows()}
+
+\codeline{table.reverse\_rows()} (with \code{sdata.\allowbreak{}example(\textquotedbl{}marks\textquotedbl{})})\\
+For an order by the values in a column use \code{table.\allowbreak{}sort\_\allowbreak{}by(\textquotedbl{}marks\textquotedbl{},\allowbreak{} biggest\_\allowbreak{}first=True)}.
+
+\wordfield{Options}{none: just write the empty brackets.}
+
+\wordfield{Underneath}{narwhals, which runs the step in pandas or Polars (whichever holds the table)}
+\wordfield{Example you can run}{(it uses the practice table \code{marks})}\par\nopagebreak
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+table = sdata.table(sdata.example("marks"))
+table.reverse_rows()
+table.show_first_rows(3)
+\end{lstlisting}
 \wordentry{table.keep\_random\_rows()}{word:table.keep-random-rows}
 Keep some rows picked at random; give a seed to get the same rows every time.
 
@@ -5210,7 +5418,7 @@ table.show()
 Show the rows whose value in a column is an outlier, and say why (the table does not change).
 
 \codeline{table.show\_rows\_with\_outliers(\textquotedbl{}marks\textquotedbl{}, for\_each=\textquotedbl{}subject\textquotedbl{})} (with \code{sdata.\allowbreak{}example(\textquotedbl{}marks\textquotedbl{})})\\
-\code{rule=\textquotedbl{}1.\allowbreak{}5 IQR\textquotedbl{}} (the default) is Tukey's rule, the one box plots use: below Q1 - 1.5 x IQR or above Q3 + 1.5 x IQR. Also \code{rule=\textquotedbl{}3 IQR\textquotedbl{}} or \code{rule=\textquotedbl{}3 standard deviations\textquotedbl{}}. Empty cells are never outliers.
+\code{rule=\textquotedbl{}1.\allowbreak{}5 IQR\textquotedbl{}} (the default) is Tukey's rule, the one box plots use: below Q1 - 1.5 x IQR or above Q3 + 1.5 x IQR. Also \code{rule=\textquotedbl{}3 IQR\textquotedbl{}} or \code{rule=\textquotedbl{}3 standard deviations\textquotedbl{}}. Empty cells are never outliers. Each row is shown with its number in the whole table (counting from 1), so \code{remove\_\allowbreak{}rows\_\allowbreak{}by\_\allowbreak{}position()} can follow.
 
 \wordfield{Options}{}\par\nopagebreak
 \begin{optiontable}
@@ -5446,13 +5654,27 @@ Replace a value (or a list of values) in a column; \code{with\_\allowbreak{}valu
 
 \codeline{table.replace\_values(\textquotedbl{}subject\textquotedbl{}, \textquotedbl{}Maths\textquotedbl{}, with\_value=\textquotedbl{}Math\textquotedbl{})} (with \code{sdata.\allowbreak{}example(\textquotedbl{}marks\textquotedbl{})})\\
 \codeline{table.replace\_values(\textquotedbl{}class\textquotedbl{}, \{\textquotedbl{}A\textquotedbl{}: \textquotedbl{}Class A\textquotedbl{}, \textquotedbl{}B\textquotedbl{}: \textquotedbl{}Class B\textquotedbl{}\})}\enspace several at once, old: new\\
-With \{old: new\}, every cell is looked up once in the original column, so \{\code{\textquotedbl{}A\textquotedbl{}}: \code{\textquotedbl{}B\textquotedbl{}}, \code{\textquotedbl{}B\textquotedbl{}}: \code{\textquotedbl{}A\textquotedbl{}}\} swaps A and B. A new value of None makes those cells empty.
+\codeline{table.replace\_values(\textquotedbl{}marks\textquotedbl{}, above=90, with\_value=90)}\enspace every value that meets a condition\\
+With \{old: new\}, every cell is looked up once in the original column, so \{\code{\textquotedbl{}A\textquotedbl{}}: \code{\textquotedbl{}B\textquotedbl{}}, \code{\textquotedbl{}B\textquotedbl{}}: \code{\textquotedbl{}A\textquotedbl{}}\} swaps A and B. A new value of None makes those cells empty. The conditions are the \code{keep\_\allowbreak{}rows} ones, one at a time: above, below, \code{at\_\allowbreak{}least}, \code{at\_\allowbreak{}most}, \code{equal\_\allowbreak{}to}, \code{not\_\allowbreak{}equal\_\allowbreak{}to}, between, \code{one\_\allowbreak{}of}, contains, \code{starts\_\allowbreak{}with}, \code{ends\_\allowbreak{}with}, after, before. Empty cells never match (fill them with \code{fill\_\allowbreak{}empty\_\allowbreak{}cells}).
 
 \wordfield{Options}{}\par\nopagebreak
 \begin{optiontable}
 \code{column=} & \\
 \code{old=} & \\
 \code{with\_\allowbreak{}value=} & \\
+\code{above=} & \\
+\code{below=} & \\
+\code{at\_\allowbreak{}least=} & \\
+\code{at\_\allowbreak{}most=} & \\
+\code{equal\_\allowbreak{}to=} & \\
+\code{not\_\allowbreak{}equal\_\allowbreak{}to=} & \\
+\code{between=} & \\
+\code{one\_\allowbreak{}of=} & \\
+\code{contains=} & \\
+\code{starts\_\allowbreak{}with=} & \\
+\code{ends\_\allowbreak{}with=} & \\
+\code{after=} & \\
+\code{before=} & \\
 \end{optiontable}
 
 \wordfield{Underneath}{narwhals, which runs the step in pandas or Polars (whichever holds the table)}
@@ -5462,6 +5684,8 @@ import simplydata as sdata
 table = sdata.table(sdata.example("marks"))
 table.replace_values("subject", "Maths", with_value="Math")
 table.count_each("subject")
+table.replace_values("marks", above=90, with_value=90)
+table.biggest_of("marks")
 \end{lstlisting}
 \wordentry{table.round\_to()}{word:table.round-to}
 Round numbers to this many decimal places: in one column, a list of columns, or every number column.
@@ -7499,7 +7723,7 @@ nums.show_last_numbers(2)
 The number at a position, counting from 1: \code{number\_\allowbreak{}at(1)} is the first number.
 
 \codeline{nums.number\_at(1)}\\
-Positions count from 1, the way people count and the way charts number the x axis.
+Positions count from 1, the way people count and the way charts number the x axis. \code{number\_\allowbreak{}at(\textquotedbl{}last\textquotedbl{})} is the last number.
 
 \wordfield{Options}{}\par\nopagebreak
 \begin{optiontable}
@@ -7512,7 +7736,7 @@ Positions count from 1, the way people count and the way charts number the x axi
 import simplydata as sdata
 nums = sdata.numbers([12, 15, 9, 20, 14])
 print(nums.number_at(1))
-print(nums.number_at(nums.count()))
+print(nums.number_at("last"))
 \end{lstlisting}
 \wordentry{nums.count()}{word:nums.count}
 How many numbers there are (empty ones included). \code{nums.\allowbreak{}count()}
@@ -7856,6 +8080,79 @@ nums = sdata.numbers([12, None, 9, 14])
 nums.remove_empty_numbers()
 nums.show()
 \end{lstlisting}
+\wordentry{nums.keep\_numbers\_by\_position()}{word:nums.keep-numbers-by-position}
+Keep numbers by their position, counting from 1: a run, every n-th number, or a list.
+
+\codeline{nums.keep\_numbers\_by\_position(2, to=4)}\\
+Both ends are included. \code{to=\textquotedbl{}last\textquotedbl{}} goes to the end; \code{step=2} keeps every 2nd number; a list such as [1, 4] keeps those numbers in that order. As NumPy a[1:4] (positions, not values: \code{keep\_\allowbreak{}numbers(between=[2,\allowbreak{} 4])} keeps the values from 2 to 4).
+
+\wordfield{Options}{}\par\nopagebreak
+\begin{optiontable}
+\code{positions=} & \\
+\code{to=} & \\
+\code{step=} & \\
+\end{optiontable}
+
+\wordfield{Underneath}{NumPy}
+\wordfield{Example you can run}{}\par\nopagebreak
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+nums = sdata.numbers([12, 15, 9, 20, 14])
+nums.keep_numbers_by_position(2, to=4)
+nums.show()
+\end{lstlisting}
+\wordentry{nums.remove\_numbers\_by\_position()}{word:nums.remove-numbers-by-position}
+Remove numbers by their position, counting from 1: a run, every n-th number, or a list.
+
+\codeline{nums.remove\_numbers\_by\_position(\textquotedbl{}last\textquotedbl{})}\\
+The opposite of \code{keep\_\allowbreak{}numbers\_\allowbreak{}by\_\allowbreak{}position}, with the same positions. As NumPy \code{np.\allowbreak{}delete(a,\allowbreak{} -1)}.
+
+\wordfield{Options}{}\par\nopagebreak
+\begin{optiontable}
+\code{positions=} & \\
+\code{to=} & \\
+\code{step=} & \\
+\end{optiontable}
+
+\wordfield{Underneath}{NumPy}
+\wordfield{Example you can run}{}\par\nopagebreak
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+nums = sdata.numbers([12, 15, 9, 20, 14])
+nums.remove_numbers_by_position("last")
+nums.show()
+\end{lstlisting}
+\wordentry{nums.replace\_numbers()}{word:nums.replace-numbers}
+Replace a number, or every number that meets one condition; \code{with\_\allowbreak{}value=None} makes them empty.
+
+\codeline{nums.replace\_numbers(-999, with\_value=None)}\enspace a code for \code{\textquotedbl{}missing\textquotedbl{}} becomes empty\\
+\codeline{nums.replace\_numbers(above=100, with\_value=100)}\enspace every number above 100 becomes 100\\
+The conditions are \code{keep\_\allowbreak{}numbers}' (one at a time): above, below, \code{at\_\allowbreak{}least}, \code{at\_\allowbreak{}most}, \code{equal\_\allowbreak{}to}, \code{not\_\allowbreak{}equal\_\allowbreak{}to}, between, \code{one\_\allowbreak{}of}, \code{is\_\allowbreak{}empty}. A grid keeps its rows and columns. As NumPy \code{np.\allowbreak{}where(a \textgreater{} 100,\allowbreak{} 100,\allowbreak{} a)} and pandas \code{s.\allowbreak{}mask(s \textgreater{} 100,\allowbreak{} 100)}.
+
+\wordfield{Options}{}\par\nopagebreak
+\begin{optiontable}
+\code{old=} & \\
+\code{with\_\allowbreak{}value=} & \\
+\code{above=} & \\
+\code{below=} & \\
+\code{at\_\allowbreak{}least=} & \\
+\code{at\_\allowbreak{}most=} & \\
+\code{equal\_\allowbreak{}to=} & \\
+\code{not\_\allowbreak{}equal\_\allowbreak{}to=} & \\
+\code{between=} & \\
+\code{one\_\allowbreak{}of=} & \\
+\code{is\_\allowbreak{}empty=} & \\
+\end{optiontable}
+
+\wordfield{Underneath}{NumPy}
+\wordfield{Example you can run}{}\par\nopagebreak
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+nums = sdata.numbers([12, -999, 9, 20, 14])
+nums.replace_numbers(-999, with_value=None)
+nums.replace_numbers(above=14, with_value=14)
+nums.show()
+\end{lstlisting}
 \wordentry{nums.fill\_empty\_numbers()}{word:nums.fill-empty-numbers}
 Fill the empty values with a number, or with the average, median, value above or value below.
 
@@ -8137,6 +8434,8 @@ grid.show_last_rows(1)
 \wordentry{grid.number\_at()}{word:grid.number-at}
 The number at a row and column, counting from 1. \code{grid.\allowbreak{}number\_\allowbreak{}at(row=1,\allowbreak{} column=2)}
 
+\code{\textquotedbl{}last\textquotedbl{}} is the last row or column: \code{grid.\allowbreak{}number\_\allowbreak{}at(row=\textquotedbl{}last\textquotedbl{},\allowbreak{} column=\textquotedbl{}last\textquotedbl{})}.
+
 \wordfield{Options}{}\par\nopagebreak
 \begin{optiontable}
 \code{row=} & \\
@@ -8153,6 +8452,8 @@ print(grid.number_at(row=1, column=2))
 \wordentry{grid.row()}{word:grid.row}
 One row of the grid as new numbers, counting from 1: \code{row(1)} is the top row. \code{grid.\allowbreak{}row(1)}
 
+\codeline{grid.row(\textquotedbl{}last\textquotedbl{}) is the bottom row.}
+
 \wordfield{Options}{}\par\nopagebreak
 \begin{optiontable}
 \code{position=} & \\
@@ -8168,6 +8469,8 @@ top.show()
 \end{lstlisting}
 \wordentry{grid.column()}{word:grid.column}
 One column of the grid as new numbers, counting from 1: \code{column(1)} is the left one. \code{grid.\allowbreak{}column(1)}
+
+\codeline{grid.column(\textquotedbl{}last\textquotedbl{}) is the right one.}
 
 \wordfield{Options}{}\par\nopagebreak
 \begin{optiontable}
@@ -8194,6 +8497,118 @@ import simplydata as sdata
 grid = sdata.number_grid([[3, 5, 2], [8, 6, 4]])
 nums = grid.numbers()
 nums.show()
+\end{lstlisting}
+\wordentry{grid.keep\_rows\_by\_position()}{word:grid.keep-rows-by-position}
+Keep rows of the grid by their position, counting from 1: a run, every n-th row, or a list.
+
+\codeline{grid.keep\_rows\_by\_position(1, to=2)}\\
+Both ends are included; \code{to=\textquotedbl{}last\textquotedbl{}} goes to the bottom; \code{step=2} keeps every 2nd row; a list such as [2, 1] keeps those rows in that order. A block is two steps:\\
+\codeline{grid.keep\_rows\_by\_position(2, to=5).keep\_columns\_by\_position(1, to=3), as NumPy g[1:5, 0:3].}
+
+\wordfield{Options}{}\par\nopagebreak
+\begin{optiontable}
+\code{positions=} & \\
+\code{to=} & \\
+\code{step=} & \\
+\end{optiontable}
+
+\wordfield{Underneath}{NumPy (a two-dimensional array)}
+\wordfield{Example you can run}{}\par\nopagebreak
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+grid = sdata.numbers(1, to=24).number_grid(columns=6)
+grid.keep_rows_by_position(2, to=3)
+print(grid)
+\end{lstlisting}
+\wordentry{grid.keep\_columns\_by\_position()}{word:grid.keep-columns-by-position}
+Keep columns of the grid by their position, counting from 1 at the left. \code{grid.\allowbreak{}keep\_\allowbreak{}columns\_\allowbreak{}by\_\allowbreak{}position(2,\allowbreak{} to=3)}
+
+The same positions as \code{keep\_\allowbreak{}rows\_\allowbreak{}by\_\allowbreak{}position}: a run (\code{to=}), every n-th (\code{step=}) or a list. As NumPy g[:, 1:3].
+
+\wordfield{Options}{}\par\nopagebreak
+\begin{optiontable}
+\code{positions=} & \\
+\code{to=} & \\
+\code{step=} & \\
+\end{optiontable}
+
+\wordfield{Underneath}{NumPy (a two-dimensional array)}
+\wordfield{Example you can run}{}\par\nopagebreak
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+grid = sdata.numbers(1, to=24).number_grid(columns=6)
+grid.keep_rows_by_position(2, to=3)
+grid.keep_columns_by_position(1, to=3)
+print(grid)
+\end{lstlisting}
+\wordentry{grid.remove\_rows\_by\_position()}{word:grid.remove-rows-by-position}
+Remove rows of the grid by their position, counting from 1. \code{grid.\allowbreak{}remove\_\allowbreak{}rows\_\allowbreak{}by\_\allowbreak{}position(1)}
+
+The same positions as \code{keep\_\allowbreak{}rows\_\allowbreak{}by\_\allowbreak{}position}. As NumPy \code{np.\allowbreak{}delete(g,\allowbreak{} 0,\allowbreak{} axis=0)}.
+
+\wordfield{Options}{}\par\nopagebreak
+\begin{optiontable}
+\code{positions=} & \\
+\code{to=} & \\
+\code{step=} & \\
+\end{optiontable}
+
+\wordfield{Underneath}{NumPy (a two-dimensional array)}
+\wordfield{Example you can run}{}\par\nopagebreak
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+grid = sdata.numbers(1, to=24).number_grid(columns=6)
+grid.remove_rows_by_position(1)
+print(grid)
+\end{lstlisting}
+\wordentry{grid.remove\_columns\_by\_position()}{word:grid.remove-columns-by-position}
+Remove columns of the grid by their position, counting from 1 at the left. \code{grid.\allowbreak{}remove\_\allowbreak{}columns\_\allowbreak{}by\_\allowbreak{}position(1)}
+
+The same positions as \code{keep\_\allowbreak{}columns\_\allowbreak{}by\_\allowbreak{}position}. As NumPy \code{np.\allowbreak{}delete(g,\allowbreak{} 0,\allowbreak{} axis=1)}.
+
+\wordfield{Options}{}\par\nopagebreak
+\begin{optiontable}
+\code{positions=} & \\
+\code{to=} & \\
+\code{step=} & \\
+\end{optiontable}
+
+\wordfield{Underneath}{NumPy (a two-dimensional array)}
+\wordfield{Example you can run}{}\par\nopagebreak
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+grid = sdata.numbers(1, to=24).number_grid(columns=6)
+grid.remove_columns_by_position(1, step=2)
+print(grid)
+\end{lstlisting}
+\wordentry{grid.replace\_numbers()}{word:grid.replace-numbers}
+Replace a number, or every number that meets one condition; the grid keeps its rows and columns.
+
+\codeline{grid.replace\_numbers(below=4, with\_value=0)}\\
+The conditions are \code{keep\_\allowbreak{}numbers}' (one at a time): above, below, \code{at\_\allowbreak{}least}, \code{at\_\allowbreak{}most}, \code{equal\_\allowbreak{}to}, \code{not\_\allowbreak{}equal\_\allowbreak{}to}, between, \code{one\_\allowbreak{}of}, \code{is\_\allowbreak{}empty}; \code{with\_\allowbreak{}value=None} makes the numbers empty. As NumPy \code{np.\allowbreak{}where(g \textless{} 4,\allowbreak{} 0,\allowbreak{} g)} or g[g \textless{} 4] = 0.
+
+\wordfield{Options}{}\par\nopagebreak
+\begin{optiontable}
+\code{old=} & \\
+\code{with\_\allowbreak{}value=} & \\
+\code{above=} & \\
+\code{below=} & \\
+\code{at\_\allowbreak{}least=} & \\
+\code{at\_\allowbreak{}most=} & \\
+\code{equal\_\allowbreak{}to=} & \\
+\code{not\_\allowbreak{}equal\_\allowbreak{}to=} & \\
+\code{between=} & \\
+\code{one\_\allowbreak{}of=} & \\
+\code{is\_\allowbreak{}empty=} & \\
+\end{optiontable}
+
+\wordfield{Underneath}{NumPy (a two-dimensional array)}
+\wordfield{Example you can run}{}\par\nopagebreak
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+grid = sdata.number_grid([[3, 5, 2], [8, 6, 4]])
+grid.replace_numbers(below=4, with_value=0)
+print(grid)
 \end{lstlisting}
 \wordentry{grid.swap\_rows\_and\_columns()}{word:grid.swap-rows-and-columns}
 Turn rows into columns and columns into rows (the transpose in maths).
@@ -8368,6 +8783,95 @@ solution for each task: \code{sdata.\allowbreak{}lesson(3,\allowbreak{} solution
 import simplydata as sdata
 sdata.lesson()
 sdata.lesson(1)
+\end{lstlisting}
+\unsection{30 days of simplydata}{group:30-days-of-simplydata}
+\wordentry{sdata.start\_30\_days()}{word:sdata.start-30-days}
+Start 30 days of simplydata: an hour a day of warm-up questions, lessons and tasks. \code{sdata.\allowbreak{}start\_\allowbreak{}30\_\allowbreak{}days()}
+
+\code{track=\textquotedbl{}python\textquotedbl{}} (the normal choice) is for people who already write some Python; \code{track=\textquotedbl{}beginner\textquotedbl{}} starts with three days of just enough Python. The day you start is kept in a small file on this computer (nothing is sent anywhere), so that \code{sdata.\allowbreak{}today()} knows which day comes next. If you have started already, it says so and changes nothing; \code{start\_\allowbreak{}again=True} starts again from day 1:\\
+\codeline{sdata.start\_30\_days(track=\textquotedbl{}beginner\textquotedbl{}, start\_again=True).}
+
+\wordfield{Options}{}\par\nopagebreak
+\begin{optiontable}
+\code{track=} & normally \code{\textquotedbl{}python\textquotedbl{}}\\
+\code{start\_\allowbreak{}again=} & normally \code{False}\\
+\end{optiontable}
+
+\wordfield{Underneath}{plain Python: the days are in simplydata/\code{learn\_\allowbreak{}days}.py, and the progress is a small JSON file on your computer (json, pathlib)}
+\wordfield{Example you can run}{}\par\nopagebreak
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+sdata.start_30_days(track="python")
+\end{lstlisting}
+\wordentry{sdata.today()}{word:sdata.today}
+Show today's day of the 30 days of simplydata: warm-up questions, what to do and a task. \code{sdata.\allowbreak{}today()}
+
+The day after the one you last opened comes next, so a day you miss is never lost: \code{today()} carries on where you stopped (on the same date it shows the same day again). If you have fallen more than a day behind the calendar it says so; \code{follow\_\allowbreak{}calendar=True} jumps to the calendar's day instead:\\
+\codeline{sdata.today(follow\_calendar=True). Not started yet? It shows how to start, and day 1.}
+
+\wordfield{Options}{}\par\nopagebreak
+\begin{optiontable}
+\code{follow\_\allowbreak{}calendar=} & normally \code{False}\\
+\end{optiontable}
+
+\wordfield{Underneath}{plain Python: the days are in simplydata/\code{learn\_\allowbreak{}days}.py, and the progress is a small JSON file on your computer (json, pathlib)}
+\wordfield{Example you can run}{}\par\nopagebreak
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+sdata.today()
+\end{lstlisting}
+\wordentry{sdata.day()}{word:sdata.day}
+Show any day of the 30 days, without changing where you are. \code{sdata.\allowbreak{}day(5)}
+
+\codeline{sdata.day() on its own lists all 30 days, with a tick for each day you have opened. The track is}\\
+the one you started, else \code{\textquotedbl{}python\textquotedbl{}}: \code{sdata.\allowbreak{}day(1,\allowbreak{} track=\textquotedbl{}beginner\textquotedbl{})} shows the other one.
+
+\wordfield{Options}{}\par\nopagebreak
+\begin{optiontable}
+\code{number=} & \\
+\code{track=} & \\
+\end{optiontable}
+
+\wordfield{Underneath}{plain Python: the days are in simplydata/\code{learn\_\allowbreak{}days}.py, and the progress is a small JSON file on your computer (json, pathlib)}
+\wordfield{Example you can run}{}\par\nopagebreak
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+sdata.day()
+sdata.day(5)
+sdata.day(1, track="beginner")
+\end{lstlisting}
+\wordentry{sdata.answers()}{word:sdata.answers}
+The answers to a day's warm-up questions, and a worked answer to its task. \code{sdata.\allowbreak{}answers(5)}
+
+\codeline{sdata.answers() on its own gives the answers to the day you opened last. The track is the one you}\\
+started, else \code{\textquotedbl{}python\textquotedbl{}}: \code{sdata.\allowbreak{}answers(5,\allowbreak{} track=\textquotedbl{}beginner\textquotedbl{})}.
+
+\wordfield{Options}{}\par\nopagebreak
+\begin{optiontable}
+\code{number=} & \\
+\code{track=} & \\
+\end{optiontable}
+
+\wordfield{Underneath}{plain Python: the days are in simplydata/\code{learn\_\allowbreak{}days}.py, and the progress is a small JSON file on your computer (json, pathlib)}
+\wordfield{Example you can run}{}\par\nopagebreak
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+sdata.answers(5)
+\end{lstlisting}
+\wordentry{sdata.next\_day()}{word:sdata.next-day}
+Go on to the next day now, without waiting for tomorrow. \code{sdata.\allowbreak{}next\_\allowbreak{}day()}
+
+It opens the day after the last one you opened, so two days can be done in one go. Tomorrow,\\
+\codeline{sdata.today() carries on from there.}
+
+\wordfield{Options}{none: just write the empty brackets.}
+
+\wordfield{Underneath}{plain Python: the days are in simplydata/\code{learn\_\allowbreak{}days}.py, and the progress is a small JSON file on your computer (json, pathlib)}
+\wordfield{Example you can run}{}\par\nopagebreak
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+sdata.start_30_days()
+sdata.next_day()
 \end{lstlisting}
 
 \part{Data science ideas}\label{part:ideas}
@@ -8836,6 +9340,17 @@ table.count_rows()
 \end{lstlisting}
 \printedoutput{output/solution10_task4.txt}
 \solutionanswer{19 rows: or keeps a row when at least one of the two is true.}
+\solutiontask{5}{From memory, without looking back: start again, keep rows 5 to 9, then remove the last row. How many rows are left, and whose name is in row 1 now?}
+\begin{lstlisting}[style=py]
+import simplydata as sdata
+table = sdata.table(sdata.example("marks"))
+table.keep_rows_by_position(5, to=9)
+table.remove_rows_by_position("last")
+table.count_rows()
+print(table.cell_at(row=1, column="name"))
+\end{lstlisting}
+\printedoutput{output/solution10_task5.txt}
+\solutionanswer{4 rows: rows 5 to 9 are 5 rows (both ends count), and one is removed. Row 1 is now Ben's Science mark, which was row 5 before: positions are always of the table as it is now.}
 \par\noindent{\small\sffamily\hyperref[lesson:10]{Back to lesson 10}}
 \unsection{Lesson 11: Tables: clean the data and add new columns}{solutions:11}
 \solutiontask{1}{In the first example, fill the empty marks with the median instead of the average.}
@@ -9211,6 +9726,7 @@ Every word and option, A to Z, with the page of its dictionary entry. Other spel
 \indexline{word:table.add-text-part-column}{table.add\_text\_part\_column()}
 \indexline{word:all-dots}{chart.all\_dots()}
 \indexline{word:animate}{chart.animate()}
+\indexline{word:sdata.answers}{sdata.answers()}
 \indexline{word:area}{chart.area()}
 \indexline{word:nums.as-numpy}{nums.as\_numpy()}
 \indexline{word:table.as-pandas}{table.as\_pandas()}
@@ -9226,6 +9742,7 @@ Every word and option, A to Z, with the page of its dictionary entry. Other spel
 \indexline{word:boxes}{chart.box()}
 \indexline{word:boxes}{chart.boxes()}
 \indexline{word:caption-bottom}{chart.caption\_bottom()}
+\indexline{word:table.cell-at}{table.cell\_at()}
 \indexline{word:dist.chance}{dist.chance()}
 \indexline{word:sdata.chance-to-find}{sdata.chance\_to\_find()}
 \indexline{word:table.change-column}{table.change\_column()}
@@ -9269,6 +9786,7 @@ Every word and option, A to Z, with the page of its dictionary entry. Other spel
 \indexline{word:cumulative-share}{chart.cumulative\_share()}
 \indexline{word:curve}{chart.curve()}
 \indexline{word:dist.cut-off}{dist.cut\_off()}
+\indexline{word:sdata.day}{sdata.day()}
 \indexline{word:density}{chart.density()}
 \indexline{word:dist.density-at}{dist.density\_at()}
 \indexline{word:table.describe-columns}{table.describe\_columns()}
@@ -9311,14 +9829,19 @@ Every word and option, A to Z, with the page of its dictionary entry. Other spel
 \indexline{word:table.join-with}{table.join\_with()}
 \indexline{word:table.keep-biggest-rows}{table.keep\_biggest\_rows()}
 \indexline{word:table.keep-columns}{table.keep\_columns()}
+\indexline{word:grid.keep-columns-by-position}{grid.keep\_columns\_by\_position()}
+\indexline{word:table.keep-columns-by-position}{table.keep\_columns\_by\_position()}
 \indexline{word:nums.keep-first-numbers}{nums.keep\_first\_numbers()}
 \indexline{word:table.keep-first-rows}{table.keep\_first\_rows()}
 \indexline{word:nums.keep-last-numbers}{nums.keep\_last\_numbers()}
 \indexline{word:table.keep-last-rows}{table.keep\_last\_rows()}
 \indexline{word:nums.keep-numbers}{nums.keep\_numbers()}
+\indexline{word:nums.keep-numbers-by-position}{nums.keep\_numbers\_by\_position()}
 \indexline{word:nums.keep-random-numbers}{nums.keep\_random\_numbers()}
 \indexline{word:table.keep-random-rows}{table.keep\_random\_rows()}
 \indexline{word:table.keep-rows}{table.keep\_rows()}
+\indexline{word:grid.keep-rows-by-position}{grid.keep\_rows\_by\_position()}
+\indexline{word:table.keep-rows-by-position}{table.keep\_rows\_by\_position()}
 \indexline{word:table.keep-smallest-rows}{table.keep\_smallest\_rows()}
 \indexline{word:label-colour-bar}{chart.label\_color\_bar()}
 \indexline{word:label-colour-bar}{chart.label\_colour\_bar()}
@@ -9350,6 +9873,7 @@ Every word and option, A to Z, with the page of its dictionary entry. Other spel
 \indexline{word:dist.middle-range}{dist.middle\_range()}
 \indexline{word:table.most-common-of}{table.most\_common\_of()}
 \indexline{word:names-on-dots}{chart.names\_on\_dots()}
+\indexline{word:sdata.next-day}{sdata.next\_day()}
 \indexline{word:note}{chart.note()}
 \indexline{word:grid.number-at}{grid.number\_at()}
 \indexline{word:nums.number-at}{nums.number\_at()}
@@ -9379,23 +9903,32 @@ Every word and option, A to Z, with the page of its dictionary entry. Other spel
 \indexline{word:range-x}{chart.range\_x()}
 \indexline{word:range-y}{chart.range\_y()}
 \indexline{word:table.remove-columns}{table.remove\_columns()}
+\indexline{word:grid.remove-columns-by-position}{grid.remove\_columns\_by\_position()}
+\indexline{word:table.remove-columns-by-position}{table.remove\_columns\_by\_position()}
 \indexline{word:nums.remove-duplicate-numbers}{nums.remove\_duplicate\_numbers()}
 \indexline{word:table.remove-duplicate-rows}{table.remove\_duplicate\_rows()}
 \indexline{word:nums.remove-empty-numbers}{nums.remove\_empty\_numbers()}
 \indexline{word:table.remove-extra-spaces}{table.remove\_extra\_spaces()}
 \indexline{word:nums.remove-numbers}{nums.remove\_numbers()}
+\indexline{word:nums.remove-numbers-by-position}{nums.remove\_numbers\_by\_position()}
 \indexline{word:table.remove-rows}{table.remove\_rows()}
+\indexline{word:grid.remove-rows-by-position}{grid.remove\_rows\_by\_position()}
+\indexline{word:table.remove-rows-by-position}{table.remove\_rows\_by\_position()}
 \indexline{word:table.remove-rows-with-empty-cells}{table.remove\_rows\_with\_empty\_cells()}
 \indexline{word:table.remove-rows-with-outliers}{table.remove\_rows\_with\_outliers()}
 \indexline{word:table.rename-column}{table.rename\_column()}
+\indexline{word:grid.replace-numbers}{grid.replace\_numbers()}
+\indexline{word:nums.replace-numbers}{nums.replace\_numbers()}
 \indexline{word:table.replace-text}{table.replace\_text()}
 \indexline{word:table.replace-values}{table.replace\_values()}
 \indexline{word:nums.reverse}{nums.reverse()}
+\indexline{word:table.reverse-rows}{table.reverse\_rows()}
 \indexline{word:rotate-labels-x}{chart.rotate\_labels\_x()}
 \indexline{word:rotate-labels-y}{chart.rotate\_labels\_y()}
 \indexline{word:nums.round-to}{nums.round\_to()}
 \indexline{word:table.round-to}{table.round\_to()}
 \indexline{word:grid.row}{grid.row()}
+\indexline{word:table.row}{table.row()}
 \indexline{word:nums.running-total}{nums.running\_total()}
 \indexline{word:save}{chart.save()}
 \indexline{word:nums.save}{nums.save()}
@@ -9432,6 +9965,7 @@ Every word and option, A to Z, with the page of its dictionary entry. Other spel
 \indexline{word:dist.standard-deviation}{dist.standard\_deviation()}
 \indexline{word:nums.standard-deviation}{nums.standard\_deviation()}
 \indexline{word:table.standard-deviation-of}{table.standard\_deviation\_of()}
+\indexline{word:sdata.start-30-days}{sdata.start\_30\_days()}
 \indexline{word:nums.start-again}{nums.start\_again()}
 \indexline{word:table.start-again}{table.start\_again()}
 \indexline{word:nums.steps}{nums.steps()}
@@ -9453,6 +9987,7 @@ Every word and option, A to Z, with the page of its dictionary entry. Other spel
 \indexline{word:ticks-y}{chart.ticks\_y()}
 \indexline{word:nums.times}{nums.times()}
 \indexline{word:title-top}{chart.title\_top()}
+\indexline{word:sdata.today}{sdata.today()}
 \indexline{word:nums.total}{nums.total()}
 \indexline{word:table.total-of}{table.total\_of()}
 \indexline{word:table.turn-columns-into-rows}{table.turn\_columns\_into\_rows()}

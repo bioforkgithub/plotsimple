@@ -644,7 +644,12 @@ def _draw_boxes(ctx, x, y, colour, violins, transparency=None, thickness=None):
         with _quiet():
             sns.boxplot(**kw)
     faces_see_through([a for a in list(ax.patches) + list(ax.collections) if a not in before], transparency)
+    ctx.store["boxes_drawn"] = True  # dots drawn on top then get a colour that stands out
     _remember(ctx, "violins" if violins else "boxes", table, n)
+
+
+# Dots drawn over boxes or violins: in the boxes' own colour they would be invisible
+DOTS_OVER_BOXES = "#333333"
 
 
 # ---------------------------------------------------------------- all dots
@@ -654,6 +659,12 @@ def _draw_all_dots(ctx, x, y, colour, transparency=None):
     dodge = bool(n["colour"]) and n["colour"] not in (n["x"], n["y"])
     kw = dict(data=table, x=n["x"], y=n["y"], **_hue(table, n), ax=ctx.ax, dodge=dodge)
     _seaborn_colours(kw, table, n, ctx, fixed)
+    if ctx.store.get("boxes_drawn"):
+        # only the default changes: a colour given with colour= is kept
+        if not n["colour"] and fixed is None:
+            kw["color"] = DOTS_OVER_BOXES
+        elif n["colour"]:
+            kw.update(edgecolor=DOTS_OVER_BOXES, linewidth=0.6)  # group colours, with a dark rim
     keys = [k for k in (n["x"], n["y"]) if k is not None and not _is_number_column(table[k])]
     if dodge:
         keys.append(n["colour"])
@@ -1314,7 +1325,8 @@ class ChartWords:
         """Every value as a dot, spread out so no dot hides another.
         chart.all_dots(x="class", y="marks") (with sdata.example("marks"))
 
-        Good on top of .boxes() or .violins(), to show each value as well.
+        Good on top of .boxes() or .violins(), to show each value as well; there the dots are dark
+        grey, so they stand out (colour= still chooses your own).
         transparency=0.5 makes them half see-through (0 is solid).
         """
         transparency = check_transparency("all_dots", transparency)

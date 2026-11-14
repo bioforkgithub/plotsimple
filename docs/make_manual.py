@@ -10,6 +10,11 @@ library each word uses) and docs/manual/ideas.tex (the data science ideas).
     python docs/make_manual.py --tex      # only write the .tex (fast; no LaTeX needed)
     python docs/make_manual.py --no-run   # write the .tex and compile, without running the examples again
 
+Compiling the manual also builds the dictionary (docs/manual/simplydataDictionary.pdf, made by
+docs/make_dictionary.py) and the guide "30 days of simplydata" (docs/manual/simplydata_30_days.pdf,
+made by docs/make_30_days.py), so their page numbers always match the manual. The LaTeX build files go
+to a scratch folder; set SIMPLYDATA_LATEX_DIR to choose another one.
+
 Building the PDF needs a LaTeX system with pdflatex (MiKTeX or TeX Live). It runs every
 lesson example and every solution, saves their charts in docs/manual/figures/ and what they
 print in docs/manual/output/, then compiles the PDF three times (for the page numbers).
@@ -73,6 +78,8 @@ GROUP_UNDERNEATH = {
     "Grids of numbers": "NumPy (a two-dimensional array)",
     "Numbers: undo and finish": "simplydata itself: it keeps every version of the numbers",
     "Help": "plain Python: simplydata reads its own word list and docstrings",
+    "30 days of simplydata": "plain Python: the days are in simplydata/learn_days.py, and the progress is a small "
+                             "JSON file on your computer (json, pathlib)",
 }
 UNDERNEATH = {
     # start, show and save
@@ -244,7 +251,7 @@ can write it up in a report or a paper.
 
 \section*{How this manual is built}
 \begin{description}[style=nextline,leftmargin=1.2em]
-  \item[{\hyperref[part:lessons]{Part II: Lessons}}] Eighteen short lessons that teach the whole
+  \item[{\hyperref[part:lessons]{Part II: Lessons}}] @LESSON_COUNT@ short lessons that teach the whole
     of simplydata in a day. Each lesson shows code you can run, says what every line does, shows
     the real chart and output it makes, and ends with tasks to try yourself.
   \item[{\hyperref[part:dictionary]{Part III: Dictionary of words}}] Every word, with what it does,
@@ -281,7 +288,13 @@ sdata.lesson(1, solutions=True)     # the first lesson, with worked solutions to
 sdata.words()                       # every word, with a short example
 sdata.help("bars")                  # one word: what it does, its options and an example
 sdata.example()                     # the made-up tables you can practise with
+sdata.start_30_days()               # or learn it in 30 days of about an hour,
+sdata.today()                       # ... with sdata.today() each day
 \end{lstlisting}
+Rather learn an hour a day? \code{sdata.start\_30\_days()} spreads the lessons over 30 days, each with
+a warm-up of questions on earlier days and a task, and a project of your own at the end
+(\code{track="beginner"} starts with just enough Python). The printable guide,
+\href{simplydata_30_days.pdf}{\code{simplydata\_30\_days.pdf}}, has the same days on paper.
 
 \section*{Your own data}
 \code{sdata.table("my\_file.xlsx")} and \code{sdata.chart("my\_file.xlsx")} read Excel, CSV, TSV,
@@ -815,6 +828,19 @@ def _index(aliases: dict) -> str:
     return "\n".join(lines)
 
 
+def in_words(number: int) -> str:
+    """A count in words ("twenty"), so that hand-written sentences follow the code."""
+    ones = ["zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten",
+            "eleven", "twelve", "thirteen", "fourteen", "fifteen", "sixteen", "seventeen", "eighteen",
+            "nineteen"]
+    tens = ["", "", "twenty", "thirty", "forty", "fifty", "sixty", "seventy", "eighty", "ninety"]
+    if number < 20:
+        return ones[number]
+    if number < 100:
+        return tens[number // 10] + ("" if number % 10 == 0 else "-" + ones[number % 10])
+    return str(number)
+
+
 def make() -> str:
     """The whole manual as LaTeX text. Runs nothing, so it is quick and always the same."""
     aliases = learn._aliases()
@@ -828,7 +854,7 @@ def make() -> str:
         r"\tableofcontents",
         r"\mainmatter",
         r"\part{Getting started}\label{part:start}",
-        GETTING_STARTED.strip(),
+        GETTING_STARTED.strip().replace("@LESSON_COUNT@", in_words(len(learn.LESSONS)).capitalize()),
         _practice_tables(),
         r"\part{Lessons}\label{part:lessons}",
         r"\lessonchapters",
@@ -932,9 +958,15 @@ def run_examples() -> None:
         print(f"  ran {prefix}")
 
 
-def compile_pdf() -> None:
-    build = _work_folder() / "latex"
+def latex_folder() -> Path:
+    """Where LaTeX writes its build files (.aux, .log ...): SIMPLYDATA_LATEX_DIR, else the scratch space."""
+    build = Path(os.environ.get("SIMPLYDATA_LATEX_DIR") or _work_folder() / "latex")
     build.mkdir(parents=True, exist_ok=True)
+    return build
+
+
+def compile_pdf() -> Path:
+    build = latex_folder()
     env = dict(os.environ, SOURCE_DATE_EPOCH="0", FORCE_SOURCE_DATE="1")
     for run in range(3):
         result = subprocess.run(
@@ -945,6 +977,7 @@ def compile_pdf() -> None:
             print(log[-4000:])
             raise SystemExit(f"pdflatex failed (run {run + 1}); the full log is in {build}")
     shutil.copyfile(build / "simplydata_manual.pdf", PDF)
+    return build
 
 
 def main(argv: list[str]) -> None:
@@ -957,9 +990,16 @@ def main(argv: list[str]) -> None:
         print("Running every lesson example and solution ...")
         run_examples()
     print("Compiling the PDF ...")
-    compile_pdf()
+    build = compile_pdf()
     print(f"Wrote {PDF}")
+    import make_dictionary  # the dictionary takes its page numbers from the manual just compiled
+
+    make_dictionary.build(build)
+    import make_30_days  # and so does the 30-day guide
+
+    make_30_days.build(build)
 
 
 if __name__ == "__main__":
+    sys.path.insert(0, str(HERE))
     main(sys.argv[1:])

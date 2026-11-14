@@ -1,30 +1,30 @@
 Kept 18 of 54 rows.
 Kept 11 of 18 rows.
-     name subject  marks
-0    Hana   Maths     91
-1    Chen   Maths     81
-2    Jade   Maths     81
-3    Dina   Maths     74
-4  Fatima   Maths     74
-5     Ben   Maths     73
-6    Noah   Maths     72
-7    Kofi   Maths     68
-8     Gus   Maths     67
-9    Omar   Maths     62
+      name subject  marks
+1     Hana   Maths     91
+2     Chen   Maths     81
+3     Jade   Maths     81
+4     Dina   Maths     74
+5   Fatima   Maths     74
+6      Ben   Maths     73
+7     Noah   Maths     72
+8     Kofi   Maths     68
+9      Gus   Maths     67
+10    Omar   Maths     62
 1. keep columns name, subject, marks
 2. keep rows where subject is "Maths"
 3. keep rows where marks is above 60
 4. sort by marks (biggest first)
 Undone: sort by marks (biggest first)
 simplydata table: 54 rows, 6 columns
-   name class  subject  hours  marks  height
-0  Asha     A    Maths    6.3     61     144
-1  Asha     A  Science    3.8     66     144
-2  Asha     A  English    7.6     77     144
-3   Ben     A    Maths    6.4     73     152
-4   Ben     A  Science    9.2     98     152
-5   Ben     A  English    6.2     71     152
-6  Chen     A    Maths    7.9     81     151
-7  Chen     A  Science    3.5     59     151
-8  Chen     A  English    2.5     46     151
-9  Dina     A    Maths    6.5     74     155
+    name class  subject  hours  marks  height
+1   Asha     A    Maths    6.3     61     144
+2   Asha     A  Science    3.8     66     144
+3   Asha     A  English    7.6     77     144
+4    Ben     A    Maths    6.4     73     152
+5    Ben     A  Science    9.2     98     152
+6    Ben     A  English    6.2     71     152
+7   Chen     A    Maths    7.9     81     151
+8   Chen     A  Science    3.5     59     151
+9   Chen     A  English    2.5     46     151
+10  Dina     A    Maths    6.5     74     155

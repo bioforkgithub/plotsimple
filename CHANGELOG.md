@@ -76,6 +76,42 @@ More statistics, each checked against R.
   and about 400 more) never run: each says "In simplydata this is ..." with the word to use.
   `sdata.help("minimize")` explains them too.
 
+### Dictionary
+
+- `docs/manual/simplydataDictionary.pdf`: every word A to Z (one entry per word, with a part for
+  each object that has it, such as `fit_line` on tables and charts), each with its meaning, a short
+  example, its main options, the names other tools use for it, related words and the page of the
+  manual that explains it (a link that opens the manual there), plus the lesson that teaches it.
+  Its last part, "Coming from another tool?", turns every name from other tools and every old name
+  into the simplydata word. It is made from the code by `docs/make_dictionary.py`; building the
+  manual (`python docs/make_manual.py`) builds the dictionary too, with the manual's page numbers,
+  and a test fails if a word has no page or the pages come from an older manual.
+
+### 30 days of simplydata
+
+- `sdata.start_30_days(track="python")` starts a course of 30 days of about an hour each:
+  `track="python"` for people who already write some Python (about two lessons a day, review days
+  on days 7, 14, 21 and 28, then an eight-day project of their own), `track="beginner"` for people
+  who have never programmed (three days of just enough Python first, then about one lesson a day
+  and a small project). Both cover all 20 lessons and end with a final test from memory.
+- `sdata.today()` shows the day to do next: a 5-minute warm-up of questions on earlier days
+  (yesterday, about three days ago, about a week ago; review days mix the whole course), what to do
+  (the lesson, the manual's sections and the words to look up) and a task to do without looking
+  back. A missed day is never lost: `today()` carries on where you stopped, says so kindly if you
+  have fallen behind the calendar, and `today(follow_calendar=True)` jumps to the calendar's day.
+- `sdata.day(5)` shows any day (`sdata.day()` lists all 30 with ticks), `sdata.answers(5)` gives
+  the warm-up answers and a worked answer to the task, and `sdata.next_day()` goes on now.
+- The progress (track, start date and the date each day was opened) is kept only in a small file
+  on your computer, `~/.simplydata/progress.json` (`SIMPLYDATA_PROGRESS_FILE` chooses another);
+  nothing is sent anywhere.
+- `docs/manual/simplydata_30_days.pdf`: the same days on paper, with a calendar to tick for each
+  track, one page per day (warm-up questions with lines for the answers, the manual's page for each
+  lesson, section and word, and the task) and the answers at the back. It is made by
+  `docs/make_30_days.py` from the same source as `sdata.today()` (`simplydata/learn_days.py`), and
+  building the manual builds it too. Every piece of code in the days runs in the tests.
+- Lesson 1, `sdata.lesson()` and `sdata.help()` say that the 30 days exist; `sdata.help("course")`
+  and `sdata.help("tutorial")` point to `start_30_days`.
+
 ### Not in this release
 
 Robust (outlier-resistant) curve fitting, gradients given by hand, profile-likelihood intervals
@@ -134,6 +170,38 @@ slopes and areas under splines.
 - `line_with_slope` (for 1:1 lines), `qq_dots` (Q-Q plots), `cumulative_share` (ECDF) and
   `font_name`.
 
+### Choosing parts by position
+
+- Printed tables number their rows from 1 (`show`, `show_first_rows`, `show_last_rows`, `print`,
+  notebooks), so the last row of a 54-row table is row 54; `show_rows_with_outliers` shows each row
+  with its number in the whole table. Only the display changes: `as_pandas()` keeps pandas' own
+  index.
+- `table.keep_rows_by_position(10, to=20)` and `remove_rows_by_position`: rows by their place,
+  counting from 1 with both ends included (rows 10 to 20 are 11 rows), `to="last"`, `step=` for every
+  n-th row and a list such as `[1, 5, 9]` (as pandas `iloc` and Polars `slice`/`gather_every`).
+  `keep_columns_by_position` and `remove_columns_by_position` do the same for columns and say which
+  columns they were.
+- `table.row(3)` gives one row as a dict, `table.cell_at(row=3, column="marks")` one cell, and
+  `table.reverse_rows()` turns the table upside down.
+- `keep_columns` and `remove_columns` take a run of names (`keep_columns("hours", to="height")`),
+  `kind="number"` (or `"text"`, `"date"`, `"true/false"`), `starts_with=`, `ends_with=`, `contains=`
+  and `pattern=`.
+- `replace_values` takes the `keep_rows` conditions: `replace_values("marks", above=100,
+  with_value=100)`.
+- Numbers: `nums.keep_numbers_by_position(3, to=8)`, `remove_numbers_by_position`, and
+  `nums.replace_numbers(-999, with_value=None)` or `replace_numbers(above=100, with_value=100)`.
+- Grids: `keep_rows_by_position`, `keep_columns_by_position`, `remove_rows_by_position`,
+  `remove_columns_by_position` (a block is two steps) and `grid.replace_numbers`. `grid.keep_numbers`
+  explains why a grid cannot drop single numbers.
+- `"last"` is a position everywhere, also in `nums.number_at`, `grid.row`, `grid.column` and
+  `grid.number_at`.
+- `table[...]`, `table.marks` and loops over a table explain the words to use instead;
+  `iloc`, `iat`, `select_dtypes`, `clip`, `np.where` and other names point to the new words.
+- Lesson 10 teaches choosing by position, with a task to do from memory.
+- Not yet: setting one cell by position, positions of matching numbers (argwhere, argmax), clip as
+  one word, random fractions and sampling with replacement, grid diagonals and flips, unions of
+  column choices, nested columns.
+
 ### Also
 
 - Example tables `school`, `meadow` and `trial`; lessons 16 to 20; the new words are also taught
@@ -143,6 +211,8 @@ slopes and areas under splines.
   imputation.
 - Panel letters on a page no longer cover the panel titles of a chart made with
   `one_chart_per`.
+- `chart.all_dots` drawn over `boxes` or `violins` uses dark grey dots (or, in colour groups, a
+  dark rim), so the dots no longer vanish into boxes of the same colour; `colour=` still wins.
 
 ## 0.1.0 (2026-11-12)
 

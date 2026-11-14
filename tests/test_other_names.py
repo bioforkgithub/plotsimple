@@ -74,10 +74,14 @@ def test_distribution_pointers_name_the_distribution_words():
 @pytest.mark.parametrize("name, word", [
     ("groupby", "average_of"), ("merge", "join_with"), ("concat", "add_rows_from"),
     ("pivot", "turn_rows_into_columns"), ("melt", "turn_columns_into_rows"), ("head", "show_first_rows"),
-    ("tail", "show_last_rows"), ("iloc", "keep_rows"), ("filter", "keep_rows"), ("dropna", "remove_rows_with_empty_cells"),
+    ("tail", "show_last_rows"), ("iloc", "keep_rows_by_position"), ("filter", "keep_rows"), ("dropna", "remove_rows_with_empty_cells"),
     ("fillna", "fill_empty_cells"), ("sort_values", "sort_by"), ("mean", "average_of"), ("plot", "chart"),
     ("curve_fit", "fit_formula"), ("polyfit", "fit_curve"), ("linregress", "fit_line"), ("interpolate", "values_at"),
     ("griddata", "map_of"), ("fitdistr", "fit_distribution"), ("to_csv", "save"), ("value_counts", "count_each"),
+    ("slice", "keep_rows_by_position"), ("take", "keep_rows_by_position"), ("gather_every", "keep_rows_by_position"),
+    ("drop_index", "remove_rows_by_position"), ("at", "cell_at"), ("iat", "cell_at"), ("item", "cell_at"),
+    ("select_dtypes", "keep_columns"), ("reverse", "reverse_rows"), ("flip", "reverse_rows"),
+    ("mask", "replace_values"), ("clip", "replace_values"),
 ])
 def test_table_other_names(name, word):
     table = sdata.table(sdata.example("marks"))

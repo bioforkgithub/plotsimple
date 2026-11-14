@@ -53,6 +53,12 @@ HINTS = {
     "column_names": "count_columns", "count_numbers": "count", "head": "show_first_numbers",
     "tail": "show_last_numbers",
     "print": "show", "sqrt_": "square_root", "log10": "log", "log2": "log", "ln": "log",
+    "take": "keep_numbers_by_position", "slice": "keep_numbers_by_position",
+    "keep_numbers_at": "keep_numbers_by_position", "keep_positions": "keep_numbers_by_position",
+    "remove_positions": "remove_numbers_by_position", "delete": "remove_numbers_by_position",
+    "replace": "replace_numbers", "replace_values": "replace_numbers", "where": "replace_numbers",
+    "clip": "replace_numbers", "putmask": "replace_numbers", "place": "replace_numbers", "mask": "replace_numbers",
+    "keep_rows_by_position": "keep_numbers_by_position", "remove_rows_by_position": "remove_numbers_by_position",
 }
 
 
@@ -249,6 +255,8 @@ class BaseNumbers:
     _noun = "numbers"
     # Old names that still work for one release (with a note the first time): old -> new.
     _OLD_WORDS = {"count_empty": "count_empty_numbers", "done": "as_numpy"}
+    _HINTS: dict = {}  # extra names -> words for one kind (grids), looked at before HINTS
+    _POINTERS: dict = {}  # names that cannot work here -> the whole explanation
 
     def __init__(self, values):
         object.__setattr__(self, "_values", values)
@@ -501,10 +509,13 @@ class BaseNumbers:
         if name in self._OLD_WORDS:
             return old_word(self, name, self._OLD_WORDS)
         known = self._word_names()
+        if name in self._POINTERS:
+            raise MissingWordError(f"simplydata has no step called .{name}() for a {self._noun}.\n"
+                                   + self._POINTERS[name])
         pointer = other_name_error("numbers", name, known, prefix=self._name)
         if pointer is not None:
             raise pointer
-        target = HINTS.get(name)
+        target = self._HINTS.get(name, HINTS.get(name))
         if target is None and name.endswith("_of") and name[:-3] in known:
             target = name[:-3]
             return_msg = (

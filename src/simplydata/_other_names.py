@@ -53,6 +53,7 @@ _SDATA = [
     ('table.correlation_between("hours", "marks"), on a table', "pearsonr spearmanr kendalltau cor cor_test"),
     ('table.compare_shape_to("marks", "normal"), on a table', "shapiro shapiro_test normaltest anderson"),
     ("sdata.how_many_needed(effect_size=0.5, power=0.8)", "power_t_test solve_power pwr"),
+    ('sdata.start_30_days(track="python") once, then sdata.today() each day', "course tutorial"),
 ]
 
 # table.<name>
@@ -65,7 +66,14 @@ _TABLE = [
     ('table.turn_columns_into_rows(["temperature", "rain"])', "melt pivot_longer gather stack unpivot"),
     ("table.show_first_rows()", "head"),
     ("table.show_last_rows()", "tail"),
-    ('table.keep_rows("marks", above=50)', "iloc loc filter query where subset"),
+    ('table.keep_rows("marks", above=50)', "loc filter query where subset"),
+    ("table.keep_rows_by_position(10, to=20)", "iloc slice take gather_every nth"),
+    ("table.remove_rows_by_position([12, 40])", "drop_index"),
+    ('table.cell_at(row=3, column="marks")', "at iat item get_value"),
+    ('table.keep_columns(kind="number")', "select_dtypes"),
+    ('table.reverse_rows() to turn the table upside down, or table.sort_by("marks", biggest_first=True) for an '
+     "order by a column", "reverse flip flipud"),
+    ('table.replace_values("marks", above=100, with_value=100)', "mask clip"),
     ('table.keep_columns("name", "marks")', "select"),
     ('table.remove_columns("height")', "drop"),
     ('table.rename_column("marks", to="score")', "rename"),

@@ -10,8 +10,9 @@ For each class:
   B: below 33.25 or above 97.25 (Q1 = 57.25, Q3 = 73.25); 1 row found
   C: below 14.88 or above 103.88 (Q1 = 48.25, Q3 = 70.5); 0 rows found
 Found 1 row with an outlier, of 54 rows.
-   name class subject  hours  marks  height
-0  Ivan     B   Maths    0.5     33     147
+    name class subject  hours  marks  height
+25  Ivan     B   Maths    0.5     33     147
+The numbers on the left are the rows' places in the whole table, so table.remove_rows_by_position(25) would remove them.
 Correlations between 3 columns (Pearson, 3 pairs; each pair uses the rows where both columns have a number). The strongest:
   "hours" and "marks": r = 0.83 (54 rows), very strong, going up, and very unlikely to be chance (p < 0.0001).
   "hours" and "height": r = 0.06 (54 rows), very weak, going up, and could easily be chance (p = 0.667).
@@ -19,6 +20,6 @@ Correlations between 3 columns (Pearson, 3 pairs; each pair uses the rows where 
 Note: these p-values are not adjusted for testing 3 pairs. To adjust them: results = table.correlation_between("hours", "marks", "height", show="each pair"), then results.add_adjusted_p_value_column(from_column="p-value").
 Added "p-value (Holm)": 3 p-values from "p-value" adjusted with Holm's method (as R p.adjust(method = "holm")): the chance of even one false alarm among all the tests stays at 5 %. Below 0.05: 1 of 3 after adjusting (1 before).
   column 1 column 2   method         r       p-value  rows               strength  p-value (Holm)
-0    hours    marks  Pearson  0.831290  7.176542e-15    54  very strong, going up    2.152963e-14
-1    hours   height  Pearson  0.059806  6.674978e-01    54    very weak, going up    1.000000e+00
-2    marks   height  Pearson  0.030712  8.255157e-01    54    very weak, going up    1.000000e+00
+1    hours    marks  Pearson  0.831290  7.176542e-15    54  very strong, going up    2.152963e-14
+2    hours   height  Pearson  0.059806  6.674978e-01    54    very weak, going up    1.000000e+00
+3    marks   height  Pearson  0.030712  8.255157e-01    54    very weak, going up    1.000000e+00

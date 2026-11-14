@@ -21,7 +21,8 @@ import sys
 
 import numpy as np
 
-from .._errors import SimplydataError, choice_error, friendly
+from .._errors import SimplydataError, choice_error, friendly, option_error
+from .._positions import read_positions
 from ._base import NOT_GIVEN, amount, check_seed, check_whole, is_number, plain, say
 
 CONDITIONS = ("above", "below", "at_least", "at_most", "equal_to", "not_equal_to", "between", "one_of",
@@ -29,8 +30,9 @@ CONDITIONS = ("above", "below", "at_least", "at_most", "equal_to", "not_equal_to
 FILL_CHOICES = ("average", "median", "value above", "value below", "line between neighbours")
 
 
-class PickingWords:
-    # ================================================================== helpers
+class ReplacingWords:
+    """Shared by numbers and grids: one condition on the numbers, and replace_numbers()."""
+
     def _condition(self, step: str, options: dict, extra: tuple):
         """Which numbers match one condition. Gives (True/False for each number, words)."""
         example = f"{step}(above=50)"
@@ -103,6 +105,75 @@ class PickingWords:
                     cond, words = v != x, f"not equal to {say(x)}"
         return cond & ~empty, words
 
+    @friendly
+    def replace_numbers(self, old=NOT_GIVEN, with_value=NOT_GIVEN, *, above=NOT_GIVEN, below=NOT_GIVEN,
+                        at_least=NOT_GIVEN, at_most=NOT_GIVEN, equal_to=NOT_GIVEN, not_equal_to=NOT_GIVEN,
+                        between=NOT_GIVEN, one_of=NOT_GIVEN, is_empty=NOT_GIVEN):
+        """Replace a number, or every number that meets one condition; with_value=None makes them empty.
+
+        nums.replace_numbers(-999, with_value=None)   a code for "missing" becomes empty
+        nums.replace_numbers(above=100, with_value=100)   every number above 100 becomes 100
+        The conditions are keep_numbers' (one at a time): above, below, at_least, at_most, equal_to,
+        not_equal_to, between, one_of, is_empty. A grid keeps its rows and columns.
+        As NumPy np.where(a > 100, 100, a) and pandas s.mask(s > 100, 100).
+        """
+        name = self._name
+        example = f"{name}.replace_numbers(above=100, with_value=100)"
+        options = dict(above=above, below=below, at_least=at_least, at_most=at_most, equal_to=equal_to,
+                       not_equal_to=not_equal_to, between=between, one_of=one_of, is_empty=is_empty)
+        given = [k for k, v in options.items() if v is not NOT_GIVEN]
+        if old is NOT_GIVEN and not given:
+            raise SimplydataError(
+                ".replace_numbers() needs the number to replace, or one condition saying which numbers ("
+                + ", ".join(f"{c}=" for c in CONDITIONS) + "), and with_value= the new number."
+                + f"\nFor example:  {name}.replace_numbers(-999, with_value=None)\nFor example:  {example}"
+            )
+        if old is not NOT_GIVEN and given:
+            raise SimplydataError(
+                f".replace_numbers() takes either the old number or one condition ({given[0]}=), not both."
+                + f"\nFor example:  {name}.replace_numbers(-999, with_value=None)\nFor example:  {example}"
+            )
+        if with_value is NOT_GIVEN:
+            raise SimplydataError(
+                ".replace_numbers() needs with_value=, the new number (None makes them empty)."
+                + f"\nFor example:  {example}"
+            )
+        if with_value is not None and not is_number(with_value):
+            raise SimplydataError(
+                f"with_value= needs a number, or None to make the numbers empty (you gave {with_value!r})."
+                + f"\nFor example:  {example}"
+            )
+        if old is not NOT_GIVEN:
+            if old is None or (is_number(old) and old != old):
+                raise SimplydataError(
+                    f"For the empty numbers write {name}.replace_numbers(is_empty=True, with_value=0) "
+                    f"or {name}.fill_empty_numbers(with_value=0)." if name == "nums" else
+                    f"For the empty numbers write {name}.replace_numbers(is_empty=True, with_value=0)."
+                )
+            olds = list(old) if isinstance(old, (list, tuple, set, np.ndarray)) else [old]
+            for x in olds:
+                if not is_number(x):
+                    raise SimplydataError(f"The old value needs to be a number (you gave {x!r})."
+                                          + f"\nFor example:  {name}.replace_numbers(-999, with_value=None)")
+            options = {"one_of": olds} if len(olds) > 1 else {"equal_to": olds[0]}
+        cond, words = self._condition("replace_numbers", options, ())
+        n, total = int(cond.sum()), self._values.size
+        if words.startswith("are "):
+            words = "that were " + words[4:]
+        values = self._values
+        if with_value is None:
+            new, said = np.where(cond, np.nan, values.astype(float)), "empty"
+        else:
+            new, said = np.where(cond, with_value, values), say(with_value)
+        if with_value is None:
+            print(f"Made {n} of {amount(total)} empty: the numbers {words}.")
+        else:
+            print(f"Replaced {n} of {amount(total)} {words} with {said}.")
+        return self._change(f"replace numbers {words} with {said}", new)
+
+
+class PickingWords(ReplacingWords):
+    # ================================================================== helpers
     def _keep(self, what: str, keep_mask, kept_word: bool = True):
         before = self._values.size
         new = self._values[keep_mask]
@@ -115,12 +186,14 @@ class PickingWords:
     def _check_position(self, step, position, option="position"):
         example = f"{step}(1)" if option == "position" else f"{step}(row=1, column=2)"
         n = self._values.size if option == "position" else self._values.shape[0 if option == "row" else 1]
+        if isinstance(position, str) and position.strip().lower() == "last" and n:
+            return n - 1
         if not isinstance(position, (int, np.integer)) or isinstance(position, bool) or not 1 <= position <= n:
             if n == 0:
                 raise SimplydataError(f"There are no {option}s to pick from: these {self._noun} are empty.")
             raise SimplydataError(
-                f"{option} needs a whole number from 1 to {n}: positions count from 1, so 1 is the first "
-                f"and {n} is the last." + self._example(example)
+                f"{option} needs a whole number from 1 to {n}, or \"last\": positions count from 1, so 1 is "
+                f"the first and {n} is the last." + self._example(example)
             )
         return int(position) - 1
 
@@ -131,6 +204,7 @@ class PickingWords:
 
         nums.number_at(1)
         Positions count from 1, the way people count and the way charts number the x axis.
+        number_at("last") is the last number.
         """
         return plain(self._values[self._check_position("number_at", position)])
 
@@ -148,6 +222,69 @@ class PickingWords:
         print(np.array2string(self._values[self._values.size - min(n, self._values.size):],
                               threshold=sys.maxsize, separator=", "))
         return None
+
+    # ================================================================== by position
+    def _positions_picked(self, step: str, positions, to, step_size, example: str):
+        return read_positions(
+            step, positions, to, step_size, self._values.size, noun="position", count_noun="numbers",
+            owner="There are", example=example, last_hint="nums.keep_last_numbers(3)",
+            after_hint="to turn the order round use nums.reverse()", name="nums",
+            other_hint=lambda v: ("To keep numbers by their values use nums.keep_numbers(above=50)."
+                                  if isinstance(v, str) else None),
+        )
+
+    def _no_value_conditions(self, step: str, conditions: dict):
+        if not conditions:
+            return
+        key = next(iter(conditions))
+        if key in CONDITIONS:
+            verb = step.split("_")[0]
+            raise SimplydataError(
+                f".{step}() chooses numbers by their place in the list, not by their values.\n"
+                f"For numbers whose values meet a condition write nums.{verb}_numbers({key}=...).\n"
+                "For example:  nums.keep_numbers(above=50)"
+            )
+        raise option_error(step, key, ["positions", "to", "step"])
+
+    @friendly
+    def keep_numbers_by_position(self, positions=None, to=None, step=None, **conditions):
+        """Keep numbers by their position, counting from 1: a run, every n-th number, or a list.
+
+        nums.keep_numbers_by_position(2, to=4)
+        Both ends are included. to="last" goes to the end; step=2 keeps every 2nd number; a list
+        such as [1, 4] keeps those numbers in that order. As NumPy a[1:4] (positions, not values:
+        keep_numbers(between=[2, 4]) keeps the values from 2 to 4).
+        """
+        example = "nums.keep_numbers_by_position(3, to=8)"
+        self._no_value_conditions("keep_numbers_by_position", conditions)
+        picked = self._positions_picked("keep_numbers_by_position", positions, to, step, example)
+        total = self._values.size
+        new = self._values[picked.array()].copy()
+        what = "the number at" if len(picked) == 1 else "the numbers at"
+        print(f"Kept {what} {picked.words()}{picked.in_order()} ({new.size} of {amount(total)}).")
+        if picked.note:
+            print(picked.note.format(verb="kept"))
+        return self._change(f"keep {what} {picked.short_words()}", new)
+
+    @friendly
+    def remove_numbers_by_position(self, positions=None, to=None, step=None, **conditions):
+        """Remove numbers by their position, counting from 1: a run, every n-th number, or a list.
+
+        nums.remove_numbers_by_position("last")
+        The opposite of keep_numbers_by_position, with the same positions. As NumPy np.delete(a, -1).
+        """
+        example = 'nums.remove_numbers_by_position("last")'
+        self._no_value_conditions("remove_numbers_by_position", conditions)
+        picked = self._positions_picked("remove_numbers_by_position", positions, to, step, example)
+        total = self._values.size
+        if len(picked) == total:
+            raise SimplydataError("That would remove every number. Keep at least one.\nFor example:  " + example)
+        new = self._values[picked.kept_positions(total)].copy()
+        what = "the number at" if len(picked) == 1 else "the numbers at"
+        print(f"Removed {what} {picked.words()} ({len(picked)} of {amount(total)}). {new.size} left.")
+        if picked.note:
+            print(picked.note.format(verb="removed"))
+        return self._change(f"remove {what} {picked.short_words()}", new)
 
     # ================================================================== keeping and removing
     @friendly

@@ -1,6 +1,6 @@
    name class  subject  hours  marks  height  height_m
-0  Asha     A    Maths    6.3     61     144      1.44
-1  Asha     A  Science    3.8     66     144      1.44
-2  Asha     A  English    7.6     77     144      1.44
-3   Ben     A    Maths    6.4     73     152      1.52
-4   Ben     A  Science    9.2     98     152      1.52
+1  Asha     A    Maths    6.3     61     144      1.44
+2  Asha     A  Science    3.8     66     144      1.44
+3  Asha     A  English    7.6     77     144      1.44
+4   Ben     A    Maths    6.4     73     152      1.52
+5   Ben     A  Science    9.2     98     152      1.52

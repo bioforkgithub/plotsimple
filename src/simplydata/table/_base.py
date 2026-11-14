@@ -15,12 +15,13 @@ from pathlib import Path
 import narwhals as nw
 
 from .._data import load_native
-from .._errors import (SimplydataError, choice_error, column_error, friendly, missing_word_error, old_word,
-                       other_name_error,
-                       suggest)
+from .._errors import (MissingWordError, SimplydataError, choice_error, column_error, friendly, missing_word_error,
+                       old_word, other_name_error, suggest)
 
 HISTORY_LIMIT = 30  # how many steps undo() can take back
 SHOW_LIMIT = 1000  # table.show() with no rows= shows at most this many rows
+REPR_WHOLE_LIMIT = 10_000  # a Polars table up to this size is shown whole in notebooks
+REPR_ENDS = 30  # a bigger one shows this many rows from the start and the end
 SAVE_TYPES = ("csv", "tsv", "xlsx", "parquet", "json")
 
 
@@ -39,18 +40,49 @@ def show(native):
     print(native)
 
 
+def numbered(part, first: int = 0):
+    """Rows of a table ready to show, numbered from 1 the way people count (display only).
+
+    part is a narwhals frame of rows taken from a table; first is the position (from 0) of its
+    first row in the whole table, so the last 3 rows of a 54-row table are shown as 52, 53, 54.
+    The stored table is never changed: pandas tables keep their own index (as_pandas() gives
+    0, 1, 2 ... as pandas users expect), and Polars tables, which have no row labels, are shown
+    through pandas with the same numbers.
+    """
+    import pandas as pd
+
+    native = part.to_native()
+    if type(native).__module__.split(".")[0] == "pandas":
+        shown = native.copy(deep=False)
+    else:
+        shown = part.to_pandas()
+    shown.index = pd.RangeIndex(first + 1, first + 1 + len(shown))
+    return shown
+
+
+def numbered_at(part, positions):
+    """Rows of a table ready to show, each numbered with its own position (from 0) in the whole table."""
+    import pandas as pd
+
+    shown = numbered(part)
+    shown.index = pd.Index([int(p) + 1 for p in positions])
+    return shown
+
+
 def _show_whole(native):
     """Show a table without hiding any rows or columns behind "..."."""
-    if type(native).__module__.split(".")[0] == "polars":
-        import polars as pl
-
-        with pl.Config(tbl_rows=-1, tbl_cols=-1, fmt_str_lengths=200):
-            show(native)
-        return
     import pandas as pd
 
     with pd.option_context("display.max_rows", None, "display.max_columns", None, "display.width", None):
         show(native)
+
+
+class PickingError(SimplydataError, TypeError):
+    """table[...] and loops over a table: a friendly error that is still the TypeError Python tools expect."""
+
+
+def _slice_text(key: slice) -> str:
+    return f"{'' if key.start is None else key.start}:{'' if key.stop is None else key.stop}"
 
 
 class BaseTable:
@@ -236,7 +268,7 @@ class BaseTable:
                 print(f"This table has {total} rows; showing the first {SHOW_LIMIT}. "
                       f"table.show(rows={total}) shows them all.")
         rows = min(rows, total)
-        _show_whole(self._frame.head(rows).to_native())
+        _show_whole(numbered(self._frame.head(rows)))
         if rows < total:
             print(f"Showing {rows} of {total} rows, {len(self._columns)} columns.")
         else:
@@ -245,14 +277,19 @@ class BaseTable:
 
     @friendly
     def show_first_rows(self, rows=5):
-        """Show the first rows. table.show_first_rows(5)"""
-        show(self._frame.head(int(rows)).to_native())
+        """Show the first rows, numbered from 1. table.show_first_rows(5)"""
+        show(numbered(self._frame.head(int(rows))))
         return None
 
     @friendly
     def show_last_rows(self, rows=5):
-        """Show the last rows. table.show_last_rows(5)"""
-        show(self._frame.tail(int(rows)).to_native())
+        """Show the last rows, with their row numbers in the whole table. table.show_last_rows(5)
+
+        The last 3 rows of a table of 54 rows are numbered 52, 53 and 54, the numbers that
+        table.keep_rows_by_position(52, to=54) takes.
+        """
+        part = self._frame.tail(int(rows))
+        show(numbered(part, len(self._frame) - len(part)))
         return None
 
     @friendly
@@ -266,12 +303,63 @@ class BaseTable:
 
     def __repr__(self):
         rows, cols = self._frame.shape
-        return f"simplydata table: {rows} rows, {cols} columns\n{self._frame.head(10).to_native()!r}"
+        return f"simplydata table: {rows} rows, {cols} columns\n{numbered(self._frame.head(10))!r}"
 
     def _repr_html_(self):
-        native = self._frame.to_native()
-        html = getattr(native, "_repr_html_", None)
-        return html() if html else None
+        """The table in Jupyter and VS Code, with rows numbered from 1 (as everywhere in simplydata)."""
+        import pandas as pd
+
+        total = len(self._frame)
+        if self._frame.implementation.is_pandas() or total <= REPR_WHOLE_LIMIT:
+            shown = numbered(self._frame)
+        else:  # a big Polars table: only the rows a notebook shows are turned into pandas
+            k = REPR_ENDS
+            shown = pd.concat([numbered(self._frame.head(k)), numbered(self._frame.tail(k), total - k)])
+        return shown._repr_html_()
+
+    def __getitem__(self, key):
+        raise PickingError(self._picking_help(key))
+
+    def __iter__(self):
+        raise PickingError(
+            "A table is not gone through row by row with a loop: simplydata words work on every row at once.\n"
+            "To look at one row write table.row(3) (rows count from 1); for one column, table.column(\"marks\")."
+        )
+
+    def _picking_help(self, key) -> str:
+        """Why table[...] does not work, and the words that do (with the user's own column or rows)."""
+        columns = self._columns
+        lines = []
+        if isinstance(key, str) and key in columns:
+            lines.append(f'For the column "{key}" on its own write table.column("{key}").')
+        elif isinstance(key, str):
+            guess = suggest(key, columns, n=1)
+            lines.append(f'There is no column "{key}".' + (f' Did you mean table.column("{guess[0]}")?' if guess else ""))
+        elif isinstance(key, (list, tuple)) and key and all(isinstance(k, str) for k in key):
+            lines.append("To keep these columns write table.keep_columns("
+                         + ", ".join(f'"{k}"' for k in key) + ").")
+        elif isinstance(key, int) and not isinstance(key, bool) and key >= 0:
+            lines.append(f"In Python [{key}] is row {key + 1} counting from 1: table.row({key + 1}) shows it.")
+        elif isinstance(key, int) and key == -1:
+            lines.append('In Python [-1] is the last row: table.row("last") shows it.')
+        elif isinstance(key, slice) and key.step in (None, 1) and all(
+                v is None or (isinstance(v, int) and not isinstance(v, bool) and v >= 0) for v in (key.start, key.stop)):
+            first = (key.start or 0) + 1
+            last = "last" if key.stop is None else key.stop
+            if last == "last" or last >= first:
+                shown = '"last"' if last == "last" else last
+                lines.append(f"In Python [{_slice_text(key)}] means rows {first} to {last} counting from 1: "
+                             f"table.keep_rows_by_position({first}, to={shown}).")
+        lines.append(
+            'Parts of a table are chosen with words, and positions count from 1:\n'
+            '    table.column("marks")                     one column, as numbers\n'
+            '    table.keep_columns("name", "marks")       some columns\n'
+            '    table.keep_rows("marks > 50")             rows that meet a condition\n'
+            '    table.keep_rows_by_position(10, to=20)    rows 10 to 20\n'
+            '    table.cell_at(row=3, column="marks")      one cell\n'
+            "Python's [ ] counts from 0, so simplydata does not use it. For a pandas table, use table.as_pandas()."
+        )
+        return "\n".join(lines)
 
     @classmethod
     def _word_names(cls) -> list[str]:
@@ -282,6 +370,16 @@ class BaseTable:
             raise AttributeError(name)
         if name in self._OLD_WORDS:
             return old_word(self, name, self._OLD_WORDS)
+        frame = self.__dict__.get("_frame")
+        if frame is not None and name in frame.columns:
+            if frame.schema[name].is_numeric():
+                what, rows = "its numbers", f'table.keep_rows("{name} > 50")'
+            else:
+                what, rows = "its values", f'table.keep_rows("{name}", equal_to="...")'
+            raise MissingWordError(
+                f'{name} is a column. For {what} write table.column("{name}"); to choose rows write {rows}.\n'
+                "Columns are named in quotes inside a word, never after a dot."
+            )
         raise other_name_error("table", name, self._word_names()) or missing_word_error(name, self._word_names())
 
     def __setattr__(self, name, value):

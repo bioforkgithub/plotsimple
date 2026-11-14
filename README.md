@@ -68,6 +68,28 @@ to try yourself.
 - `sdata.example()` lists the made-up tables to practise with (marks, weather, fruit, growth, shop, school, meadow, trial, island; shop has dates and empty cells)
 - `sdata.lesson(3, solutions=True)` adds a worked solution to each "Try it yourself" task
 
+## Or learn it in 30 days
+
+Rather learn an hour a day? simplydata has a 30-day course built in:
+
+```python
+import simplydata as sdata
+sdata.start_30_days()                    # you already write some Python
+sdata.start_30_days(track="beginner")    # you have never programmed: starts with just enough Python
+sdata.today()                            # every day: the day to do next
+```
+
+Each day starts with a 5-minute warm-up of questions on earlier days (answered from memory, which
+fixes words better than reading them again), then the lesson to work through, and ends with a task
+to do without looking back. Review days mix the whole course, the last week is a project of your
+own, and day 29 is a final test from memory. Missed a day? `sdata.today()` carries on where you
+stopped. `sdata.answers()` gives the answers, `sdata.day()` the whole calendar, and `sdata.next_day()`
+goes on now. Your progress is kept only on your computer, in `~/.simplydata/progress.json`.
+
+**[30 days of simplydata (PDF)](https://github.com/bioforkgithub/simplydata/blob/main/docs/manual/simplydata_30_days.pdf)**
+is the same course on paper: a calendar to tick for each track, one page per day with the page of
+the manual for each lesson and word, and the answers at the back.
+
 ## Manual
 
 **[The simplydata manual (PDF)](https://github.com/bioforkgithub/simplydata/blob/main/docs/manual/simplydata_manual.pdf)** has everything in one book:
@@ -77,9 +99,12 @@ behind the numbers (average or median, standard deviation or standard error, con
 p-values, effect sizes, and which statistical test to use when), and a worked solution for every
 task.
 
+**[The simplydata dictionary (PDF)](https://github.com/bioforkgithub/simplydata/blob/main/docs/manual/simplydataDictionary.pdf)** lists every word A to Z, with its meaning, an example and the page of the manual that explains it, and turns names from other tools (`groupby`, `iloc`, `hist`, `curve_fit` ...) into simplydata words.
+
 The manual is made from the code by `python docs/make_manual.py` (it needs a LaTeX system with
 `pdflatex`), so it never goes out of date: a test fails if
-[docs/manual/simplydata_manual.tex](https://github.com/bioforkgithub/simplydata/blob/main/docs/manual/simplydata_manual.tex) no longer matches the code.
+[docs/manual/simplydata_manual.tex](https://github.com/bioforkgithub/simplydata/blob/main/docs/manual/simplydata_manual.tex) no longer matches the code. The same command builds the dictionary and the 30-day guide,
+with the page numbers of the manual it has just compiled.
 
 ## Tables
 
@@ -108,6 +133,23 @@ nums.undo()                                # ... and can be taken back
 nums.average()
 grid = sdata.number_grid([[3, 5, 2], [8, 6, 4]])
 grid.total(for_each="row")
+```
+
+## Choosing parts
+
+Rows, columns and numbers by their place, counting from 1 the way the printed row numbers do,
+with both ends included:
+
+```python
+table = sdata.table(sdata.example("marks"))
+table.keep_rows_by_position(10, to=20)       # rows 10 to 20 (pandas df.iloc[9:20])
+table.keep_rows_by_position(1, step=2)       # every 2nd row
+table.keep_columns("hours", to="height")     # a run of columns by name
+table.keep_columns(kind="number")            # every number column
+table.cell_at(row=3, column="marks")         # one cell
+table.replace_values("marks", above=90, with_value=90)
+grid = sdata.numbers(1, to=24).number_grid(columns=6)
+grid.keep_rows_by_position(2, to=3).keep_columns_by_position(1, to=3)   # a block
 ```
 
 ## More statistics
@@ -152,6 +194,14 @@ school.compare_distributions("days_absent", distributions=("poisson", "negative 
 Coming from another tool? Its names point to the simplydata word and never run:
 `sdata.minimize` says "In simplydata this is sdata.find_smallest(...)", `table.groupby` points to
 `for_each=`, `chart.hist` to `chart.histogram`.
+
+## How simplydata works
+
+simplydata does not implement statistical methods itself. Every calculation is done by
+established, peer-reviewed packages: Python packages (SciPy, statsmodels, pandas, NumPy and
+others), and R packages through rpy2 where Python has none. simplydata translates simple words
+into those calls, with the right settings, and says in the result which method was used. What we
+test is that translation: each answer is checked against the package underneath and against R.
 
 ## Ideas behind it
 

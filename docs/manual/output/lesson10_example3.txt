@@ -4,9 +4,9 @@ Removed 38 of 54 rows. 16 rows left.
 Kept the 2 rows with the biggest marks for each subject: 6 of 54 rows.
 Note: 3 rows had the same marks as the last row kept and were left out; rows that tie are kept in table order.
      name class  subject  hours  marks  height
-0  Fatima     A  English    6.8     81     158
-1    Asha     A  English    7.6     77     144
-2    Hana     B    Maths    6.1     91     144
-3    Chen     A    Maths    7.9     81     151
-4     Ben     A  Science    9.2     98     152
-5  Fatima     A  Science    8.6     87     158
+1  Fatima     A  English    6.8     81     158
+2    Asha     A  English    7.6     77     144
+3    Hana     B    Maths    6.1     91     144
+4    Chen     A    Maths    7.9     81     151
+5     Ben     A  Science    9.2     98     152
+6  Fatima     A  Science    8.6     87     158

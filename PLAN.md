@@ -1,6 +1,6 @@
 # simplydata — design plan
 
-*Status: version 0.1.0 (charts, tables, numbers and statistical tests). Last updated 2026-11-12.*
+*Status: version 0.1.0 released; fitting, distributions and choosing parts by position are on main.*
 
 ## 1. The idea
 
@@ -12,7 +12,10 @@ libraries underneath.
 Like a phrasebook that lets you speak Spanish, Italian and French without learning each
 grammar.
 
-- The libraries underneath do all drawing and calculation.
+- The libraries underneath do all drawing and calculation. **simplydata does not implement
+  statistical methods itself**: every calculation is done by established, peer-reviewed
+  packages (Python packages; R packages through rpy2 where Python has none), and simplydata
+  translates simple words into those calls.
 - simplydata's job is the **translation**: each word must map to the right call with the
   right settings. That is what we test.
 - Users never see the libraries underneath. There is **no bridge** to raw matplotlib
@@ -44,7 +47,7 @@ grammar.
 | Saving | `chart.save("x.png")` or `chart.save("x.pdf")`, format from the file name |
 | Spelling | Both `colour` and `color`, `grey` and `gray` |
 | Errors | Friendly message, "did you mean …?", list of columns, link to request a missing word on GitHub |
-| Learning | Built-in lessons `sdata.lesson(1)` … `sdata.lesson(15)`, `sdata.help("bars")`, `sdata.words()` |
+| Learning | Built-in lessons `sdata.lesson(1)` … `sdata.lesson(20)`, `sdata.help("bars")`, `sdata.words()` |
 | Renaming | A renamed word or option keeps working for one release and prints one line, once per session: `Note: "remove_empty_rows" is now called "remove_rows_with_empty_cells".` Old names are never listed in `sdata.words()`, the cheat sheet or the lessons; `sdata.help("old_name")` points to the new one |
 
 ## 4. Grammar rules
@@ -188,7 +191,7 @@ chart.save("marks.png")
 ### 5.8 Help and learning
 | Word | Example |
 |---|---|
-| `sdata.lesson` | `sdata.lesson(1)` … `sdata.lesson(15)` |
+| `sdata.lesson` | `sdata.lesson(1)` … `sdata.lesson(20)` |
 | `sdata.help` | `sdata.help("bars")` |
 | `sdata.words` | `sdata.words()` prints the whole list |
 
@@ -234,13 +237,18 @@ statistics are checked against SciPy, seaborn and R on reference data.
 | v0.3 | Arrays: plain-word layer over NumPy; statistical tests in plain words (comparing averages, comparing counts, fitting formulas) over SciPy |
 | v0.4 | More statistics: regression with several predictors, mixed models, survival curves, multiple-testing correction, power analysis, PCA and ordination |
 | v0.4.x | Charts and statistics polish: colour scales, transparency, line thickness, tick formats, histogram options, 1:1 lines, Q-Q plots, cumulative share (ECDF), comparing spreads, Tukey pairs, goodness of fit, more summary measures, special maths functions (erf, gamma ...) inside formulas |
-| v0.5 | Curve fitting and optimisation: fit any formula, find minima and maxima, solve equations; interpolation; probability distributions (`sdata.distribution`) |
-| v0.6 | Signals and time series: smoothing, filtering, peaks, Fourier transforms, rolling averages, resampling dates; control systems (transfer functions, step responses) |
-| v0.7 | Maths: areas under curves, differential equations, matrices and linear algebra |
-| v0.8 | Tables and data handling: the remaining pandas and Polars tasks (row summaries, ordered categories, date arithmetic, choosing columns by a rule ...); SQL queries on tables |
-| v0.9 | Numbers and arrays: the remaining NumPy tasks |
-| v0.10 | Charts II: page layouts, insets, polar and 3D in full, arrows, colour maps and norms, chart.undo |
-| v0.11 | Images and networks: image processing (filters, labelling, measuring shapes) and graphs (shortest paths, connected parts) |
+| v0.5 | Curve fitting and optimisation: fit any formula, find minima and maxima, solve equations; interpolation; probability distributions (`sdata.distribution`) (done) |
+| v0.5.x | Choosing parts by position: rows, columns and cells by their place (counting from 1, both ends included), every n-th row, columns by kind or name pattern, replacing values by a condition; a printable dictionary of every word; the course "30 days of simplydata" (done) |
+| Statistics I | Tests: effect sizes with intervals, 2x2 tables, agreement between raters, diagnostic accuracy, bootstrap and permutation tests, equivalence tests, one-sided tests |
+| v0.6 | Signals, time series and control systems: smoothing, filtering, peaks, Fourier transforms, rolling averages, resampling dates; transfer functions and step responses |
+| Statistics II | The full model family: ANOVA tables, extensions of generalised linear models, mixed models for yes/no answers and counts, GEE, model diagnostics |
+| v0.7 | Multivariate statistics II, and Bayesian statistics (as an optional extra) |
+| Statistics III | Survival II, meta-analysis, power analysis II, design of experiments, survey weights |
+| v0.8 | Maths: areas under curves (integration), differential equations (ODEs), matrices and linear algebra, with SymPy |
+| v0.9 | Tables and data handling: the remaining pandas and Polars tasks (row summaries, ordered categories, date arithmetic, choosing columns by a rule ...); SQL queries on tables (DuckDB); labelled arrays (xarray) |
+| v0.10 | Numbers and arrays: the remaining NumPy tasks |
+| v0.11 | Charts II: page layouts, insets, polar and 3D in full, arrows, colour maps and norms, chart.undo; interactive charts (Plotly) and maps (GeoPandas, Cartopy) |
+| v0.12 | Images and networks: image processing with scikit-image (filters, labelling, measuring shapes) and graphs with NetworkX (shortest paths, connected parts) |
 
 Goal: every task in pandas, Polars, NumPy, SciPy, matplotlib and seaborn has a simple simplydata word. Cells hold
 one value each (lists inside cells are split into rows instead). Machine learning, deep learning and language models
