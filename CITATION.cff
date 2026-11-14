@@ -1,0 +1,24 @@
+cff-version: 1.2.0
+message: "If you use simplydata, please cite it as below."
+title: "simplydata: simple words for data science in Python"
+abstract: >-
+  simplydata gives simple, readable English words over pandas, Polars, NumPy,
+  SciPy, matplotlib and seaborn for tables, charts, numbers and statistics.
+  Every printed statistical result is tested against R.
+type: software
+authors:
+  - given-names: Manish Prakash
+    family-names: Victor
+    orcid: "https://orcid.org/0000-0002-1409-5894"
+version: 0.1.0
+date-released: "2026-11-14"
+license: MIT
+repository-code: "https://github.com/bioforkgithub/simplydata"
+url: "https://pypi.org/project/simplydata/"
+keywords:
+  - data science
+  - statistics
+  - plotting
+  - pandas
+  - polars
+  - education
