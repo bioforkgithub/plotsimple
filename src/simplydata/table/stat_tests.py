@@ -1421,8 +1421,13 @@ class StatTestWords:
 
     def _compare_other_shape(self, step, column, shape, for_each, seed):
         """compare_shape_to() for any shape but normal: the engine is table/distribution_words.shape_test."""
+        from ..distributions import _find_family
         from .distribution_words import shape_test
 
+        try:
+            _find_family(shape, step)
+        except SimplydataError as error:  # the option here is shape=: say so in the did-you-mean
+            raise SimplydataError(str(error).replace('Did you mean "', 'Did you mean shape="')) from None
         if isinstance(seed, bool) or not isinstance(seed, int):
             raise SimplydataError("seed= needs a whole number, such as seed=1 (the same seed gives the same p-value).")
         groups = self._group_columns(step, for_each, [column]) if for_each is not None else []
