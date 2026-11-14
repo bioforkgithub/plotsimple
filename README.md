@@ -195,6 +195,14 @@ Coming from another tool? Its names point to the simplydata word and never run:
 `sdata.minimize` says "In simplydata this is sdata.find_smallest(...)", `table.groupby` points to
 `for_each=`, `chart.hist` to `chart.histogram`.
 
+## How simplydata works
+
+simplydata does not implement statistical methods itself. Every calculation is done by
+established, peer-reviewed packages: Python packages (SciPy, statsmodels, pandas, NumPy and
+others), and R packages through rpy2 where Python has none. simplydata translates simple words
+into those calls, with the right settings, and says in the result which method was used. What we
+test is that translation: each answer is checked against the package underneath and against R.
+
 ## Ideas behind it
 
 - **Talk to the program.** Each step reads like a short sentence: `chart.title_top(...)`,
