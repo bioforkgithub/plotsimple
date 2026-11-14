@@ -176,19 +176,23 @@ and `a`, `b` in `sdata.side_by_side(a, b)` are charts you made first.
 | Word | Example | Table | What it does |
 |---|---|---|---|
 | `sdata.table` | `sdata.table(sdata.example("marks"))` | marks | Start a table. |
-| `show_first_rows` | `table.show_first_rows(5)` | marks | Show the first rows. |
-| `show_last_rows` | `table.show_last_rows(5)` | marks | Show the last rows. |
+| `show_first_rows` | `table.show_first_rows(5)` | marks | Show the first rows, numbered from 1. |
+| `show_last_rows` | `table.show_last_rows(5)` | marks | Show the last rows, with their row numbers in the whole table. |
 | `show` | `table.show()` | marks | Show the table, every row and every column (or only the first rows=). |
 | `column_names` | `table.column_names()` | marks | The names of all columns. |
 | `describe_columns` | `table.describe_columns()` | marks | Describe every column: its kind, empty cells, smallest, biggest and average. |
 | `column` | `table.column("marks")` | marks | One column on its own: a column of numbers becomes sdata.numbers, any other a plain list. |
+| `row` | `table.row(3)` | marks | One row as a plain dict of column: value, counting from 1. |
+| `cell_at` | `table.cell_at(row=3, column="marks")` | marks | The value in one cell: a row counting from 1 and a column by name. |
 
 ## Choose columns
 
 | Word | Example | Table | What it does |
 |---|---|---|---|
-| `keep_columns` | `table.keep_columns("name", "marks")` | marks | Keep only these columns, in the order you list them. |
-| `remove_columns` | `table.remove_columns("height")` | marks | Remove these columns. |
+| `keep_columns` | `table.keep_columns("name", "marks")` | marks | Keep only these columns: by name (in the order you list them), a run of names, or by kind. |
+| `remove_columns` | `table.remove_columns("height")` | marks | Remove these columns: by name, a run of names, or by kind. |
+| `keep_columns_by_position` | `table.keep_columns_by_position(1, to=3)` | marks | Keep columns by their position, counting from 1 at the left; it says which columns they were. |
+| `remove_columns_by_position` | `table.remove_columns_by_position(1)` | marks | Remove columns by their position, counting from 1 at the left; it says which columns they were. |
 | `rename_column` | `table.rename_column("marks", to="score")` | marks | Give a column a new name. |
 
 ## Choose rows
@@ -199,6 +203,9 @@ and `a`, `b` in `sdata.side_by_side(a, b)` are charts you made first.
 | `remove_rows` | `table.remove_rows("subject", equal_to="English")` | marks | Remove the rows that match a condition (the opposite of keep_rows). |
 | `keep_first_rows` | `table.keep_first_rows(10)` | marks | Keep only the first rows. |
 | `keep_last_rows` | `table.keep_last_rows(10)` | marks | Keep only the last rows. |
+| `keep_rows_by_position` | `table.keep_rows_by_position(10, to=20)` | marks | Keep rows by their position, counting from 1: a run, every n-th row, or a list. |
+| `remove_rows_by_position` | `table.remove_rows_by_position([12, 40])` | marks | Remove rows by their position, counting from 1: a run, every n-th row, or a list. |
+| `reverse_rows` | `table.reverse_rows()` | marks | Turn the table upside down: the last row comes first. |
 | `keep_random_rows` | `table.keep_random_rows(10, seed=1)` | marks | Keep some rows picked at random; give a seed to get the same rows every time. |
 | `remove_duplicate_rows` | `table.remove_duplicate_rows(columns=["name"])` | marks | Remove rows that repeat an earlier row, or that repeat it in the columns you name. |
 | `keep_biggest_rows` | `table.keep_biggest_rows(3, by="marks", for_each="subject")` | marks | Keep the n rows with the biggest values in a column (also for each group). |
@@ -433,6 +440,9 @@ and `a`, `b` in `sdata.side_by_side(a, b)` are charts you made first.
 | `keep_random_numbers` | `nums.keep_random_numbers(10, seed=1)` |  | Keep some numbers picked at random (they keep their order); a seed gives the same pick every time. |
 | `remove_duplicate_numbers` | `nums.remove_duplicate_numbers()` |  | Remove numbers that repeat an earlier number, so each number is left once, in its first place. |
 | `remove_empty_numbers` | `nums.remove_empty_numbers()` |  | Remove the empty (missing) values. |
+| `keep_numbers_by_position` | `nums.keep_numbers_by_position(2, to=4)` |  | Keep numbers by their position, counting from 1: a run, every n-th number, or a list. |
+| `remove_numbers_by_position` | `nums.remove_numbers_by_position("last")` |  | Remove numbers by their position, counting from 1: a run, every n-th number, or a list. |
+| `replace_numbers` | `nums.replace_numbers(-999, with_value=None)` |  | Replace a number, or every number that meets one condition; with_value=None makes them empty. |
 | `fill_empty_numbers` | `nums.fill_empty_numbers(with_value=0)` |  | Fill the empty values with a number, or with the average, median, value above or value below. |
 | `sort` | `nums.sort(biggest_first=True)` |  | Put the numbers in order, smallest first; empty values go last. |
 | `reverse` | `nums.reverse()` |  | Turn the order round: the last number comes first. |
@@ -465,6 +475,11 @@ and `a`, `b` in `sdata.side_by_side(a, b)` are charts you made first.
 | `row` | `grid.row(1)` |  | One row of the grid as new numbers, counting from 1: row(1) is the top row. |
 | `column` | `grid.column(1)` |  | One column of the grid as new numbers, counting from 1: column(1) is the left one. |
 | `numbers` | `grid.numbers()` |  | All the numbers of the grid as a list, row by row (flatten). |
+| `keep_rows_by_position` | `grid.keep_rows_by_position(1, to=2)` |  | Keep rows of the grid by their position, counting from 1: a run, every n-th row, or a list. |
+| `keep_columns_by_position` | `grid.keep_columns_by_position(2, to=3)` |  | Keep columns of the grid by their position, counting from 1 at the left. |
+| `remove_rows_by_position` | `grid.remove_rows_by_position(1)` |  | Remove rows of the grid by their position, counting from 1. |
+| `remove_columns_by_position` | `grid.remove_columns_by_position(1)` |  | Remove columns of the grid by their position, counting from 1 at the left. |
+| `replace_numbers` | `grid.replace_numbers(below=4, with_value=0)` |  | Replace a number, or every number that meets one condition; the grid keeps its rows and columns. |
 | `swap_rows_and_columns` | `grid.swap_rows_and_columns()` |  | Turn rows into columns and columns into rows (the transpose in maths). |
 
 ## Numbers: undo and finish

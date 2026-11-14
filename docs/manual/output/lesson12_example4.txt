@@ -1,8 +1,8 @@
 9 of 54 rows in this table found a match in the other table.
    name class  subject  hours  marks  height  age
-0  Asha     A    Maths    6.3     61     144   12
-1  Asha     A  Science    3.8     66     144   12
-2  Asha     A  English    7.6     77     144   12
-3   Ben     A    Maths    6.4     73     152   13
-4   Ben     A  Science    9.2     98     152   13
+1  Asha     A    Maths    6.3     61     144   12
+2  Asha     A  Science    3.8     66     144   12
+3  Asha     A  English    7.6     77     144   12
+4   Ben     A    Maths    6.4     73     152   13
+5   Ben     A  Science    9.2     98     152   13
 The average of "marks" for each "age": 12 65, 13 80.67.

@@ -15,10 +15,10 @@ Residual deviance 165 on 158 df (with no columns: 215 on 160 df). The model as a
 A link does not show that one thing causes the other.
 Added "predicted marks": the fitted value of "marks" from "hours" and "breakfast" (least squares, 180 rows).
      school pupil  hours  ... passed  days_absent  predicted marks
-0  School A  P001    4.3  ...     no            2        44.451206
-1  School A  P002    3.4  ...     no            3        45.126707
-2  School A  P003    4.8  ...    yes            3        49.068830
-3  School A  P004    5.7  ...     no            2        48.393329
-4  School A  P005   11.6  ...    yes            1        68.216285
+1  School A  P001    4.3  ...     no            2        44.451206
+2  School A  P002    3.4  ...     no            3        45.126707
+3  School A  P003    4.8  ...    yes            3        49.068830
+4  School A  P004    5.7  ...     no            2        48.393329
+5  School A  P005   11.6  ...    yes            1        68.216285
 
 [5 rows x 9 columns]

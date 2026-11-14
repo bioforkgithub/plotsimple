@@ -130,6 +130,38 @@ slopes and areas under splines.
 - `line_with_slope` (for 1:1 lines), `qq_dots` (Q-Q plots), `cumulative_share` (ECDF) and
   `font_name`.
 
+### Choosing parts by position
+
+- Printed tables number their rows from 1 (`show`, `show_first_rows`, `show_last_rows`, `print`,
+  notebooks), so the last row of a 54-row table is row 54; `show_rows_with_outliers` shows each row
+  with its number in the whole table. Only the display changes: `as_pandas()` keeps pandas' own
+  index.
+- `table.keep_rows_by_position(10, to=20)` and `remove_rows_by_position`: rows by their place,
+  counting from 1 with both ends included (rows 10 to 20 are 11 rows), `to="last"`, `step=` for every
+  n-th row and a list such as `[1, 5, 9]` (as pandas `iloc` and Polars `slice`/`gather_every`).
+  `keep_columns_by_position` and `remove_columns_by_position` do the same for columns and say which
+  columns they were.
+- `table.row(3)` gives one row as a dict, `table.cell_at(row=3, column="marks")` one cell, and
+  `table.reverse_rows()` turns the table upside down.
+- `keep_columns` and `remove_columns` take a run of names (`keep_columns("hours", to="height")`),
+  `kind="number"` (or `"text"`, `"date"`, `"true/false"`), `starts_with=`, `ends_with=`, `contains=`
+  and `pattern=`.
+- `replace_values` takes the `keep_rows` conditions: `replace_values("marks", above=100,
+  with_value=100)`.
+- Numbers: `nums.keep_numbers_by_position(3, to=8)`, `remove_numbers_by_position`, and
+  `nums.replace_numbers(-999, with_value=None)` or `replace_numbers(above=100, with_value=100)`.
+- Grids: `keep_rows_by_position`, `keep_columns_by_position`, `remove_rows_by_position`,
+  `remove_columns_by_position` (a block is two steps) and `grid.replace_numbers`. `grid.keep_numbers`
+  explains why a grid cannot drop single numbers.
+- `"last"` is a position everywhere, also in `nums.number_at`, `grid.row`, `grid.column` and
+  `grid.number_at`.
+- `table[...]`, `table.marks` and loops over a table explain the words to use instead;
+  `iloc`, `iat`, `select_dtypes`, `clip`, `np.where` and other names point to the new words.
+- Lesson 10 teaches choosing by position, with a task to do from memory.
+- Not yet: setting one cell by position, positions of matching numbers (argwhere, argmax), clip as
+  one word, random fractions and sampling with replacement, grid diagonals and flips, unions of
+  column choices, nested columns.
+
 ### Also
 
 - Example tables `school`, `meadow` and `trial`; lessons 16 to 20; the new words are also taught

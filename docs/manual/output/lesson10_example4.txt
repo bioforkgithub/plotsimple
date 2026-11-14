@@ -1,0 +1,20 @@
+    name class  subject  hours  marks  height
+52  Rosa     C    Maths    3.4     55     162
+53  Rosa     C  Science    1.6     45     162
+54  Rosa     C  English    7.9     71     162
+Kept rows 10 to 20 (11 of 54 rows).
+Kept every 2nd row from row 1 to row 11: rows 1, 3, 5, 7, 9, 11 (6 of 11 rows).
+Kept columns 1 to 3: name, class, subject.
+     name class  subject
+1    Dina     A    Maths
+2    Dina     A  English
+3    Emil     A  Science
+4  Fatima     A    Maths
+5  Fatima     A  English
+6     Gus     B  Science
+77
+Reversed the order of the 54 rows: the last row is now first.
+   name class  subject  hours  marks  height
+1  Rosa     C  English    7.9     71     162
+2  Rosa     C  Science    1.6     45     162
+3  Rosa     C    Maths    3.4     55     162

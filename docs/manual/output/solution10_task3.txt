@@ -1,8 +1,8 @@
 Kept 5 of 54 rows.
 simplydata table: 5 rows, 6 columns
    name class  subject  hours  marks  height
-0  Kofi     B    Maths    7.5     68     146
-1  Asha     A  English    7.6     77     144
-2  Omar     C  English    6.0     49     151
-3  Kofi     B  English    1.9     57     146
-4  Kofi     B  Science    8.5     74     146
+1  Kofi     B    Maths    7.5     68     146
+2  Asha     A  English    7.6     77     144
+3  Omar     C  English    6.0     49     151
+4  Kofi     B  English    1.9     57     146
+5  Kofi     B  Science    8.5     74     146

@@ -1,8 +1,8 @@
 Bray-Curtis distances between 30 rows from 10 columns, as R vegan::vegdist(x, "bray"). 0 means the same; the bigger, the more different.
   plot       NG1       NG2  ...       RU3       RU4       RU5
-0  NG1  0.000000  0.336493  ...  0.328947  0.474286  0.351351
-1  NG2  0.336493  0.000000  ...  0.502347  0.601695  0.479675
-2  NG3  0.280576  0.400000  ...  0.460993  0.597561  0.436782
+1  NG1  0.000000  0.336493  ...  0.328947  0.474286  0.351351
+2  NG2  0.336493  0.000000  ...  0.502347  0.601695  0.479675
+3  NG3  0.280576  0.400000  ...  0.460993  0.597561  0.436782
 
 [3 rows x 31 columns]
 NMDS map of 30 rows from 10 columns (Bray-Curtis distances, 2 dimensions): stress = 0.195, usable, but do not read too much into small details (Clarke's rule of thumb: below 0.05 excellent, below 0.1 good, below 0.2 usable, above 0.2 hard to trust).

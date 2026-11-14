@@ -106,6 +106,23 @@ grid = sdata.number_grid([[3, 5, 2], [8, 6, 4]])
 grid.total(for_each="row")
 ```
 
+## Choosing parts
+
+Rows, columns and numbers by their place, counting from 1 the way the printed row numbers do,
+with both ends included:
+
+```python
+table = sdata.table(sdata.example("marks"))
+table.keep_rows_by_position(10, to=20)       # rows 10 to 20 (pandas df.iloc[9:20])
+table.keep_rows_by_position(1, step=2)       # every 2nd row
+table.keep_columns("hours", to="height")     # a run of columns by name
+table.keep_columns(kind="number")            # every number column
+table.cell_at(row=3, column="marks")         # one cell
+table.replace_values("marks", above=90, with_value=90)
+grid = sdata.numbers(1, to=24).number_grid(columns=6)
+grid.keep_rows_by_position(2, to=3).keep_columns_by_position(1, to=3)   # a block
+```
+
 ## More statistics
 
 Models, patterns across many columns, survival and planning a study, each checked against R:

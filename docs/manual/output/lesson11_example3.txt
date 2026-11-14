@@ -1,7 +1,7 @@
    name class  subject  hours  marks  height  marks_per_hour grade
-0  Asha     A    Maths    6.3     61     144        9.682540     B
-1  Asha     A  Science    3.8     66     144       17.368421     B
-2  Asha     A  English    7.6     77     144       10.131579     B
-3   Ben     A    Maths    6.4     73     152       11.406250     B
-4   Ben     A  Science    9.2     98     152       10.652174     A
+1  Asha     A    Maths    6.3     61     144        9.682540     B
+2  Asha     A  Science    3.8     66     144       17.368421     B
+3  Asha     A  English    7.6     77     144       10.131579     B
+4   Ben     A    Maths    6.4     73     152       11.406250     B
+5   Ben     A  Science    9.2     98     152       10.652174     A
 How many rows have each "grade" (4 different values): B 25, C 18, A 8, D 3.
