@@ -501,3 +501,13 @@ and `a`, `b` in `sdata.side_by_side(a, b)` are charts you made first.
 | `sdata.words` | `sdata.words()` |  | Print every simplydata word with a short example. |
 | `sdata.help` | `sdata.help("bars")` |  | Explain one word: what it does, its options and an example you can run. |
 | `sdata.lesson` | `sdata.lesson(1)` |  | A lesson: an example to run, what each line does, and a task. |
+
+## 30 days of simplydata
+
+| Word | Example | Table | What it does |
+|---|---|---|---|
+| `sdata.start_30_days` | `sdata.start_30_days()` |  | Start 30 days of simplydata: an hour a day of warm-up questions, lessons and tasks. |
+| `sdata.today` | `sdata.today()` |  | Show today's day of the 30 days of simplydata: warm-up questions, what to do and a task. |
+| `sdata.day` | `sdata.day(5)` |  | Show any day of the 30 days, without changing where you are. |
+| `sdata.answers` | `sdata.answers(5)` |  | The answers to a day's warm-up questions, and a worked answer to its task. |
+| `sdata.next_day` | `sdata.next_day()` |  | Go on to the next day now, without waiting for tomorrow. |

@@ -53,6 +53,7 @@ _SDATA = [
     ('table.correlation_between("hours", "marks"), on a table', "pearsonr spearmanr kendalltau cor cor_test"),
     ('table.compare_shape_to("marks", "normal"), on a table', "shapiro shapiro_test normaltest anderson"),
     ("sdata.how_many_needed(effect_size=0.5, power=0.8)", "power_t_test solve_power pwr"),
+    ('sdata.start_30_days(track="python") once, then sdata.today() each day', "course tutorial"),
 ]
 
 # table.<name>

@@ -11,7 +11,8 @@
 
 Numbers too: nums = sdata.numbers([3, 5, 2, 8]), then nums.average().
 
-New here? Type sdata.lesson(1). Every word: sdata.words(). One word: sdata.help("bars").
+New here? Type sdata.lesson(1), or sdata.start_30_days() for an hour a day over 30 days.
+Every word: sdata.words(). One word: sdata.help("bars").
 """
 
 from ._errors import SimplydataError
@@ -28,6 +29,7 @@ from .distributions import distribution
 # Last, on purpose: the function sdata.words must win over the subpackage simplydata.words
 # (sdata.table and sdata.numbers win over their subpackages the same way, by being imported after them).
 from .learn import help, lesson, words  # noqa: E402
+from .learn_days import answers, day, next_day, start_30_days, today  # noqa: E402
 
 __version__ = "0.1.0"
 
@@ -43,8 +45,8 @@ def __getattr__(name):
 
 
 __all__ = [
-    "Chart", "NumberGrid", "Numbers", "SimplydataError", "Table", "chance_to_find", "chart", "distribution",
-    "example", "find_biggest", "find_smallest", "grid", "help", "how_many_needed",
-    "lesson", "number_grid", "numbers", "one_above_other", "pairs", "random_numbers", "side_by_side",
-    "solve", "table", "words", "__version__",
+    "Chart", "NumberGrid", "Numbers", "SimplydataError", "Table", "answers", "chance_to_find", "chart", "day",
+    "distribution", "example", "find_biggest", "find_smallest", "grid", "help", "how_many_needed",
+    "lesson", "next_day", "number_grid", "numbers", "one_above_other", "pairs", "random_numbers", "side_by_side",
+    "solve", "start_30_days", "table", "today", "words", "__version__",
 ]

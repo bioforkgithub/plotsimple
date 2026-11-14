@@ -116,6 +116,8 @@ GROUPS = [
     ("Numbers: undo and finish", ["nums.undo", "nums.steps", "nums.start_again", "nums.table", "nums.chart",
                                   "nums.save", "nums.as_numpy"]),
     ("Help", ["sdata.words", "sdata.help", "sdata.lesson"]),
+    ("30 days of simplydata", ["sdata.start_30_days", "sdata.today", "sdata.day", "sdata.answers",
+                               "sdata.next_day"]),
 ]
 
 # Options that work inside several chart steps. They are not steps, so they are
@@ -739,6 +741,12 @@ HELP_EXAMPLES = {
     "sdata.words": "import simplydata as sdata\nsdata.words()",
     "sdata.help": 'import simplydata as sdata\nsdata.help("bars")\nsdata.help("show=")\nsdata.help("keep_rows")\nsdata.help("average")',
     "sdata.lesson": "import simplydata as sdata\nsdata.lesson()\nsdata.lesson(1)",
+    # 30 days of simplydata
+    "sdata.start_30_days": 'import simplydata as sdata\nsdata.start_30_days(track="python")',
+    "sdata.today": "import simplydata as sdata\nsdata.today()",
+    "sdata.day": 'import simplydata as sdata\nsdata.day()\nsdata.day(5)\nsdata.day(1, track="beginner")',
+    "sdata.answers": "import simplydata as sdata\nsdata.answers(5)",
+    "sdata.next_day": "import simplydata as sdata\nsdata.start_30_days()\nsdata.next_day()",
 }
 
 
@@ -1091,6 +1099,7 @@ def _print_help_overview() -> None:
           sdata.help("show=")      explains an option you use inside a step
           sdata.words()            lists every word, with a short example of each
           sdata.lesson()           lists the lessons: learn the whole of simplydata in a day
+          sdata.start_30_days()    or learn it in 30 days, an hour a day: then sdata.today()
           sdata.example()          lists the made-up tables you can practise with
 
         You can type the word with or without "chart." or "table." in front and with or
@@ -1253,6 +1262,9 @@ LESSONS = [
             "In Jupyter, VS Code or Spyder, write chart on the last line of a cell and the chart "
             "appears by itself. In a script, chart.show() opens it in a window.",
             "Are the names under the bars bumping into each other? Lesson 2 shows how to turn them.",
+            "Learning on your own? sdata.start_30_days() turns the lessons into 30 days of about an hour: "
+            "each day starts with a few questions on earlier days and ends with a task. Then type "
+            'sdata.today() each day (or sdata.start_30_days(track="beginner") if you have never programmed).',
         ],
         task=[
             'Change x="name" to x="subject". What does each bar show now?',
@@ -1286,7 +1298,7 @@ LESSONS = [
              "One bar per fruit. Each fruit was sold several times, so a bar is the average count "
              'of one sale; show="total" would show how many were sold in the whole week.'),
         ],
-        words=["sdata.example", "sdata.chart", "bars", "save", "show"],
+        words=["sdata.example", "sdata.chart", "bars", "save", "show", "sdata.start_30_days", "sdata.today"],
     ),
     dict(
         title="Titles and labels",
@@ -3501,6 +3513,8 @@ def _list_lessons() -> None:
     for i, les in enumerate(LESSONS, start=1):
         print(f"  sdata.lesson({i}){' ' * (5 - len(str(i)))}{les['title']}")
     print("\nStart with sdata.lesson(1). Each lesson ends with a small task to try yourself.")
+    print("Rather learn an hour a day? sdata.start_30_days() spreads the lessons over 30 days, with warm-up")
+    print("questions and a project of your own; then type sdata.today() each day.")
 
 
 def lesson_solutions(number: int) -> list[tuple[str, str]]:

@@ -10,6 +10,13 @@ from simplydata import _errors
 
 
 @pytest.fixture(autouse=True)
+def progress_in_a_temporary_file(tmp_path, monkeypatch):
+    """sdata.start_30_days() and sdata.today() keep their progress in a temporary file, never in the home folder."""
+    monkeypatch.setenv("SIMPLYDATA_PROGRESS_FILE", str(tmp_path / "simplydata_progress" / "progress.json"))
+    yield
+
+
+@pytest.fixture(autouse=True)
 def fresh_old_name_notes():
     """Each test starts like a new session: an old name prints its note again the first time."""
     _errors._NOTED.clear()
