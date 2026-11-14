@@ -1,10 +1,14 @@
 # simplydata
 
+[![PyPI](https://img.shields.io/pypi/v/simplydata)](https://pypi.org/project/simplydata/) [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.24210045.svg)](https://doi.org/10.5281/zenodo.24210045)
+
 **Simple words for data science in Python.** One small vocabulary you can learn in a day,
 built on matplotlib, seaborn, pandas, Polars, NumPy and SciPy (with narwhals linking pandas and
 Polars), so you don't have to learn them first.
 
 > Status: early development (charts, tables, numbers, statistical tests, fitting and distributions ready). The word list may still change: an old word keeps working for one release and prints a one-line note with its new name.
+
+Install: `pip install simplydata`
 
 ```python
 import simplydata as sdata
@@ -169,6 +173,14 @@ The full design is in [PLAN.md](https://github.com/bioforkgithub/simplydata/blob
 
 What changed in each release is in [CHANGELOG.md](https://github.com/bioforkgithub/simplydata/blob/main/CHANGELOG.md). Contributions are welcome:
 [CONTRIBUTING.md](https://github.com/bioforkgithub/simplydata/blob/main/CONTRIBUTING.md) explains how to suggest a word, report a problem or add code.
+
+## How to cite
+
+If simplydata helps your work, please cite the archived software:
+
+> Victor, M. P. simplydata: simple words for data science in Python. Zenodo. https://doi.org/10.5281/zenodo.24210045
+
+This DOI always points to the latest version; each release also has its own DOI on Zenodo. GitHub's "Cite this repository" button gives the same citation in other formats.
 
 ## Licence
 
